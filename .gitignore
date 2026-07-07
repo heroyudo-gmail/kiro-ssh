@@ -216,3 +216,16 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+
+# Dataset
+*.csv
+*.xlsx
+
+
+# Model files
+*.json
+!package.json
+!package-lock.json
+*.joblib
+*.pkl
