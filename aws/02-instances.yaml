@@ -1,0 +1,200 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  SSH Brute-Force Detection - Step 2: EC2 Instances + IAM Roles
+  Target Server, Analyzer Node, Attacker Node (all in private subnet)
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: ssh-detection
+
+  InstanceAmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
+    Description: Latest Amazon Linux 2023 AMI
+
+Resources:
+  # --- IAM Role for SSM access ---
+  SSMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${ProjectName}-ssm-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-ssm-role
+
+  # --- IAM Role for Analyzer (SSM + S3 write) ---
+  AnalyzerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${ProjectName}-analyzer-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Policies:
+        - PolicyName: S3WriteAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                  - s3:ListBucket
+                Resource: '*'
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-analyzer-role
+
+  # --- Instance Profiles ---
+  SSMInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: !Sub ${ProjectName}-ssm-profile
+      Roles:
+        - !Ref SSMRole
+
+  AnalyzerInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: !Sub ${ProjectName}-analyzer-profile
+      Roles:
+        - !Ref AnalyzerRole
+
+  # --- Target Server (SSH Server) ---
+  TargetServer:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t3.micro
+      ImageId: !Ref InstanceAmiId
+      SubnetId:
+        Fn::ImportValue: !Sub ${ProjectName}-private-subnet-id
+      SecurityGroupIds:
+        - Fn::ImportValue: !Sub ${ProjectName}-instance-sg-id
+      IamInstanceProfile: !Ref SSMInstanceProfile
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          # SSH sudah aktif by default di Amazon Linux
+          # Buat user test untuk brute-force target
+          useradd -m testuser
+          echo "testuser:SuperSecret123!" | chpasswd
+          # Enable password authentication untuk SSH
+          sed -i 's/^PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
+          sed -i 's/^#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
+          systemctl restart sshd
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-target-server
+
+  # --- Analyzer Node (CICFlowMeter) ---
+  AnalyzerNode:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t3.medium
+      ImageId: !Ref InstanceAmiId
+      SubnetId:
+        Fn::ImportValue: !Sub ${ProjectName}-private-subnet-id
+      SecurityGroupIds:
+        - Fn::ImportValue: !Sub ${ProjectName}-instance-sg-id
+      IamInstanceProfile: !Ref AnalyzerInstanceProfile
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          # Install Java (required for CICFlowMeter)
+          yum install -y java-17-amazon-corretto
+          # Install Python 3.9+ dan dependencies
+          yum install -y python3 python3-pip
+          pip3 install boto3 pandas numpy xgboost
+          # Install tcpdump untuk packet capture
+          yum install -y tcpdump libpcap
+          # Create working directory
+          mkdir -p /opt/cicflowmeter
+          mkdir -p /opt/ssh-detection
+          echo "Analyzer setup complete" > /opt/ssh-detection/setup.log
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-analyzer-node
+
+  # --- Attacker Node ---
+  AttackerNode:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t3.micro
+      ImageId: !Ref InstanceAmiId
+      SubnetId:
+        Fn::ImportValue: !Sub ${ProjectName}-private-subnet-id
+      SecurityGroupIds:
+        - Fn::ImportValue: !Sub ${ProjectName}-instance-sg-id
+      IamInstanceProfile: !Ref SSMInstanceProfile
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          # Install Hydra (SSH brute-force tool)
+          yum install -y gcc make openssl-devel
+          cd /tmp
+          curl -L -o hydra.tar.gz https://github.com/vanhauser-thc/thc-hydra/archive/refs/tags/v9.5.tar.gz
+          tar xzf hydra.tar.gz
+          cd thc-hydra-9.5
+          ./configure
+          make
+          make install
+          # Install Nmap
+          yum install -y nmap
+          # Create password list for brute-force
+          mkdir -p /opt/attack
+          echo -e "admin\nroot\npassword\n123456\ntest\ntestuser\nSuperSecret123!" > /opt/attack/passwords.txt
+          echo -e "admin\nroot\ntestuser\nuser\nubuntu" > /opt/attack/usernames.txt
+          echo "Attacker setup complete" > /opt/attack/setup.log
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-attacker-node
+
+Outputs:
+  TargetServerId:
+    Value: !Ref TargetServer
+    Export:
+      Name: !Sub ${ProjectName}-target-id
+
+  TargetServerPrivateIp:
+    Value: !GetAtt TargetServer.PrivateIp
+    Export:
+      Name: !Sub ${ProjectName}-target-ip
+
+  AnalyzerNodeId:
+    Value: !Ref AnalyzerNode
+    Export:
+      Name: !Sub ${ProjectName}-analyzer-id
+
+  AnalyzerNodePrivateIp:
+    Value: !GetAtt AnalyzerNode.PrivateIp
+    Export:
+      Name: !Sub ${ProjectName}-analyzer-ip
+
+  AttackerNodeId:
+    Value: !Ref AttackerNode
+    Export:
+      Name: !Sub ${ProjectName}-attacker-id
+
+  AttackerNodePrivateIp:
+    Value: !GetAtt AttackerNode.PrivateIp
+    Export:
+      Name: !Sub ${ProjectName}-attacker-ip

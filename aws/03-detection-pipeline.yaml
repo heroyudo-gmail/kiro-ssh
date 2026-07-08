@@ -1,0 +1,199 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  SSH Brute-Force Detection - Step 3: S3 + Lambda + SNS
+  Detection pipeline (without Traffic Mirroring - that's Step 4)
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: ssh-detection
+
+  AlertEmail:
+    Type: String
+    Default: heroyudo@gmail.com
+    Description: Email address for SNS attack alerts
+
+Resources:
+  # --- S3 Bucket for feature vectors ---
+  FeatureBucket:
+    Type: AWS::S3::Bucket
+    DependsOn: S3InvokeLambdaPermission
+    Properties:
+      BucketName: !Sub ${ProjectName}-features-${AWS::AccountId}
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: s3:ObjectCreated:*
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: features/
+                  - Name: suffix
+                    Value: .csv
+            Function: !GetAtt DetectionFunction.Arn
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-features
+
+  # --- SNS Topic for alerts ---
+  AlertTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub ${ProjectName}-alerts
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-alerts
+
+  AlertSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref AlertTopic
+      Protocol: email
+      Endpoint: !Ref AlertEmail
+
+  # --- Lambda IAM Role ---
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${ProjectName}-lambda-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: S3ReadAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:ListBucket
+                Resource:
+                  - !Sub arn:aws:s3:::${ProjectName}-features-${AWS::AccountId}
+                  - !Sub arn:aws:s3:::${ProjectName}-features-${AWS::AccountId}/*
+        - PolicyName: SNSPublishAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource: !Ref AlertTopic
+
+  # --- Lambda Function ---
+  DetectionFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub ${ProjectName}-inference
+      Runtime: python3.9
+      Handler: index.handler
+      MemorySize: 128
+      Timeout: 30
+      Role: !GetAtt LambdaRole.Arn
+      Environment:
+        Variables:
+          SNS_TOPIC_ARN: !Ref AlertTopic
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import os
+          import csv
+          from io import StringIO
+
+          s3 = boto3.client('s3')
+          sns = boto3.client('sns')
+
+          def handler(event, context):
+              """
+              Triggered by S3 when Analyzer uploads feature CSV.
+              Reads CSV, predicts (placeholder), sends SNS if attack.
+              """
+              try:
+                  bucket = event['Records'][0]['s3']['bucket']['name']
+                  key = event['Records'][0]['s3']['object']['key']
+                  print(f"Processing: s3://{bucket}/{key}")
+
+                  # Read CSV from S3
+                  response = s3.get_object(Bucket=bucket, Key=key)
+                  content = response['Body'].read().decode('utf-8')
+
+                  # Parse CSV
+                  reader = csv.DictReader(StringIO(content))
+                  results = []
+                  for row in reader:
+                      # Placeholder: simple rule-based detection
+                      # Will be replaced with XGBoost model inference
+                      dst_port = int(float(row.get('Dst Port', 0)))
+                      flow_pkts = float(row.get('Flow Pkts/s', 0))
+
+                      # Simple heuristic: SSH port + high packet rate = attack
+                      if dst_port == 22 and flow_pkts > 100:
+                          results.append(1)
+                      else:
+                          results.append(0)
+
+                  attack_count = sum(results)
+                  total_flows = len(results)
+
+                  if attack_count > 0:
+                      message = (
+                          f"SSH BRUTE-FORCE DETECTED!\n\n"
+                          f"Source: s3://{bucket}/{key}\n"
+                          f"Total flows analyzed: {total_flows}\n"
+                          f"Attacks detected: {attack_count}\n"
+                          f"Detection rate: {attack_count/max(total_flows,1)*100:.1f}%\n"
+                      )
+                      sns.publish(
+                          TopicArn=os.environ['SNS_TOPIC_ARN'],
+                          Subject='[SSH Detection] Attack Detected!',
+                          Message=message
+                      )
+                      print(f"ALERT: {attack_count}/{total_flows} attacks")
+                  else:
+                      print(f"Clear: {total_flows} flows, no attacks")
+
+                  return {
+                      'statusCode': 200,
+                      'body': json.dumps({
+                          'total_flows': total_flows,
+                          'attacks': attack_count
+                      })
+                  }
+              except Exception as e:
+                  print(f"Error: {str(e)}")
+                  raise
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-inference
+
+  # --- S3 -> Lambda trigger permission ---
+  S3InvokeLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref DetectionFunction
+      Action: lambda:InvokeFunction
+      Principal: s3.amazonaws.com
+      SourceArn: !Sub arn:aws:s3:::${ProjectName}-features-${AWS::AccountId}
+
+Outputs:
+  FeatureBucketName:
+    Value: !Ref FeatureBucket
+    Export:
+      Name: !Sub ${ProjectName}-bucket-name
+
+  AlertTopicArn:
+    Value: !Ref AlertTopic
+    Export:
+      Name: !Sub ${ProjectName}-alert-topic-arn
+
+  LambdaFunctionArn:
+    Value: !GetAtt DetectionFunction.Arn
+    Export:
+      Name: !Sub ${ProjectName}-lambda-arn
