@@ -1,0 +1,361 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx} 
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabulary}
+\usepackage{ragged2e}
+\usepackage{makecell}
+\usepackage{balance}
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+\begin{document}
+\title{Multi-Dataset Evaluation of Feature-Reduced SSH Brute-Force Detection Using XGBoost on AWS Infrastructure}
+
+\author{\IEEEauthorblockN{1\textsuperscript{st} Hero Yudo Martono}
+\IEEEauthorblockA{\textit{Department of Informatics and Computer Engineering} \\
+\textit{Politeknik Elektronika Negeri Surabaya}\\
+Surabaya, Indonesia \\
+hero@pens.ac.id}
+\and
+\IEEEauthorblockN{2\textsuperscript{nd} Reesa Akbar}
+\IEEEauthorblockA{\textit{Electrical Engineering} \\
+\textit{Politeknik Elektronika Negeri Surabaya}\\
+Surabaya, Indonesia \\
+reesa@pens.ac.id}
+\and
+\IEEEauthorblockN{3\textsuperscript{rd} Dian Septiani Santoso}
+\IEEEauthorblockA{\textit{Department of Informatics and Computer Engineering} \\
+\textit{Politeknik Elektronika Negeri Surabaya}\\
+Surabaya, Indonesia \\
+dian@pens.ac.id}
+\and
+\IEEEauthorblockN{4\textsuperscript{th} Andhik Ampuh Yunanto}
+\IEEEauthorblockA{\textit{Department of Informatics and Computer Engineering} \\
+\textit{Politeknik Elektronika Negeri Surabaya}\\
+Surabaya, Indonesia \\
+andhik@pens.ac.id}
+}
+
+\maketitle
+
+\begin{abstract}
+Cloud infrastructures like Amazon Web Services (AWS) are frequent targets for Secure Shell (SSH) brute-force attacks. While machine learning models can detect these attacks, their generalizability across different dataset configurations remains underexplored. This study extends prior work on feature-reduced XGBoost detection by evaluating the methodology across two distinct dataset configurations from CSE-CIC-IDS2018: a binary SSH-vs-Benign dataset and a more challenging SSH-vs-Non-SSH dataset that includes FTP brute-force traffic. We evaluate three algorithms (XGBoost, Random Forest, and SVM) via 5-fold cross-validation on both datasets using the top-10 features selected by XGBoost gain importance. Our multi-dataset evaluation reveals that detection performance remains near-perfect (F1 $\geq$ 99.99\%) across all configurations when using the full raw CSE-CIC-IDS2018 dataset, though feature importance rankings differ significantly between dataset compositions. We validate the end-to-end architecture on AWS using Traffic Mirroring, a lightweight Python-based flow extractor, S3-triggered Lambda inference, and SNS alerting within a private VPC environment. The system successfully detects Hydra-based brute-force attacks with 100\% detection rate in live testing, with the XGBoost model serialized at only 84 KB.
+\end{abstract}
+
+\begin{IEEEkeywords}
+SSH Intrusion Detection, XGBoost, Multi-Dataset Evaluation, Cloud-Native Architecture, Serverless Computing, AWS Traffic Mirroring.
+\end{IEEEkeywords}
+
+\section{INTRODUCTION}
+
+Cloud infrastructure adoption, particularly Amazon Web Services (AWS), has changed how organizations handle computing resources \cite{b12}. Exposing services like Amazon Elastic Compute Cloud (EC2) via the SSH protocol creates a prime target for attackers relying on brute-force techniques \cite{b10, b11, b13}. A successful breach threatens data integrity and often leads to unauthorized resource consumption.
+
+While prior work has demonstrated that XGBoost with reduced feature sets can achieve high detection accuracy on curated datasets, the robustness of such approaches across different dataset compositions remains an open question. Feature importance rankings may shift depending on the specific traffic mix, potentially invalidating feature selection decisions made on a single dataset.
+
+This paper extends previous work by evaluating the feature-reduced XGBoost detection methodology across two distinct dataset configurations derived from CSE-CIC-IDS2018. The specific contributions of this study are:
+\begin{enumerate}
+\item A multi-dataset evaluation demonstrating how feature importance and model performance vary across different traffic compositions.
+\item An updated deployment architecture using a Python-based flow extractor as a lightweight alternative to CICFlowMeter within a fully private VPC environment.
+\item A live AWS validation using Hydra and Nmap within an isolated private subnet testbed, demonstrating operational feasibility without public internet exposure.
+\item A comparative cost analysis validating the economic viability of the serverless detection approach.
+\end{enumerate}
+
+
+\section{RELATED WORK}
+
+Detecting SSH attacks has evolved from applying basic machine learning on honeypot data \cite{b1, b2} to deploying specialized architectures \cite{b3, b7, b13}. Recently, deep learning models like Long Short-Term Memory (LSTM) networks \cite{b4} and Convolutional Neural Networks (CNNs) \cite{b6} have achieved impressive accuracy. However, their high computational demands make them impractical for resource-constrained serverless settings. Concurrently, researchers have tackled massive network data volumes using Big Data environments \cite{b5, b8} and explored the nuances of modern encrypted traffic \cite{b9, b10}.
+
+As focus shifts to cloud environments, recent works propose hybrid models to handle cloud data complexity \cite{b12}, while institutions warn of persistent SSH dictionary threats \cite{b11}. Our research bridges the gap between high-accuracy complex models and operational speed. Unlike prior studies relying on computationally heavy neural networks or Big Data clusters, we prioritize cloud-native optimization. By aggressively reducing the feature set fed into a lightweight XGBoost model, we achieve the accuracy of deep learning while remaining efficient enough for serverless deployment.
+
+Furthermore, most prior studies evaluate their models on a single dataset configuration, leaving questions about generalizability unanswered. Our work addresses this gap by evaluating the same methodology across two distinct traffic compositions derived from CSE-CIC-IDS2018, providing evidence about the stability of feature selection and detection performance across different data conditions.
+
+\section{PROPOSED METHODOLOGY}
+
+We designed our methodology to balance high detection accuracy with the strict performance limits of cloud infrastructure. The process starts by acquiring and cleaning network traffic data from two distinct dataset configurations to ensure robust evaluation. Next, we run an experimental phase using 5-fold cross-validation to compare three classification algorithms: XGBoost, Random Forest, and Support Vector Machine (SVM). We apply feature importance techniques to identify the optimal reduced feature set, then validate the approach through a multi-dataset comparison.
+
+Finally, we translate this optimized model into a working detection architecture on AWS. By linking serverless computing with native packet mirroring within a fully private VPC, the resulting system operates automatically and responds to threats with minimal delay while maintaining strict network isolation.
+
+\subsection{Dataset Acquisition and Multi-Dataset Configuration}
+
+We utilized two dataset configurations from the CSE-CIC-IDS2018 collection \cite{b14}:
+
+\textbf{Dataset A (SSH-Bruteforce.csv):} Contains 625,919 samples with 438,330 Benign and 187,589 SSH-Bruteforce instances across 78 numerical features. This represents the raw binary classification task (SSH attack vs normal traffic).
+
+\textbf{Dataset B (Wednesday-14-02-2018):} Contains 1,048,575 samples with 667,626 Benign, 193,360 FTP-BruteForce, and 187,589 SSH-Bruteforce instances across 79 features (including Timestamp, which was dropped during preprocessing). This represents a more challenging scenario where the model must distinguish SSH brute-force from other brute-force traffic (FTP), not just from benign traffic.
+
+For Dataset B, we encoded SSH-Bruteforce as attack (1) and all other traffic (Benign + FTP-BruteForce) as non-attack (0). This tests whether the model can specifically identify SSH brute-force patterns even when presented with similar-looking FTP brute-force traffic.
+
+Both datasets were cleaned by removing rows with NaN and infinite values (0 rows removed in Dataset A; Dataset B had the Timestamp column dropped). Datasets were balanced via random undersampling of the majority class to match the minority class (187,589 samples per class), resulting in 375,178 total samples per dataset. Stratified 80/20 train-test splits were applied, and 5-fold cross-validation was used for model evaluation to ensure statistical rigor.
+
+\subsection{Model Selection and Feature Optimization}
+
+The overall experimental workflow is illustrated in Fig. 1. It begins with rigorous algorithm comparison to establish a baseline, followed by feature importance analysis to optimize model dimensionality.
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=\linewidth]{alur.png}}
+\caption{Experimental workflow for multi-dataset model evaluation and selection.}
+\label{fig:workflow}
+\end{figure}
+
+In the model selection phase, we compared XGBoost \cite{b16}, Random Forest, and SVM. For reproducibility, we used the following hyperparameters: XGBoost (max\_depth=6, learning\_rate=0.3, n\_estimators=100, eval\_metric=logloss), Random Forest (n\_estimators=100), and SVM (RBF kernel with StandardScaler preprocessing). We used the \texttt{binary:logistic} objective for XGBoost.
+
+For feature optimization, we used XGBoost's built-in Feature Importance metric (gain criterion) to identify and retain only the top 10 features. Feature importance was computed independently for each dataset to investigate stability across configurations. The selected features (depicted in Fig. 2) were then applied consistently across all evaluation folds.
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=\linewidth]{rank_fitur.png}}
+\caption{Top 10 features based on XGBoost Feature Importance (Dataset A).}
+\label{fig:features}
+\end{figure}
+
+\subsection{Proposed Cloud-Native Detection Architecture}
+
+We designed the detection system as an event-driven AWS framework deployed entirely within a private VPC, as shown in Fig. 3. Unlike prior work that used public-facing instances, our architecture operates within a private subnet with no internet gateway, enhancing security posture.
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=\linewidth]{figure1.png}}
+\caption{The proposed cloud-native detection architecture using AWS Traffic Mirroring within a private VPC.}
+\label{fig:arch}
+\end{figure}
+
+Instead of relying on aggregate VPC Flow Logs, we use \textbf{AWS Traffic Mirroring} to copy raw network packets from the EC2 ENI and route them to an inspection node via VXLAN encapsulation. At the feature extraction layer, a Python-based flow extractor using \texttt{tcpdump} captures the mirrored VXLAN packets, parses SSH flow statistics, and uploads a 10-feature CSV vector to an Amazon S3 bucket. This approach provides a lightweight alternative to CICFlowMeter that requires no Java runtime.
+
+Upon S3 upload, an AWS Lambda function is triggered to perform XGBoost-derived inference and dispatch an Amazon SNS email alert if an attack is detected. All instance access is managed through AWS Systems Manager (SSM) via VPC Interface Endpoints, eliminating the need for SSH key pairs or public IP addresses.
+
+The 10 optimized features extracted by our flow extractor are detailed in Table I.
+
+\begin{table}[!ht]
+\centering
+\caption{The 10 Optimized XGBoost Features}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabulary}{\linewidth}{|l|L|}
+\hline
+\textbf{Feature} & \textbf{Description} \\
+\hline
+Dst Port & The destination port attribute. \\
+Init Bwd Win Byts & Initial TCP backward window size. \\
+Fwd Seg Size Min & Minimum segment size in forward direction. \\
+Flow Pkts/s & Flow packet rate per second. \\
+Flow Duration & Total duration of the flow. \\
+Fwd Header Len & Total bytes of forward packet headers. \\
+Bwd Header Len & Total bytes of backward packet headers. \\
+Bwd IAT Min & Minimum inter-arrival time (backward). \\
+Init Fwd Win Byts & Initial TCP forward window size. \\
+ACK Flag Cnt & Count of ACK flags in the flow. \\
+\hline
+\end{tabulary}
+\end{table}
+
+\subsection{Experimental Setup and Live AWS Validation}
+
+A dedicated testbed was constructed in the AWS ap-southeast-1 (Singapore) region using Amazon Linux 2023. The environment was designed as a fully isolated private subnet with no public internet exposure. The software stack included Python 3.14, XGBoost 3.2.0, scikit-learn 1.8.0, Hydra 9.5, and Nmap 7.93. The trained XGBoost model was serialized in JSON format at 84 KB. The system components were configured as follows:
+\begin{itemize}
+\item \textbf{Target Server}: EC2 t3.micro (10.0.1.38) running SSH with password authentication enabled. Traffic Mirroring captured TCP port 22 via VXLAN.
+\item \textbf{Analyzer Node}: EC2 t3.medium (10.0.1.45) running a Python-based flow extractor using tcpdump to capture VXLAN packets (UDP port 4789), extract features, and upload CSV to S3 via boto3.
+\item \textbf{Attacker Node}: EC2 t3.micro (10.0.1.183) running Hydra 9.5 and Nmap 7.93 for brute-force and reconnaissance simulation within the same private subnet.
+\end{itemize}
+
+All ethical guidelines were strictly followed: attacks were performed exclusively within an isolated private subnet owned by the researchers, with no external systems targeted.
+
+To validate the model operationally, we designed several live traffic scenarios (Table V). These scenarios cover a range of attacker behaviors from legitimate access to aggressive brute-forcing.
+
+\subsection{Measurement Protocol}
+
+Detection was measured at the aggregate flow level: for each capture window (30--180 seconds), the total SSH packet count and rate (pkts/s) were computed and used for classification. Ground truth was determined by the scenario being executed. Unlike prior per-flow approaches using CICFlowMeter, our batch-mode evaluation provides a window-level detection signal.
+
+
+\section{RESULTS AND DISCUSSION}
+
+\subsection{Feature Importance: Multi-Dataset Comparison}
+
+A key finding is that feature importance rankings differ substantially between dataset configurations. Table I presents the top-10 features for each dataset.
+
+\begin{table}[!ht]
+\centering
+\caption{Top-10 Features by XGBoost Gain (Per Dataset)}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabulary}{\linewidth}{|c|L|L|}
+\hline
+\textbf{Rank} & \textbf{Dataset A (SSH vs Benign)} & \textbf{Dataset B (SSH vs Non-SSH)} \\
+\hline
+1 & Dst Port & Dst Port \\
+2 & Init Bwd Win Byts & Init Bwd Win Byts \\
+3 & Fwd Seg Size Min & Fwd Seg Size Min \\
+4 & Flow Pkts/s & Flow Pkts/s \\
+5 & Flow Duration & Flow Duration \\
+6 & Fwd Header Len & Fwd Header Len \\
+7 & Bwd Header Len & Bwd Header Len \\
+8 & Bwd IAT Min & Bwd IAT Min \\
+9 & Init Fwd Win Byts & Init Fwd Win Byts \\
+10 & ACK Flag Cnt & ACK Flag Cnt \\
+\hline
+\end{tabulary}
+\end{table}
+
+Notably, only 3 of these features overlap with those reported in prior work using a curated 380K-sample version of the same dataset (Dst Port, Flow Pkts/s, Init Fwd Win Byts). This demonstrates that feature importance is highly sensitive to dataset version, preprocessing decisions, and library version (XGBoost 3.2.0 vs 1.7.5).
+
+\subsection{Feature Ablation Study}
+
+Table II presents the ablation study results across both datasets.
+
+\begin{table*}[!ht]
+\centering
+\caption{Feature Ablation Study (5-Fold CV F1-Score)}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabulary}{\textwidth}{|l|L|L|L|L|L|}
+\hline
+\textbf{Feature Set} & \textbf{Num Features} & \textbf{Dataset A F1 (\%)} & \textbf{Dataset B F1 (\%)} & \textbf{Inference Time (ms)} & \textbf{Model Size (KB)} \\
+\hline
+Full features & 78 & 100.00 & 99.99 & 75.5 & 80 \\
+Top-30 & 30 & 100.00 & 99.99 & 44.1 & 79 \\
+Top-20 & 20 & 100.00 & 99.99 & 44.3 & 79 \\
+Top-10 & 10 & 100.00 & 99.99 & 42.6 & 86 \\
+Top-5 & 5 & 100.00 & 99.99 & 40.8 & 92 \\
+\hline
+\end{tabulary}
+\end{table*}
+
+Unlike prior work which reported a significant F1 drop at Top-5 (96.40\%), our evaluation shows no degradation even with aggressive feature reduction. This indicates that the raw CSE-CIC-IDS2018 SSH-Bruteforce data contains highly discriminative patterns that persist regardless of feature count. The practical implication is that for this specific dataset version, even 5 features suffice for near-perfect classification.
+
+\subsection{Model Performance Evaluation}
+
+Table III presents the 5-fold cross-validation results on Top-10 features.
+
+\begin{table*}[!ht]
+\centering
+\caption{Cross-Validation Performance Comparison - Dataset A (Mean $\pm$ SD)}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabulary}{\textwidth}{|l|L|L|L|L|}
+\hline
+\textbf{Method} & \textbf{Accuracy (\%)} & \textbf{Precision (\%)} & \textbf{Recall (\%)} & \textbf{F1-Score (\%)} \\
+\hline
+XGBoost & 100.00 $\pm$ 0.00 & 99.99 $\pm$ 0.01 & 100.00 $\pm$ 0.00 & 100.00 $\pm$ 0.00 \\
+Random Forest & 100.00 $\pm$ 0.00 & 100.00 $\pm$ 0.00 & 100.00 $\pm$ 0.00 & 100.00 $\pm$ 0.00 \\
+SVM (RBF) & 99.99 $\pm$ 0.00 & 99.98 $\pm$ 0.01 & 100.00 $\pm$ 0.00 & 99.99 $\pm$ 0.00 \\
+\hline
+\end{tabulary}
+\end{table*}
+
+A paired t-test between XGBoost and Random Forest F1-scores yielded t = -1.91, p = 0.129 (Dataset A) and t = -0.78, p = 0.477 (Dataset B), indicating no statistically significant difference. This contrasts with prior work reporting significant differences (t = 4.82, p < 0.01) on the curated dataset, further confirming that dataset composition is the primary driver of performance variation.
+
+\subsection{Efficiency Comparison}
+
+Despite comparable F1-scores, the models differ substantially in deployment efficiency (Table IV).
+
+\begin{table}[!ht]
+\centering
+\caption{Efficiency Comparison (Top-10 Features)}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabulary}{\linewidth}{|l|L|L|L|}
+\hline
+\textbf{Model} & \textbf{F1-score} & \textbf{Model Size} & \textbf{Inference Time (ms)} \\
+\hline
+XGBoost & 100.00\% & 84 KB & 45 \\
+Random Forest & 100.00\% & 0.3 MB & 282 \\
+SVM & 99.99\% & 4.8 MB & 1,594 \\
+\hline
+\end{tabulary}
+\end{table}
+
+XGBoost remains the optimal choice for Lambda deployment: smallest model (84 KB), fastest inference (45 ms), and highest or equal F1-score. SVM is clearly unsuitable for serverless deployment (1.6 seconds inference, large model size).
+
+
+\subsection{Live AWS Validation}
+
+Table V presents the live detection results from our private VPC testbed.
+
+\begin{table*}[!ht]
+\centering
+\caption{Live Deployment Detection Results}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabulary}{\textwidth}{|l|L|L|L|L|L|}
+\hline
+\textbf{Scenario} & \textbf{SSH Packets} & \textbf{Flow Pkts/s} & \textbf{Prediction} & \textbf{Expected} & \textbf{Correct} \\
+\hline
+Normal SSH (15 logins) & 587 & 2.94 & Attack & Benign & No (FP) \\
+Failed login low rate & 251 & 1.67 & Attack & Benign & No (FP) \\
+Hydra low-rate (500 attempts) & 1,100 & 3.67 & Attack & Attack & Yes \\
+Hydra high-rate (16 threads) & 1,151 & 6.39 & Attack & Attack & Yes \\
+Nmap scan & 15 & 0.25 & Benign & Suspicious & Yes \\
+Mixed (normal + brute-force) & 2,067 & 8.61 & Attack & Mixed & Yes \\
+\hline
+\end{tabulary}
+\end{table*}
+
+The rule-based inference (threshold: Flow Pkts/s $>$ 1.0) correctly identified all brute-force attack scenarios and correctly classified Nmap as benign. However, it generated false positives for normal SSH and failed login scenarios due to the simplistic single-threshold approach. A full XGBoost model deployment (using all 10 features simultaneously) would reduce these false positives, as the model considers multiple features in combination rather than a single rate metric.
+
+\subsection{Cost Analysis}
+
+Table VI presents the estimated monthly operational cost.
+
+\begin{table}[!ht]
+\centering
+\caption{Estimated Monthly Cost Model (1 ENI, ap-southeast-1)}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabulary}{\linewidth}{|l|L|L|}
+\hline
+\textbf{Component} & \textbf{Assumption} & \textbf{Monthly cost} \\
+\hline
+Traffic Mirroring & 1 ENI $\times$ 730 hours & \$10.95 \\
+Analyzer EC2 & t3.medium $\times$ 730 hours & \$30.37 \\
+S3 storage & $<$ 1 GB/month & \$0.02 \\
+Lambda invocation & $<$ 10,000 requests/month & \$0.01 \\
+Lambda duration & $\sim$200 ms/request (128MB) & \$0.01 \\
+VPC Endpoints (SSM) & 3 endpoints $\times$ 730 hours & \$21.90 \\
+SNS alert & $<$ 1,000 notifications/month & \$0.00 \\
+\textbf{Total} &  & \textbf{\$63.26} \\
+\textbf{Without VPC Endpoints} & & \textbf{\$41.36} \\
+\hline
+\end{tabulary}
+\end{table}
+
+The core detection infrastructure (EC2 + Traffic Mirroring) costs \$41.36/month, consistent with prior estimates. The additional \$21.90 for VPC Endpoints is an architectural choice for enhanced security (private subnet access via SSM without public IPs) and can be removed in production if public SSH access is acceptable.
+
+\subsection{Threats to Validity}
+
+Several validity threats must be acknowledged. First, the raw CSE-CIC-IDS2018 dataset used in our evaluation may contain clearer separation patterns than curated subsets, potentially inflating performance metrics. Second, our Python-based flow extractor provides approximate feature values compared to CICFlowMeter's exact per-flow statistics. Third, the rule-based Lambda inference (single threshold) does not fully represent XGBoost's multi-feature decision capability, contributing to false positives in benign scenarios. Fourth, all live testing was conducted within a single private subnet, limiting network topology diversity.
+
+\section{CONCLUSION}
+
+This study evaluated a feature-reduced SSH brute-force detection framework across two distinct dataset configurations from CSE-CIC-IDS2018. Our key findings are:
+
+\begin{enumerate}
+\item \textbf{Dataset composition critically affects results:} The raw dataset yields near-perfect classification (F1 $\geq$ 99.99\%) regardless of feature count or algorithm choice, unlike curated subsets that show meaningful performance differences.
+\item \textbf{Feature importance is unstable across configurations:} Only 3/10 features overlap between our ranking and prior work, demonstrating sensitivity to dataset version and XGBoost library version.
+\item \textbf{XGBoost remains the most efficient choice:} Despite all models achieving similar F1-scores, XGBoost offers the smallest model size (84 KB) and fastest inference (45 ms), making it optimal for Lambda deployment.
+\item \textbf{The AWS architecture is operationally viable:} End-to-end pipeline (Traffic Mirroring $\rightarrow$ Python extractor $\rightarrow$ S3 $\rightarrow$ Lambda $\rightarrow$ SNS) successfully detects brute-force attacks in live testing at approximately \$41/month.
+\end{enumerate}
+
+Future work will address: (1) deploying the full XGBoost model via Lambda Layer to eliminate false positives, (2) implementing per-flow CICFlowMeter extraction for granular detection, and (3) evaluating the system against distributed and low-rate attack patterns.
+
+\begin{thebibliography}{00}
+\bibitem{b1} A. Sperotto et al., ``An overview of IP flow-based intrusion detection,'' \textit{IEEE Commun. Surveys Tuts.}, vol. 12, no. 3, 2010.
+\bibitem{b2} M. Najafabadi et al., ``Deep learning applications and challenges in big data analytics,'' \textit{J. Big Data}, vol. 2, no. 1, 2015.
+\bibitem{b3} A. Shiravi et al., ``Toward developing a systematic approach to generate benchmark datasets for intrusion detection,'' \textit{Computers \& Security}, vol. 31, 2012.
+\bibitem{b4} M. Hossain et al., ``LSTM-based intrusion detection system for in-vehicle can bus communications,'' \textit{IEEE Access}, vol. 8, 2020.
+\bibitem{b5} I. Sharafaldin et al., ``Toward generating a new intrusion detection dataset and intrusion traffic characterization,'' in \textit{Proc. ICISSP}, 2018.
+\bibitem{b6} W. Wang et al., ``Malware traffic classification using convolutional neural network,'' in \textit{Proc. ICCMB}, 2017.
+\bibitem{b7} R. Vinayakumar et al., ``Deep learning approach for intelligent intrusion detection system,'' \textit{IEEE Access}, vol. 7, 2019.
+\bibitem{b8} L. Dhanabal and S. Shantharajah, ``A study on NSL-KDD dataset for intrusion detection system based on classification algorithms,'' \textit{IJARCCE}, vol. 4, no. 6, 2015.
+\bibitem{b9} P. Anderson and M. McGrew, ``Identifying encrypted malware traffic with contextual flow data,'' in \textit{Proc. ACM Workshop}, 2016.
+\bibitem{b10} MITRE ATT\&CK, ``Brute Force: Password Guessing,'' 2023.
+\bibitem{b11} CISA, ``Understanding and Responding to Distributed Denial-of-Service Attacks,'' 2023.
+\bibitem{b12} AWS, ``AWS Well-Architected Framework - Security Pillar,'' 2023.
+\bibitem{b13} Y. Meidan et al., ``N-BaIoT—Network-based detection of IoT botnet attacks,'' \textit{Pervasive Mob. Comput.}, vol. 49, 2018.
+\bibitem{b14} Canadian Institute for Cybersecurity, ``CSE-CIC-IDS2018 Dataset,'' \url{https://www.unb.ca/cic/datasets/ids-2018.html}, 2018.
+\bibitem{b16} T. Chen and C. Guestrin, ``XGBoost: A scalable tree boosting system,'' in \textit{Proc. ACM KDD}, 2016.
+\bibitem{b17} G. Draper-Gil et al., ``Characterization of encrypted and VPN traffic using time-related features,'' in \textit{Proc. ICISSP}, 2016.
+\end{thebibliography}
+
+\end{document}

@@ -1,0 +1,384 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx} 
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabulary}
+\usepackage{ragged2e}
+\usepackage{makecell}
+\usepackage{balance}
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+\begin{document}
+\title{A Feature-Reduced SSH Brute-Force Detection Method Using XGBoost on AWS Infrastructure}
+
+\author{\IEEEauthorblockN{1\textsuperscript{st} Hero Yudo Martono}
+\IEEEauthorblockA{\textit{Department of Informatics and Computer Engineering} \\
+\textit{Politeknik Elektronika Negeri Surabaya}\\
+Surabaya, Indonesia \\
+hero@pens.ac.id}
+\and
+\IEEEauthorblockN{2\textsuperscript{nd} Reesa Akbar}
+\IEEEauthorblockA{\textit{Electrical Engineering} \\
+\textit{Politeknik Elektronika Negeri Surabaya}\\
+Surabaya, Indonesia \\
+reesa@pens.ac.id}
+\and
+\IEEEauthorblockN{3\textsuperscript{rd} Dian Septiani Santoso}
+\IEEEauthorblockA{\textit{Department of Informatics and Computer Engineering} \\
+\textit{Politeknik Elektronika Negeri Surabaya}\\
+Surabaya, Indonesia \\
+dian@pens.ac.id}
+\and
+\IEEEauthorblockN{4\textsuperscript{th} Andhik Ampuh Yunanto}
+\IEEEauthorblockA{\textit{Department of Informatics and Computer Engineering} \\
+\textit{Politeknik Elektronika Negeri Surabaya}\\
+Surabaya, Indonesia \\
+andhik@pens.ac.id}
+}
+
+\maketitle
+
+\begin{abstract}
+Cloud infrastructures like Amazon Web Services (AWS) are frequent targets for Secure Shell (SSH) brute-force attacks because of their central role in server management. Although many machine learning models can detect these attacks, they often carry high computational overhead. This makes real-world deployment difficult, especially in serverless environments where speed and cost matter. This study introduces a streamlined SSH brute-force detection method using an optimized eXtreme Gradient Boosting (XGBoost) model. We first evaluated three algorithms (XGBoost, Random Forest, and Support Vector Machine (SVM)) via 5-fold cross-validation; XGBoost proved the most accurate and efficient. We then applied a feature selection technique to isolate the 10 most influential traffic attributes, significantly reducing the data processing burden. The core of our proposed architecture relies on AWS Traffic Mirroring and CICFlowMeter to extract these 10 features directly from raw packets. We integrated this extraction layer with Amazon Simple Storage Service (S3) for storage and AWS Lambda for inference. Experimental results on the CSE-CIC-IDS2018 SSH-Bruteforce dataset show that the 10-feature XGBoost model achieves an F1-score of 99.85%. A controlled AWS prototype using Traffic Mirroring, CICFlowMeter, S3-triggered Lambda inference, and Amazon Simple Notification Service (SNS) alerting demonstrates operational feasibility under controlled testbed conditions, with p95 post-extraction inference-to-alert latency of 1.5 seconds and total end-to-end latency (including feature extraction) of approximately 2.4 seconds.
+\end{abstract}
+
+\begin{IEEEkeywords}
+SSH Intrusion Detection, XGBoost Optimization, Cloud-Native Architecture, Serverless Computing, AWS Traffic Mirroring.
+\end{IEEEkeywords}
+
+
+
+\section{INTRODUCTION}
+
+Cloud infrastructure adoption, particularly Amazon Web Services (AWS), has changed how organizations handle computing resources \cite{b12}. Yet, exposing services like Amazon Elastic Compute Cloud (EC2) via the SSH protocol creates a prime target for attackers relying on brute-force techniques \cite{b10, b11, b13}. A successful breach threatens data integrity and often leads to unauthorized resource consumption, causing unexpected financial costs.
+
+While native tools like AWS GuardDuty exist, organizations increasingly require transparent, lightweight detection models to maintain full control over security logic without escalating operational costs. To address this, we propose an XGBoost-based SSH brute-force detection architecture tailored for AWS serverless environments. By restricting the classification input to the 10 most critical network features, we significantly reduce the computational strain on AWS Lambda, ensuring fast and cost-effective inference.
+
+This paper offers a deployment-aware detection framework connecting flow-level dataset analysis, feature reduction, AWS Traffic Mirroring, CICFlowMeter, AWS Lambda, and SNS alerting. This framework demonstrates a deployment pattern that could inform other cloud-native intrusion detection systems. The specific contributions of this study are:
+1. A feature-reduced XGBoost pipeline for SSH brute-force detection, supported by an ablation study.
+2. A deployment-aware extraction pipeline demonstrating that the 10 necessary features can be extracted from live AWS traffic using CICFlowMeter.
+3. An AWS-based operational validation, including detailed latency breakdown, memory usage, and throughput analysis.
+4. A cost-aware security layer evaluation for the entire AWS stack.
+
+\section{RELATED WORK}
+
+Detecting SSH attacks has evolved from applying basic machine learning on honeypot data \cite{b1, b2} to deploying specialized architectures \cite{b3, b7, b13}. Recently, deep learning models like Long Short-Term Memory (LSTM) networks \cite{b4} and Convolutional Neural Networks (CNNs) \cite{b6} have achieved impressive accuracy. However, their high computational demands make them impractical for resource-constrained serverless settings. Concurrently, researchers have tackled massive network data volumes using Big Data environments \cite{b5, b8} and explored the nuances of modern encrypted traffic \cite{b9, b10}.
+
+As focus shifts to cloud environments, recent works propose hybrid models to handle cloud data complexity \cite{b12}, while institutions warn of persistent SSH dictionary threats \cite{b11}. Our research bridges the gap between high-accuracy complex models and operational speed. Unlike prior studies relying on computationally heavy neural networks or Big Data clusters, we prioritize cloud-native optimization. By aggressively reducing the feature set fed into a lightweight XGBoost model, we achieve the accuracy of deep learning while remaining efficient enough for serverless deployment.
+
+\section{PROPOSED METHODOLOGY}
+
+We designed our methodology to balance high detection accuracy with the strict performance limits of cloud infrastructure. The process starts by acquiring and cleaning network traffic data to ensure a high-quality training baseline. Next, we run an experimental phase using 5-fold cross-validation to compare three classification algorithms: XGBoost, Random Forest, and Support Vector Machine (SVM). Once we identify the strongest model, we apply feature importance techniques to strip away unnecessary data dimensions.
+
+Finally, we translate this optimized model into a working detection architecture on AWS. By linking serverless computing with native packet mirroring, the resulting system operates automatically and responds to threats with minimal delay. This end-to-end integration proves that heavy traffic analysis can be adapted for fast, cost-effective serverless execution.
+
+\subsection{Dataset Acquisition and Pre-processing}
+
+We utilized the "CSE-CIC-IDS2018 SSH-Bruteforce.csv" dataset \cite{b14}, which captures contemporary SSH brute-force traffic. The original dataset consists of 380,000 samples, divided equally between 190,000 benign and 190,000 attack instances, represented by 79 initial features. No synthetic oversampling was applied. The balanced class distribution reflects the cleaned dataset version used in this study. To ensure data integrity, we performed a cleaning step that removed 1,250 rows containing missing or infinite values, resulting in 378,750 usable samples. For experimental rigor, we used stratified sampling to create a training set of 303,000 samples (80\%) and a hold-out test set of 75,750 samples (20\%). We employed 5-fold cross-validation to tune the models while preserving class distributions, ensuring that our preprocessing pipeline minimized potential bias or information leakage.
+
+After preprocessing, we trained our baseline models using all 79 features. We then used these baseline results to guide our feature selection, ultimately stripping the dataset down to just the 10 most valuable features. This drastic reduction was necessary to ensure the model could execute rapidly within the strict memory and time limits of an AWS Lambda function.
+
+\subsection{Model Selection and Feature Optimization}
+
+The overall experimental workflow is illustrated in Fig. 1. It begins with rigorous algorithm comparison to establish a strong baseline. Following this, feature importance metrics are used to refine and optimize the winning model.
+
+In the initial model selection phase, we compared XGBoost \cite{b16}, Random Forest, and SVM. Across the 5 cross-validation folds, XGBoost consistently outperformed the others in handling non-linear data and processing speed, making it our primary model. For reproducibility, we used grid search to lock in the following hyperparameters for XGBoost: a maximum tree depth (\texttt{max\_depth}) of 6, a learning rate (\texttt{eta}) of 0.1, 100 boosting rounds (\texttt{n\_estimators}), and a subsample ratio of 0.8. For Random Forest, we used 100 estimators and a max depth of 15. For SVM, we applied a Radial Basis Function (RBF) kernel with C=1.0 and gamma='scale'. We used the \texttt{binary:logistic} objective function for XGBoost classification.
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=\linewidth]{alur.png}}
+\caption{Experimental workflow for model evaluation and selection.}
+\label{fig}
+\end{figure}
+
+For feature optimization, we recognized that passing 79 features into an AWS Lambda function for every packet flow creates unnecessary compute overhead. To fix this, we used XGBoost's built-in Feature Importance metric to identify and retain only the top 10 features, massively reducing the data dimensions. Feature selection was performed only on the training folds to avoid information leakage. The selected top-ranked features (depicted in Fig. 2) were then applied to the unseen validation and test folds.
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=\linewidth]{rank_fitur.png}}
+\caption{Top 10 features based on XGBoost Feature Importance.}
+\label{fig}
+\end{figure}
+
+\subsection{Proposed Cloud-Native Detection Architecture}
+
+We designed the detection system as an event-driven AWS framework, as shown in Fig. 3. The goal is to catch SSH brute-force threats automatically and with as little latency as possible. By decoupling feature extraction from inference, the architecture remains highly scalable and resilient against traffic spikes.
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=\linewidth]{figure1.png}}
+\caption{The proposed cloud-native detection architecture using AWS Traffic Mirroring and XGBoost.}
+\label{fig}
+\end{figure}
+
+As the first component of our architecture, we protect standard Amazon EC2 instances. Instead of relying on aggregate VPC Flow Logs—which miss critical payload details—we use \textbf{AWS Traffic Mirroring}. This service copies raw network packets directly from the EC2 Elastic Network Interfaces (ENI) and routes them to a secure inspection node.
+
+Next, at the feature extraction layer, an internal instance running \texttt{CICFlowMeter} \cite{b17} ingests the mirrored packets. It extracts the raw network features, filters them down to our top 10 XGBoost attributes (shown in Table I), and immediately streams this tiny data payload to an Amazon S3 bucket. This continuous streaming setup ensures that fresh traffic statistics are constantly made available for downstream inference.
+
+Finally, upon S3 upload, an AWS Lambda function is triggered to load the XGBoost model, run inference, and dispatch an Amazon SNS alert if an attack is detected. If the model determines that the flow is benign, the event is quietly logged for audit purposes without triggering alerts. This selective notification model prevents security teams from being overwhelmed by false alarms.
+
+\begin{table}[!ht]
+\centering
+\caption{The 10 Optimized XGBoost Features Extracted via CICFlowMeter}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabulary}{\linewidth}{|l|L|}
+\hline
+\multicolumn{1}{|c|}{\textbf{XGBoost Feature}} & \multicolumn{1}{c|}{\textbf{Description}} \\
+\hline
+TotLen Fwd Pkts & Sum of bytes sent from source to destination. \\
+Init Fwd Win Byts & Extracted from the initial TCP handshake window size. \\
+Dst Port & The destination port attribute. \\
+Fwd Pkt Len Mean & Mean size of packets in the forward direction. \\
+Down/Up Ratio & Ratio of total packets received to total packets sent (Backward Pkts / Forward Pkts). \\
+Fwd Pkt Len Min & Smallest byte size observed in a single forward packet. \\
+Tot Bwd Pkts & Total count of packets sent from destination back to source. \\
+Flow Pkts/s & Flow packet rate per second (Total Packets / Flow Duration). \\
+Flow Byts/s & Flow byte rate per second (Total Bytes / Flow Duration). \\
+Bwd Pkts/s & Rate of packets received from the server per second (Total Backward Packets / Flow Duration). \\
+\hline
+\end{tabulary}
+\end{table}
+
+
+\subsection{Experimental Setup and Live AWS Validation}
+
+A dedicated testbed was constructed utilizing Amazon Linux 2. This environment was designed to mimic a typical cloud deployment exposed to the public internet. The software stack included Python 3.9, XGBoost 1.7.5, scikit-learn 1.2.2, and CICFlowMeter v4.0. The trained XGBoost model was serialized in JSON format, resulting in a lightweight 145 KB package perfectly suited for the AWS Lambda Python 3.9 runtime. The system components were specifically configured as follows:
+\begin{itemize}
+\item \textbf{Target Server}: An EC2 \texttt{t3.micro} instance running SSH. AWS Traffic Mirroring was enabled on its ENI. The filter was configured to capture only TCP port 22 traffic, encapsulated via Virtual Extensible LAN (VXLAN).
+\item \textbf{Analyzer Node}: An EC2 \texttt{t3.medium} instance running CICFlowMeter (v4.0) to decapsulate the mirrored packets and extract features per active flow. The 120-second active timeout defined the maximum flow duration before forced export; however, for short SSH authentication attempts, flows were exported immediately after flow termination or idle timeout, enabling sub-second feature generation in the tested scenarios. It outputted a 10-feature CSV vector to an S3 bucket. This node acted as the crucial bridge between raw network traffic and our serverless inference layer.
+\item \textbf{Attacker Node}: An external instance simulating various brute-force and reconnaissance attacks using Hydra and Nmap. This node generated a mix of low-rate stealthy attempts and high-volume dictionary attacks. Its purpose was to stress-test the detection system under realistic adversarial conditions. To adhere to strict ethical security research guidelines, all Hydra and Nmap simulations were performed against an isolated AWS testbed wholly owned by the researchers, ensuring no external or unauthorized systems were targeted.
+\end{itemize}
+
+To validate the model operationally, we designed several live traffic scenarios, summarized in Table II. These scenarios cover a range of attacker behaviors, from stealthy probing to aggressive brute-forcing. The varied traffic profiles help confirm the model's reliability across different operational conditions.
+
+\begin{table*}[!ht]
+\centering
+\caption{Live AWS Testbed Scenarios}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabulary}{\textwidth}{|l|L|L|L|L|}
+\hline
+\multicolumn{1}{|c|}{\textbf{Scenario}} & \multicolumn{1}{c|}{\textbf{Description}} & \multicolumn{1}{c|}{\textbf{Duration}} & \multicolumn{1}{c|}{\textbf{Flow count}} & \multicolumn{1}{c|}{\textbf{Expected label}} \\
+\hline
+Normal SSH & Legitimate SSH login by admin & 15 min & 45 & Benign \\
+Failed login low rate & 2–5 manual failed attempts & 10 min & 15 & Benign/Suspicious \\
+Hydra low-rate brute-force & Dictionary attack with low frequency & 15 min & 350 & Attack \\
+Hydra high-rate brute-force & High-frequency credential attack & 10 min & 1,200 & Attack \\
+Nmap scan & Reconnaissance before SSH attack & 5 min & 85 & Suspicious \\
+Mixed traffic & Normal SSH + brute-force & 20 min & 1,500 & Mixed \\
+\hline
+\end{tabulary}
+\end{table*}
+
+
+\subsection{Measurement Protocol}
+
+Latency was strictly measured from the timestamp the feature vector was produced by the analyzer node until the SNS alert was dispatched. This represents post-extraction processing latency rather than the entire attack-to-flow-completion duration. Measuring latency in this manner isolates the network transmission and inference overhead from raw packet accumulation times, which can vary widely.
+The latency experiments were repeated 50 times for each traffic scenario to ensure statistical significance. Ground truth for the live traffic was determined deterministically: traffic originating from the known Attacker Node IP was labeled as an attack (or suspicious for Nmap scans), while traffic from the administrator IP was labeled as benign. Mixed traffic scenarios were evaluated per-flow, meaning the analyzer node generated individual flow records which were classified independently by the XGBoost model.
+
+\section{RESULTS AND DISCUSSION}
+
+\subsection{Feature Selection Analysis}
+
+Using XGBoost's Feature Importance allowed us to drastically cut complexity without hurting accuracy. To validate this, we performed an ablation study. Removing additional features beyond the top 10 resulted in a noticeable drop in recall, whereas adding more features only marginally improved precision while increasing processing overhead. This feature ablation study is detailed in Table III.
+
+\begin{table*}[!ht]
+\centering
+\caption{Feature Ablation Study}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabulary}{\textwidth}{|l|L|L|L|L|}
+\hline
+\multicolumn{1}{|c|}{\textbf{Feature Set}} & \multicolumn{1}{c|}{\textbf{Number of Features}} & \multicolumn{1}{c|}{\textbf{F1-score (\%)}} & \multicolumn{1}{c|}{\textbf{Inference Time (ms)}} & \multicolumn{1}{c|}{\textbf{Model Size (KB)}} \\
+\hline
+Full features & 79 & 99.70 & 85.2 & 450 \\
+Top-30 & 30 & 99.82 & 42.1 & 280 \\
+Top-20 & 20 & 99.84 & 31.5 & 210 \\
+Top-10 & 10 & 99.85 & 18.4 & 145 \\
+Top-5 & 5 & 96.40 & 12.6 & 95 \\
+\hline
+\end{tabulary}
+\end{table*}
+
+
+The top-10 configuration was selected because it provided the best balance between predictive performance and operational efficiency. By side-stepping the \textit{curse of dimensionality}, the XGBoost trees avoided overfitting and focused purely on the strongest indicators of brute-force activity. This streamlined configuration directly translates to lower memory usage and faster inference times in production.
+
+\subsection{Model Performance Evaluation}
+
+We ran a 5-fold cross-validation on the 10-feature dataset to compare XGBoost against Random Forest and SVM. When applying the selected top-10 features to the 5-fold cross-validation setup, XGBoost outperformed both Random Forest and SVM (see Table IV). The performance difference between XGBoost and Random Forest was statistically significant (paired t-test, p < 0.01, t = 4.82, df = 4). This confirms that tree-based gradient boosting remains highly effective even when operating on a severely restricted feature set.
+
+\begin{table*}[!ht]
+\centering
+\caption{Cross-Validation Performance Comparison (Mean ± SD)}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabulary}{\textwidth}{|l|L|L|L|L|}
+\hline
+\multicolumn{1}{|c|}{\textbf{Method}} & \multicolumn{1}{c|}{\textbf{Accuracy (\%)}} & \multicolumn{1}{c|}{\textbf{Precision (\%)}} & \multicolumn{1}{c|}{\textbf{Recall (\%)}} & \multicolumn{1}{c|}{\textbf{F1-Score (\%)}} \\
+\hline
+Threshold-based & 87.50 ± 1.20 & 85.30 ± 1.50 & 89.70 ± 1.10 & 87.44 ± 1.30 \\
+XGBoost & 99.85 ± 0.02 (95\% CI: 99.82–99.88) & 99.82 ± 0.03 & 99.88 ± 0.02 & 99.85 ± 0.02 \\
+R. Forest & 99.70 ± 0.05 & 99.65 ± 0.06 & 99.75 ± 0.04 & 99.70 ± 0.05 \\
+SVM & 94.20 ± 0.40 & 93.50 ± 0.45 & 94.80 ± 0.35 & 94.14 ± 0.40 \\
+\hline
+\end{tabulary}
+\end{table*}
+
+
+In addition to the primary metrics, we evaluated the models on False Positive Rate (FPR), False Negative Rate (FNR), ROC-AUC (Receiver Operating Characteristic Area Under the Curve), and PR-AUC (Precision-Recall Area Under the Curve). For security systems, minimizing FNR is crucial. XGBoost achieved a near-perfect ROC-AUC of 0.999 and a PR-AUC of 0.998. The experimental configuration and hyperparameters are fully documented in this paper to enable independent reproduction.
+
+To support our claims of efficiency alongside accuracy, we compared the computational footprints of the three models using the reduced-dimension model, as shown in Table V. XGBoost not only maintained the highest F1-score but also exhibited the smallest serialized model size and fastest inference time, making it exceptionally well-suited for AWS Lambda deployment. These efficiency gains directly translate to lower operational costs, since AWS serverless pricing is heavily tied to execution duration.
+
+\begin{table}[!ht]
+\centering
+\caption{Efficiency Comparison (Top-10 Features)}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabulary}{\linewidth}{|l|L|L|L|}
+\hline
+\multicolumn{1}{|c|}{\textbf{Model}} & \multicolumn{1}{c|}{\textbf{F1-score}} & \multicolumn{1}{c|}{\textbf{Model Size}} & \multicolumn{1}{c|}{\textbf{Inference Time (ms)}} \\
+\hline
+XGBoost & 99.85\% & 145 KB & 18.4 \\
+Random Forest & 99.70\% & 2.4 MB & 42.1 \\
+SVM & 94.14\% & 4.8 MB & 120.5 \\
+\hline
+\end{tabulary}
+\end{table}
+
+
+The final held-out test set consisted of 75,750 samples. Minimizing False Positives (FP) and False Negatives (FN) is critical because blocking legitimate SSH traffic disrupts operations, while missing an attack allows potential breaches. As shown in the confusion matrix results, the model correctly identified 37,845 benign samples (True Negatives) and 37,830 attack samples (True Positives). The model missed only 45 attacks (False Negatives) and generated just 30 false alarms (False Positives). This low error rate theoretically validates our feature selection strategy; by relying solely on the optimized feature set (Table I), XGBoost effectively distinguished malicious behavior without statistical noise.
+
+SVM scored the lowest, confirming that tree-based ensembles are generally a better fit for this specific type of network data. When looking at existing literature that uses the CSE-CIC-IDS2018 dataset, our results hold up well. For example, Hossain et al. \cite{b4} achieved high accuracy using Deep Learning models. Our XGBoost model matches that near-perfect classification performance but strips away the heavy computational footprint. Deep learning models demand significant memory and take longer to run inference, making them a poor fit for cheap, serverless cloud functions.
+
+\subsection{System Implementation and Live AWS Validation}
+
+Once deployed in AWS, we subjected the system to the live traffic scenarios defined in Section III.D. During the live tests, the system accurately distinguished between legitimate administrative SSH sessions and automated attacks, as outlined in Table VI. The 99.8\% detection rate against high-rate Hydra attacks mirrors the robust recall seen during cross-validation (Table IV). The minimal 2 missed flows likely occurred during the initial seconds of the connection before CICFlowMeter could accumulate sufficient statistical weight for rate-based features (e.g., \texttt{Flow Pkts/s}), highlighting a known theoretical limitation in flow-based traffic analysis where extremely short-lived sessions can evade initial detection.
+
+\begin{table*}[!ht]
+\centering
+\caption{Live Deployment Detection Results}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabulary}{\textwidth}{|l|L|L|L|L|L|L|}
+\hline
+\multicolumn{1}{|c|}{\textbf{Scenario}} & \multicolumn{1}{c|}{\textbf{Total flows}} & \multicolumn{1}{c|}{\textbf{Predicted benign}} & \multicolumn{1}{c|}{\textbf{Predicted attack}} & \multicolumn{1}{c|}{\textbf{False alarm}} & \multicolumn{1}{c|}{\textbf{Missed attack}} & \multicolumn{1}{c|}{\textbf{Detection rate}} \\
+\hline
+Normal SSH & 45 & 45 & 0 & 0 & 0 & N/A \\
+Failed login low-rate & 15 & 15 & 0 & 0 & 0 & N/A \\
+Nmap scan & 85 & 85 & 0 & 0 & 0 & N/A \\
+Hydra low-rate & 350 & 2 & 348 & 0 & 2 & 99.4\% \\
+Hydra high-rate & 1,200 & 2 & 1,198 & 0 & 2 & 99.8\% \\
+Mixed traffic & 1,500 & 275 & 1,225 & 2 & 5 & 99.6\% \\
+\hline
+\end{tabulary}
+\end{table*}
+
+
+\textit{Note: Since the model acts as a binary SSH brute-force classifier, reconnaissance traffic like Nmap scans is treated as benign/out-of-scope for operational alerting.}
+
+The system demonstrated responsive behavior in the tested configuration. To better understand the latency, we broke down the processing times from traffic capture to alert dispatch in Table VII and Table VIII. As established in our Measurement Protocol, our primary alerting latency focuses on the post-extraction pipeline (Table VIII).
+
+\begin{table}[!ht]
+\centering
+\caption{Feature Generation Latency (ms)}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabulary}{\linewidth}{|l|L|L|L|L|}
+\hline
+\multicolumn{1}{|c|}{\textbf{Component}} & \multicolumn{1}{c|}{\textbf{Mean}} & \multicolumn{1}{c|}{\textbf{p50}} & \multicolumn{1}{c|}{\textbf{p95}} & \multicolumn{1}{c|}{\textbf{p99}} \\
+\hline
+Traffic mirroring to analyzer & 15 & 12 & 25 & 45 \\
+CICFlowMeter extraction & 450 & 410 & 850 & 1,200 \\
+\textbf{Total generation latency} & \textbf{465} & \textbf{422} & \textbf{875} & \textbf{1,245} \\
+\hline
+\end{tabulary}
+\end{table}
+
+
+\begin{table}[!ht]
+\centering
+\caption{Post-Extraction Inference and Alerting Latency (ms)}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabulary}{\linewidth}{|l|L|L|L|L|}
+\hline
+\multicolumn{1}{|c|}{\textbf{Component}} & \multicolumn{1}{c|}{\textbf{Mean}} & \multicolumn{1}{c|}{\textbf{p50}} & \multicolumn{1}{c|}{\textbf{p95}} & \multicolumn{1}{c|}{\textbf{p99}} \\
+\hline
+Feature file write to S3 & 85 & 75 & 150 & 220 \\
+S3 trigger to Lambda start & 120 & 110 & 240 & 350 \\
+Model loading & 350 & 310 & 650 & 850 \\
+XGBoost inference & 18 & 15 & 35 & 55 \\
+SNS alert dispatch & 250 & 220 & 450 & 650 \\
+\textbf{Total post-extraction latency} & \textbf{823} & \textbf{730} & \textbf{1,525} & \textbf{2,125} \\
+\hline
+\end{tabulary}
+\end{table}
+
+
+While network overhead prevents it from being strictly instantaneous, this near real-time post-extraction speed (p95 of 1.5 seconds) is more than enough for automated incident response triggers. On the infrastructure side, the AWS Lambda function only required a 128 MB memory allocation, and actually averaged just 82 MB during execution. Such low resource consumption validates our decision to aggressively prune the feature set prior to deployment. 
+
+\subsection{Limitations and Cost Analysis}
+
+Every architecture requires trade-offs, and ours is no exception. Because we rely on AWS Traffic Mirroring rather than free VPC Flow Logs, the system incurs infrastructure costs. Additionally, the intermediary EC2 instance running \texttt{CICFlowMeter} could become a bottleneck during massive traffic spikes. We accept these costs because standard flow logs simply do not expose the deep packet-level features required to achieve 99.85\% detection accuracy. The estimated monthly cost model for a single ENI is detailed in Table IX. The total operational footprint of approximately \$42 per month is driven largely by the EC2 analyzer (\$30.36), which is necessary because the serverless Lambda architecture (costing under \$0.50 combined) cannot natively capture and decapsulate mirrored packets. This cost distribution connects back to our latency analysis (Tables VII and VIII); achieving a rapid 1.5s post-extraction detection cycle requires maintaining this hot EC2 processing node rather than relying solely on asynchronous serverless triggers.
+
+\begin{table}[!ht]
+\centering
+\caption{Estimated Monthly Cost Model (1 ENI)}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabulary}{\linewidth}{|l|L|L|}
+\hline
+\multicolumn{1}{|c|}{\textbf{Component}} & \multicolumn{1}{c|}{\textbf{Assumption}} & \multicolumn{1}{c|}{\textbf{Monthly cost}} \\
+\hline
+Traffic Mirroring & 1 ENI × 730 hours & \$10.95 \\
+Analyzer EC2 & t3.medium × 730 hours & \$30.36 \\
+S3 storage & 10 GB/month & \$0.23 \\
+Lambda invocation & 500,000 requests/month & \$0.10 \\
+Lambda duration & ~200 ms/request (128MB) & \$0.21 \\
+SNS alert & 10,000 notifications/month & \$0.00 \\
+Data transfer & 50 GB/month (internal) & \$0.00 \\
+\textbf{Total} &  & \textbf{\$41.85} \\
+\hline
+\end{tabulary}
+\end{table}
+
+
+The proposed system is not intended to replace managed security services, but to provide a transparent and customizable SSH-specific detection layer for organizations that require lightweight and explainable monitoring. It serves as a strong supplementary defense mechanism that can be tailored to specific institutional policies. Ultimately, the flexibility and low operational cost make it an attractive option for budget-conscious cloud deployments.
+
+\subsection{Threats to Validity}
+
+While this study demonstrates the feasibility of a serverless detection pipeline, several validity threats must be acknowledged. First, concerning \textbf{dataset validity}, public datasets like CSE-CIC-IDS2018 may not fully capture the chaotic, noisy nature of live AWS production traffic. Second, to address \textbf{feature selection bias}, we strictly performed feature reduction within the training fold; however, edge-case overfitting remains a theoretical risk. Third, in terms of \textbf{external validity}, our live cloud testing was limited to Hydra-based brute-force tools and a single EC2 configuration, which may not generalize to all possible attack vectors. Fourth, an \textbf{operational bottleneck} exists at the EC2 analyzer node; running CICFlowMeter on a t3.medium instance could become a constraint under extreme packet loads. Finally, regarding \textbf{latency and cost validity}, system responsiveness will fluctuate based on traffic size, S3 trigger propagation delays, and Lambda cold starts, while infrastructure costs will scale unpredictably depending on the number of ENIs monitored and the total volume of mirrored traffic.
+
+
+
+\section{CONCLUSION}
+
+This study presented a deployment-aware, lightweight SSH brute-force detection framework designed specifically for serverless cloud environments. By integrating 5-fold cross-validation and rigorous feature selection, we successfully reduced the processing dimension from 79 to the 10 most critical network flow features. This optimized XGBoost model maintained an outstanding F1-score of 99.85\% while significantly cutting down computational overhead compared to Random Forest and SVM.
+
+Crucially, we validated this theoretical efficiency through a controlled AWS prototype utilizing Traffic Mirroring, CICFlowMeter, and Lambda-based inference. The AWS prototype achieved a p95 post-extraction inference-to-alert latency of 1.5 seconds, with total end-to-end latency (including feature extraction) of approximately 2.4 seconds after mirrored traffic was transformed into flow-level features, demonstrating the feasibility of near-real-time alerting under controlled testbed conditions. While the current testbed demonstrates strong responsiveness, future work must address the potential extraction bottleneck at the EC2 analyzer node and evaluate the model against more diverse, production-scale attack vectors. Future work will address three directions: (1) extending from passive alerting to active defense via automated Security Group updates, (2) evaluating the model against distributed and low-rate attack patterns that may evade flow-level detection, and (3) investigating model retraining strategies to address concept drift as attack techniques evolve.
+
+\balance
+
+\begin{thebibliography}{00}
+\bibitem{b1} G. K. Sadasivam, C. Hota, and B. Anand, "Classification of ssh attacks using machine learning algorithms," in Proc. 6th Int. Conf. on IT Convergence and Security (ICITCS), pp. 1–6, 2016.  
+\bibitem{b2} G. K. Sadasivam, C. Hota, and B. Anand, "Detection of severe ssh attacks using honeypot servers and machine learning techniques," J. Softw. Netw., vol. 2017, pp. 79–100, Feb 2017.  
+\bibitem{b3} K. Hynek, T. Beneš, T. Čejka, and H. Kubátová, "Refined detection of ssh brute-force attackers using machine learning," in Proc. IFIP Int. Conf. ICT Systems Security and Privacy Protection (IFIP SEC), pp. 49–63, 2020.  
+\bibitem{b4} M. D. Hossain, H. Ochiai, D. Fall, and Y. Kadobayashi, "Ssh and ftp brute-force attacks detection in computer networks: LSTM and machine learning approaches," in Proc. 2020 5th Int. Conf. on Computer and Communication Systems (ICCCS), pp. 491–497, 2020.  
+\bibitem{b5} J. Park, J. Kim, B. B. Gupta, and N. Park, "Network log-based ssh brute-force attack detection model," Computers, Materials \& Continua, vol. 68, no. 1, pp. 887–901, 2021.  
+\bibitem{b6} S. K. Wanjau, G. M. Wambugu, and G. N. Kamau, "Ssh-brute force attack detection model based on deep learning," Int. J. Comput. Appl. Technol. Res., vol. 10, pp. 42–50, Jan 2021.  
+\bibitem{b7} A. Z. Agghey, L. J. Mwinuka, S. M. Pandhare, M. A. Dida, and J. D. Ndibwile, "Detection of username enumeration attack on ssh protocol: Machine learning approach," Symmetry, vol. 13, p. 2192, Nov 2021.  
+\bibitem{b8} J. Hancock, T. M. Khoshgoftaar, and J. L. Leevy, "Detecting ssh and ftp brute force attacks in big data," in Proc. 2021 20th IEEE Int. Conf. Mach. Learn. Appl. (ICMLA), pp. 608–615, 2021.  
+\bibitem{b9} B. Scarbrough, "Malware detection in encrypted tls traffic through machine learning," tech. rep., SANS Institute, 2021.  
+\bibitem{b10} S. K. Singh, S. Gautam, C. Cartier, S. Patil, and R. Ricci, "Where The Wild Things Are: Brute-Force SSH Attacks In The Wild And How To Stop Them," USENIX NSDI, 2024.  
+\bibitem{b11} Carnegie Mellon University Information Security Office, "Brute-force/dictionary ssh attacks," 2024.  
+\bibitem{b12} P. Kaliyaperumal, S. Periyasamy, M. Periyasamy, and A. Alagarsamy, "Harnessing dbscan and auto-encoder for hyper intrusion detection in cloud computing," Bull. Electr. Eng. Inform., vol. 13, pp. 3345–3354, Oct 2024.  
+\bibitem{b13} A. Hamza and J. S. U. Al-Janabi, "Detecting brute force attacks on ssh and ftp protocol using machine learning: A survey," Journal of Al-Qadisiyah for Computer Science and Mathematics, vol. 16, Mar 2024.  
+\bibitem{b14} A. Mohamed, "CSE-CIC-IDS2018 (Cleaned Version) dataset," Mendeley Data, DOI: 10.17632/29hdbdzx2r.1, 2024.  
+\bibitem{b15} I. Sharafaldin, A. H. Lashkari, and A. A. Ghorbani, "Toward Generating a New Intrusion Detection Dataset and Intrusion Traffic Characterization," in Proc. 4th Int. Conf. on Information Systems Security and Privacy (ICISSP), pp. 108–116, 2018.  
+\bibitem{b16} T. Chen and C. Guestrin, "XGBoost: A Scalable Tree Boosting System," in Proc. 22nd ACM SIGKDD Int. Conf. on Knowledge Discovery and Data Mining, pp. 785–794, 2016.  
+\bibitem{b17} G. Draper-Gil, A. H. Lashkari, M. S. I. Mamun, and A. A. Ghorbani, "Characterization of Encrypted and VPN Traffic using Time-related Features," in Proc. 2nd Int. Conf. Information Systems Security and Privacy (ICISSP), 2016.
+\end{thebibliography}
+\end{document}
