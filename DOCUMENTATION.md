@@ -233,7 +233,68 @@ aws ssm start-session --target i-0a3ed2fd3f0e72492 --region ap-southeast-1  # Ta
 
 ---
 
-## 11. Future Work
+## 11. tcpdump vs CICFlowMeter — Perbandingan Approach
+
+### Latency
+
+| Component | Paper (CICFlowMeter) | Kita (tcpdump + Python) |
+|-----------|---------------------|------------------------|
+| Traffic mirroring | 15 ms | ~15 ms (sama, VXLAN) |
+| Feature extraction | 450 ms (per-flow, streaming) | 30-180 detik (batch per-window) |
+| Mode operasi | Real-time per-flow | Batch aggregated |
+
+### Tool Comparison
+
+| Aspek | tcpdump + Python (kita) | CICFlowMeter (paper) |
+|-------|------------------------|---------------------|
+| Apa itu | Raw packet capture + manual parse | Java tool, otomatis hitung 80+ flow stats |
+| Akurasi fitur | Estimasi kasar (packet count, rate) | Exact (mean, std, min, max per-flow) |
+| Real-time | Tidak (batch) | Ya (export per-flow) |
+| Dependency | Zero (sudah di Linux) | Java + JAR ~50MB |
+| Granularitas | 1 prediction per window | 1 prediction per SSH connection |
+
+### Dampak pada Hasil Deteksi
+
+- Paper: per-flow → "348 predicted attack, 2 predicted benign" dari 350 flows
+- Kita: per-batch → "1 prediction (Attack/Benign)" dari seluruh window
+
+### Untuk Replikasi Exact
+
+Perlu install CICFlowMeter (Java) di Analyzer dan konfigurasi per-flow CSV output.
+Pendekatan kita sudah membuktikan arsitektur bekerja, perbedaannya di granularitas.
+
+---
+
+## 12. Cost Analysis (Table IX Verification)
+
+### Paper vs Our Architecture
+
+| Component | Paper Assumption | Paper Cost | Our Setup (ap-southeast-1) | Our Cost |
+|-----------|-----------------|-----------|---------------------------|----------|
+| Traffic Mirroring | 1 ENI × 730 hrs | $10.95 | 1 ENI × 730 hrs | $10.95 |
+| Analyzer EC2 | t3.medium × 730 hrs | $30.36 | t3.medium × 730 hrs | $30.37 |
+| S3 storage | 10 GB/month | $0.23 | <1 GB (CSV kecil) | ~$0.02 |
+| Lambda invocation | 500k req/month | $0.10 | <1k req (testing) | ~$0.01 |
+| Lambda duration | 200ms/req (128MB) | $0.21 | ~200ms (128MB) | ~$0.01 |
+| SNS alert | 10k notif/month | $0.00 | <100 notif | $0.00 |
+| Data transfer | 50 GB internal | $0.00 | <1 GB | $0.00 |
+| VPC Endpoints (SSM) | *tidak dipakai* | $0 | 3 endpoints × 730 hrs | ~$21.90 |
+| **Total** | | **$41.85** | | **~$63.26** |
+
+### Analisis
+
+- EC2 Analyzer + Traffic Mirroring = ~$41/bulan (73% total cost paper) — identik di kedua setup
+- Kita lebih mahal +$21.90 karena pakai VPC Endpoints untuk SSM (paper akses via public SSH)
+- Lambda + S3 + SNS hampir gratis (< $0.50 combined) — ini yang membuat serverless menarik
+- Tanpa VPC Endpoints (produksi): biaya kita ~$41.35/bulan ≈ paper
+
+### Kesimpulan Cost
+- Klaim paper "$42/bulan per ENI" **terbukti valid** untuk komponen inti
+- Overhead tambahan (VPC Endpoints) adalah pilihan arsitektur keamanan (private subnet), bukan keharusan
+
+---
+
+## 13. Future Work
 
 - [ ] Update Lambda dengan XGBoost model sesungguhnya (via Lambda Layer)
 - [ ] Per-flow classification (bukan aggregated)
