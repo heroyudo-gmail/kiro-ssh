@@ -41,6 +41,7 @@ kiro-ssh/
 └── README.md
 ```
 
+
 ---
 
 ## 3. Hasil Training (Notebook)
@@ -196,7 +197,43 @@ aws ssm start-session --target i-0a3ed2fd3f0e72492 --region ap-southeast-1  # Ta
 
 ---
 
-## 10. Future Work
+## 10. Ablation Study Results (Table III Verification)
+
+### Hasil Percobaan
+
+| Config | Paper F1% | Dataset A F1% | Dataset B F1% | Paper Time (ms) | Ours Time (ms) | Paper Size (KB) | Ours Size (KB) |
+|--------|-----------|---------------|---------------|-----------------|----------------|-----------------|----------------|
+| Full   | 99.70     | 100.00        | 99.99         | 85.2            | 75.5           | 450             | 80             |
+| Top-30 | 99.82     | 100.00        | 99.99         | 42.1            | 44.1           | 280             | 79             |
+| Top-20 | 99.84     | 100.00        | 99.99         | 31.5            | 44.3           | 210             | 79             |
+| Top-10 | 99.85     | 100.00        | 99.99         | 18.4            | 42.6           | 145             | 86             |
+| Top-5  | 96.40     | 100.00        | 99.99         | 12.6            | 40.8           | 95              | 92             |
+
+### Analisis
+
+**F1-Score:**
+- Dataset kita tidak menunjukkan penurunan F1 bahkan di Top-5 (100% dan 99.99%)
+- Paper menunjukkan drop signifikan di Top-5 (96.40%) — ini tidak terbukti di dataset kita
+- Dataset kita terlalu "mudah" — pattern SSH vs Benign sangat jelas bahkan dengan 5 fitur
+
+**Inference Time:**
+- Paper: penurunan linear (85→12 ms) sesuai jumlah fitur berkurang
+- Kita: hampir flat (~40-75 ms) — XGBoost 3.2.0 memiliki overhead internal yang mendominasi
+
+**Model Size:**
+- Paper: turun drastis (450→95 KB) seiring fitur berkurang
+- Kita: hampir konstan (~80-92 KB) — tree sederhana untuk semua konfigurasi karena data mudah
+
+### Kesimpulan Ablation Study
+
+1. Klaim paper "Top-10 optimal" **tidak terbukti** di dataset kita — semua konfigurasi sama bagusnya
+2. Klaim paper **bisa benar** di dataset mereka yang lebih noisy/menantang
+3. Perbedaan utama: **dataset, bukan metode** — reproducibility di ML sangat bergantung pada data exact
+4. Dataset B (SSH vs FTP+Benign) sedikit lebih menantang tapi masih belum cukup untuk menunjukkan degradasi
+
+---
+
+## 11. Future Work
 
 - [ ] Update Lambda dengan XGBoost model sesungguhnya (via Lambda Layer)
 - [ ] Per-flow classification (bukan aggregated)
