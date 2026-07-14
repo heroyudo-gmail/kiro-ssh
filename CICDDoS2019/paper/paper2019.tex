@@ -1,0 +1,248 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{times}
+\usepackage[left=2.5cm,right=2.5cm,top=2.5cm,bottom=2.5cm]{geometry}
+\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{ragged2e}
+
+% Single column for title/abstract, two column for body
+\begin{document}
+
+% ============================================================
+% TITLE (single column)
+% ============================================================
+\begin{center}
+{\fontsize{12pt}{14pt}\selectfont\textbf{ANALISIS KOMPARATIF DETEKSI DDOS MULTI-KELAS MENGGUNAKAN XGBOOST DENGAN REDUKSI FITUR DAN ENSEMBLE LEARNING PADA INFRASTRUKTUR CLOUD}}
+
+\vspace{10pt}
+
+{\fontsize{10pt}{12pt}\selectfont\textbf{Hero Yudo Martono*\textsuperscript{1}, Reesa Akbar\textsuperscript{2}, Dian Septiani Santoso\textsuperscript{3}, Andhik Ampuh Yunanto\textsuperscript{4}}}
+
+\vspace{10pt}
+
+{\fontsize{10pt}{12pt}\selectfont
+\textsuperscript{1,3,4}Departemen Teknik Informatika dan Komputer\\
+Politeknik Elektronika Negeri Surabaya\\
+\textsuperscript{2}Departemen Teknik Elektro\\
+Politeknik Elektronika Negeri Surabaya\\
+Email: \textsuperscript{1}hero@pens.ac.id, \textsuperscript{2}reesa@pens.ac.id, \textsuperscript{3}dian@pens.ac.id, \textsuperscript{4}andhik@pens.ac.id\\
+*Penulis Korespondensi
+}
+
+\vspace{10pt}
+
+{\fontsize{10pt}{12pt}\selectfont (Naskah masuk: dd mmm yyyy, diterima untuk diterbitkan: dd mmm yyyy)}
+
+\vspace{10pt}
+
+{\fontsize{10pt}{12pt}\selectfont\textbf{Abstrak}}
+
+\vspace{10pt}
+
+\begin{justify}
+{\fontsize{10pt}{12pt}\selectfont
+Serangan \textit{Distributed Denial of Service} (DDoS) tetap menjadi salah satu ancaman paling kritikal terhadap ketersediaan layanan pada infrastruktur cloud. Deteksi DDoS berbasis \textit{machine learning} konvensional sering kali menghadapi kendala efisiensi akibat tingginya dimensi fitur jaringan dan keterbatasan kapasitas memori pada lingkungan fungsi komputasi tanpa server (\textit{serverless functions}) ketika menangani model \textit{multi-class} yang kompleks. Penelitian ini mengusulkan sebuah sistem deteksi DDoS \textit{multi-class} yang efisien menggunakan algoritma XGBoost dengan pendekatan reduksi fitur yang diimplementasikan pada arsitektur kontainer tanpa server (\textit{serverless container}), serta membandingkan performanya dengan model \textit{Voting Ensemble Learning} (gabungan XGBoost, LightGBM, dan \textit{Random Forest}). Model dilatih menggunakan dataset benchmark modern CICDDoS2019 dengan menerapkan skema \textit{Cross-Time Validation} (Validasi Lintas Waktu) antara fase pelatihan dan pengujian untuk memastikan kemampuan generalisasi model terhadap variasi serangan baru yang belum pernah dikenalkan sebelumnya. Metode \textit{Feature Importance} berbasis kriteria \textit{gain} digunakan untuk memangkas dimensi data, menyisakan fitur-fitur paling berkontribusi guna meminimalkan beban komputasi. Guna mengatasi masalah keterbatasan memori pada pipeline deteksi, model diekspor dan dibungkus ke dalam \textit{Docker Container} yang dijalankan di atas arsitektur kontainer terkelola di cloud, memisahkan beban kerja komputasi dari server utama (\textit{Original Target}) secara \textit{cloud-native} melalui mekanisme duplikasi lalu lintas jaringan. Hasil eksperimen menunjukkan bahwa model XGBoost dengan fitur tereduksi mampu mempertahankan tingkat akurasi dan F1-Score yang sangat kompetitif dibandingkan model \textit{Voting Ensemble}, namun dengan ukuran file model yang jauh lebih ramping serta latensi inferensi yang signifikan lebih rendah. Ditambah dengan keunggulan arsitektur kontainer tanpa server, sistem yang diusulkan memberikan skalabilitas otomatis serta portabilitas tinggi, sehingga modul deteksi dapat dikloning secara instan ke berbagai lingkungan operasional lain tanpa rekayasa ulang.
+}
+\end{justify}
+
+\vspace{10pt}
+
+{\fontsize{10pt}{12pt}\selectfont\textit{Kata kunci: deteksi DDoS, multi-class, XGBoost, ensemble learning, reduksi fitur, kontainer tanpa server, cross-time validation, portabilitas kontainer}}
+
+\vspace{20pt}
+
+{\fontsize{12pt}{14pt}\selectfont\textbf{\textit{COMPARATIVE ANALYSIS OF MULTI-CLASS DDOS DETECTION USING FEATURE-REDUCED XGBOOST AND ENSEMBLE LEARNING ON CLOUD INFRASTRUCTURE}}}
+
+\vspace{10pt}
+
+{\fontsize{10pt}{12pt}\selectfont\textbf{\textit{Abstract}}}
+
+\vspace{10pt}
+
+\begin{justify}
+{\fontsize{10pt}{12pt}\selectfont\textit{%
+Distributed Denial of Service (DDoS) attacks remain one of the most critical threats to service availability on cloud infrastructure. Conventional machine learning-based DDoS detection often faces efficiency challenges due to the high dimensionality of network features and memory limitations in serverless computing environments when handling complex multi-class models. This study proposes an efficient multi-class DDoS detection system using the XGBoost algorithm with a feature reduction approach implemented on a serverless container architecture, and compares its performance against a Voting Ensemble Learning model (combining XGBoost, LightGBM, and Random Forest). The model is trained on the modern CICDDoS2019 benchmark dataset employing a Cross-Time Validation scheme between training and testing phases to ensure the model's generalization capability against previously unseen attack variations. Feature Importance based on the gain criterion is used to prune data dimensions, retaining only the most contributing features to minimize computational overhead. To overcome memory limitations in the detection pipeline, the model is exported and packaged into a Docker Container running on a managed container architecture in the cloud, separating the computational workload from the Original Target in a cloud-native manner through network traffic duplication mechanisms. Experimental results demonstrate that the feature-reduced XGBoost model maintains highly competitive accuracy and F1-Score compared to the Voting Ensemble model, yet with a significantly leaner model file size and substantially lower inference latency. Combined with the advantages of the serverless container architecture, the proposed system provides automatic scalability and high portability, enabling the detection module to be instantly cloned to various other operational environments without re-engineering.
+}}
+\end{justify}
+
+\vspace{10pt}
+
+{\fontsize{10pt}{12pt}\selectfont\textit{Keywords: DDoS detection, multi-class, XGBoost, ensemble learning, feature reduction, serverless container, cross-time validation, container portability}}
+
+\vspace{10pt}
+
+\end{center}
+
+% ============================================================
+% BODY (two columns)
+% ============================================================
+\begin{multicols}{2}
+
+\section*{\textbf{1. PENDAHULUAN}}
+
+Perkembangan teknologi komputasi awan (\textit{cloud computing}) telah mengubah lanskap infrastruktur teknologi informasi secara global dengan menawarkan fleksibilitas, skalabilitas, dan efisiensi biaya. Kendati demikian, migrasi masif layanan kritikal ke lingkungan cloud juga mengundang peningkatan ancaman siber yang jauh lebih kompleks dan destruktif. Di antara berbagai jenis serangan siber, \textit{Distributed Denial of Service} (DDoS) tetap menjadi ancaman paling persisten dan berbahaya yang menargetkan ketersediaan layanan (\textit{availability}). Serangan DDoS modern tidak lagi sekadar membanjiri jalur komunikasi secara acak, melainkan telah berevolusi menjadi serangan yang terorganisasi dengan memanfaatkan ribuan perangkat terinfeksi (\textit{botnet}) untuk melumpuhkan target dalam waktu singkat.
+
+Karakteristik serangan DDoS saat ini telah bergeser dari serangan \textit{single-vector} sederhana menjadi serangan \textit{multi-class} yang menggunakan berbagai protokol secara simultan (\textit{multi-vector}). Penyerang mengombinasikan serangan volumetrik pada \textit{layer transport}, seperti UDP \textit{flood} dan TCP SYN \textit{flood}, dengan serangan refleksi berbasis amplifikasi yang mengeksploitasi protokol \textit{Domain Name System} (DNS) atau \textit{Network Time Protocol} (NTP), hingga serangan berbasis \textit{layer} aplikasi (HTTP \textit{flood}). Keberagaman jenis serangan ini menciptakan tantangan besar bagi sistem pertahanan konvensional, karena setiap jenis serangan memiliki pola anomali jaringan yang berbeda dan memerlukan strategi mitigasi yang spesifik agar tidak mengganggu lalu lintas data pengguna yang sah.
+
+Untuk menghadapi ancaman tersebut, penerapan \textit{Intrusion Detection System} (IDS) menjadi garda terdepan dalam memantau lalu lintas jaringan di lingkungan cloud. Namun, sebagian besar IDS tradisional masih mengandalkan metode pencocokan pola berbasis aturan (\textit{rule-based detection}). Metode konvensional ini memiliki kelemahan mendasar berupa ketidakmampuan dalam mendeteksi variasi serangan baru yang belum terdaftar dalam basis data (\textit{zero-day attacks}). Selain itu, pengelolaan aturan yang kaku pada lalu lintas data berskala besar sering kali memicu tingginya angka salah deteksi (\textit{false positives}) dan membutuhkan intervensi manual yang konstan dari administrator jaringan.
+
+Guna mengatasi keterbatasan metode berbasis aturan, implementasi \textit{machine learning} mulai diadopsi secara luas karena kemampuannya dalam mempelajari pola anomali jaringan secara dinamis dan adaptif. Algoritma canggih seperti XGBoost dan pendekatan \textit{Ensemble Learning} terbukti memiliki akurasi yang sangat tinggi dalam mendeteksi serangan siber. Kendati demikian, model \textit{machine learning} konvensional sering kali dilatih menggunakan fitur jaringan yang sangat melimpah dengan dimensi yang tinggi. Kondisi tingginya dimensi data ini berimplikasi langsung pada peningkatan drastis beban komputasi dan memori, yang pada akhirnya memperlambat waktu inferensi model saat dihadapkan pada skenario deteksi \textit{real-time}.
+
+Dalam implementasi praktis di arsitektur \textit{cloud native}, para peneliti awalnya mencoba mengintegrasikan model deteksi ini ke dalam fungsi komputasi tanpa server (\textit{serverless functions}), seperti arsitektur \textit{event-driven} berbasis fungsi instan, demi mengejar efisiensi biaya. Namun, paradigma ini menghadapi jalan buntu ketika diterapkan pada kasus klasifikasi \textit{multi-class} yang membutuhkan model berukuran besar dan dalam. Keterbatasan kapasitas memori bawaan serta kendala \textit{timeout} pada fungsi komputasi tanpa server tradisional membuat lingkungan tersebut tidak memadai untuk memuat model \textit{machine learning} yang kompleks sekaligus memproses telemetri jaringan berkecepatan tinggi, sehingga memicu kegagalan sistem deteksi.
+
+Untuk menjembatani batasan memori tersebut tanpa kehilangan elastisitas khas cloud, riset ini mengalihkan pipa deteksi (\textit{detection pipeline}) ke arsitektur kontainer tanpa server (\textit{serverless container}). Dengan membungkus model ke dalam \textit{Docker Container} yang berjalan di atas klaster kontainer terkelola, sistem deteksi memperoleh kapasitas memori dan CPU yang jauh lebih besar setara peladen mandiri, namun tetap mempertahankan sifat otomatisasi skala (\textit{auto-scaling}). Yang paling krusial, arsitektur ini memungkinkan pemisahan beban kerja secara total antara server utama (\textit{Original Target}) dan mesin penganalisis melalui mekanisme duplikasi lalu lintas jaringan (\textit{traffic mirroring}), sehingga performa server utama tetap terjaga optimal meskipun sedang dievaluasi dari serangan siber.
+
+Validitas riset keamanan siber sangat bergantung pada relevansi dataset yang digunakan untuk melatih model. Banyak penelitian sebelumnya yang terjebak pada penggunaan dataset usang dengan pola lalu lintas data yang tidak lagi mencerminkan kondisi jaringan modern. Penelitian ini memanfaatkan dataset benchmark modern CICDDoS2019 yang memuat variasi serangan DDoS mutakhir berbasis refleksi dan eksploitasi protokol. Untuk memberikan pengujian yang adil dan objektif, riset ini menerapkan skema \textit{Cross-Time Validation} (Validasi Lintas Waktu), di mana model dilatih menggunakan data perekaman satu waktu dan diuji secara ketat menggunakan data dari waktu yang berbeda dengan jenis serangan baru, guna membuktikan ketangguhan generalisasi model di dunia nyata.
+
+Meskipun algoritma berbasis \textit{tree} seperti XGBoost dikenal efisien, klaim keunggulannya tidak dapat diterima begitu saja tanpa adanya pengujian komparatif yang komprehensif. Oleh karena itu, diperlukan sebuah analisis perbandingan (\textit{comparative analysis}) yang mendalam antara model XGBoost tunggal dengan model \textit{Voting Ensemble Learning} yang menggabungkan beberapa algoritma kuat sekaligus, seperti XGBoost, LightGBM, dan \textit{Random Forest}. Perbandingan ini menjadi penting untuk membedah \textit{trade-off} (timbal-balik) performa secara empiris, tidak hanya dari aspek metrik akurasi tradisional semata, melainkan juga dari aspek efisiensi sumber daya komputasi.
+
+Berdasarkan pemaparan di atas, terdapat celah riset (\textit{research gap}) yang nyata di mana sebagian besar penelitian berfokus mengejar akurasi tertinggi menggunakan model \textit{ensemble} yang berat, namun mengabaikan faktor latensi inferensi dan ukuran penyimpanan model. Padahal, dalam skenario mitigasi DDoS, keterlambatan sepersekian detik akibat model yang lambat dapat mengakibatkan kelumpuhan total pada infrastruktur cloud. Belum banyak literatur yang mengeksplorasi bagaimana mengoptimalkan model \textit{multi-class} melalui reduksi fitur berbasis kriteria \textit{gain} agar dapat berjalan optimal di dalam arsitektur kontainer cloud yang memiliki keunggulan portabilitas tinggi untuk dikloning secara instan ke berbagai lingkungan operasional.
+
+Mengatasi celah riset tersebut, penelitian ini bertujuan untuk merancang, mengimplementasikan, dan mengevaluasi sistem deteksi DDoS \textit{multi-class} yang optimal pada infrastruktur cloud. Kontribusi utama dari penelitian ini mencakup pembuktian efektivitas reduksi fitur pada XGBoost dalam memangkas latensi inferensi dan ukuran model tanpa mengorbankan F1-Score secara signifikan dibandingkan model \textit{Voting Ensemble}. Selain itu, penelitian ini memberikan cetak biru arsitektur IDS berbasis kontainer tanpa server yang bersifat portabel, adaptif terhadap validasi lintas waktu, serta siap diimplementasikan untuk mengamankan infrastruktur jaringan cloud modern dari ancaman DDoS multi-vektor.
+
+\section*{\textbf{2. METODE PENELITIAN}}
+
+\subsection*{2.1 Dataset}
+
+Penelitian ini menggunakan dataset CICDDoS2019 yang dikembangkan oleh \textit{Canadian Institute for Cybersecurity}, University of New Brunswick. Dataset ini terdiri dari dua fase pengambilan data pada waktu yang berbeda:
+
+\textbf{\textit{Training Day} (12 Januari 2019):} Terdiri dari 11 file CSV yang mencakup serangan DrDoS\_DNS, DrDoS\_LDAP, DrDoS\_MSSQL, DrDoS\_NetBIOS, DrDoS\_NTP, DrDoS\_SNMP, DrDoS\_SSDP, DrDoS\_UDP, Syn, TFTP, dan UDPLag, beserta lalu lintas normal (BENIGN).
+
+\textbf{\textit{Testing Day} (11 Maret 2019):} Terdiri dari 7 file CSV yang mencakup LDAP, MSSQL, NetBIOS, Portmap, Syn, UDP, dan UDPLag, beserta lalu lintas normal (BENIGN).
+
+Pemisahan data berdasarkan waktu pengambilan yang berbeda ini merupakan implementasi dari skema \textit{Cross-Time Validation}, di mana model dilatih menggunakan data dari satu periode waktu dan diuji menggunakan data dari periode waktu yang berbeda. Pendekatan ini lebih ketat dibandingkan \textit{random split} konvensional karena menguji kemampuan generalisasi model terhadap variasi serangan yang belum pernah ditemui selama pelatihan.
+
+\subsection*{2.2 \textit{Preprocessing}}
+
+Tahap \textit{preprocessing} dilakukan melalui beberapa langkah:
+
+\begin{enumerate}
+\item \textbf{\textit{Stratified Sampling}:} Mengingat ukuran dataset yang sangat besar (puluhan juta \textit{record}), dilakukan \textit{stratified sampling} dengan mempertahankan rasio proporsi asli antara kelas serangan dan lalu lintas normal pada setiap file. Maksimal 100.000 baris diambil per file CSV.
+\item \textbf{Pembersihan Data:} Menghapus baris yang mengandung nilai NaN dan \textit{Infinity}, menghapus kolom \textit{Timestamp}, serta mempertahankan hanya kolom bertipe numerik.
+\item \textbf{Standardisasi Label:} Nama label dari \textit{Training Day} menggunakan prefiks ``DrDoS\_'' sedangkan \textit{Testing Day} tidak. Dilakukan standardisasi dengan menghapus prefiks dan mengubah ke huruf kapital (contoh: ``DrDoS\_DNS'' $\rightarrow$ ``DNS'').
+\item \textbf{\textit{Label Encoding}:} Mengonversi label string menjadi integer berurutan (0 sampai N-1) menggunakan \texttt{LabelEncoder} dari scikit-learn.
+\item \textbf{Penyesuaian Kolom:} Memastikan kolom fitur pada data \textit{training} dan \textit{testing} konsisten dengan hanya mempertahankan kolom yang ada di kedua set data.
+\end{enumerate}
+
+Hasil \textit{preprocessing}: data \textit{training} terdiri dari 319.286 sampel dengan 82 fitur numerik, dan data \textit{testing} terdiri dari 201.950 sampel. Total terdapat 14 kelas: BENIGN, DNS, LDAP, MSSQL, NETBIOS, NTP, PORTMAP, SNMP, SSDP, SYN, TFTP, UDP, UDP-LAG, dan WEBDDOS. Perlu dicatat bahwa kelas PORTMAP hanya terdapat pada data \textit{testing} dan tidak ada pada data \textit{training}.
+
+\subsection*{2.3 Model \textit{Machine Learning}}
+
+Tiga model dievaluasi dalam penelitian ini:
+
+\begin{enumerate}
+\item \textbf{XGBoost} (\textit{eXtreme Gradient Boosting}): Algoritma \textit{gradient boosting} berbasis \textit{decision tree} yang dikenal efisien dan akurat. Konfigurasi: \texttt{objective='multi:softmax'}, \texttt{max\_depth=6}, \texttt{learning\_rate=0.3}, \texttt{n\_estimators=100}, \texttt{eval\_metric='mlogloss'}.
+\item \textbf{\textit{Random Forest}}: Algoritma \textit{ensemble} berbasis \textit{bagging} yang membangun banyak \textit{decision tree} secara paralel. Konfigurasi: \texttt{n\_estimators=100}.
+\item \textbf{\textit{Voting Ensemble}}: Gabungan dari XGBoost, LightGBM, dan \textit{Random Forest} menggunakan mekanisme \textit{soft voting} untuk menghasilkan prediksi akhir berdasarkan rata-rata probabilitas dari ketiga model.
+\end{enumerate}
+
+\subsection*{2.4 Evaluasi Model}
+
+Evaluasi dilakukan menggunakan \textit{5-fold stratified cross-validation} pada data \textit{training} dengan metrik:
+\begin{itemize}
+\item \textit{Accuracy}: Proporsi prediksi benar dari seluruh prediksi.
+\item \textit{Precision} (macro): Rata-rata presisi per kelas.
+\item \textit{Recall} (macro): Rata-rata \textit{recall} per kelas.
+\item F1-Score (macro): Rata-rata harmonik dari presisi dan \textit{recall} per kelas.
+\end{itemize}
+
+Evaluasi akhir dilakukan pada data \textit{Testing Day} yang terpisah secara temporal untuk menguji kemampuan generalisasi model.
+
+\subsection*{2.5 Studi Ablasi (\textit{Feature Reduction})}
+
+Studi ablasi dilakukan untuk mengevaluasi dampak reduksi fitur terhadap performa model. \textit{Feature Importance} berbasis kriteria \textit{gain} dari XGBoost digunakan untuk meranking fitur berdasarkan kontribusinya terhadap klasifikasi. Lima konfigurasi diuji:
+\begin{itemize}
+\item \textit{Full features} (82 fitur)
+\item Top-30 (30 fitur terpenting)
+\item Top-20 (20 fitur terpenting)
+\item Top-10 (10 fitur terpenting)
+\item Top-5 (5 fitur terpenting)
+\end{itemize}
+
+Setiap konfigurasi dievaluasi berdasarkan F1-Score, waktu inferensi, dan ukuran file model.
+
+\subsection*{2.6 Arsitektur Deployment}
+
+Arsitektur deteksi diimplementasikan pada infrastruktur cloud menggunakan mekanisme duplikasi lalu lintas jaringan (\textit{traffic mirroring}). Model XGBoost yang telah dilatih diekspor dalam format JSON dan dibungkus ke dalam \textit{Docker Container} yang berjalan pada node penganalisis terpisah dari server target. Pipeline deteksi berjalan secara otomatis:
+
+\begin{enumerate}
+\item Lalu lintas jaringan pada server target diduplikasi via \textit{traffic mirroring} (VXLAN, UDP port 4789).
+\item Node penganalisis menangkap paket menggunakan \texttt{tcpdump} dan mengekstraksi fitur per \textit{flow}.
+\item Model XGBoost melakukan inferensi \textit{multi-class} pada fitur yang diekstraksi.
+\item Jika serangan terdeteksi, notifikasi dikirim melalui layanan \textit{messaging} cloud.
+\item Hasil deteksi disimpan ke penyimpanan objek cloud untuk keperluan audit.
+\end{enumerate}
+
+\section*{\textbf{3. METODOLOGI}}
+
+\subsection*{3.1 Dataset}
+
+Penelitian ini menggunakan dataset CICDDoS2019 yang terdiri dari:
+
+\textbf{Training Day (12 Januari 2019):} 11 file CSV mencakup serangan DrDoS\_DNS, DrDoS\_LDAP, DrDoS\_MSSQL, DrDoS\_NetBIOS, DrDoS\_NTP, DrDoS\_SNMP, DrDoS\_SSDP, DrDoS\_UDP, Syn, TFTP, dan UDPLag.
+
+\textbf{Testing Day (11 Maret 2019):} 7 file CSV mencakup LDAP, MSSQL, NetBIOS, Portmap, Syn, UDP, dan UDPLag.
+
+Data di-\textit{sampling} secara stratifikasi untuk menjaga rasio asli antara kelas serangan dan lalu lintas normal.
+
+\subsection*{3.2 Preprocessing}
+
+Tahap preprocessing meliputi: (1) pembersihan data dari nilai NaN dan Infinity, (2) penghapusan kolom \textit{Timestamp}, (3) seleksi fitur numerik, (4) standardisasi nama label, dan (5) encoding label ke integer.
+
+\subsection*{3.3 Model}
+
+Tiga model dievaluasi: XGBoost (\texttt{multi:softmax}, max\_depth=6, learning\_rate=0.3, n\_estimators=100), Random Forest (n\_estimators=100), dan LightGBM (objective=multiclass). Evaluasi menggunakan \textit{5-fold stratified cross-validation} dengan metrik akurasi, presisi, \textit{recall}, dan F1-score (macro average).
+
+\subsection*{3.4 Studi Ablasi}
+
+Studi ablasi dilakukan untuk mengevaluasi dampak reduksi fitur terhadap performa model. Konfigurasi yang diuji: Full features, Top-30, Top-20, Top-10, dan Top-5.
+
+\section*{\textbf{4. HASIL DAN PEMBAHASAN}}
+
+\subsection*{4.1 Distribusi Data}
+
+(Hasil dari notebook akan diisi di sini setelah eksperimen selesai)
+
+\subsection*{4.2 Performa Cross-Validation}
+
+(Tabel hasil 5-fold CV: XGBoost vs RF vs LightGBM)
+
+\subsection*{4.3 Studi Ablasi}
+
+(Tabel ablation: Full → Top-5 dengan F1, inference time, model size)
+
+\subsection*{4.4 Evaluasi pada Testing Day}
+
+(Confusion matrix, per-class F1, overall accuracy)
+
+\subsection*{4.5 Perbandingan Efisiensi}
+
+(Tabel: model size, inference time per model)
+
+\section*{\textbf{5. KESIMPULAN}}
+
+(Akan diisi setelah eksperimen selesai)
+
+\section*{\textbf{DAFTAR PUSTAKA}}
+
+\begin{enumerate}
+\small
+\item I. Sharafaldin, A. H. Lashkari, S. Hakak, and A. A. Ghorbani, ``Developing Realistic Distributed Denial of Service (DDoS) Attack Dataset and Taxonomy,'' in \textit{Proc. IEEE ICCST}, 2019.
+\item T. Chen and C. Guestrin, ``XGBoost: A Scalable Tree Boosting System,'' in \textit{Proc. ACM KDD}, 2016.
+\item Canadian Institute for Cybersecurity, ``CICDDoS2019 Dataset,'' \url{https://www.unb.ca/cic/datasets/ddos-2019.html}, 2019.
+\item A. Sperotto et al., ``An Overview of IP Flow-Based Intrusion Detection,'' \textit{IEEE Commun. Surveys Tuts.}, vol. 12, no. 3, 2010.
+\item R. Vinayakumar et al., ``Deep Learning Approach for Intelligent Intrusion Detection System,'' \textit{IEEE Access}, vol. 7, 2019.
+\item M. Hossain et al., ``LSTM-Based Intrusion Detection System for In-Vehicle CAN Bus Communications,'' \textit{IEEE Access}, vol. 8, 2020.
+\item W. Wang et al., ``Malware Traffic Classification Using Convolutional Neural Network,'' in \textit{Proc. ICCMB}, 2017.
+\item AWS, ``AWS Well-Architected Framework - Security Pillar,'' 2023.
+\end{enumerate}
+
+\end{multicols}
+\end{document}

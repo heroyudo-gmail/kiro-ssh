@@ -23,10 +23,16 @@ S3_BUCKET = "ssh-detection-features-232032302717"
 S3_PREFIX = "results/"
 CAPTURE_DURATION = 60  # seconds per capture window
 INTERFACE = "ens5"
-MODEL_PATH = "/home/ssm-user/xgboost_model.json"
+MODEL_PATH = "/home/ssm-user/xgboost_ddos_model.json"
 REGION = "ap-southeast-1"
 
+# Multi-class labels (from training)
+CLASS_NAMES = ['BENIGN', 'DNS', 'LDAP', 'MSSQL', 'NETBIOS', 'NTP',
+               'SNMP', 'SSDP', 'SYN', 'TFTP', 'UDP', 'UDP-LAG', 'WEBDDOS']
+
 # The 10 features our model expects (in order)
+# NOTE: Model was trained with 82 features using CICDDoS2019 column names
+# We extract what we can from tcpdump and fill rest with 0
 FEATURE_NAMES = [
     'Dst Port',
     'Init Bwd Win Byts',
@@ -39,6 +45,47 @@ FEATURE_NAMES = [
     'Init Fwd Win Byts',
     'ACK Flag Cnt'
 ]
+
+# Full feature names as in the CICDDoS2019 dataset (model was trained with these)
+FULL_FEATURE_NAMES = [
+    'ACK Flag Count', 'Active Max', 'Active Mean', 'Active Min', 'Active Std',
+    'Average Packet Size', 'Avg Bwd Segment Size', 'Avg Fwd Segment Size',
+    'Bwd Avg Bulk Rate', 'Bwd Avg Bytes/Bulk', 'Bwd Avg Packets/Bulk',
+    'Bwd Header Length', 'Bwd IAT Max', 'Bwd IAT Mean', 'Bwd IAT Min',
+    'Bwd IAT Std', 'Bwd IAT Total', 'Bwd PSH Flags', 'Bwd Packet Length Max',
+    'Bwd Packet Length Mean', 'Bwd Packet Length Min', 'Bwd Packet Length Std',
+    'Bwd Packets/s', 'Bwd URG Flags', 'CWE Flag Count', 'Destination Port',
+    'Down/Up Ratio', 'ECE Flag Count', 'FIN Flag Count', 'Flow Bytes/s',
+    'Flow Duration', 'Flow IAT Max', 'Flow IAT Mean', 'Flow IAT Min',
+    'Flow IAT Std', 'Flow Packets/s', 'Fwd Avg Bulk Rate', 'Fwd Avg Bytes/Bulk',
+    'Fwd Avg Packets/Bulk', 'Fwd Header Length', 'Fwd Header Length.1',
+    'Fwd IAT Max', 'Fwd IAT Mean', 'Fwd IAT Min', 'Fwd IAT Std', 'Fwd IAT Total',
+    'Fwd PSH Flags', 'Fwd Packet Length Max', 'Fwd Packet Length Mean',
+    'Fwd Packet Length Min', 'Fwd Packet Length Std', 'Fwd Packets/s',
+    'Fwd URG Flags', 'Idle Max', 'Idle Mean', 'Idle Min', 'Idle Std',
+    'Inbound', 'Init_Win_bytes_backward', 'Init_Win_bytes_forward',
+    'Max Packet Length', 'Min Packet Length', 'PSH Flag Count',
+    'Packet Length Mean', 'Packet Length Std', 'Packet Length Variance',
+    'Protocol', 'RST Flag Count', 'SYN Flag Count', 'Source Port',
+    'Subflow Bwd Bytes', 'Subflow Bwd Packets', 'Subflow Fwd Bytes',
+    'Subflow Fwd Packets', 'Total Backward Packets', 'Total Fwd Packets',
+    'Total Length of Bwd Packets', 'Total Length of Fwd Packets',
+    'URG Flag Count', 'Unnamed: 0', 'act_data_pkt_fwd', 'min_seg_size_forward'
+]
+
+# Mapping from our extracted names to CICDDoS2019 dataset names
+FEATURE_MAPPING = {
+    'Dst Port': 'Destination Port',
+    'Init Bwd Win Byts': 'Init_Win_bytes_backward',
+    'Fwd Seg Size Min': 'min_seg_size_forward',
+    'Flow Pkts/s': 'Flow Packets/s',
+    'Flow Duration': 'Flow Duration',
+    'Fwd Header Len': 'Fwd Header Length',
+    'Bwd Header Len': 'Bwd Header Length',
+    'Bwd IAT Min': 'Bwd IAT Min',
+    'Init Fwd Win Byts': 'Init_Win_bytes_forward',
+    'ACK Flag Cnt': 'ACK Flag Count'
+}
 
 # ===== GLOBAL MODEL =====
 MODEL = None
@@ -237,7 +284,8 @@ def _calc_bwd_iat_min(timestamps):
 def predict(features_list):
     """
     Run XGBoost inference on extracted features.
-    Returns list of (prediction, probability) tuples.
+    Maps our 10 extracted features to the full 82-feature vector expected by model.
+    Returns list of (class_index, class_name, probability) tuples.
     """
     import xgboost as xgb
 
@@ -249,20 +297,25 @@ def predict(features_list):
     if not features_list:
         return []
 
-    # Convert to numpy array in correct feature order
+    # Build full feature array (82 features, fill with 0 for unknown)
     data = []
     for feat_dict in features_list:
-        row = [feat_dict[name] for name in FEATURE_NAMES]
+        row = np.zeros(len(FULL_FEATURE_NAMES), dtype=np.float32)
+        for our_name, dataset_name in FEATURE_MAPPING.items():
+            if dataset_name in FULL_FEATURE_NAMES:
+                idx = FULL_FEATURE_NAMES.index(dataset_name)
+                row[idx] = feat_dict.get(our_name, 0)
         data.append(row)
 
     data_array = np.array(data, dtype=np.float32)
-    dmatrix = xgb.DMatrix(data_array, feature_names=FEATURE_NAMES)
-    probabilities = model.predict(dmatrix)
+    dmatrix = xgb.DMatrix(data_array, feature_names=FULL_FEATURE_NAMES)
+    predictions = model.predict(dmatrix)
 
     results = []
-    for prob in probabilities:
-        pred = 1 if prob > 0.5 else 0
-        results.append((pred, float(prob)))
+    for pred in predictions:
+        cls_idx = int(pred)
+        cls_name = CLASS_NAMES[cls_idx] if cls_idx < len(CLASS_NAMES) else f'UNKNOWN_{cls_idx}'
+        results.append((cls_idx, cls_name, 1.0))
 
     return results
 
@@ -272,8 +325,10 @@ def predict_fallback(features_list):
     results = []
     for feat_dict in features_list:
         pkts_s = feat_dict.get('Flow Pkts/s', 0)
-        pred = 1 if pkts_s > 1.0 else 0
-        results.append((pred, pkts_s))
+        if pkts_s > 1.0:
+            results.append((8, 'SYN', pkts_s))  # default attack
+        else:
+            results.append((0, 'BENIGN', pkts_s))
     return results
 
 
@@ -309,17 +364,22 @@ def save_results(features_list, predictions):
 
         results = []
         for i, feat_dict in enumerate(features_list):
-            pred, prob = predictions[i]
+            cls_idx, cls_name, prob = predictions[i]
             results.append({
                 'features': feat_dict,
-                'prediction': 'attack' if pred == 1 else 'benign',
+                'prediction': cls_name,
+                'class_index': cls_idx,
                 'probability': round(prob, 4)
             })
+
+        from collections import Counter
+        class_counts = Counter(r['prediction'] for r in results)
 
         output = {
             'timestamp': timestamp,
             'total_flows': len(results),
-            'attacks': sum(1 for r in results if r['prediction'] == 'attack'),
+            'attacks': sum(1 for r in results if r['prediction'] != 'BENIGN'),
+            'class_distribution': dict(class_counts),
             'flows': results
         }
 
@@ -363,11 +423,14 @@ def main():
                 if features:
                     # 4. Predict
                     predictions = predict(features)
-                    attack_count = sum(1 for p, _ in predictions if p == 1)
+                    
+                    # Count per class
+                    from collections import Counter
+                    class_counts = Counter(name for _, name, _ in predictions)
+                    attack_count = sum(1 for _, name, _ in predictions if name != 'BENIGN')
                     total = len(predictions)
 
-                    print(f"[PREDICT] {attack_count}/{total} attacks | "
-                          f"{total - attack_count}/{total} benign")
+                    print(f"[PREDICT] {total} flows: {dict(class_counts)}")
 
                     # 5. Alert if attacks found
                     if attack_count > 0:

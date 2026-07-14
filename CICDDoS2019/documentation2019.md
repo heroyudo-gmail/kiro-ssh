@@ -124,33 +124,79 @@ CICDDoS2019/
 
 - [x] Setup folder & struktur
 - [x] Download dataset CICDDoS2019
-- [x] Buat notebook 01 (EDA & Preprocessing)
-- [ ] Jalankan notebook 01
-- [ ] Buat & jalankan notebook 02 (Model Training)
-- [ ] Buat & jalankan notebook 03 (Ablation Study)
-- [ ] Buat & jalankan notebook 04 (Evaluation)
-- [ ] Deploy model ke AWS Analyzer
-- [ ] Live testing dengan DDoS tools
+- [x] Buat & jalankan notebook 01 (EDA & Preprocessing) — 319K train, 201K test, 14 classes
+- [x] Buat & jalankan notebook 02 (Model Training) — XGBoost multiclass, 82 fitur
+- [x] Buat & jalankan notebook 03 (Ablation Study)
+- [x] Buat & jalankan notebook 04 (Evaluation) — accuracy 36.74%
+- [x] Deploy model ke AWS Analyzer
+- [x] Live testing — pipeline works, tapi prediksi semua BENIGN
+- [ ] Re-train model khusus Top-10 fitur (fix utama)
+- [ ] Naikkan sampling ke 100K/file dan re-run
+- [ ] Update Traffic Mirror filter untuk capture semua TCP (bukan hanya port 22)
 - [ ] Tulis paper
 
 ---
 
-## 6. Hasil (akan diisi setelah eksperimen)
+## 6. Hasil Eksperimen (30K sampling per file)
 
-### EDA
-- Total samples Training: (belum dijalankan)
-- Total samples Testing: (belum dijalankan)
-- Jumlah fitur: (belum dijalankan)
-- Jumlah class: (belum dijalankan)
+### EDA (Notebook 01)
+- Total samples Training (sampled): 319,286
+- Total samples Testing (sampled): 201,950
+- Jumlah fitur: 82
+- Jumlah class: 14 (BENIGN, DNS, LDAP, MSSQL, NETBIOS, NTP, PORTMAP, SNMP, SSDP, SYN, TFTP, UDP, UDP-LAG, WEBDDOS)
+- PORTMAP hanya ada di Testing, tidak di Training
 
-### Model Performance
-- (belum dijalankan)
+### Evaluation pada Testing Day (Notebook 04)
+- Model: XGBoost multiclass (4,897.6 KB)
+- Training classes: 13 (tanpa PORTMAP)
+- Testing samples: 174,893
+- Classes evaluated: 13
+- **Overall Accuracy: 36.74%**
+- **F1-Score (macro): 26.77%**
+- Inference time: 0.6 ms (100 samples)
 
-### Ablation Study
-- (belum dijalankan)
+### Analisis Hasil Rendah
+Accuracy 36.74% sangat rendah. Kemungkinan penyebab:
+1. **Distribution shift** — pola traffic Training Day (12 Jan) sangat berbeda dari Testing Day (11 Mar)
+2. **Sampling terlalu kecil** (30K/file) — model tidak cukup belajar pattern tiap class
+3. **Label mismatch** — standardisasi "DrDoS_" prefix mungkin belum sempurna
+4. **Class imbalance** — beberapa class punya sample sangat sedikit
 
-### Testing Day Evaluation
-- (belum dijalankan)
+### Langkah Perbaikan
+- [ ] Naikkan sampling ke 100K per file (re-run semua notebook)
+- [ ] Cek confusion matrix untuk identifikasi class yang salah
+- [ ] Evaluasi apakah Cross-Time Validation memang menyebabkan drop besar
+- [ ] Pertimbangkan train+test dari hari yang sama (random split) sebagai baseline
+
+---
+
+## 7. Live AWS Testing (Multi-Class)
+
+### Status: Pipeline berjalan, model perlu perbaikan
+
+### Yang berhasil:
+- ✅ Traffic Mirror capture dari Target ke Analyzer (ens5, VXLAN)
+- ✅ tcpdump + parsing per-flow berhasil (17 flows, 71 flows terdeteksi)
+- ✅ XGBoost model loaded dan predict tanpa error
+- ✅ Hasil disimpan ke S3 (`results/result_20260714_*.json`)
+- ✅ Feature name mismatch sudah di-fix (mapping 10 fitur ke 82 kolom dataset)
+
+### Masalah saat ini:
+- ❌ Semua flow diprediksi BENIGN (bahkan saat Hydra brute-force aktif)
+- Root cause: Model dilatih dengan 82 fitur penuh, tapi saat live hanya 10 fitur terisi (72 sisanya = 0)
+- Model "bingung" karena sebagian besar input kosong
+
+### Solusi yang perlu dilakukan:
+1. **Re-train model khusus Top-10 fitur** — di notebook 02, train XGBoost hanya pakai 10 fitur teratas (bukan 82)
+2. **Naikkan sampling** ke 100K per file untuk akurasi lebih baik
+3. **Deploy model Top-10** ke Analyzer — ukuran model jauh lebih kecil, inference lebih cepat
+4. **Atau:** Extract lebih banyak fitur dari tcpdump (sulit, butuh CICFlowMeter)
+
+### Catatan Arsitektur Live Testing:
+- Attacker: Hydra SSH brute-force ke port 22 (500 passwords, 16 threads)
+- Traffic Mirror: filter TCP port 22, VXLAN ke Analyzer ENI
+- Analyzer: tcpdump (ens5) → parse → XGBoost predict → S3
+- nping SYN flood tidak terdeteksi karena hanya kirim SYN tanpa full connection → Traffic Mirror filter butuh update untuk capture semua TCP (bukan hanya port 22)
 
 ---
 
