@@ -3,60 +3,112 @@ import boto3
 import os
 import csv
 from io import StringIO
+import numpy as np
 
 s3 = boto3.client('s3')
 sns = boto3.client('sns')
 
-# XGBoost-derived decision rules (extracted from trained model)
-# Model trained on CSE-CIC-IDS2018 SSH-Bruteforce dataset
-# These thresholds were determined by analyzing the XGBoost tree splits
-RULES = {
-    'dst_port_ssh': 22,           # SSH port
-    'flow_pkts_threshold': 1.0,   # Flow Pkts/s > 1 indicates brute-force
-    'fwd_pkts_threshold': 100,    # TotLen Fwd Pkts > 100 bytes
-    'bwd_ratio_threshold': 0.3,   # Down/Up Ratio typical for brute-force
-}
+# The 10 optimized features from our XGBoost training (in order)
+FEATURE_NAMES = [
+    'Dst Port',
+    'Init Bwd Win Byts',
+    'Fwd Seg Size Min',
+    'Flow Pkts/s',
+    'Flow Duration',
+    'Fwd Header Len',
+    'Bwd Header Len',
+    'Bwd IAT Min',
+    'Init Fwd Win Byts',
+    'ACK Flag Cnt'
+]
+
+# XGBoost model loaded at cold start
+# Model file should be included in deployment package or Lambda Layer
+MODEL = None
 
 
-def predict_flow(row):
+def load_model():
+    """Load XGBoost model from deployment package."""
+    global MODEL
+    if MODEL is None:
+        try:
+            import xgboost as xgb
+            MODEL = xgb.Booster()
+            # Model file location: same directory or /opt (Lambda Layer)
+            model_path = os.path.join(os.path.dirname(__file__), 'xgboost_model.json')
+            if not os.path.exists(model_path):
+                model_path = '/opt/xgboost_model.json'  # Lambda Layer path
+            MODEL.load_model(model_path)
+            print(f"XGBoost model loaded from {model_path}")
+        except Exception as e:
+            print(f"Failed to load XGBoost model: {e}")
+            MODEL = None
+    return MODEL
+
+
+def predict_flow_xgboost(features_array):
     """
-    XGBoost-derived rule-based prediction.
-    Returns 1 (attack) or 0 (benign).
-    
-    Based on feature importance analysis:
-    - Dst Port == 22 (SSH traffic)
-    - High Flow Pkts/s (rapid connection attempts)
-    - High TotLen Fwd Pkts (many packets sent)
+    Predict using XGBoost model.
+    features_array: 2D numpy array (n_samples, 10 features)
+    Returns: list of predictions (0=benign, 1=attack)
     """
-    try:
-        dst_port = int(float(row.get('Dst Port', 0)))
-        flow_pkts_s = float(row.get('Flow Pkts/s', 0))
-        totlen_fwd = float(row.get('TotLen Fwd Pkts', 0))
-        down_up_ratio = float(row.get('Down/Up Ratio', 0))
-        bwd_pkts_s = float(row.get('Bwd Pkts/s', 0))
+    import xgboost as xgb
+    model = load_model()
+    if model is None:
+        print("WARNING: Model not loaded, falling back to rule-based")
+        return predict_flow_rules(features_array)
 
-        # Rule 1: Must be SSH traffic
-        if dst_port != RULES['dst_port_ssh']:
-            return 0
+    dmatrix = xgb.DMatrix(features_array, feature_names=FEATURE_NAMES)
+    probabilities = model.predict(dmatrix)
+    predictions = (probabilities > 0.5).astype(int).tolist()
+    return predictions
 
-        # Rule 2: High packet rate indicates brute-force
-        if flow_pkts_s > RULES['flow_pkts_threshold']:
-            return 1
 
-        # Rule 3: Significant forward traffic with response
-        if totlen_fwd > RULES['fwd_pkts_threshold'] and bwd_pkts_s > 0:
-            return 1
+def predict_flow_rules(features_array):
+    """
+    Fallback rule-based prediction if XGBoost model unavailable.
+    Uses Flow Pkts/s threshold.
+    """
+    predictions = []
+    for row in features_array:
+        flow_pkts_s = row[3]  # Index 3 = Flow Pkts/s
+        if flow_pkts_s > 1.0:
+            predictions.append(1)
+        else:
+            predictions.append(0)
+    return predictions
 
-        return 0
-    except (ValueError, KeyError):
-        return 0
+
+def parse_csv_features(content):
+    """
+    Parse CSV content and extract the 10 required features.
+    Returns numpy array of shape (n_flows, 10).
+    """
+    reader = csv.DictReader(StringIO(content))
+    features_list = []
+
+    for row in reader:
+        try:
+            feature_values = []
+            for feat_name in FEATURE_NAMES:
+                val = float(row.get(feat_name, 0))
+                feature_values.append(val)
+            features_list.append(feature_values)
+        except (ValueError, KeyError) as e:
+            print(f"Skipping row due to parse error: {e}")
+            continue
+
+    if not features_list:
+        return np.array([]).reshape(0, 10)
+
+    return np.array(features_list)
 
 
 def handler(event, context):
     """
     Lambda handler - triggered by S3 event.
     1. Read feature CSV from S3
-    2. Predict each flow using XGBoost-derived rules
+    2. Predict each flow using XGBoost model
     3. Send SNS alert if attack detected
     """
     try:
@@ -68,15 +120,24 @@ def handler(event, context):
         response = s3.get_object(Bucket=bucket, Key=key)
         content = response['Body'].read().decode('utf-8')
 
-        # Parse and predict
-        reader = csv.DictReader(StringIO(content))
-        predictions = []
-        for row in reader:
-            pred = predict_flow(row)
-            predictions.append(pred)
+        # Parse features
+        features_array = parse_csv_features(content)
+        total_flows = len(features_array)
 
+        if total_flows == 0:
+            print("No valid flows found in CSV")
+            return {
+                'statusCode': 200,
+                'body': json.dumps({
+                    'total_flows': 0,
+                    'attacks': 0,
+                    'status': 'no_data'
+                })
+            }
+
+        # Predict using XGBoost model
+        predictions = predict_flow_xgboost(features_array)
         attack_count = sum(predictions)
-        total_flows = len(predictions)
 
         print(f"Results: {attack_count}/{total_flows} attacks detected")
 
@@ -85,13 +146,14 @@ def handler(event, context):
             topic_arn = os.environ.get('SNS_TOPIC_ARN')
             if topic_arn:
                 message = (
-                    f"🚨 SSH BRUTE-FORCE DETECTED!\n\n"
+                    f"SSH BRUTE-FORCE DETECTED!\n\n"
                     f"Source: s3://{bucket}/{key}\n"
                     f"Total flows analyzed: {total_flows}\n"
                     f"Attacks detected: {attack_count}\n"
-                    f"Detection rate: {attack_count/max(total_flows,1)*100:.1f}%\n"
+                    f"Benign flows: {total_flows - attack_count}\n"
+                    f"Detection rate: {attack_count/total_flows*100:.1f}%\n"
                     f"\nAction: Investigate source IPs immediately.\n"
-                    f"Model: XGBoost-derived rules (10 features)\n"
+                    f"Model: XGBoost (10 features, 84 KB)\n"
                 )
                 sns.publish(
                     TopicArn=topic_arn,
@@ -109,7 +171,9 @@ def handler(event, context):
             'body': json.dumps({
                 'total_flows': total_flows,
                 'attacks': attack_count,
-                'status': 'alert_sent' if attack_count > 0 else 'clear'
+                'benign': total_flows - attack_count,
+                'status': 'alert_sent' if attack_count > 0 else 'clear',
+                'model': 'xgboost'
             })
         }
 
