@@ -1,0 +1,283 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  IDS2018 Testing - Step 3: Protected Target (Target-2)
+  EC2 + ALB + WAF Web ACL + GuardDuty + Security Hub + VPC Flow Logs
+  Tujuan: Bandingkan detection rate model ML vs AWS native security services
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: ids2018-test
+
+  InstanceAmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
+
+  TargetInstanceType:
+    Type: String
+    Default: t3.small
+
+Resources:
+  # ============================================================
+  # TARGET-2: Protected EC2 (sama seperti Target-1 tapi di belakang ALB+WAF)
+  # ============================================================
+  ProtectedTarget:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref TargetInstanceType
+      ImageId: !Ref InstanceAmiId
+      SubnetId:
+        Fn::ImportValue: !Sub ${ProjectName}-private-subnet-id
+      SecurityGroupIds:
+        - Fn::ImportValue: !Sub ${ProjectName}-instance-sg-id
+      IamInstanceProfile: !Sub ${ProjectName}-ssm-profile
+      UserData:
+        Fn::Base64: |
+          #!/bin/bash
+          yum update -y
+          # SSH: enable password auth (sama seperti Target-1)
+          useradd -m testuser && echo "testuser:P@ssw0rd123" | chpasswd
+          sed -i 's/^PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
+          sed -i 's/^#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
+          systemctl restart sshd
+          # HTTP: nginx
+          yum install -y nginx
+          systemctl enable nginx && systemctl start nginx
+          # FTP: vsftpd
+          yum install -y vsftpd
+          echo "local_enable=YES" >> /etc/vsftpd/vsftpd.conf
+          systemctl enable vsftpd && systemctl start vsftpd
+          echo "Protected Target-2 setup complete" > /tmp/setup.log
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-target2-protected
+        - Key: Role
+          Value: target-protected
+
+  # ============================================================
+  # ALB (Application Load Balancer) — Required untuk attach WAF
+  # ============================================================
+  ALBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: ALB Security Group - allow HTTP/HTTPS
+      VpcId:
+        Fn::ImportValue: !Sub ${ProjectName}-vpc-id
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 10.1.0.0/16
+          Description: HTTP from VPC
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 10.1.0.0/16
+          Description: HTTPS from VPC
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-alb-sg
+
+  ALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub ${ProjectName}-alb
+      Scheme: internal
+      Type: application
+      Subnets:
+        - Fn::ImportValue: !Sub ${ProjectName}-private-subnet-id
+      SecurityGroups:
+        - !Ref ALBSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-alb
+
+  ALBTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub ${ProjectName}-tg
+      Port: 80
+      Protocol: HTTP
+      VpcId:
+        Fn::ImportValue: !Sub ${ProjectName}-vpc-id
+      TargetType: instance
+      Targets:
+        - Id: !Ref ProtectedTarget
+          Port: 80
+      HealthCheckPath: /
+      HealthCheckProtocol: HTTP
+
+  ALBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref ALB
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref ALBTargetGroup
+
+  # ============================================================
+  # AWS WAF — Web ACL with Rate Limiting + Managed Rules
+  # ============================================================
+  WAFWebACL:
+    Type: AWS::WAFv2::WebACL
+    Properties:
+      Name: !Sub ${ProjectName}-waf-acl
+      Scope: REGIONAL
+      DefaultAction:
+        Allow: {}
+      Description: WAF for IDS2018 protected target - rate limit + managed rules
+      VisibilityConfig:
+        SampledRequestsEnabled: true
+        CloudWatchMetricsEnabled: true
+        MetricName: !Sub ${ProjectName}-waf-metric
+      Rules:
+        # Rule 1: Rate limiting (max 1000 req / 5 min per IP)
+        - Name: RateLimit1000
+          Priority: 1
+          Action:
+            Block: {}
+          Statement:
+            RateBasedStatement:
+              Limit: 1000
+              AggregateKeyType: IP
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: RateLimit1000
+        # Rule 2: AWS Managed - Known Bad Inputs
+        - Name: AWSManagedKnownBadInputs
+          Priority: 2
+          OverrideAction:
+            None: {}
+          Statement:
+            ManagedRuleGroupStatement:
+              VendorName: AWS
+              Name: AWSManagedRulesKnownBadInputsRuleSet
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: KnownBadInputs
+        # Rule 3: AWS Managed - SQL Injection
+        - Name: AWSManagedSQLi
+          Priority: 3
+          OverrideAction:
+            None: {}
+          Statement:
+            ManagedRuleGroupStatement:
+              VendorName: AWS
+              Name: AWSManagedRulesSQLiRuleSet
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: SQLInjection
+        # Rule 4: AWS Managed - Amazon IP Reputation
+        - Name: AWSManagedIPReputation
+          Priority: 4
+          OverrideAction:
+            None: {}
+          Statement:
+            ManagedRuleGroupStatement:
+              VendorName: AWS
+              Name: AWSManagedRulesAmazonIpReputationList
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: IPReputation
+
+  # Associate WAF with ALB
+  WAFAssociation:
+    Type: AWS::WAFv2::WebACLAssociation
+    Properties:
+      WebACLArn: !GetAtt WAFWebACL.Arn
+      ResourceArn: !Ref ALB
+
+  # ============================================================
+  # GuardDuty — Threat Detection
+  # ============================================================
+  GuardDutyDetector:
+    Type: AWS::GuardDuty::Detector
+    Properties:
+      Enable: true
+      FindingPublishingFrequency: FIFTEEN_MINUTES
+      DataSources:
+        S3Logs:
+          Enable: true
+
+  # ============================================================
+  # Security Hub — Centralized Security Findings
+  # ============================================================
+  SecurityHub:
+    Type: AWS::SecurityHub::Hub
+    Properties:
+      Tags:
+        Project: !Ref ProjectName
+
+  # ============================================================
+  # VPC Flow Logs — Network Audit Trail
+  # ============================================================
+  FlowLogRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${ProjectName}-flowlog-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: vpc-flow-logs.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: FlowLogPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - logs:DescribeLogGroups
+                  - logs:DescribeLogStreams
+                Resource: '*'
+
+  FlowLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/vpc/flowlogs/${ProjectName}
+      RetentionInDays: 7
+
+  VPCFlowLog:
+    Type: AWS::EC2::FlowLog
+    Properties:
+      ResourceId:
+        Fn::ImportValue: !Sub ${ProjectName}-vpc-id
+      ResourceType: VPC
+      TrafficType: ALL
+      LogGroupName: !Ref FlowLogGroup
+      DeliverLogsPermissionArn: !GetAtt FlowLogRole.Arn
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-flow-log
+
+Outputs:
+  ProtectedTargetId:
+    Value: !Ref ProtectedTarget
+    Export:
+      Name: !Sub ${ProjectName}-target2-id
+  ProtectedTargetIp:
+    Value: !GetAtt ProtectedTarget.PrivateIp
+    Export:
+      Name: !Sub ${ProjectName}-target2-ip
+  ALBDnsName:
+    Value: !GetAtt ALB.DNSName
+    Export:
+      Name: !Sub ${ProjectName}-alb-dns
+  WAFWebACLArn:
+    Value: !GetAtt WAFWebACL.Arn
+  GuardDutyDetectorId:
+    Value: !Ref GuardDutyDetector
