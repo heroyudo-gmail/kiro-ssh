@@ -557,7 +557,7 @@ aws cloudformation create-stack \
 # Step 2: Instances (tunggu step 1 selesai)
 aws cloudformation create-stack \
   --stack-name ids2018-instances \
-  --template-body file://CICDDoS2018/aws/02-instances.yaml \
+  --template-body file://CICDDoS2018/aws/02-instances-ml-target.yaml \
   --capabilities CAPABILITY_NAMED_IAM \
   --region ap-southeast-1
 
@@ -900,7 +900,7 @@ Attacker 1/2/3
 # Deploy setelah fase 1 testing selesai
 aws cloudformation create-stack \
   --stack-name ids2018-protected \
-  --template-body file://CICDDoS2018/aws/03-protected-target.yaml \
+  --template-body file://CICDDoS2018/aws/03-instances-aws-target.yaml \
   --capabilities CAPABILITY_NAMED_IAM \
   --region ap-southeast-1
 ```
@@ -945,7 +945,74 @@ Ini menjadi **value proposition** penelitian: model ML melengkapi AWS native ser
 
 ---
 
-## 10. Catatan Penting
+## 10. Fase 3: Open-Source IDS Target (Target-3)
+
+### 10.1 Tujuan
+
+Deploy Target-3 yang dilindungi oleh **tools open-source** untuk intrusion detection & prevention di Layer 3, 4, dan 7. Bandingkan dengan Target-1 (ML) dan Target-2 (AWS managed).
+
+### 10.2 Tools yang Diinstall di Target-3
+
+| Tool | Layer | Fungsi | Detect? | Block? |
+|------|-------|--------|---------|--------|
+| **Suricata** | L3, L4, L7 | Network IDS/IPS — inspect semua packet, rule-based detection | ✅ | ✅ (IPS mode) |
+| **Fail2Ban** | L7 (Application) | Monitor auth logs → ban IP via iptables | ✅ | ✅ (auto-ban) |
+| **Nginx Rate Limiting** | L7 (HTTP) | Rate limit 10 req/s per IP, burst 20 | ✅ (implicit) | ✅ (reject 503) |
+
+**Suricata Rules (custom untuk IDS2018):**
+- SSH Brute-Force: >5 attempts / 60s → alert
+- FTP Brute-Force: >5 USER commands / 60s → alert
+- HTTP Flood (Hulk/GoldenEye): >100 req / 10s → alert
+- Slowloris: incomplete HTTP requests >20 / 30s → alert
+- SYN Flood: >500 SYN / 10s → alert
+- UDP Flood: >1000 packets / 10s → alert
+- Slow HTTP POST: >10 incomplete POST / 30s → alert
+
+### 10.3 Deployment
+
+```bash
+aws cloudformation create-stack \
+  --stack-name ids2018-opensource \
+  --template-body file://CICDDoS2018/aws/04-opensource-target.yaml \
+  --region ap-southeast-1
+```
+
+### 10.4 Collect Results (di Target-3)
+
+```bash
+# Setelah testing selesai, collect semua alerts:
+/opt/ids2018/collect_alerts.sh
+
+# Output: /opt/ids2018/logs/alerts_YYYYMMDD_HHMMSS.csv
+# Upload ke S3:
+aws s3 cp /opt/ids2018/logs/ s3://BUCKET/ids2018/results/ --recursive
+```
+
+---
+
+## 11. Notebook 05: Perbandingan 3 Pendekatan
+
+File: `CICDDoS2018/notebooks/05_comparison.ipynb`
+
+### Input Files (dari S3 setelah testing):
+- `results/target1_ml_results.csv` — per-flow predictions dari ML model
+- `results/target2_aws_results.csv` — WAF blocks + GuardDuty findings
+- `results/target3_opensource_results.csv` — Suricata alerts + Fail2Ban bans
+
+### Output Visualisasi:
+| File | Deskripsi |
+|------|-----------|
+| `comparison_detection_rate.png` | Grouped bar chart: detection rate per attack type × 3 targets |
+| `comparison_radar.png` | Radar chart: 5 dimensi (detect rate, speed, coverage, FP, blocking) |
+| `comparison_latency.png` | Bar chart: detection latency per attack (log scale) |
+| `comparison_heatmap.png` | Heatmap: attack type × system → detection rate |
+| `comparison_detection_rates.csv` | Tabel detection rate (untuk paper) |
+| `comparison_latency.csv` | Tabel latency (untuk paper) |
+| `comparison_overall.csv` | Tabel perbandingan keseluruhan |
+
+---
+
+## 12. Catatan Penting
 
 1. File Tuesday-20-02 (3.8 GB) perlu strategi khusus — mungkin sampling lebih agresif atau skip untuk run awal
 2. Label naming perlu dicek per file (mungkin berbeda format)

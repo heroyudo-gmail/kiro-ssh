@@ -229,3 +229,7 @@ __marimo__/
 !package-lock.json
 *.joblib
 *.pkl
+
+# Setting files (local config, not for git)
+**/setting.txt
+**/test_config.json
