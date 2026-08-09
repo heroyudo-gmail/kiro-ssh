@@ -1,0 +1,61 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Single Amazon Linux 2023 instance (bare, no UserData)
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: testing-multidetection
+
+  InstanceAmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
+
+Resources:
+  EC2Role:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${ProjectName}-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Policies:
+        - PolicyName: S3Access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: s3:*
+                Resource: '*'
+
+  EC2Profile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles: [!Ref EC2Role]
+
+  TestNode:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t3.large
+      ImageId: !Ref InstanceAmiId
+      SubnetId:
+        Fn::ImportValue: !Sub ${ProjectName}-subnet-id
+      SecurityGroupIds:
+        - Fn::ImportValue: !Sub ${ProjectName}-sg-id
+      IamInstanceProfile: !Ref EC2Profile
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-node
+
+Outputs:
+  InstanceId:
+    Value: !Ref TestNode
+  PublicIp:
+    Value: !GetAtt TestNode.PublicIp
+  PrivateIp:
+    Value: !GetAtt TestNode.PrivateIp

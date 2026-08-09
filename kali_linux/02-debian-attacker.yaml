@@ -1,0 +1,106 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: '02 - Debian 12 EC2 with SSM Agent (connect via Session Manager)'
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: Security-Lab
+
+  NetworkStackName:
+    Type: String
+    Default: security-lab-vpc
+    Description: Name of stack 01 (for import values)
+
+  DebianAmiId:
+    Type: String
+    Default: ami-097284c1ee60065d1
+    Description: Debian 12 AMI for ap-southeast-1
+
+  KeyPairName:
+    Type: String
+    Default: key_server1
+    Description: EC2 Key Pair for SSH access
+
+Resources:
+  # Security Group
+  InstanceSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow SSH + HTTP + all outbound
+      VpcId:
+        Fn::ImportValue: !Sub '${NetworkStackName}-VPC'
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+          Description: SSH
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+          Description: HTTP
+        - IpProtocol: -1
+          CidrIp: 10.0.0.0/16
+          Description: All internal VPC
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-SG'
+
+  # IAM Role (SSM + S3)
+  EC2Role:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${EnvironmentName}-debian-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Policies:
+        - PolicyName: S3Access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: s3:*
+                Resource: '*'
+
+  EC2Profile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles: [!Ref EC2Role]
+
+  # Debian EC2 Instance
+  DebianInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t3.large
+      ImageId: !Ref DebianAmiId
+      KeyName: !Ref KeyPairName
+      SubnetId:
+        Fn::ImportValue: !Sub '${NetworkStackName}-PublicSubnet'
+      SecurityGroupIds: [!Ref InstanceSG]
+      IamInstanceProfile: !Ref EC2Profile
+      UserData:
+        Fn::Base64: |
+          #!/bin/bash
+          echo "Ready" > /tmp/setup.log
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-Debian'
+
+Outputs:
+  InstanceId:
+    Value: !Ref DebianInstance
+  PublicIp:
+    Value: !GetAtt DebianInstance.PublicIp
+  PrivateIp:
+    Value: !GetAtt DebianInstance.PrivateIp

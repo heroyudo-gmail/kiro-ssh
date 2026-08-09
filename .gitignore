@@ -231,5 +231,9 @@ __marimo__/
 *.pkl
 
 # Setting files (local config, not for git)
-**/setting.txt
+
 **/test_config.json
+
+# Private keys
+*.ppk
+*.pem

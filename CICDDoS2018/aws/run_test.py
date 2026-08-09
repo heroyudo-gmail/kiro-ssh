@@ -90,7 +90,7 @@ def get_attack_schedule(target_ip, duration=300):
             "name": "DDoS-SYN",
             "attacker": "attacker3",
             "duration": duration,
-            "command": f"sudo timeout {duration} hping3 -S --flood -V -p 80 {target_ip} 2>&1 | tee /opt/attack/log_syn.txt"
+            "command": f"sudo timeout {duration} nping --tcp --flags SYN --rate 5000 -p 80 -c 100000 {target_ip} 2>&1 | tee /opt/attack/log_syn.txt"
         },
         {
             "name": "DDoS-UDP",
@@ -173,17 +173,22 @@ def run_test(config):
     log(f"Estimated total time: {total_time//60} min {total_time%60}s")
     log("=" * 60)
 
-    # ---- STEP 1: Start Analyzer capture ----
-    log("[ANALYZER] Starting tcpdump + CICFlowMeter...")
-    analyzer_start_cmd = (
+    # ---- STEP 1: Start capture on TARGET (where traffic arrives) ----
+    log("[TARGET] Starting tcpdump...")
+    target_id = config.get("target_instance_id", "i-0bf85ecefd3deeaf2")
+    target_start_cmd = (
         "sudo pkill tcpdump 2>/dev/null; "
-        "sudo pkill -f CICFlowMeter 2>/dev/null; "
-        "mkdir -p /opt/ids2018/{flows,results,logs}; "
-        "sudo tcpdump -i eth0 -w /opt/ids2018/capture.pcap &"
+        "rm -f /opt/ids2018/capture.pcap; "
+        "rm -rf /opt/ids2018/flows/*; "
+        "mkdir -p /opt/ids2018/flows; "
+        "nohup sudo tcpdump -i any -w /opt/ids2018/capture.pcap > /dev/null 2>&1 & "
+        "sleep 2; "
+        "ls -la /opt/ids2018/capture.pcap 2>&1; "
+        "echo CAPTURE_STARTED"
     )
-    cmd_id = send_ssm_command(ssm, instances['analyzer'], analyzer_start_cmd, "Start capture")
+    cmd_id = send_ssm_command(ssm, target_id, target_start_cmd, "Start capture on target")
     time.sleep(5)
-    log("[ANALYZER] Capture started")
+    log("[TARGET] Capture started")
 
     # ---- STEP 2: Warmup (benign traffic) ----
     log(f"[WARMUP] Generating benign traffic for {warmup}s...")
@@ -248,30 +253,82 @@ def run_test(config):
             log(f"  → Cooldown {cooldown}s...")
             time.sleep(cooldown)
 
-    # ---- STEP 4: Stop capture & run inference ----
+    # ---- STEP 4: Stop capture on Target, extract flows, copy to Analyzer, run inference ----
     log(f"\n{'='*60}")
-    log("[ANALYZER] Stopping capture & running inference...")
+    log("[TARGET] Stopping capture...")
     log(f"{'='*60}")
 
-    stop_and_infer_cmd = (
+    stop_cmd = (
         "sudo pkill tcpdump; "
-        "sleep 10; "
-        "sudo pkill -f CICFlowMeter 2>/dev/null; "
+        "sleep 3; "
+        "ls -lh /opt/ids2018/capture.pcap 2>&1; "
+        "echo CAPTURE_STOPPED"
+    )
+    cmd_id = send_ssm_command(ssm, target_id, stop_cmd, "Stop tcpdump on target")
+    time.sleep(10)
+    status, stdout, stderr = wait_for_command(ssm, cmd_id, target_id, timeout=30)
+    log(f"[TARGET] Stop status: {status}")
+    if stdout:
+        for line in stdout.strip().split('\n')[-3:]:
+            log(f"  {line}")
+
+    # Extract flows from pcap using cicflowmeter on Target
+    log("[TARGET] Extracting flows with cicflowmeter...")
+    extract_cmd = (
+        "cicflowmeter -f /opt/ids2018/capture.pcap /opt/ids2018/flows/ 2>&1 | tail -5; "
+        "echo; ls -lh /opt/ids2018/flows/ 2>&1; "
+        "echo FLOWS_EXTRACTED"
+    )
+    cmd_id = send_ssm_command(ssm, target_id, extract_cmd, "Extract flows on target")
+    log("  → Waiting for flow extraction (up to 120s)...")
+    status, stdout, stderr = wait_for_command(ssm, cmd_id, target_id, timeout=120)
+    log(f"  → Extract status: {status}")
+    if stdout:
+        for line in stdout.strip().split('\n')[-5:]:
+            log(f"    {line}")
+
+    # Copy flow CSV from Target to S3, then download to Analyzer
+    log("[TARGET→S3→ANALYZER] Transferring flow data...")
+    upload_flows_cmd = (
+        "aws s3 sync /opt/ids2018/flows/ s3://" + bucket + "/ids2018/flows/ 2>&1 | tail -3; "
+        "echo FLOWS_UPLOADED"
+    )
+    cmd_id = send_ssm_command(ssm, target_id, upload_flows_cmd, "Upload flows to S3")
+    time.sleep(20)
+    wait_for_command(ssm, cmd_id, target_id, timeout=60)
+
+    # Download flows to Analyzer
+    download_flows_cmd = (
+        "rm -rf /opt/ids2018/flows/*; "
+        "aws s3 sync s3://" + bucket + "/ids2018/flows/ /opt/ids2018/flows/ 2>&1 | tail -3; "
+        "ls -lh /opt/ids2018/flows/ 2>&1; "
+        "echo FLOWS_DOWNLOADED"
+    )
+    cmd_id = send_ssm_command(ssm, instances['analyzer'], download_flows_cmd, "Download flows to analyzer")
+    time.sleep(20)
+    status, stdout, stderr = wait_for_command(ssm, cmd_id, instances['analyzer'], timeout=60)
+    log(f"  → Download to Analyzer: {status}")
+    if stdout:
+        for line in stdout.strip().split('\n')[-4:]:
+            log(f"    {line}")
+
+    # Run inference on Analyzer
+    log("[ANALYZER] Running inference...")
+    infer_cmd = (
         "cd /opt/ids2018 && "
         "python3 inference.py "
         "--flows-dir /opt/ids2018/flows/ "
         "--models-dir /opt/ids2018/models/ "
         "--schedule /opt/ids2018/schedule/schedule.json "
-        "--output-dir /opt/ids2018/results/ 2>&1 | tee /opt/ids2018/logs/inference.log"
+        "--output-dir /opt/ids2018/results/ 2>&1 | tee /opt/ids2018/logs/inference.log | tail -20"
     )
-    cmd_id = send_ssm_command(ssm, instances['analyzer'], stop_and_infer_cmd, "Stop + Inference")
-    log("[ANALYZER] Inference command sent. Waiting for completion...")
-    
+    cmd_id = send_ssm_command(ssm, instances['analyzer'], infer_cmd, "Run inference")
+    log("  → Waiting for inference (up to 300s)...")
     status, stdout, stderr = wait_for_command(ssm, cmd_id, instances['analyzer'], timeout=300)
-    log(f"[ANALYZER] Inference status: {status}")
+    log(f"  → Inference status: {status}")
     if stdout:
         for line in stdout.strip().split('\n')[-10:]:
-            log(f"  {line}")
+            log(f"    {line}")
 
     # ---- STEP 5: Upload results to S3 ----
     if bucket:
