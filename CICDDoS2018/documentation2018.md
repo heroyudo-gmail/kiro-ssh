@@ -1018,3 +1018,145 @@ File: `CICDDoS2018/notebooks/05_comparison.ipynb`
 2. Label naming perlu dicek per file (mungkin berbeda format)
 3. Bisa di-reuse arsitektur AWS yang sama (Traffic Mirror + Analyzer)
 4. Untuk demo, bisa simulate berbagai attack type dari Attacker Node (Hydra, Slowloris, hping3)
+
+
+---
+
+## Ringkasan Notebook (Quick Reference)
+
+### 01_sampling.ipynb — Sampling & Visualisasi Distribusi
+
+**Apa yang dilakukan:**
+- Scan semua file CSV dataset (10 file, ~6.7 GB total)
+- Hitung distribusi label populasi asli (Benign vs masing-masing attack type)
+- Stratified sampling 10% → simpan sebagai `file_100.csv`
+- Generate subset: `file_75.csv`, `file_50.csv`, `file_25.csv`
+- Verifikasi sampling mempertahankan distribusi asli
+
+**Output .png:**
+| File | Isi |
+|------|-----|
+| `bar_distribusi_label_populasi.png` | Bar chart jumlah flow per label di dataset asli |
+| `pie_komposisi_attack_types.png` | Pie chart: (1) Benign vs Attack, (2) proporsi antar attack types |
+| `comparison_original_vs_sampled.png` | Grouped bar chart perbandingan % original vs sampled per label |
+
+---
+
+### 02_preprocessing.ipynb — Preprocessing & Cleaning
+
+**Apa yang dilakukan:**
+- Load semua file subset (100/75/50/25)
+- Impute nilai Infinity → max finite value per kolom
+- Hapus baris NaN
+- Drop kolom: Timestamp, Dst Port, Protocol (non-feature)
+- Hapus kolom zero-variance (fitur yang nilainya konstan)
+- StandardScaler normalisasi fitur numerik
+- LabelEncoder: label string → integer
+
+**Output .png:** Tidak ada (hanya menghasilkan file .pkl yang dipakai notebook selanjutnya)
+
+**Output data:** `cleaned_100.pkl`, `cleaned_75.pkl`, `cleaned_50.pkl`, `cleaned_25.pkl`
+
+---
+
+### 03_training.ipynb — Training & Evaluation (All Features)
+
+**Apa yang dilakukan:**
+- Train 3 model (XGBoost, Random Forest, SVM) pada 4 ukuran dataset
+- Split 80/20 per dataset size
+- Hitung metrik: Accuracy, Precision, Recall, F1, ROC-AUC
+- Hitung efisiensi: Training time, Inference per 10k samples, Model size, RAM usage
+- Feature importance (Top-20) berdasarkan XGBoost gain
+
+**Output .png:**
+| File | Isi |
+|------|-----|
+| `learning_curve_all_features.png` | Line chart F1-score vs dataset size (100/75/50/25) per model |
+| `confusion_matrix_all_models.png` | Heatmap confusion matrix untuk ketiga model (dataset 100%) |
+| `feature_importance_top20.png` | Horizontal bar chart 20 fitur terpenting berdasarkan gain |
+
+**Output data:** `experiment_results_03.pkl`, model files di `models/`
+
+---
+
+### 04_ablation.ipynb — Feature Reduction (Ablation Study)
+
+**Apa yang dilakukan:**
+- Train 3 model × 4 konfigurasi fitur: All features, Top-20, Top-15, Top-10
+- Ukur F1-score dan inference time per konfigurasi
+- Tentukan konfigurasi optimal (sweet spot: F1 tertinggi, size terkecil)
+- Export Top-3 model terbaik untuk deployment (format .json / .pkl)
+- Simpan metadata per model (scaler params, feature names, label mapping)
+
+**Output .png:**
+| File | Isi |
+|------|-----|
+| `ablation_f1_vs_features.png` | Line chart F1-score vs jumlah fitur per model |
+| `ablation_time_vs_features.png` | Line chart inference time vs jumlah fitur per model |
+| `confusion_matrix_best_ablation.png` | Heatmap CM dari konfigurasi model terbaik |
+| `feature_importance_top10_deploy.png` | Horizontal bar chart 10 fitur final untuk deployment |
+
+**Output data:** `ablation_results_04.pkl`, model files di `models/deploy/`
+
+---
+
+### 05_comparison.ipynb — Final Comparison & Presentasi
+
+**Apa yang dilakukan:**
+- Load semua hasil dari notebook 03 dan 04
+- Rangkum perbandingan performa antar model dan konfigurasi
+- Buat visualisasi untuk presentasi/paper
+- Generate tabel summary detection rate per attack type
+- Bandingkan latency (inference time) antar model
+
+**Output .png:**
+| File | Isi |
+|------|-----|
+| `comparison_detection_rate.png` | Bar chart detection rate per attack type per model |
+| `comparison_radar.png` | Radar/spider chart multi-metrik per model |
+| `comparison_latency.png` | Bar chart latency comparison antar model + konfigurasi fitur |
+
+**Output data:** Summary CSV untuk paper
+
+---
+
+## Ringkasan File AWS (Quick Reference)
+
+### CloudFormation YAML — Infrastructure as Code
+
+| File | Stack | Kegunaan |
+|------|-------|----------|
+| `05-network-vpc.yaml` | Network layer | VPC, Private Subnet, Route Table, Security Groups, VPC Endpoints |
+| `06-target1-instance.yaml` | Target 1 | EC2 target server (SSH+HTTP+FTP) — AZ-A |
+| `07-target2-instance.yaml` | Target 2 | EC2 target tambahan — AZ-A |
+| `08-target3-instance.yaml` | Target 3 | EC2 target tambahan — AZ-A |
+| `09-target4-instance-azb.yaml` | Target 4 | EC2 target di AZ-B (multi-AZ testing) |
+| `10-alb.yaml` | Load Balancer | Application Load Balancer di depan target servers |
+| `11-waf.yaml` | WAF | AWS WAF rules untuk proteksi HTTP (DDoS protection) |
+| `12-guardduty-flowlogs.yaml` | Monitoring | GuardDuty + VPC Flow Logs sebagai baseline comparison |
+
+**Deploy order:** 05 → 06/07/08/09 → 10 → 11 → 12
+**Delete order:** 12 → 11 → 10 → 09/08/07/06 → 05
+
+### Script Pendukung
+
+| File | Kegunaan |
+|------|----------|
+| `extract_flows_tshark.py` | Ekstraksi flow features dari pcap menggunakan tshark (alternatif CICFlowMeter) |
+| `inference.py` | Script inferensi: load model, predict, log result, upload S3 |
+| `install-attacker.sh` | Script install semua attack tools (Hydra, Slowloris, GoldenEye, hping3, dll) |
+| `run_test.py` | Orchestrator: jalankan semua skenario serangan secara otomatis via SSM |
+| `testing-attack.sh` | Script serangan manual (alternative untuk run_test.py) |
+
+### Dokumentasi Skenario
+
+| File | Isi |
+|------|-----|
+| `langkah.md` | Langkah-langkah operasional deploy & testing |
+| `vpc_testing.md` | Detail konfigurasi VPC untuk testing |
+| `attack.md` | Daftar serangan dan command per tool |
+| `skenario-1.md` | Detail skenario testing batch 1 (Brute-Force) |
+| `skenario-2.md` | Detail skenario testing batch 2 (DoS) |
+| `skenario-3.md` | Detail skenario testing batch 3 (DDoS) |
+
+---
