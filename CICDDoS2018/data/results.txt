@@ -1,0 +1,9 @@
+Model,Features,Training (s),Inference/10k (s),Model Size (MB),RAM (MB)
+XGBoost,All (68),359.17,0.2400,7.17,103.8
+Random Forest,All (68),621.02,0.1443,289.65,640.6
+XGBoost,Top-20,172.91,0.2266,6.82,17.6
+Random Forest,Top-20,268.04,0.1036,260.49,353.6
+XGBoost,Top-15,153.16,0.1930,5.91,0.0
+Random Forest,Top-15,203.57,0.1020,200.57,179.6
+XGBoost,Top-10,138.66,0.1826,5.65,10.0
+Random Forest,Top-10,166.37,0.1013,168.28,102.1
