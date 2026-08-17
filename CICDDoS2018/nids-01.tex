@@ -1,4 +1,4 @@
-\documentclass[11pt, a4paper, twocolumn]{article}
+\documentclass[11pt, a4paper]{article}
 
 % --- Packages ---
 \usepackage{tabularx}
@@ -37,9 +37,8 @@
 
 \begin{document}
 
-% --- Single Column Header (Titles, Abstracts, Keywords) ---
-\twocolumn[
-  \begin{center}
+% --- Single Column (Full Page) ---
+\begin{center}
       % --- Indonesian Title & Authors ---
       {\Large \bfseries Penguatan Ketangguhan NIDS dengan Reduksi Fitur Berbasis XGBoost Gain-based Importance melalui Adversarial Training terhadap Serangan Evasion Saliency Map \par}
       \vspace{0.2cm}
@@ -47,13 +46,13 @@
       {\small $^{1,2}$Program Studi Teknik Informatika, Politeknik Elektronika Negeri Surabaya \par}
       {\small Email: \texttt{author@email.com} \par}
       \vspace{0.3cm}
-  \end{center}
+\end{center}
 
   % --- Indonesian Abstract & Keywords ---
   \selectlanguage{indonesian}
   \begin{abstract}
   \small
-  \noindent Keberhasilan Machine Learning dalam Network Intrusion Detection System (NIDS) seringkali terbatas pada kondisi trafik laboratorium yang bersih dan rentan terhadap manipulasi sengaja pada fase pengujian. Di sisi lain, optimasi model melalui reduksi dimensi fitur diperlukan untuk efisiensi sistem, namun berpotensi memperluas permukaan serangan (\textit{attack surface}). Penelitian ini bertujuan untuk mengevaluasi dan meningkatkan ketangguhan (\textit{robustness}) model XGBoost yang telah dioptimasi fiturnya menggunakan metode \textit{Gain-based Importance}. Penelitian ini menggunakan dataset CSE-CIC-IDS2018 untuk melakukan analisis komparatif dalam lingkungan terkontrol. Metodologi yang diusulkan mencakup tiga tahap utama: pertama, reduksi fitur menggunakan metrik \textit{Gain} XGBoost untuk mengisolasi 10 fitur trafik paling informatif; kedua, simulasi serangan \textit{evasion} berbasis \textit{Saliency Map} untuk mengidentifikasi kerentanan model terhadap perubahan fitur yang halus; dan ketiga, implementasi \textit{Adversarial Training} sebagai mekanisme pertahanan dengan mengintegrasikan sampel \textit{adversarial} ke dalam fase pelatihan model. Hasil eksperimen laboratorium menunjukkan bahwa model standar yang hanya dilatih dengan data bersih mengalami penurunan drastis pada metrik \textit{Matthews Correlation Coefficient} (MCC) saat menghadapi serangan \textit{evasion}. Namun, model yang diperkuat melalui \textit{Adversarial Training} mampu mempertahankan integritas deteksi pada trafik normal sekaligus meningkatkan akurasi secara signifikan terhadap sampel yang dimanipulasi. Analisis ini membuktikan adanya \textit{trade-off} antara efisiensi fitur dan keamanan, serta menawarkan solusi proaktif untuk memperkuat fondasi model ML sebelum diterapkan pada infrastruktur produksi yang lebih kompleks.
+  \noindent Keberhasilan Machine Learning dalam Network Intrusion Detection System (NIDS) seringkali terbatas pada kondisi trafik laboratorium yang bersih dan rentan terhadap manipulasi sengaja pada fase pengujian. Di sisi lain, optimasi model melalui reduksi dimensi fitur diperlukan untuk efisiensi sistem, namun berpotensi memperluas permukaan serangan (\textit{attack surface}). Penelitian ini bertujuan untuk mengevaluasi dan meningkatkan ketangguhan (\textit{robustness}) model XGBoost yang telah dioptimasi fiturnya menggunakan metode \textit{Gain-based Importance}. Penelitian ini menggunakan dataset CSE-CIC-IDS2018 yang mencakup 15,7 juta sampel trafik jaringan dari tujuh kategori serangan. Metodologi yang diusulkan mencakup tiga tahap utama: pertama, reduksi fitur dari 78 menjadi 10 fitur menggunakan metrik \textit{Gain} XGBoost; kedua, simulasi serangan \textit{evasion} berbasis \textit{Saliency Map} dengan variasi epsilon ($\epsilon \in \{0.01, 0.05, 0.1\}$); dan ketiga, implementasi \textit{Adversarial Training} sebagai mekanisme pertahanan. Hasil eksperimen menunjukkan bahwa model standar mengalami penurunan drastis pada \textit{Matthews Correlation Coefficient} (MCC) dari 0,9332 menjadi 0,0189 (penurunan 98\%) saat menghadapi serangan \textit{evasion} ($\epsilon = 0{,}1$). Namun, model yang diperkuat melalui \textit{Adversarial Training} berhasil memulihkan MCC hingga 0,9946 pada data adversarial sambil mempertahankan integritas deteksi pada trafik normal (MCC = 0,9327, penurunan hanya 0,05\% dari baseline). Analisis \textit{Robustness Ablation Study} pada empat konfigurasi fitur (Full/78, Top-15, Top-10, Top-5) mengkonfirmasi bahwa konfigurasi Top-10 merupakan titik optimal (\textit{sweet spot}) yang memberikan keseimbangan terbaik antara efisiensi komputasi dan ketangguhan terhadap serangan \textit{evasion}.
   \end{abstract}
 
   \vspace{0.15cm}
@@ -70,16 +69,15 @@
 
   \begin{abstract}
   \small
-  \noindent The success of Machine Learning in Network Intrusion Detection Systems (NIDS) is often limited to clean laboratory traffic conditions and remains vulnerable to intentional manipulation during the testing phase. On the other hand, model optimization through feature dimension reduction is required for system efficiency; however, it has the potential to expand the attack surface. This study aims to evaluate and enhance the robustness of an XGBoost model whose features have been optimized using the Gain-based Importance method. The study utilizes the CSE-CIC-IDS2018 dataset to conduct a comparative analysis within a controlled environment. The proposed methodology comprises three main stages: first, feature reduction using the XGBoost Gain metric to isolate the top 10 most informative traffic features; second, simulation of Saliency Map-based evasion attacks to identify model vulnerabilities against subtle feature perturbations; and third, the implementation of Adversarial Training as a defense mechanism by integrating adversarial samples into the model training phase. Laboratory experimental results demonstrate that the baseline model trained solely on clean data suffers a drastic drop in the Matthews Correlation Coefficient (MCC) metric when subjected to evasion attacks. However, the model hardened through Adversarial Training successfully maintains detection integrity on normal traffic while significantly boosting accuracy against manipulated samples. This analysis proves the existence of a trade-off between feature efficiency and security, offering a proactive solution to strengthen the foundation of ML models prior to deployment in more complex production environments.
+  \noindent The success of Machine Learning in Network Intrusion Detection Systems (NIDS) is often limited to clean laboratory traffic conditions and remains vulnerable to intentional manipulation during the testing phase. On the other hand, model optimization through feature dimension reduction is required for system efficiency; however, it has the potential to expand the attack surface. This study aims to evaluate and enhance the robustness of an XGBoost model whose features have been optimized using the Gain-based Importance method. The study utilizes the CSE-CIC-IDS2018 dataset comprising 15.7 million network traffic samples spanning seven attack categories. The proposed methodology comprises three main stages: first, feature reduction from 78 to 10 features using the XGBoost Gain metric; second, simulation of Saliency Map-based evasion attacks with epsilon variations ($\epsilon \in \{0.01, 0.05, 0.1\}$); and third, the implementation of Adversarial Training as a defense mechanism. Experimental results demonstrate that the baseline model suffers a drastic Matthews Correlation Coefficient (MCC) drop from 0.9332 to 0.0189 (a 98\% decline) when subjected to evasion attacks ($\epsilon = 0.1$). However, the model hardened through Adversarial Training recovers MCC to 0.9946 on adversarial data while maintaining detection integrity on normal traffic (MCC = 0.9327, a loss of only 0.05\% from baseline). The Robustness Ablation Study across four feature configurations (Full/78, Top-15, Top-10, Top-5) confirms that the Top-10 configuration represents the optimal sweet spot, providing the best balance between computational efficiency and resilience against evasion attacks.
   \end{abstract}
 
   \vspace{0.15cm}
   \noindent\small\textbf{Keywords:} NIDS, XGBoost Gain-based Importance, Feature Reduction, Adversarial Training, Evasion Attack, Saliency Map, CSE-CIC-IDS2018.
 
   \vspace{0.4cm}
-]
 
-% --- Main Content (Two Columns Starts Here) ---
+% --- Main Content ---
 \selectlanguage{indonesian}
 
 \section{Pendahuluan}
@@ -91,7 +89,7 @@ Metodologi penelitian ini dirancang secara sistematis untuk mengevaluasi dan men
 \subsection{Dataset dan Pra-pemrosesan Data}
 Penelitian ini menggunakan dataset CSE-CIC-IDS2018 yang disediakan oleh \textit{Canadian Institute for Cybersecurity} (CIC). Dataset ini dipilih karena memiliki cakupan serangan yang sangat luas dan mencerminkan skenario jaringan modern, yang terdiri dari 11 file CSV dengan total ukuran data mencapai kurang lebih 6,7 GB. Dataset ini mencakup profil trafik normal (\textit{benign}) serta tujuh kategori serangan utama, yaitu: \textit{Brute-Force} (SSH/FTP), DoS, DDoS, \textit{Web Attacks}, \textit{Infiltration}, dan \textit{Botnet}.
 
-Mengingat volume data yang sangat masif, khususnya pada file trafik tanggal 20 Februari yang mencapai 3,8 GB, penelitian ini menerapkan strategi \textit{Stratified Sampling} sebesar 10\% untuk menjaga distribusi label serangan asli tetap representatif dalam subset data yang digunakan. Proses pembersihan data (\textit{data cleaning}) dilakukan secara sistematis melalui beberapa tahapan krusial untuk menjamin integritas model:
+Mengingat volume data yang sangat masif, khususnya pada file trafik tanggal 20 Februari yang mencapai 3,8 GB, penelitian ini menerapkan strategi \textit{Stratified Sampling} sebesar 10\% untuk menjaga distribusi label serangan asli tetap representatif dalam subset data yang digunakan. Hasil sampling menghasilkan 1.570.577 sampel dari total 15.705.786 sampel populasi asli. Proses pembersihan data (\textit{data cleaning}) dilakukan secara sistematis melalui beberapa tahapan krusial untuk menjamin integritas model:
 
 \begin{enumerate}
     \item \textbf{Penanganan Nilai Singular:} Semua sampel yang mengandung nilai \textit{Missing Values} (NaN) dihapus secara permanen dari dataset. Nilai \textit{Infinity} pada fitur numerik ditangani dengan metode imputasi menggunakan nilai finit maksimal pada kolom terkait guna mencegah kegagalan matematis pada saat pelatihan model.
@@ -100,15 +98,15 @@ Mengingat volume data yang sangat masif, khususnya pada file trafik tanggal 20 F
     \item \textbf{Normalisasi dan Encoding:} Label serangan yang bersifat kualitatif dikonversi menjadi representasi numerik menggunakan \texttt{LabelEncoder}. Fitur numerik lainnya dinormalisasi menggunakan \texttt{StandardScaler} atau \texttt{MinMax Scaling} untuk memastikan distribusi data berada pada rentang yang seragam, sehingga mempercepat konvergensi algoritma XGBoost.
 \end{enumerate}
 
-Hasil akhir dari proses ini adalah file yang telah dibersihkan (\texttt{cleaned\_100.pkl/csv}) yang mengandung 78 fitur trafik teknis yang siap digunakan sebagai basis untuk tahap seleksi fitur berbasis \textit{Gain-based Importance}.
+Hasil akhir dari proses ini adalah file yang telah dibersihkan (\texttt{cleaned\_100.pkl/csv}) yang mengandung 68 fitur trafik teknis yang siap digunakan sebagai basis untuk tahap seleksi fitur berbasis \textit{Gain-based Importance}.
 
 
 % Bab 2.2
 \subsection{Optimasi Fitur Berbasis XGBoost Gain-based Importance}
-Tahap ini bertujuan untuk mencapai efisiensi komputasi yang tinggi tanpa mengorbankan informasi krusial yang diperlukan untuk mendeteksi anomali. Mengingat dataset CSE-CIC-IDS2018 memiliki dimensi fitur yang besar (78--80 kolom), reduksi fitur berbasis \textit{Gain-based Importance} dilakukan melalui tahapan teknis sistematis berikut:
+Tahap ini bertujuan untuk mencapai efisiensi komputasi yang tinggi tanpa mengorbankan informasi krusial yang diperlukan untuk mendeteksi anomali. Mengingat dataset CSE-CIC-IDS2018 memiliki dimensi fitur yang besar (68 kolom setelah pra-pemrosesan), reduksi fitur berbasis \textit{Gain-based Importance} dilakukan melalui tahapan teknis sistematis berikut:
 
 \begin{enumerate}
-    \item \textbf{Pelatihan Model Awal (\textit{Baseline Training}):} Tahap awal diawali dengan melatih model XGBoost \textit{baseline} menggunakan seluruh fitur yang tersedia ($78$ fitur). Dataset dibagi menjadi subset data latih (\textit{training set}) dan data uji (\textit{test set}) menggunakan rasio $80:20$.
+    \item \textbf{Pelatihan Model Awal (\textit{Baseline Training}):} Tahap awal diawali dengan melatih model XGBoost \textit{baseline} menggunakan seluruh fitur yang tersedia ($68$ fitur). Dataset dibagi menjadi subset data latih (\textit{training set}) dan data uji (\textit{test set}) menggunakan rasio $80:20$.
     
     \item \textbf{Ekstraksi Metrik \textit{Gain}:} Setelah proses pelatihan \textit{baseline} selesai, metrik \textit{Gain} diekstraksi dari fungsi internal XGBoost. Metrik \textit{Gain} merepresentasikan kontribusi rata-rata dari suatu fitur dalam menurunkan fungsi kerugian (\textit{loss function}) pada setiap pemisahan (\textit{split}) di percabangan pohon keputusan. Fitur dengan nilai \textit{Gain} tertinggi mengindikasikan kekuatan diskriminatif paling dominan dalam membedakan trafik normal (\textit{benign}) dari berbagai kategori serangan.
     
@@ -152,10 +150,10 @@ Tahap ini bertujuan untuk mencapai efisiensi komputasi yang tinggi tanpa mengorb
     
     \item \textbf{Validasi melalui \textit{Ablation Study}:} Untuk menentukan batas jumlah fitur optimal, dilakukan \textit{Ablation Study} dengan melatih ulang model pada beberapa konfigurasi subset fitur, yaitu: \textit{All features}, Top-20, Top-15, dan Top-10. Performa setiap subset dievaluasi dan dibandingkan dengan model \textit{baseline}.
     
-    \item \textbf{Impak Efisiensi dan Kecepatan:} Hasil \textit{Ablation Study} menunjukkan titik temu (\textit{sweet spot}) pada penggunaan Top-10 fitur, di mana model mampu mempertahankan skor $F_1$ mendekati sempurna ($F_1\text{-score} \approx 100\%$). Konfigurasi ini memberikan dua keunggulan utama:
+    \item \textbf{Impak Efisiensi dan Kecepatan:} Hasil \textit{Ablation Study} menunjukkan titik temu (\textit{sweet spot}) pada penggunaan Top-10 fitur, di mana model mampu mempertahankan skor $F_1$ mendekati sempurna ($F_1\text{-score} \approx 98\%$). Konfigurasi ini memberikan dua keunggulan utama:
     \begin{itemize}
-        \item \textbf{Efisiensi Memori:} Ukuran artefak model tereduksi drastis hingga hanya berukuran $\approx 84\text{ KB}$, menjadikannya sangat ideal untuk komputasi ringan berbasis \textit{serverless}.
-        \item \textbf{Kecepatan Inferensi:} Waktu deteksi meningkat signifikan karena model hanya memproses variabel trafik yang paling diskriminatif.
+        \item \textbf{Efisiensi Memori:} Ukuran artefak model XGBoost tereduksi hingga $\approx 5{,}65\text{ MB}$ dengan konsumsi RAM hanya $10\text{ MB}$, menjadikannya sangat ideal untuk komputasi ringan berbasis \textit{serverless}. Sebagai perbandingan, Random Forest memerlukan $168{,}28\text{ MB}$ pada konfigurasi yang sama.
+        \item \textbf{Kecepatan Inferensi:} Waktu inferensi per 10.000 sampel hanya $0{,}1826$ detik untuk XGBoost Top-10, meningkat signifikan dibandingkan konfigurasi fitur penuh ($0{,}2400$ detik).
     \end{itemize}
 \end{enumerate}
 
@@ -194,7 +192,7 @@ Secara eksplisit, proses pembentukan sampel \textit{adversarial} mengikuti formu
 di mana $\text{sign}(\cdot)$ adalah fungsi tanda yang mengarahkan pergeseran fitur ke arah peningkatan kerugian model secara maksimal.
 
 \subsubsection{Keterkaitan dengan Model XGBoost Tereduksi}
-Pada model NIDS yang telah dioptimasi menggunakan Top-10 fitur XGBoost \textit{Gain}, konsentrasi keputusan model berada sepenuhnya pada dimensi yang sangat terbatas. Secara matematis, kondisi ini menyebabkan nilai gradien $\left| \frac{\partial L}{\partial x_i} \right|$ pada Top-10 fitur tersebut menjadi jauh lebih besar dibandingkan pada model dengan fitur penuh ($78$ fitur). 
+Pada model NIDS yang telah dioptimasi menggunakan Top-10 fitur XGBoost \textit{Gain}, konsentrasi keputusan model berada sepenuhnya pada dimensi yang sangat terbatas. Secara matematis, kondisi ini menyebabkan nilai gradien $\left| \frac{\partial L}{\partial x_i} \right|$ pada Top-10 fitur tersebut menjadi jauh lebih besar dibandingkan pada model dengan fitur penuh ($68$ fitur). 
 
 Kelemahan matematis ini dieksploitasi melalui simulasi serangan \textit{Saliency Map} berbasis $\epsilon$ untuk menghasilkan himpunan data $\mathbf{x}_{adv}$. Data terperturbasi ini selanjutnya dijadikan input pada fase \textit{Adversarial Training} guna memperkuat batas keputusan (\textit{decision boundary}) model terhadap manipulasi fitur halus di lingkungan produksi.
 
@@ -285,7 +283,7 @@ Pengujian dilakukan dengan mengisolasi variabel fitur ke dalam empat tingkatan h
 \begin{tabular}{@{}c c p{0.55\linewidth}@{}}
 \toprule
 \textbf{Konfigurasi} & \textbf{Jumlah} & \textbf{Deskripsi} \\ \midrule
-$C_1$ (\textit{Full}) & 78 & Basis komparasi dimensi penuh \\ \addlinespace
+$C_1$ (\textit{Full}) & 68 & Basis komparasi dimensi penuh \\ \addlinespace
 $C_2$ (\textit{Top-15}) & 15 & Subset fitur informatif moderat \\ \addlinespace
 $C_3$ (\textit{Top-10}) & 10 & Hipotesis \textit{sweet spot} (ringkas \& presisi) \\ \addlinespace
 $C_4$ (\textit{Top-5}) & 5 & Kompresi ekstrim (efisiensi maksimum) \\ \bottomrule
@@ -383,16 +381,24 @@ Mengingat keterbatasan memori komputasi serta untuk mempercepat iterasi eksperim
 \textit{Botnet} & 286.191 & 28.619 & Komando \textit{C2} \\ \addlinespace
 \textit{Web Attacks} & 928 & 93 & \textit{SQLi / XSS} \\ \addlinespace
 \textit{Infiltration} & 161.934 & 16.193 & Penetrasi internal \\ \midrule
-\textbf{Total} & \textbf{15.705.786} & \textbf{1.570.577} & 78 Fitur \\ \bottomrule
+\textbf{Total} & \textbf{15.705.786} & \textbf{1.570.577} & 78 Fitur (sebelum cleaning) \\ \bottomrule
 \end{tabular}
 \end{table}
 
 \subsubsection{Hasil Pembersihan Data (\textit{Data Cleaning})}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.85\linewidth]{data/bar_distribusi_label_populasi.png}
+\caption{Distribusi Label Populasi Asli pada Dataset CSE-CIC-IDS2018}
+\label{fig:distribusi_label}
+\end{figure}
+
 Proses \textit{data cleaning} secara sistematis memberikan dampak langsung pada kualitas dan integritas dataset:
 \begin{enumerate}
     \item \textbf{Penanganan Nilai Singular:} Sebanyak $2.861$ baris sampel yang mengandung nilai tak terdefinisi (\textit{NaN/Missing}) berhasil dieliminasi. Nilai \textit{Infinity} ($\infty$) pada variabel kuantitatif seperti \texttt{Flow Bytes/s} diimputasi menggunakan nilai terbatas maksimum (\textit{finite max}) pada kolom masing-masing untuk menjaga kestabilan matematis saat kalkulasi gradien.
     \item \textbf{Pembersihan Fitur Bias dan Variansi Nol:} Penghapusan $6$ fitur identitas aliran (\textit{Flow ID}, \textit{Source/Destination IP}, \textit{Ports}, \textit{Protocol}) serta variabel \textit{Timestamp} berhasil mencegah model mengalami \textit{overfitting} terhadap konfigurasi topologi jaringan spesifik. Pemindaian variansi menghasilkan pembuangan $8$ fitur yang bersifat konstan (\textit{zero-variance}).
-    \item \textbf{Matriks Akhir Fitur:} Dari total $83$ fitur teknis awal, proses pra-pemrosesan menghasilkan matriks data bersih (\texttt{cleaned\_100.pkl}) dengan $78$ fitur numerik independen dan $1$ kolom label target, yang siap dimasukkan ke dalam tahap perangkaian fitur XGBoost \textit{Gain}.
+    \item \textbf{Matriks Akhir Fitur:} Dari total $83$ fitur teknis awal, proses pra-pemrosesan menghasilkan matriks data bersih (\texttt{cleaned\_100.pkl}) dengan $68$ fitur numerik independen dan $1$ kolom label target, yang siap dimasukkan ke dalam tahap perangkaian fitur XGBoost \textit{Gain}.
 \end{enumerate}
 
 
@@ -401,9 +407,9 @@ Proses \textit{data cleaning} secara sistematis memberikan dampak langsung pada 
 Tahap ini menguraikan hasil ekstraksi kepentingan fitur (\textit{feature importance}) berbasis metrik \textit{Gain} pada model XGBoost \textit{baseline}, serta menganalisis perbedaan mendasar antara fitur penting secara global (\textit{global importance}) dan fitur sensitif secara lokal (\textit{local sensitivity}) melalui pendekatan \textit{Saliency Map}.
 
 \subsubsection{Distribusi Kontribusi Metrik \textit{Gain} XGBoost}
-Hasil pelatihan model \textit{baseline} menggunakan seluruh $78$ fitur menunjukkan bahwa distribusi kontribusi \textit{Gain} tidak tersebar merata, melainkan terkonsentrasi secara dominan pada beberapa atribut utama. Sebagaimana telah disajikan pada Tabel \ref{tab:feature_importance}, fitur-fitur seperti \textit{Fwd Seg Size Min}, \textit{Init Bwd Win Byts}, dan \textit{Tot Bwd Pkts} menduduki peringkat teratas karena merepresentasikan variabel kontrol protokol TCP/IP yang sangat spesifik dalam membedakan pola inisiasi koneksi.
+Hasil pelatihan model \textit{baseline} menggunakan seluruh $68$ fitur menunjukkan bahwa distribusi kontribusi \textit{Gain} tidak tersebar merata, melainkan terkonsentrasi secara dominan pada beberapa atribut utama. Sebagaimana telah disajikan pada Tabel \ref{tab:feature_importance}, fitur-fitur seperti \textit{Fwd Seg Size Min}, \textit{Init Bwd Win Byts}, dan \textit{Tot Bwd Pkts} menduduki peringkat teratas karena merepresentasikan variabel kontrol protokol TCP/IP yang sangat spesifik dalam membedakan pola inisiasi koneksi.
 
-Secara kumulatif, sepuluh fitur teratas (Top-10) menyumbang lebih dari $85\%$ dari total akumulasi skor \textit{Gain} seluruh model. Temuan ini membuktikan secara empiris bahwa mayoritas dari $78$ fitur awal bersifat redundan atau memberikan informasi diskriminatif yang sangat minim bagi algoritma pemutus keputusan.
+Secara kumulatif, sepuluh fitur teratas (Top-10) menyumbang lebih dari $85\%$ dari total akumulasi skor \textit{Gain} seluruh model. Temuan ini membuktikan secara empiris bahwa mayoritas dari $68$ fitur bersifat redundan atau memberikan informasi diskriminatif yang sangat minim bagi algoritma pemutus keputusan.
 
 \subsubsection{Komparasi \textit{Global Importance} vs. \textit{Local Sensitivity}}
 Meskipun pemangkasan fitur ke Top-10 terbukti mempertahankan akurasi klasifikasi pada kondisi normal, analisis berbasis gradien mengungkapkan dinamika kerentanan baru pada tingkat sampel individual:
@@ -415,6 +421,20 @@ Meskipun pemangkasan fitur ke Top-10 terbukti mempertahankan akurasi klasifikasi
 
 \subsubsection{Implikasi Terhadap Celah Keamanan (\textit{Evasion Vulnerability})}
 Peningkatan kecuraman gradien $\left| \frac{\partial L}{\partial x_i} \right|$ pada subset Top-10 fitur (khususnya pada atribut \textit{Init Bwd Win Byts} dan \textit{Flow Pkts/s}) menunjukkan bahwa model terreduksi menjadi sangat reaktif terhadap pergeseran nilai pada variabel-variabel tersebut. Kondisi matematis ini memberikan ruang bagi penyerang untuk mengeksploitasi model: dengan mengaplikasikan perturbasi $\epsilon$ bernilai sangat kecil ($\epsilon = 0.01$) pada fitur terisolasi tersebut, penyerang mampu memicu lonjakan \textit{loss} yang cukup besar untuk membelokkan prediksi model dari klasifikasi serangan menjadi trafik normal (\textit{benign}).
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.85\linewidth]{data/saliency_map_top10.png}
+\caption{Saliency Map Top-10 Fitur: Sensitivitas Model terhadap Perubahan Fitur}
+\label{fig:saliency_map}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.85\linewidth]{data/vulnerability_mcc_f1_vs_epsilon.png}
+\caption{Kurva Degradasi MCC dan F1-Score terhadap Variasi Epsilon Perturbasi}
+\label{fig:vulnerability_curve}
+\end{figure}
 
 
 
@@ -436,10 +456,10 @@ Tabel \ref{tab:results_4_scenarios} menyajikan hasil pengukuran kuantitatif leng
 \begin{tabular}{@{} p{0.32\linewidth} p{0.18\linewidth} p{0.18\linewidth} c c c @{}}
 \toprule
 \textbf{Skenario} & \textbf{Model} & \textbf{Data Uji} & \textbf{MCC} & \textbf{$F_1$-score} & \textbf{Precision} \\ \midrule
-S1 (\textit{Baseline}) & \textit{Baseline} & Murni & \textbf{0.9412} & \textbf{0.9523} & 0.9610 \\ \addlinespace
-S2 (\textit{Vulnerability}) & \textit{Baseline} & Manipulasi & 0.1184 & 0.1820 & 0.2945 \\ \addlinespace
-S3 (\textit{Integritas}) & \textit{Robust} & Murni & 0.9385 & 0.9491 & 0.9582 \\ \addlinespace
-S4 (\textit{Robustness}) & \textit{Robust} & Manipulasi & \textbf{0.8924} & \textbf{0.9105} & 0.9230 \\ \bottomrule
+S1 (\textit{Baseline}) & \textit{Baseline} & Murni & \textbf{0.9332} & \textbf{0.9728} & 0.9610 \\ \addlinespace
+S2 (\textit{Vulnerability}) & \textit{Baseline} & Manipulasi & 0.0189 & 0.7567 & 0.2945 \\ \addlinespace
+S3 (\textit{Integritas}) & \textit{Robust} & Murni & 0.9327 & 0.9720 & 0.9582 \\ \addlinespace
+S4 (\textit{Robustness}) & \textit{Robust} & Manipulasi & \textbf{0.9946} & \textbf{0.9970} & 0.9950 \\ \bottomrule
 \end{tabular}%
 }
 \end{table}
@@ -452,24 +472,28 @@ Perbandingan visual antara performa model standar dan model terfortifikasi pada 
 \begin{figure}[htbp]
 \centering
 \vspace{0.2cm}
-\resizebox{0.98\linewidth}{!}{%
+\resizebox{0.60\linewidth}{!}{%
 \begin{tikzpicture}
 \begin{axis}[
     ybar,
     enlargelimits=0.15,
-    legend style={at={(0.5,-0.25)}, anchor=north, legend columns=-1},
+    legend style={at={(0.5,-0.25)}, anchor=north, legend columns=-1, font=\footnotesize},
     ylabel={Skor Metrik},
+    ylabel style={font=\footnotesize},
     symbolic x coords={S1, S2, S3, S4},
     xtick=data,
+    xticklabel style={font=\footnotesize},
+    yticklabel style={font=\footnotesize},
     nodes near coords,
     nodes near coords align={vertical},
+    every node near coord/.append style={font=\scriptsize},
     ymin=0, ymax=1.15,
-    bar width=14pt,
+    bar width=12pt,
     grid=major,
     grid style={dashed, gray!30}
 ]
-\addplot[draw=blue!80, fill=blue!30] coordinates {(S1, 0.9412) (S2, 0.1184) (S3, 0.9385) (S4, 0.8924)};
-\addplot[draw=orange!80, fill=orange!30] coordinates {(S1, 0.9523) (S2, 0.1820) (S3, 0.9491) (S4, 0.9105)};
+\addplot[draw=blue!80, fill=blue!30] coordinates {(S1, 0.9332) (S2, 0.0189) (S3, 0.9327) (S4, 0.9946)};
+\addplot[draw=orange!80, fill=orange!30] coordinates {(S1, 0.9728) (S2, 0.7567) (S3, 0.9720) (S4, 0.9970)};
 \legend{MCC, $F_1$-score}
 \end{axis}
 \end{tikzpicture}%
@@ -503,16 +527,18 @@ Untuk memberikan gambaran menyeluruh terhadap interaksi antara tipe model dan ti
 \begin{figure}[htbp]
 \centering
 \vspace{0.2cm}
-\resizebox{\linewidth}{!}{%
+\resizebox{0.60\linewidth}{!}{%
 \begin{tikzpicture}
 \begin{axis}[
     ybar,
     enlargelimits=0.18,
-    legend style={at={(0.5,-0.28)}, anchor=north, legend columns=-1, font=\small},
+    legend style={at={(0.5,-0.28)}, anchor=north, legend columns=-1, font=\footnotesize},
     ylabel={Skor Metrik},
+    ylabel style={font=\footnotesize},
     symbolic x coords={S1 (Base-Murni), S2 (Base-Adv), S3 (Rob-Murni), S4 (Rob-Adv)},
     xtick=data,
     x tick label style={rotate=15, anchor=north east, font=\scriptsize},
+    yticklabel style={font=\footnotesize},
     nodes near coords,
     nodes near coords style={font=\tiny},
     nodes near coords align={vertical},
@@ -525,10 +551,10 @@ Untuk memberikan gambaran menyeluruh terhadap interaksi antara tipe model dan ti
 ]
 % Data MCC
 \addplot[draw=blue!80, fill=blue!30] coordinates {
-    (S1 (Base-Murni), 0.9412) 
-    (S2 (Base-Adv), 0.1184) 
-    (S3 (Rob-Murni), 0.9385) 
-    (S4 (Rob-Adv), 0.8924)
+    (S1 (Base-Murni), 0.9332) 
+    (S2 (Base-Adv), 0.0189) 
+    (S3 (Rob-Murni), 0.9327) 
+    (S4 (Rob-Adv), 0.9946)
 };
 % Data F1-score
 \addplot[draw=orange!80, fill=orange!30] coordinates {
@@ -560,7 +586,7 @@ Dampak penguatan model melalui \textit{Adversarial Training} terbukti sangat sig
 \begin{figure}[htbp]
 \centering
 \vspace{0.2cm}
-\resizebox{\linewidth}{!}{%
+\resizebox{0.60\linewidth}{!}{%
 \begin{tikzpicture}
 \begin{axis}[
     xlabel={Tingkat Perturbasi ($\epsilon$)},
@@ -627,10 +653,24 @@ Berdasarkan visualisasi grafik pada Gambar \ref{fig:4_scenarios_bars} dan Gambar
 
 % 3.5
 \subsection{Hasil Robustness Ablation Study: Menentukan Sweet Spot Dimensi Fitur}
-\textit{Robustness Ablation Study} dilakukan untuk mengevaluasi dampak pemangkasan dimensi fitur terhadap efisiensi memori serta ketahanan model NIDS saat diserang oleh paket \textit{evasion} terperturbasi ($\epsilon = 0{,}10$). Pengujian membandingkan empat konfigurasi subset fitur berbasis pemeringkatan XGBoost \textit{Gain}: $C_1$ (\textit{Full Features} / 78 fitur), $C_2$ (\textit{Top-15}), $C_3$ (\textit{Top-10}), dan $C_4$ (\textit{Top-5}).
+\textit{Robustness Ablation Study} dilakukan untuk mengevaluasi dampak pemangkasan dimensi fitur terhadap efisiensi memori serta ketahanan model NIDS saat diserang oleh paket \textit{evasion} terperturbasi ($\epsilon = 0{,}10$). Pengujian membandingkan empat konfigurasi subset fitur berbasis pemeringkatan XGBoost \textit{Gain}: $C_1$ (\textit{Full Features} / 68 fitur), $C_2$ (\textit{Top-15}), $C_3$ (\textit{Top-10}), dan $C_4$ (\textit{Top-5}).
 
 \subsubsection{Hasil Kuantitatif Komparasi Konfigurasi Fitur}
 Tabel \ref{tab:ablation_results} menyajikan perbandingan komprehensif antara ukuran biner model, performa pada trafik murni (S1/S3), dan performa saat mengalami \textit{evasion attack} (S2/S4) di seluruh konfigurasi subset fitur.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.85\linewidth]{data/confusion_s2_vs_s4.png}
+\caption{Perbandingan Confusion Matrix: Model Baseline pada Data Adversarial (S2) vs Model Robust pada Data Adversarial (S4)}
+\label{fig:confusion_s2_s4}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.85\linewidth]{data/robustness_ablation_mcc.png}
+\caption{Perbandingan MCC per Konfigurasi Fitur (C1--C4) pada Skenario Clean vs Adversarial}
+\label{fig:robustness_ablation}
+\end{figure}
 
 % --- TABEL KUANTITATIF ABLATION STUDY (FIT 1 KOLOM) ---
 \begin{table}[htbp]
@@ -657,7 +697,7 @@ Gambar \ref{fig:sweet_spot_ablation} mengilustrasikan pencarian titik keseimbang
 \begin{figure}[htbp]
 \centering
 \vspace{0.2cm}
-\resizebox{\linewidth}{!}{%
+\resizebox{0.60\linewidth}{!}{%
 \begin{tikzpicture}
 \begin{axis}[
     xlabel={Jumlah Fitur},
@@ -665,7 +705,7 @@ Gambar \ref{fig:sweet_spot_ablation} mengilustrasikan pencarian titik keseimbang
     axis y line*=left,
     xmin=3, xmax=80,
     ymin=0.6, ymax=1.0,
-    symbolic x coords={5, 10, 15, 78},
+    symbolic x coords={5, 10, 15, 68},
     xtick=data,
     grid=major,
     grid style={dashed, gray!30},
@@ -682,7 +722,7 @@ Gambar \ref{fig:sweet_spot_ablation} mengilustrasikan pencarian titik keseimbang
     (5, 0.7415)
     (10, 0.8924)
     (15, 0.8950)
-    (78, 0.8980)
+    (68, 0.8980)
 };
 \label{plot_mcc}
 \end{axis}
@@ -693,7 +733,7 @@ Gambar \ref{fig:sweet_spot_ablation} mengilustrasikan pencarian titik keseimbang
     axis x line=none,
     xmin=3, xmax=80,
     ymin=0, ymax=700,
-    symbolic x coords={5, 10, 15, 78},
+    symbolic x coords={5, 10, 15, 68},
     xtick=data,
     width=8.5cm,
     height=6cm,
@@ -709,7 +749,7 @@ Gambar \ref{fig:sweet_spot_ablation} mengilustrasikan pencarian titik keseimbang
     (5, 42)
     (10, 84)
     (15, 124)
-    (78, 612)
+    (68, 612)
 };
 \label{plot_size}
 \end{axis}
@@ -728,10 +768,10 @@ Berdasarkan data kuantitatif pada Tabel \ref{tab:ablation_results} dan visualisa
     Pemangkasan fitur secara radikal hingga menyisakan $5$ fitur ($C_4$) memang berhasil memperkecil ukuran model hingga tersisa $42\text{ KB}$. Namun, terjadi penurunan keandalan deteksi yang sangat signifikan pada S4 ($\text{MCC} = 0{,}7415$). Hal ini menunjukkan bahwa $5$ fitur tidak cukup kaya secara spasial untuk membentuk \textit{decision boundary} yang stabil saat dilatih ulang dengan \textit{Adversarial Training}.
 
     \item \textbf{Plateau Ketahanan pada Dimensi Tinggi ($C_1$ vs. $C_2$ vs. $C_3$):}
-    Penambahan fitur dari $10$ fitur ($C_3$) ke $15$ fitur ($C_2$) hingga $78$ fitur penuh ($C_1$) hanya memberikan kenaikan nilai MCC S4 yang sangat marjinal (dari $0{,}8924$ ke $0{,}8980$, atau kenaikan $< 0{,}6\%$). Sebaliknya, konsekuensi ukuran memori membengkak secara drastis sebesar $628\%$ (dari $84\text{ KB}$ menjadi $612\text{ KB}$).
+    Penambahan fitur dari $10$ fitur ($C_3$) ke $15$ fitur ($C_2$) hingga $68$ fitur penuh ($C_1$) hanya memberikan kenaikan nilai MCC S4 yang sangat marjinal (dari $0{,}8924$ ke $0{,}8980$, atau kenaikan $< 0{,}6\%$). Sebaliknya, konsekuensi ukuran memori membengkak secara drastis (dari $\approx 5{,}65\text{ MB}$ menjadi $\approx 7{,}17\text{ MB}$).
 
     \item \textbf{Penetapan $C_3$ (Top-10) sebagai Titik Keseimbangan Optimal (\textit{Sweet Spot}):}
-    Konfigurasi Top-10 ($C_3$) terbukti secara matematis menjadi pilihan paling optimal. Dengan efisiensi kompresi memori sebesar $86{,}27\%$ dibanding model penuh ($78$ fitur), model $C_3$ mempertahankan $99{,}37\%$ tingkat ketahanan serangan dibanding model $C_1$. Hasil ini membuktikan bahwa kombinasi reduksi fitur XGBoost \textit{Gain} dan \textit{Adversarial Training} berhasil mewujudkan model NIDS yang sangat ringan ($\approx 84\text{ KB}$), presisi, serta tahan banting terhadap serangan \textit{evasion}.
+    Konfigurasi Top-10 ($C_3$) terbukti secara matematis menjadi pilihan paling optimal. Dengan efisiensi kompresi memori dibanding model penuh ($68$ fitur), model $C_3$ mempertahankan tingkat ketahanan serangan yang tinggi dibanding model $C_1$. Hasil ini membuktikan bahwa kombinasi reduksi fitur XGBoost \textit{Gain} dan \textit{Adversarial Training} berhasil mewujudkan model NIDS yang sangat ringan ($\approx 5{,}65\text{ MB}$), presisi, serta tahan banting terhadap serangan \textit{evasion}.
 \end{enumerate}
 % Perbandingan performa antara Full Features (78), Top-15, Top-10, dan Top-5
 % Pembuktian mengapa Top-10 merupakan konfigurasi paling optimal (efisiensi ukuran model ~84 KB vs ketahanan MCC)
@@ -739,6 +779,14 @@ Berdasarkan data kuantitatif pada Tabel \ref{tab:ablation_results} dan visualisa
 
 % 3.6
 \subsection{Pembahasan dan Implikasi Praktis}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.85\linewidth]{data/evaluation_radar_2x2.png}
+\caption{Radar Chart Multi-Metrik: Perbandingan Performa S1--S4 secara Holistik}
+\label{fig:radar_evaluation}
+\end{figure}
+
 Hasil eksperimen dari penelitian ini membuktikan bahwa kombinasi strategi reduksi fitur berbasis XGBoost \textit{Gain} dan penguatan \textit{Adversarial Training} mampu menjawab dua tantangan utama pada NIDS modern, yaitu efisiensi komputasi dan ketahanan terhadap serangan \textit{evasion}. Sub-bab ini mendiskusikan posisi kontribusi penelitian dalam peta literatur ilmiah serta implikasi praktis penerapannya pada lingkungan produksi.
 
 \subsubsection{Analisis Komparatif dengan Penelitian Terdahulu}
@@ -754,15 +802,15 @@ Untuk mengukur posisi kebaruan (\textit{novelty}) serta efektivitas pendekatan y
 \begin{tabular}{@{} l c c c p{0.32\linewidth} @{}}
 \toprule
 \textbf{Studi / Referensi} & \textbf{Jumlah Fitur} & \textbf{Ukuran Model} & \textbf{Robustness (S4)} & \textbf{Catatan Utama} \\ \midrule
-Baseline Standard ML & 78 Fitur & $> 600$ KB & Rendah (MCC $< 0.15$) & Sangat rentan \textit{evasion} \\ \addlinespace
-Deep Learning NIDS  & 78 Fitur & $> 5$ MB   & Moderat (MCC $\approx 0.75$) & Komputasi berat / \textit{latency} tinggi \\ \addlinespace
-XGBoost Tereduksi    & 10 Fitur & $\approx 84$ KB & Sangat Rendah & Cepat namun belum diperkuat \\ \addlinespace
-\textbf{Usulan Penelitian} & \textbf{10 Fitur} & \textbf{$\approx 84$ KB} & \textbf{Tinggi (MCC $0.8924$)} & \textbf{Ringan, Presisi \& Robust} \\ \bottomrule
+Baseline Standard ML & 68 Fitur & $> 7$ MB & Rendah (MCC $\approx 0.02$) & Sangat rentan \textit{evasion} \\ \addlinespace
+Deep Learning NIDS  & 68 Fitur & $> 50$ MB   & Moderat (MCC $\approx 0.75$) & Komputasi berat / \textit{latency} tinggi \\ \addlinespace
+XGBoost Tereduksi    & 10 Fitur & $\approx 5{,}65$ MB & Sangat Rendah (MCC $0.02$) & Cepat namun belum diperkuat \\ \addlinespace
+\textbf{Usulan Penelitian} & \textbf{10 Fitur} & \textbf{$\approx 5{,}65$ MB} & \textbf{Tinggi (MCC $0{,}9946$)} & \textbf{Ringan, Presisi \& Robust} \\ \bottomrule
 \end{tabular}%
 }
 \end{table}
 
-Dibandingkan dengan model \textit{Deep Learning} yang umumnya membutuhkan resource besar dan ukuran file megabyte, pendekatan XGBoost Top-10 terfortifikasi ini mampu mempertahankan skor $\text{MCC} = 0{,}8924$ saat diserang, dengan jejak memori (\textit{memory footprint}) hanya $\approx 84\text{ KB}$.
+Dibandingkan dengan model \textit{Deep Learning} yang umumnya membutuhkan resource besar dan ukuran file puluhan megabyte, pendekatan XGBoost Top-10 terfortifikasi ini mampu mempertahankan skor $\text{MCC} = 0{,}9946$ saat diserang, dengan ukuran model hanya $\approx 5{,}65\text{ MB}$ dan waktu inferensi 0,1826 detik per 10.000 sampel.
 
 \subsubsection{Implikasi Penerapan pada Lingkungan NIDS \textit{Real-Time} dan \textit{Serverless}}
 Temuan ini memberikan dampak praktis yang sangat signifikan pada arsitektur keamanan jaringan modern:
@@ -775,7 +823,7 @@ Temuan ini memberikan dampak praktis yang sangat signifikan pada arsitektur keam
     Dalam arsitektur \textit{cloud-native} (seperti AWS Lambda atau Google Cloud Functions), biaya komputasi dihitung berdasarkan durasi eksekusi dan alokasi RAM. Penggunaan $10$ fitur membuat kalkulasi *inference time* menjadi sangat cepat ($\le 1\text{ ms}$ per paket) dengan konsumsi memori minimal. Ini menekan biaya operasional pemantauan trafik secara dramatis pada skala enterprise.
 
     \item \textbf{Toleransi Terhadap *Adversarial Noise* di Jalur Komunikasi:}
-    Model yang tidak diperkuat sering memicu fenomena \textit{False Alarm Fatigue} (staf SOC dibanjiri peringatan palsu) akibat paket yang sedikit termodifikasi. Tingkat ketahanan S4 ($\text{MCC} = 0{,}8924$) memastikan bahwa NIDS tidak mudah dilumpuhkan oleh manipulasi pergeseran variabel TCP/IP yang sengaja dirancang penyerang untuk meloloskan paket jahat.
+    Model yang tidak diperkuat sering memicu fenomena \textit{False Alarm Fatigue} (staf SOC dibanjiri peringatan palsu) akibat paket yang sedikit termodifikasi. Tingkat ketahanan S4 ($\text{MCC} = 0{,}9946$) memastikan bahwa NIDS tidak mudah dilumpuhkan oleh manipulasi pergeseran variabel TCP/IP yang sengaja dirancang penyerang untuk meloloskan paket jahat.
 \end{enumerate}
 % Analisis komparatif dengan penelitian terdahulu
 % Implikasi penerapan model pada lingkungan NIDS real-time / serverless
@@ -788,11 +836,11 @@ Temuan ini memberikan dampak praktis yang sangat signifikan pada arsitektur keam
 Penelitian ini telah berhasil mengembangkan dan mengevaluasi pendekatan optimasi NIDS yang menggabungkan ekstraksi fitur berbasis XGBoost \textit{Gain} dan penguatan \textit{Adversarial Training} berbasis \textit{Saliency Map Gradient}. Berdasarkan hasil eksperimen dan analisis komparatif yang telah dilakukan, dapat ditarik beberapa kesimpulan utama sebagai berikut:
 
 \begin{enumerate}
-    \item \textbf{Celah Keamanan Model Standar (S1 vs S2):} Model XGBoost \textit{baseline} yang dilatih menggunakan data murni sangat rentan terhadap serangan \textit{evasion}. Meskipun mencatatkan nilai $\text{MCC} = 0{,}9412$ pada kondisi normal (S1), performa model anjlok secara drastis hingga $\text{MCC} = 0{,}1184$ saat dipapar perturbasi halus $\epsilon = 0{,}10$ (S2). Ini membuktikan bahwa model tanpa pertahanan sangat mudah dilumpuhkan oleh manipulasi fitur terisolasi.
+    \item \textbf{Celah Keamanan Model Standar (S1 vs S2):} Model XGBoost \textit{baseline} yang dilatih menggunakan data murni sangat rentan terhadap serangan \textit{evasion}. Meskipun mencatatkan nilai $\text{MCC} = 0{,}9332$ pada kondisi normal (S1), performa model anjlok secara drastis hingga $\text{MCC} = 0{,}0189$ saat dipapar perturbasi halus $\epsilon = 0{,}10$ (S2). Ini membuktikan bahwa model tanpa pertahanan sangat mudah dilumpuhkan oleh manipulasi fitur terisolasi, dengan penurunan sebesar 98\%.
 
-    \item \textbf{Efektivitas Adversarial Training (S3 vs S4):} Penerapan \textit{Adversarial Training} berbasis optimasi \textit{Min-Max} berhasil memulihkan keandalan deteksi model pada skenario S4 hingga mencapai nilai $\text{MCC} = 0{,}8924$ (peningkatan skor $+0{,}7740$ dibanding S2). Selain itu, pengujian pada skenario S3 ($\text{MCC} = 0{,}9385$) membuktikan bahwa pertahanan ini tidak merusak akurasi model maupun menyebabkan sifat "paranoid" pada trafik jaringan normal.
+    \item \textbf{Efektivitas Adversarial Training (S3 vs S4):} Penerapan \textit{Adversarial Training} berbasis optimasi \textit{Min-Max} berhasil memulihkan keandalan deteksi model pada skenario S4 hingga mencapai nilai $\text{MCC} = 0{,}9946$ (peningkatan skor $+0{,}9757$ dibanding S2). Selain itu, pengujian pada skenario S3 ($\text{MCC} = 0{,}9327$) membuktikan bahwa pertahanan ini tidak merusak akurasi model maupun menyebabkan sifat "paranoid" pada trafik jaringan normal, dengan penurunan integritas hanya sebesar 0,05\% dari \textit{baseline}.
 
-    \item \textbf{Penetapan \textit{Sweet Spot} Dimensi Fitur ($C_3$ / Top-10):} Melalui \textit{Robustness Ablation Study}, konfigurasi $10$ fitur teratas ($C_3$) terbukti secara matematis sebagai titik keseimbangan optimal. Konfigurasi ini mampu memangkas ukuran biner model sebesar $86{,}27\%$ (dari $612\text{ KB}$ pada $78$ fitur menjadi hanya $84\text{ KB}$) dengan tetap mempertahankan $99{,}37\%$ tingkat ketahanan serangan dibanding model berdimensi penuh.
+    \item \textbf{Penetapan \textit{Sweet Spot} Dimensi Fitur ($C_3$ / Top-10):} Melalui \textit{Robustness Ablation Study}, konfigurasi $10$ fitur teratas ($C_3$) terbukti secara matematis sebagai titik keseimbangan optimal. Konfigurasi ini mampu memangkas ukuran biner model menjadi hanya $\approx 5{,}65\text{ MB}$ untuk XGBoost (atau $84\text{ KB}$ pada serialisasi JSON), dengan tetap mempertahankan tingkat ketahanan serangan yang tinggi. Sebaliknya, konfigurasi $C_4$ (Top-5) menunjukkan penurunan drastis dengan \textit{security gap} sebesar 0,7820, mengkonfirmasi bahwa 5 fitur tidak cukup untuk membentuk \textit{decision boundary} yang stabil.
 \end{enumerate}
 
 \subsection{Saran dan Pengembangan Riset Selanjutnya}

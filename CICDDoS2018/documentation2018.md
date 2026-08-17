@@ -1160,3 +1160,101 @@ File: `CICDDoS2018/notebooks/05_comparison.ipynb`
 | `skenario-3.md` | Detail skenario testing batch 3 (DDoS) |
 
 ---
+
+
+## Ringkasan Notebook 05-08 (Adversarial Robustness Pipeline)
+
+### 05_adversarial_attack.ipynb — Saliency Map & Evasion Simulation
+
+**Apa yang dilakukan:**
+- Load model baseline XGBoost Top-10 dari notebook 04
+- Hitung Saliency Map (gradient sensitivitas loss terhadap tiap fitur)
+- Generate adversarial samples menggunakan FGSM (ε = 0.01, 0.05, 0.1)
+- Evaluasi vulnerability: ukur MCC/F1 drop pada setiap level epsilon
+- Identifikasi kelas yang paling rentan terhadap evasion
+
+**Hasil utama:**
+- Fitur paling sensitif: `Init Fwd Win Byts` (saliency = 35.37)
+- MCC drop: 0.9332 → 0.0189 pada ε=0.1 (penurunan 98%)
+- F1 drop: 97.28% → 75.67%
+- Kelas paling rentan: DDoS-HOIC (100% drop), DDoS-LOIC-UDP (100%)
+
+**Output:** `adversarial_results_05.pkl`, `adversarial_samples_05.pkl`, 4 file PNG
+
+---
+
+### 06_adversarial_training.ipynb — Hardening via Adversarial Training
+
+**Apa yang dilakukan:**
+- Load adversarial samples dari notebook 05
+- Augmentasi training data: D_robust = D_clean ∪ D_adv (rasio 80:20)
+- Re-train XGBoost pada D_robust (Min-Max optimization)
+- Evaluasi 4 skenario S1-S4:
+  - S1: Baseline + Clean → MCC = 0.9332
+  - S2: Baseline + Adversarial → MCC = 0.0189
+  - S3: Robust + Clean → MCC = 0.9327
+  - S4: Robust + Adversarial → MCC = 0.9946
+
+**Hasil utama:**
+- Security Gap (S1→S2): 0.9143
+- Integrity Loss (S1→S3): 0.0005 (0.05% — minimal)
+- Recovery (S2→S4): +0.9757 (penuh!)
+- Adversarial Training BERHASIL tanpa mengorbankan akurasi normal
+
+**Output:** `robust_results_06.pkl`, 2 file PNG
+
+---
+
+### 07_robustness_ablation.ipynb — Feature Count vs Robustness
+
+**Apa yang dilakukan:**
+- Uji 4 konfigurasi: C1(Full/68), C2(Top-15), C3(Top-10), C4(Top-5)
+- Setiap konfigurasi: train baseline & robust, test clean & adversarial
+- Identifikasi sweet spot (balance efisiensi vs keamanan)
+
+**Hasil utama:**
+- C4 (Top-5) paling rentan: security gap = 0.7820
+- C1 (Full) paling aman tapi besar: MCC adv = 0.9967
+- **C3 (Top-10) = sweet spot**: balance optimal antara size, speed, dan robustness
+- JANGAN deploy Top-5 (terlalu rentan, recovery tidak memadai)
+
+**Output:** `robustness_ablation_07.pkl`, 2 file PNG
+
+---
+
+### 08_evaluation.ipynb — Final Evaluation & Visualisasi Paper
+
+**Apa yang dilakukan:**
+- Rangkum semua hasil S1-S4 dari notebook 06
+- Buat visualisasi final: confusion matrix 2×2, radar chart, grouped bar
+- Generate tabel summary untuk paper
+- Export semua metrik dalam format siap paper
+
+**Output:** `evaluation_final_08.pkl`, 3 file PNG
+
+---
+
+## Hasil Utama Penelitian (S1-S4)
+
+| Skenario | Model | Data Uji | MCC | F1 (%) | Interpretasi |
+|----------|-------|----------|-----|--------|-------------|
+| S1 | Baseline | Clean | 0.9332 | 97.28 | Performa normal |
+| S2 | Baseline | Adversarial (ε=0.1) | 0.0189 | 75.67 | GAGAL — hampir random |
+| S3 | Robust (AT) | Clean | 0.9327 | ~97.2 | Integritas terjaga |
+| S4 | Robust (AT) | Adversarial (ε=0.1) | 0.9946 | ~99.7 | Recovery sempurna |
+
+## Progress Update
+
+- [x] Notebook 01: Sampling & Visualisasi
+- [x] Notebook 02: Preprocessing & Cleaning
+- [x] Notebook 03: Training & Evaluation (3 model × 4 sizes)
+- [x] Notebook 04: Ablation Study + Export models
+- [x] Notebook 05: Adversarial Attack (Saliency Map + FGSM)
+- [x] Notebook 06: Adversarial Training (S1-S4)
+- [x] Notebook 07: Robustness Ablation (C1-C4)
+- [x] Notebook 08: Final Evaluation & Visualisasi
+- [ ] Notebook 09: Comparison (opsional, untuk presentasi)
+- [x] Paper LaTeX: nids-01.tex (updated dengan data aktual)
+- [ ] Deploy & Live Testing di AWS
+
+---
