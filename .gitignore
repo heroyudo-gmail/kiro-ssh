@@ -237,3 +237,7 @@ __marimo__/
 # Private keys
 *.ppk
 *.pem
+
+
+# Image files
+*.png
