@@ -1,0 +1,162 @@
+\documentclass[a4paper]{article}
+\usepackage[margin=1cm, landscape]{geometry}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage[table]{xcolor}
+\usepackage{enumitem}
+\usepackage{caption}
+
+\pagestyle{empty}
+
+\begin{document}
+
+% ==========================================
+% TABEL 1: Halaman 1
+% ==========================================
+
+\captionof{table}{Ringkasan dan Perbandingan Literatur Survei NIDS dengan Penelitian yang Diusulkan (Bagian 1)}
+\label{tab:literature_review_1}
+\footnotesize
+\renewcommand{\arraystretch}{1.25}
+
+\noindent
+\begin{tabularx}{\textwidth}{>{\centering\arraybackslash}p{0.6cm} >{\centering\arraybackslash}p{1.4cm} >{\raggedright\arraybackslash}p{2.2cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}p{3.0cm} >{\centering\arraybackslash}p{1.3cm} >{\centering\arraybackslash}p{2.0cm} >{\centering\arraybackslash}p{1.5cm} >{\centering\arraybackslash}p{1.3cm}}
+  \toprule
+  \textbf{No} & \textbf{Tahun} & \textbf{Peneliti} & \textbf{Metode} & \textbf{Dataset} & \textbf{Cross Dataset} & \textbf{Arsitektur} & \textbf{Adver-sarial} & \textbf{Real Trafik} \\
+
+  \midrule
+  \rowcolor[gray]{0.9}
+  1 & \textbf{2026} & \textbf{Paper 1} & \textbf{XGBoost} & \textbf{CSE-CIC-IDS 2018} & \textbf{Tidak} & \textbf{Centralized} & \textbf{Ya} & \textbf{Ya} \\
+
+  \rowcolor[gray]{0.9}
+  2 & \textbf{2026} & \textbf{Paper 2} & \textbf{Ensemble (XGBoost, LightGBM, CatBoost)} & \textbf{CSE-CIC-IDS 2018} & \textbf{Tidak} & \textbf{Centralized} & \textbf{Ya} & \textbf{Ya} \\
+
+  \midrule
+  \multicolumn{9}{l}{\textit{\textbf{Kelompok 1: Fondasi \& Teori Generatif (Algoritma Dasar)}}} \\
+  \midrule
+  3 & 2014--2019 & {[2], [12], [13], [15], [17], [18]} & GAN, WGAN, CGAN, DCGAN, SAGAN, ACGAN & -- & Tidak & Centralized & Ya & Tidak \\
+
+  \midrule
+  \multicolumn{9}{l}{\textit{\textbf{Kelompok 2: Single Model -- Klasifikator Berbasis Machine Learning Tradisional}}} \\
+  \midrule
+  4 & 2019--2025 & {[3], [4], [5], [9], [14], [20], [21], [22], [31], [36], [42], [43]} & GAN/CTGAN/MCGAN/IGAN/Syn-GAN/CE-GAN/OGAN/N-GAN + RF, DT, SVM, XGBoost, k-NN, NB, LR & KDD Cup 99, NSL-KDD, UNSW-NB15, CICIDS2017, CSE-CIC-IDS2018, Bot-IoT, ToN\_IoT, CICIoT2023 & Tidak & Centralized & Ya & Tidak \\
+
+  \midrule
+  \multicolumn{9}{l}{\textit{\textbf{Kelompok 3: Single Model -- Klasifikator Berbasis Deep Learning}}} \\
+  \midrule
+  5 & 2019--2025 & {[1], [16], [19], [23], [25], [26], [27], [28], [29], [30], [33], [34], [35], [37], [40], [46], [49], [57]} & TCN-GAN, DCGAN+ResNet, SPE-ACGAN, QGAN, CTGAN, TMG-GAN, R-GAN, Diff-IDS, HE-GAN + DNN, CNN, MLP, LSTM, GRU, SRU, DRL & NSL-KDD, KDD Cup 99, UNSW-NB15, CICIDS2017, Bot-IoT, ToN\_IoT, CICIoT2023 & Tidak & Centralized & Ya & Tidak \\
+
+  \midrule
+  \multicolumn{9}{l}{\textit{\textbf{Kelompok 4: Serangan Adversarial (Evasion Attack) -- Centralized}}} \\
+  \midrule
+  6 & 2021--2025 & {[6], [7], [8], [39], [41], [44], [45]} & AttackGAN, SGAN-IDS, IDS-GAN, Evasion-GAN, DEMGAN, IoT-Evasion GAN, AAGAN & NSL-KDD, UNSW-NB15, CICIDS2017, CICDDoS2019, Bot-IoT, N-BaIoT, Android Malware & Tidak & Centralized & Ya & Tidak \\
+
+  \midrule
+  \multicolumn{9}{l}{\textit{\textbf{Kelompok 5: Metode Ensemble / Hibrida}}} \\
+  \midrule
+  7 & 2023--2025 & {[24], [32], [59]} & Ensemble WGAN, Hybrid WGAN+Autoencoder, GLEAM (GAN+LLM) + ML/DL Classifiers & Gas Pipeline, Water Treatment IIoT, UNSW-NB15, BoT-IoT, ToN\_IoT, CICIoT2023, Android/PE Malware & Tidak & Centralized & Ya & Tidak \\
+
+  \bottomrule
+\end{tabularx}
+
+% ==========================================
+% TABEL 2: Halaman 2
+% ==========================================
+\newpage
+
+\captionof{table}{Ringkasan dan Perbandingan Literatur Survei NIDS dengan Penelitian yang Diusulkan (Bagian 2)}
+\label{tab:literature_review_2}
+\footnotesize
+\renewcommand{\arraystretch}{1.25}
+
+\noindent
+\begin{tabularx}{\textwidth}{>{\centering\arraybackslash}p{0.6cm} >{\centering\arraybackslash}p{1.4cm} >{\raggedright\arraybackslash}p{2.2cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}p{3.0cm} >{\centering\arraybackslash}p{1.3cm} >{\centering\arraybackslash}p{2.0cm} >{\centering\arraybackslash}p{1.5cm} >{\centering\arraybackslash}p{1.3cm}}
+  \toprule
+  \textbf{No} & \textbf{Tahun} & \textbf{Peneliti} & \textbf{Metode} & \textbf{Dataset} & \textbf{Cross Dataset} & \textbf{Arsitektur} & \textbf{Adver-sarial} & \textbf{Real Trafik} \\
+
+  \midrule
+  \multicolumn{9}{l}{\textit{\textbf{Kelompok 6: Pengujian Cross-Dataset}}} \\
+  \midrule
+  8 & 2024 & {[47]} & CTGAN / Diffusion + RF, XGBoost, DNN & CICIDS2017, CSE-CIC-IDS2018, CTU-13 & Ya & Centralized & Ya & Tidak \\
+
+  \midrule
+  \multicolumn{9}{l}{\textit{\textbf{Kelompok 7: Arsitektur Terdistribusi \& Federated Learning}}} \\
+  \midrule
+  9 & 2023--2024 & {[48], [58]} & Distributed GAN, NIDS-FGPA + Secure Aggregation + DNN & Credit/Traffic Logs, UNSW-NB15, CICIDS2017 (non-IID) & Tidak & Federated / Distributed & Ya & Tidak \\
+
+  \midrule
+  \multicolumn{9}{l}{\textit{\textbf{Kelompok 8: Survei, Tutorial \& Dataset Benchmark}}} \\
+  \midrule
+  10 & 2009--2025 & {[10], [11], [38], [50], [51], [52], [53], [54], [55], [56]} & Survei GAN-IDS, Tutorial GAN, Deskripsi Dataset (KDD Cup 99, UNSW-NB15, CICIDS2017, Bot-IoT, ToN\_IoT, CICIoT2023) & KDD Cup 99, NSL-KDD, UNSW-NB15, CICIDS2017, Bot-IoT, ToN\_IoT, CICIoT2023 & -- & -- & -- & -- \\
+
+  \bottomrule
+\end{tabularx}
+
+% ==========================================
+% DAFTAR REFERENSI
+% ==========================================
+\vspace{0.5cm}
+\noindent\textbf{Referensi:}
+\begin{enumerate}[leftmargin=1.2cm, itemsep=1pt, parsep=0pt]
+    \item de Araujo-Filho, P.F.; Naili, M.; Kaddoum, G.; Fapi, E.T.; Zhu, Z.: Unsupervised gan-based intrusion detection system using temporal convolutional networks and self-attention. \textit{IEEE Trans. Netw. Serv. Manage.} 20(4), 4951--4963 (2023)
+    \item Goodfellow, I.; Pouget-Abadie, J.; Mirza, M.; Xu, B.; WardeFarley, D.; Ozair, S.; Courville, A.; Bengio, Y.: Generative adversarial nets. In: \textit{Advances in Neural Information Processing Systems}, pp. 2672--2680 (2014)
+    \item Mari, A.-G.; Zinca, D.; Dobrota, V.: Development of a machine-learning intrusion detection system and testing of its performance using a generative adversarial network. \textit{Sensors} 23(3), 1315 (2023)
+    \item Kumar, V.; Sinha, D.: Synthetic attack data generation model applying generative adversarial network for intrusion detection. \textit{Comput. Secur.} 125, 103054 (2023)
+    \item Zhao, X.; Fok, K.W.; Thing, V.L.L.: Enhancing network intrusion detection performance using generative adversarial networks. \textit{Comput. Secur.} 145, 104005 (2024)
+    \item Zhao, S.; Li, J.; Wang, J.; Zhang, Z.; Zhu, L.; Zhang, Y.: AttackGAN: Adversarial attack against black-box IDS using generative adversarial networks. \textit{Procedia Comput. Sci.} 187, 128--133 (2021)
+    \item Aldhaheri, S.; Alhuzali, A.: SGAN-IDS: Self-attention-based generative adversarial network against intrusion detection systems. \textit{Sensors} 23(18), 7796 (2023)
+    \item Wang, D.; Wang, X.; Fei, J.: IDS-GAN: Adversarial attack against intrusion detection based on generative adversarial networks. In: \textit{2024 5th International Conference on Computer Vision, Image and Deep Learning (CVIDL)}, pp. 1130--1134 (2024)
+    \item Alabsi, B.A.; Anbar, M.; Rihan, S.D.A.: Conditional tabular generative adversarial based intrusion detection system for detecting DDoS and DoS attacks on the internet of things networks. \textit{Sensors} 23(12), 5644 (2023)
+    \item Dunmore, A.; Jang-Jaccard, J.; Sabrina, F.; Kwak, J.: Generative adversarial networks for malware detection: a survey. \textit{arXiv preprint arXiv:2302.08558} (2023)
+    \item Al-Ajlan, M.; Ykhlef, M.: A review of generative adversarial networks for intrusion detection systems: advances, challenges, and future directions. \textit{Comput. Mater. Continua} 81(2), 2053--2076 (2024)
+    \item Arjovsky, M.; Chintala, S.; Bottou, L.: Wasserstein GAN (2017). \textit{arXiv preprint arXiv:1701.07875}
+    \item Mirza, M.; Osindero, S.: Conditional generative adversarial nets (2014). \textit{arXiv preprint arXiv:1411.1784}
+    \item Babu, K.S.; Rao, Y.N.: MCGAN: Modified conditional generative adversarial network (MCGAN) for class imbalance problems in network intrusion detection system. \textit{Appl. Sci.} 13(4) (2023)
+    \item Radford, A.; Metz, L.; Chintala, S.: Unsupervised representation learning with deep convolutional generative adversarial networks (2015). \textit{arXiv preprint arXiv:1511.06434}
+    \item Singh, I.; Sherman, E.; Dut, D.M.A.; Harshit; Jain, H.: Network intrusion detection using GAN and ResNet optimized with glowworm optimization. In: \textit{2023 5th International Conference on Advances in Computing, Communication Control and Networking (ICAC3N)}, pp. 1348--1354 (2023)
+    \item Zhang, H.; Goodfellow, I.; Metaxas, D.; Odena, A.: Self-attention generative adversarial networks. In: \textit{Proceedings of the 36th International Conference on Machine Learning}, Ser. Proceedings of Machine Learning Research, vol. 97. PMLR, pp. 7354--7363 (2019)
+    \item Odena, A.; Olah, C.; Shlens, J.: Conditional image synthesis with auxiliary classifier GANs. In: \textit{Proceedings of the 34th International Conference on Machine Learning}, Ser. Proceedings of Machine Learning Research, vol. 70. PMLR, pp. 2642--2651 (2017)
+    \item Yang, H.; Xu, J.; Xiao, Y.; Hu, L.: SPE-ACGAN: A resampling approach for class imbalance problem in network intrusion detection systems. \textit{Electronics} 12(15), 3323 (2023)
+    \item Xu, L.; Skoularidou, M.; Cuesta-Infante, A.; Veeramachaneni, K.: Modeling tabular data using conditional GAN. In: \textit{Advances in Neural Information Processing Systems}, vol. 32. Curran Associates, Inc. (2019)
+    \item Alabdulwahab, S.; Kim, Y.T.; Son, Y.: Privacy-preserving synthetic data generation method for IoT-sensor network IDS using CTGAN. \textit{Sensors} 24(9), 2746 (2024)
+    \item Rao, Y.N.; Babu, K.S.: An imbalanced generative adversarial network-based approach for network intrusion detection in an imbalanced dataset. \textit{Sensors} 23(1) (2023)
+    \item Rahman, M.A.; Shahriar, H.; Clincy, V.; Hossain, M.F.; Rahman, M.: A quantum generative adversarial network-based intrusion detection system. In: \textit{2023 IEEE 47th Annual Computers, Software, and Applications Conference (COMPSAC)}, pp. 1810--1815 (2023)
+    \item Riaz, R.; Han, G.; Shaukat, K.; Khan, N.U.; Zhu, H.; Wang, L.: A novel ensemble Wasserstein GAN framework for effective anomaly detection in industrial internet of things environments. \textit{Sci. Rep.} 15(1), 26786 (2025)
+    \item Yang, J.; Li, T.; Liang, G.; He, W.: A simple recurrent unit model based intrusion detection system with DCGAN. \textit{IEEE Access} 7, 83286--83296 (2019)
+    \item Menssouri, S.; Amhoud, E.M.: A conditional tabular GAN-enhanced intrusion detection system for rare attacks in IoT networks (2025)
+    \item Ding, H.; Sun, Y.; Huang, N.; Shen, Z.; Cui, X.: TMG-GAN: Generative adversarial networks-based imbalanced learning for network intrusion detection. \textit{IEEE Trans. Inf. Forensics Secur.} 19, 1156--1167 (2024)
+    \item Luo, H.; Wan, L.: A recombination generative adversarial network for intrusion detection. \textit{Int. J. Appl. Math. Comput. Sci.} 34(2), 323--334 (2024)
+    \item Park, C.; Lee, J.; Kim, Y.; Park, J.-G.; Kim, H.; Hong, D.: An enhanced AI-based network intrusion detection system using generative adversarial networks. \textit{IEEE Internet Things J.} 10(3), 2330--2345 (2023)
+    \item Mouyart, M.; Machado, G.M.; Jun, J.-Y.: A multi-agent intrusion detection system optimized by a deep reinforcement learning approach with a dataset enlarged using a generative model to reduce the bias effect. \textit{J. Sensor Actuator Netw.} 12(5) (2023)
+    \item Rahman, S.; Pal, S.; Mittal, S.; Chawla, T.; Karmakar, C.: Syn-GAN: A robust intrusion detection system using GAN-based synthetic data for IoT security. \textit{Internet of Things} 26, 101212 (2024)
+    \item Alshehri, M.S.; Saidani, O.; Malwi, W.A.; Asiri, F.; Latif, S.; Khattak, A.A.; Ahmad, J.: A hybrid Wasserstein GAN and autoencoder model for robust intrusion detection in IoT. \textit{Comput. Model. Eng. Sci.} 143(3), 3899--3920 (2025)
+    \item Yang, Y.; Tang, X.; Liu, Z.; Cheng, J.; Fang, H.; Zhang, C.: Diff-IDS: A network intrusion detection model based on diffusion model for imbalanced data samples. \textit{Comput. Mater. Continua} 82(3), 4389--4408 (2025)
+    \item Merzouk, M.A.; Beurier, E.; Yaich, R.; Boulahia-Cuppens, N.; Cuppens, F.; Khomh, F.: Diffusion-based adversarial purification for intrusion detection. In: \textit{IFIP Annual Conference on Data and Applications Security and Privacy}, pp. 351--370. Springer (2025)
+    \item Hammami, W.; Cherkaoui, S.; Wang, S.: Enhancing network anomaly detection with quantum GANs and successive data injection for multivariate time series (2025). \textit{arXiv preprint arXiv:2505.11631}
+    \item Yang, Y.; Liu, X.; Wang, D.; Sui, Q.; Yang, C.; Li, H.; Li, Y.; Luan, T.: A CE-GAN based approach to address data imbalance in network intrusion detection systems. \textit{Sci. Rep.} 15(1), 7916 (2025)
+    \item Yang, J.: WSN intrusion detection method using improved spatiotemporal ResNet and GAN. \textit{Open Comput. Sci.} 14(1), 20240018 (2024)
+    \item Huang, Y.; Fields, K.G.; Ma, Y.: A tutorial on generative adversarial networks with application to classification of imbalanced data. \textit{Stat. Anal. Data Min.: ASA Data Sci. J.} 15(5), 543--552 (2022)
+    \item Randhawa, R.H.; Aslam, N.; Alauthman, M.; Rafiq, H.: Evasion generative adversarial network for low data regimes. \textit{IEEE Trans. Artif. Intell.} 4(5), 1076--1088 (2023)
+    \item Kamran, S.A.; Sengupta, S.; Tavakkoli, A.: Semi-supervised conditional GAN for simultaneous generation and detection of phishing URLs: a game theoretic perspective (2021). \textit{arXiv preprint arXiv:2108.01852}
+    \item Xu, D.; Lv, Y.; Wang, M.; Zheng, B.; Zhao, J.; Yu, J.: DEMGAN: A machine learning-based intrusion detection system evasion scheme. \textit{Comput. Mater. Continua} 84(1), 1731--1746 (2025)
+    \item Kim, T.; Pak, W.: Early detection of network intrusions using a GAN-based one-class classifier. \textit{IEEE Access} 10, 119357--119367 (2022)
+    \item Iliyasu, A.S.; Deng, H.: N-GAN: A novel anomaly-based network intrusion detection with generative adversarial networks. \textit{Int. J. Inf. Technol.} 14(7), 3365--3375 (2022)
+    \item Mbow, M.; Roman, R.; Takahashi, T.; Sakurai, K.: Evading IoT intrusion detection systems with GAN. In: \textit{2024 19th Asia Joint Conference on Information Security (AsiaJCIS)}, pp. 48--55 (2024)
+    \item Trung, D.M.; Khoa, N.H.; Duy, P.T.; Pham, V.-H.; Cam, N.T.: AAGAN: Android malware generation system based on generative adversarial network. \textit{Int. J. Semant. Comput.} 14(1) (2024)
+    \item Nayak, N.K.S.; Bhattacharyya, B.: Multilayered SDN security with MAC authentication and GAN-based intrusion detection. \textit{PLoS ONE} 20(9), 1--27 (2025)
+    \item Aceto, G.; Giampaolo, F.; Guida, C.; Izzo, S.; Pescap\`{e}, A.; Piccialli, F.; Prezioso, E.: Synthetic and privacy-preserving traffic trace generation using generative AI models for training network intrusion detection systems. \textit{J. Netw. Comput. Appl.} 229, 103926 (2024)
+    \item Jiang, X.; Zhang, Y.; Zhou, X.; Grossklags, J.: Distributed GAN-based privacy-preserving publication of vertically-partitioned data. \textit{Proc. Privacy Enhanc. Technol.} 2023(2), 50--69 (2023)
+    \item Hassan, U.; Chen, D.; Cheung, S.-C.; Chuah, C.-N.: HE-GAN: Differentially private GAN using Hamiltonian Monte Carlo based exponential mechanism. In: \textit{Proceedings of IEEE ICASSP}, pp. 3186--3190 (2023)
+    \item Tavallaee, M.; Bagheri, E.; Lu, W.; Ghorbani, A.A.: A detailed analysis of the KDD Cup 99 data set. In: \textit{Proceedings of CISDA} (2009)
+    \item Moustafa, N.; Slay, J.: UNSW-NB15: A comprehensive data set for network intrusion detection systems. In: \textit{MILCOM}, pp. 1--6 (2015)
+    \item Sharafaldin, I.; Lashkari, A.H.; Ghorbani, A.A.: Toward generating a new intrusion detection dataset and intrusion traffic characterization. In: \textit{ICISSP}, pp. 108--116 (2018)
+    \item Koroniotis, N.; Moustafa, N.; Sitnikova, E.; Turnbull, B.: Towards the development of realistic botnet dataset for IoT networks. \textit{IEEE Access} 7, 94529--94541 (2019)
+    \item Alsaedi, A.; Moustafa, N.; Tari, Z.; Mahmood, A.N.; Anwar, A.: TON\_IoT telemetry dataset: A new generation dataset of IoT and IIoT for data-driven intrusion detection systems. \textit{IEEE Access} 8, 165130--165150 (2020)
+    \item Neto, E.C.P.; Dadkhah, S.; Ferreira, R.; Zohourian, A.; Lu, R.; Ghorbani, A.A.: CICIoT2023: A real-time dataset and benchmark for large-scale attacks in IoT environment. \textit{Sensors} 23(13) (2023)
+    \item Educative: What are the challenges in training GAN? Online; https://www.educative.io/answers/what-are-the-challenges-in-training-gan. Accessed 10 Sep 2025 (2025)
+    \item Xu, C.; Zhan, Y.; Chen, G.; Wang, Z.; Liu, S.; Hu, W.: Elevated few-shot network intrusion detection via self-attention mechanisms and iterative refinement. \textit{PLoS ONE} 20(1), e0317713 (2025)
+    \item Wang, J.; Yang, K.; Li, M.: NIDS-FGPA: A federated learning network intrusion detection algorithm based on secure aggregation of gradient similarity models. \textit{PLoS ONE} 19(10), e0308639 (2024)
+    \item Devadiga, D.; Jin, G.; Potdar, B.; Koo, H.; Han, A.; Shringi, A.; Singh, A.; Chaudhari, K.; Kumar, S.: GLEAM: GAN and LLM for evasive adversarial malware. In: \textit{2023 14th International Conference on Information and Communication Technology Convergence (ICTC)}, pp. 53--58 (2023)
+\end{enumerate}
+
+\end{document}

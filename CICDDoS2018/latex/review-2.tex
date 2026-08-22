@@ -1,0 +1,240 @@
+\documentclass[a4paper]{article}
+\usepackage[margin=0.7cm, landscape]{geometry}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage[table]{xcolor}
+\usepackage{enumitem}
+\usepackage{caption}
+
+\pagestyle{empty}
+
+\begin{document}
+
+% ==========================================
+% TABEL 1: Halaman 1
+% ==========================================
+
+\captionof{table}{Ringkasan dan Perbandingan Literatur FL-NIDS dengan Penelitian yang Diusulkan (Bagian 1)}
+\label{tab:fl_nids_1}
+\scriptsize
+\renewcommand{\arraystretch}{1.15}
+
+\noindent
+\begin{tabularx}{\textwidth}{>{\centering\arraybackslash}p{0.4cm} >{\centering\arraybackslash}p{1.0cm} >{\raggedright\arraybackslash}p{3.5cm} >{\raggedright\arraybackslash}p{3.2cm} >{\raggedright\arraybackslash}p{2.8cm} >{\centering\arraybackslash}p{1.8cm} >{\centering\arraybackslash}p{1.4cm} >{\centering\arraybackslash}p{1.6cm} >{\centering\arraybackslash}p{1.4cm} >{\centering\arraybackslash}p{1.0cm} >{\centering\arraybackslash}p{0.9cm} >{\centering\arraybackslash}p{0.8cm}}
+  \toprule
+  \textbf{No} & \textbf{Tahun} & \textbf{Peneliti} & \textbf{Metode / Model} & \textbf{Dataset} & \textbf{Agregasi} & \textbf{Deploy} & \textbf{Privasi} & \textbf{Arsitektur} & \textbf{Adv.} & \textbf{Cross DS} & \textbf{Real} \\
+
+  \midrule
+  \rowcolor[gray]{0.9}
+  1 & \textbf{2027} & \textbf{Paper 1} & \textbf{XGBoost} & \textbf{CSE-CIC-IDS 2018} & \textbf{FedAvg} & \textbf{Cross-dev} & \textbf{Tidak} & \textbf{Distrib.} & \textbf{Ya} & \textbf{Tidak} & \textbf{Ya} \\
+  \rowcolor[gray]{0.9}
+  2 & \textbf{2027} & \textbf{Paper 2} & \textbf{Ensemble (XGB, LGBM, CatB)} & \textbf{CSE-CIC-IDS 2018} & \textbf{FedAvg} & \textbf{Cross-dev} & \textbf{Tidak} & \textbf{Distrib.} & \textbf{Ya} & \textbf{Tidak} & \textbf{Ya} \\
+
+  \midrule
+  \multicolumn{12}{l}{\textit{\textbf{Kelompok 1: FL-IDS -- Deep Learning (CNN, DNN, GRU, LSTM, Autoencoder)}}} \\
+  \midrule
+  3 & 2019--2024 & [4], [10], [12], [13], [14], [20], [21], [22], [23], [24], [37], [55], [72], [94], [96], [102], [103] & FELIDS, FTL+RL, Blockchain+CNN-GRU, DeepFed, GRU Ensemble, IoTDefender CNN, FedAGRU, D\"IoT GRU, Multi-view FL, IDSoft 6G, FL-DAD CNN, FL-GBM+LSTM, DNN+SHAP, K-greedy Bayesian DL & NSL-KDD, KDDCup99, UNSW-NB15, CICIDS2017, CICDDoS2019, InSDN, N-BaIoT, Modbus IoT, Industrial CPS, Mirai, Agricultural IoT & FedAvg, FedSGD, Astraes, K-greedy, Custom & Cross-dev, Cross-silo & DP, Paillier HE, Blockchain, Tidak & Distrib. & Ya & Tidak & Tidak \\
+
+  \midrule
+  \multicolumn{12}{l}{\textit{\textbf{Kelompok 2: Arsitektur \& Strategi Agregasi FL}}} \\
+  \midrule
+  4 & 2019--2024 & [3], [7], [8], [11], [15], [16], [17], [18], [19], [25], [28], [30], [31], [32], [33], [34], [35], [36], [38], [39], [40], [41], [48], [49], [51], [52], [56], [69], [70], [71], [73], [77] & FedAvg, FedProx, FedSGD, SCAFFOLD, FedATM, Krum, Trimmed Mean, Byzantine-Resilient FL, Hierarchical FL, Decentralized FL, Multi-server, Cycle Ring & -- (Teori \& Benchmark) & FedAvg, FedProx, SCAFFOLD, Krum, Trimmed Mean & Cross-dev, Cross-silo & -- & Distrib. & -- & -- & -- \\
+
+  \midrule
+  \multicolumn{12}{l}{\textit{\textbf{Kelompok 3: Privasi \& Keamanan dalam FL (DP, HE, SMPC, Blockchain)}}} \\
+  \midrule
+  5 & 2017--2024 & [5], [26], [27], [29], [43], [44], [45], [46], [50], [57], [58], [59], [61], [62], [63], [64], [65], [66], [67], [74], [75] & FL+DP, Secure FL Transfer, SMPC, Homomorphic Encryption, TEE/TrustZone, Blockchain+FL, LDP-FL, FedZKP, Label-flipping Defense, Poisoning Defense, FLRAM & NSL-KDD, CICIDS2017, Industrial CPS & FedAvg, Custom & Cross-dev, Cross-silo & DP, HE, SMPC, Blockchain, LDP, ZKP & Distrib. & Ya & Tidak & Tidak \\
+
+  \midrule
+  \multicolumn{12}{l}{\textit{\textbf{Kelompok 4: Framework \& Platform FL}}} \\
+  \midrule
+  6 & 2018--2024 & [47], [53], [54], [60], [61], [63], [64], [68], [69], [70], [71], [72], [74], [75], [76], [77] & TensorFlow Federated, PySyft, FATE, Flower, OpenFL, PaddleFL, FedML, LEAF, SecureML, FedScale, Fed-TGAN, FLUTE, IBM FL, IDSoft, UniFed & -- (Framework) & -- & -- & -- & Distrib. & -- & -- & -- \\
+
+  \bottomrule
+\end{tabularx}
+
+% ==========================================
+% TABEL 2: Halaman 2
+% ==========================================
+\newpage
+
+\captionof{table}{Ringkasan dan Perbandingan Literatur FL-NIDS dengan Penelitian yang Diusulkan (Bagian 2)}
+\label{tab:fl_nids_2}
+\scriptsize
+\renewcommand{\arraystretch}{1.15}
+
+\noindent
+\begin{tabularx}{\textwidth}{>{\centering\arraybackslash}p{0.4cm} >{\centering\arraybackslash}p{1.0cm} >{\raggedright\arraybackslash}p{3.5cm} >{\raggedright\arraybackslash}p{3.2cm} >{\raggedright\arraybackslash}p{2.8cm} >{\centering\arraybackslash}p{1.8cm} >{\centering\arraybackslash}p{1.4cm} >{\centering\arraybackslash}p{1.6cm} >{\centering\arraybackslash}p{1.4cm} >{\centering\arraybackslash}p{1.0cm} >{\centering\arraybackslash}p{0.9cm} >{\centering\arraybackslash}p{0.8cm}}
+  \toprule
+  \textbf{No} & \textbf{Tahun} & \textbf{Peneliti} & \textbf{Metode / Model} & \textbf{Dataset} & \textbf{Agregasi} & \textbf{Deploy} & \textbf{Privasi} & \textbf{Arsitektur} & \textbf{Adv.} & \textbf{Cross DS} & \textbf{Real} \\
+
+  \midrule
+  \multicolumn{12}{l}{\textit{\textbf{Kelompok 5: Kompresi Model \& Efisiensi Komunikasi dalam FL}}} \\
+  \midrule
+  7 & 2020--2024 & [80], [81], [82], [83], [84], [85], [86], [87], [88], [89], [90], [91], [92], [185], [203] & Quantization (FedQCS, FedVQCS), Pruning (FedPE), Knowledge Distillation (FedKD), SVD Compression, Resource-aware Transfer & NSL-KDD, CIFAR, IoT Data & FedAvg + Compression & Cross-dev & Tidak & Distrib. & Tidak & Tidak & Tidak \\
+
+  \midrule
+  \multicolumn{12}{l}{\textit{\textbf{Kelompok 6: FL untuk IoT, Edge Computing, 5G/6G, Vehicular Networks}}} \\
+  \midrule
+  8 & 2019--2024 & [1], [2], [6], [9], [21], [24], [28], [30], [44], [55], [76], [167], [199], [200], [201] & FL-IoT IDS, D\"IoT, TrustFed IIoT, IDSoft 6G, Blockchain+FL Vehicles, FL Healthcare, FL non-IID IoT & NSL-KDD, UNSW-NB15, CICIDS2017, Private IoT, Mirai, Vehicular & FedAvg, FTL, Custom & Cross-dev & DP, Blockchain, Tidak & Distrib. & Ya & Ya & Tidak \\
+
+  \midrule
+  \multicolumn{12}{l}{\textit{\textbf{Kelompok 7: Quantum Machine Learning untuk IDS}}} \\
+  \midrule
+  9 & 2023--2025 & [104], [107], [112], [113], [117], [118], [119], [120], [121], [122], [123], [125], [126], [127], [128], [129], [130], [131], [132], [133], [134], [135], [136], [137], [138], [139], [140], [141] & VQC, QCNN, QSVM, QSVC, QAE, qGAN, QkNN, QPCA, QRL, Quantum Ensemble, Hybrid QNN, Quantum Clustering, Quantum Boltzmann Machine & NSL-KDD, UNSW-NB15, CIC-IDS17, CICIoT23, TON\_IoT, EDGE-IIoTSET, KDD99, IoT-23 & -- & Cross-dev & Tidak & Distrib. & Ya & Tidak & Tidak \\
+
+  \midrule
+  \multicolumn{12}{l}{\textit{\textbf{Kelompok 8: Quantum Federated Learning (QFL)}}} \\
+  \midrule
+  10 & 2021--2025 & [142], [143], [144], [145], [146], [147], [148], [149], [150], [151], [152], [153], [154], [158], [159], [160], [161], [162], [163], [164], [169], [174], [175], [176] & QFL Framework (Qiskit, PennyLane, Cirq, TFQ), FedQNN, NAC-QFL, MQFL-FHE, DAQFL, Chained QFL, QuantumFed, CryptoQFL, QKD+FL & -- (Quantum Platform) & QFL Aggregation & Cross-dev & QKD, QDP, QHE & Distrib. & Ya & Tidak & Tidak \\
+
+  \midrule
+  \multicolumn{12}{l}{\textit{\textbf{Kelompok 9: Serangan \& Pertahanan Adversarial pada FL}}} \\
+  \midrule
+  11 & 2018--2024 & [33], [39], [40], [41], [42], [59], [60], [63], [64], [65], [66], [172], [177], [178], [179], [180], [181], [182], [204] & Byzantine Attack, Model Poisoning, Backdoor (BadNets), Gradient Leakage, Membership Inference, Label-flipping, Adversarial QML & NSL-KDD, CICIDS2017, CIFAR & Krum, Trimmed Mean, FedATM, Custom Defense & Cross-dev & DP, Tidak & Distrib. & Ya & Tidak & Tidak \\
+
+  \midrule
+  \multicolumn{12}{l}{\textit{\textbf{Kelompok 10: Non-IID Data \& Heterogenitas dalam FL}}} \\
+  \midrule
+  12 & 2019--2024 & [34], [49], [50], [69], [70], [165], [166], [167], [168], [186] & FedProx, FedClust, SCAFFOLD, Non-IID Handling, Clustered FL, FL on Non-IID Silos & NSL-KDD, CICIDS2017 & FedProx, FedClust, SCAFFOLD & Cross-dev & Tidak & Distrib. & Tidak & Tidak & Tidak \\
+
+  \midrule
+  \multicolumn{12}{l}{\textit{\textbf{Kelompok 11: Survei Komprehensif FL / FL-IDS / QFL}}} \\
+  \midrule
+  13 & 2019--2025 & [1], [2], [3], [6], [7], [8], [9], [11], [15], [16], [17], [18], [19], [31], [35], [37], [38], [39], [40], [41], [42], [52], [56], [68], [78], [79], [154], [196] & Survei FL, FL-IDS, QFL, XAI-IDS, Dataset Benchmark & -- & -- & -- & -- & -- & -- & -- & -- \\
+
+  \bottomrule
+\end{tabularx}
+
+% ==========================================
+% DAFTAR REFERENSI (100+ paper)
+% ==========================================
+\newpage
+\footnotesize
+\noindent\textbf{Daftar Referensi (Gabungan dari Khraisat et al. 2024 [Paper Survey 1] \& Chaudhary et al. 2025 [Paper Survey 2]):}
+
+\begin{enumerate}[leftmargin=0.8cm, itemsep=0pt, parsep=0pt, label={[\arabic*]}]
+\item Khraisat, A.; Alazab, A.: A critical review of IDS in IoT. \textit{Cybersecurity} 4(1), 18 (2021)
+\item Khraisat, A. et al.: Survey of IDS: Techniques, datasets and challenges. \textit{Cybersecurity} 2(1), 20 (2019)
+\item Kairouz, P. et al.: Advances and open problems in federated learning. \textit{Found. Trends ML} 14(1-2), 1--210 (2021)
+\item Friha, O. et al.: FELIDS: FL-based IDS for agricultural IoT. \textit{J. Parallel Distrib. Comput.} 165, 17--31 (2022)
+\item Alazab, A. et al.: Enhancing privacy-preserving IDS through FL. \textit{Electronics} 12(16), 3382 (2023)
+\item Lavaur, L. et al.: Evolution of FL-based intrusion detection: A survey. \textit{IEEE TNSM} 19(3), 2309--2332 (2022)
+\item Li, T. et al.: Federated learning: Challenges, methods, and future directions. \textit{IEEE SPM} 37(3), 50--60 (2020)
+\item Yang, Q. et al.: Federated machine learning: Concept and applications. \textit{ACM TIST} 10(2), Art. 12 (2019)
+\item Alazab, M. et al.: FL for cybersecurity: Concepts, challenges, future directions. \textit{IEEE TII} 18(5), 3501--3509 (2021)
+\item Ferrag, M.A. et al.: Federated deep learning for cyber security in IoT. \textit{IEEE Access} 9, 138509--138542 (2021)
+\item Wahab, O.A. et al.: FL survey: Multi-level classification. \textit{IEEE COMST} 23(2), 1342--1397 (2021)
+\item Cheng, Y. et al.: FTL with client selection for IDS in MEC. \textit{IEEE Commun. Lett.} 26(3), 552--556 (2022)
+\item Liu, H. et al.: Blockchain and FL for collaborative IDS in vehicular edge. \textit{IEEE TVT} 70(6), 6073--6084 (2021)
+\item Li, B. et al.: DeepFed: FL deep learning for IDS in industrial CPS. \textit{IEEE TII} 17(8), 5615--5624 (2021)
+\item Lim, W.Y.B. et al.: FL in mobile edge networks: A survey. \textit{IEEE COMST} 22(3), 2031--2063 (2020)
+\item Abdulrahman, S. et al.: A survey on FL: From centralized to distributed. \textit{IEEE IoT J.} 8(7), 5476--5497 (2020)
+\item Li, Q. et al.: A survey on FL systems: Vision, hype and reality. \textit{IEEE TKDE} 35(4), 3347--3366 (2021)
+\item Khan, L.U. et al.: FL for IoT: Recent advances, taxonomy, challenges. \textit{IEEE COMST} 23(3), 1759--1799 (2021)
+\item Nguyen, D.C. et al.: FL for IoT: A comprehensive survey. \textit{IEEE COMST} 23(3), 1622--1658 (2021)
+\item Mothukuri, V. et al.: FL-based anomaly detection for IoT security. \textit{IEEE IoT J.} 9(4), 2545--2554 (2021)
+\item Fan, Y. et al.: IoTDefender: FL transfer learning IDS for 5G IoT. In: \textit{IEEE BigDataSE}, 88--95 (2020)
+\item Rahman, S.A. et al.: IoT IDS: Centralized, on-device, or FL? \textit{IEEE Network} 34(6), 310--317 (2020)
+\item Chen, Z. et al.: IDS for wireless edge networks based on FL (FedAGRU). \textit{IEEE Access} 8, 217463--217472 (2020)
+\item Nguyen, T.D. et al.: D\"IoT: Federated self-learning anomaly detection for IoT. In: \textit{IEEE ICDCS}, 756--767 (2019)
+\item Zhang, T.; Mao, S.: An introduction to the federated learning standard. \textit{GetMobile} 25(3), 18--22 (2022)
+\item Liu, Y. et al.: A secure federated transfer learning framework. \textit{IEEE Intell. Syst.} 35(4), 70--82 (2020)
+\item Sharma, S. et al.: Secure and efficient federated transfer learning. In: \textit{IEEE Big Data}, 2569--2576 (2019)
+\item Rehman, M.H.U. et al.: TrustFed: Fair cross-device FL in IIoT. \textit{IEEE TII} 17, 8485--8494 (2021)
+\item Xu, Y. et al.: Comments on VERSA: Verifiable secure aggregation for FL. \textit{IEEE TDSC} (2023)
+\item Yang, W. et al.: Practical cross-device FL framework over 5G networks. \textit{IEEE Wireless Commun.} 29(6), 128--134 (2022)
+\item Tang, M.; Wong, V.W.S.: Incentive mechanism for cross-silo FL. In: \textit{IEEE INFOCOM}, 1--10 (2021)
+\item Wang, Y. et al.: Efficient approach for cross-silo FL to rank. In: \textit{IEEE ICDE}, 1128--1139 (2021)
+\item So, J. et al.: Byzantine-resilient secure federated learning. \textit{IEEE JSAC} 39(7), 2168--2181 (2021)
+\item He, W. et al.: Three-stage Stackelberg game clustered FL in UAV swarms. \textit{IEEE TVT} 72(7), 9366--9380 (2023)
+\item Qu, Z. et al.: Convergence of multi-server FL with overlapping area. \textit{IEEE TMC} 22, 6647--6662 (2023)
+\item Yuan, L. et al.: Decentralized federated learning: A survey. \textit{IEEE IoT J.} (2024)
+\item Attota, D.C. et al.: Ensemble multi-view FL intrusion detection for IoT. \textit{IEEE Access} 9, 117734--117745 (2021)
+\item Sun, T. et al.: Decentralized federated averaging. \textit{IEEE TPAMI} 45(4), 4289--4301 (2023)
+\item Nishimoto, K. et al.: FedATM: Adaptive trimmed mean FL against poisoning. In: \textit{IEEE VTC} (2023)
+\item Zhang, Z. et al.: Dim-Krum: Backdoor-resistant FL for NLP. \textit{arXiv:2210.06894} (2022)
+\item Yin, D. et al.: Byzantine-robust distributed learning: Optimal rates. \textit{arXiv:1803.01498} (2021)
+\item Ren, H. et al.: GRNN: Data leakage attack for FL. \textit{ACM TIST} 13(4), Art. 65 (2022)
+\item Bi, M. et al.: Privacy-preserving mechanism based on LDP in edge. \textit{China Commun.} 17(9), 50--65 (2020)
+\item Zhou, L. et al.: AntNest: Fully non-interactive SMPC. \textit{IEEE Access} 6, 75639--75649 (2018)
+\item Park, J. et al.: Privacy-preserving FL using homomorphic encryption. In: \textit{IEEE ICTC}, 1869--1871 (2022)
+\item M\"uller, C. et al.: TZ4Fabric: Smart contracts with ARM TrustZone. In: \textit{IEEE SRDS}, 31--40 (2020)
+\item Beutel, D.J. et al.: Flower: A friendly FL research framework. \textit{arXiv:2007.14390} (2022)
+\item Caldas, S. et al.: LEAF: A benchmark for federated settings. \textit{arXiv:1812.01097} (2018)
+\item Reina, G.A. et al.: OpenFL: Open-source framework for FL. \textit{arXiv:2105.06413} (2021)
+\item Mohassel, P.; Zhang, Y.: SecureML: Scalable privacy-preserving ML. In: \textit{IEEE SP}, 19--38 (2017)
+\item Lai, F. et al.: FedScale: Benchmarking FL at scale. \textit{arXiv:2105.11367} (2021)
+\item Ntantiso, L. et al.: Review of FL: Algorithms, frameworks, applications. \textit{Springer} (2023)
+\item Liu, X. et al.: UniFed: Benchmark for FL frameworks. \textit{arXiv:2207.10308} (2022)
+\item Zhao, Z. et al.: Fed-TGAN: FL framework for synthesizing tabular data. \textit{arXiv:2108.07927} (2021)
+\item Alotaibi, A.; Barnawi, A.: IDSoft: Federated softwarized IDS for 6G IoT. \textit{J. King Saud Univ.} 35(6), 101575 (2023)
+\item Shahid, O. et al.: Communication efficiency in FL: Achievements and challenges. \textit{arXiv:2107.10996} (2021)
+\item Zhao, Y. et al.: Local DP-based FL for IoT. \textit{IEEE IoT J.} 8(11), 8836--8853 (2021)
+\item Li, Z. et al.: Preserving data privacy via FL: Challenges and solutions. \textit{IEEE Consumer Electron. Mag.} 9(3), 8--16 (2020)
+\item Liu, P. et al.: Threats, attacks and defenses to FL: Issues and taxonomy. \textit{Cybersecurity} 5(1), 4 (2022)
+\item Nemeth, G.D. et al.: Addressing membership inference attack in FL. \textit{arXiv:2311.17750} (2023)
+\item Shen, X. et al.: Privacy-preserving FL against label-flipping on non-IID. \textit{IEEE IoT J.} 11(1), 1241--1255 (2024)
+\item Hasan, J.: Security and privacy issues of federated learning. \textit{arXiv:2307.12181} (2023)
+\item Lai, Y.-C. et al.: Two-phase defense against poisoning on FL-IDS. \textit{Comput. Secur.} 129, 103205 (2023)
+\item Chen, H. et al.: FLRAM: Robust aggregation against Byzantine poisoning. \textit{Electronics} 12(21), 4463 (2023)
+\item Aljaafari, N. et al.: Factors impacting adversarial attack in FL. \textit{IEEE TEM} 71, 12542--12555 (2022)
+\item Jere, M.S. et al.: A taxonomy of attacks on federated learning. \textit{IEEE Security \& Privacy} 19(2), 20--28 (2021)
+\item Wei, K. et al.: FL with differential privacy: Algorithms and analysis. \textit{IEEE TIFS} 15, 3454--3469 (2020)
+\item Saha, S.; Ahmad, T.: Federated transfer learning: Concept and applications. \textit{Intelligenza Artificiale} 15(1), 35--44 (2021)
+\item Yang, C. et al.: Impacts of heterogeneity in FL on smartphones. In: \textit{WWW}, 935--946 (2021)
+\item Li, Q. et al.: FL on non-IID data silos: Experimental study. In: \textit{IEEE ICDE}, 965--978 (2022)
+\item Luo, S. et al.: HFEL: Hierarchical federated edge learning. \textit{IEEE TWC} 19(10), 6535--6548 (2020)
+\item Azizan, A.H. et al.: ML approach for improving NIDS performance. \textit{Ann. Emerg. Technol. Comput.} 5(5), 201--208 (2021)
+\item Lin, S. et al.: Collaborative learning via federated meta-learning. In: \textit{IEEE ICDCS}, 289--299 (2020)
+\item Mironov, I.: R\'enyi differential privacy. In: \textit{IEEE CSF}, 263--275 (2017)
+\item Yang, W. et al.: FedZKP: FL model ownership verification with ZKP. \textit{arXiv:2305.04507} (2023)
+\item Jasoliya, H.; Shah, K.: Exploration of quantum cryptography. In: \textit{IEEE INDIACom}, 506--510 (2022)
+\item Tran, N.H. et al.: FL over wireless networks: Optimization. In: \textit{IEEE INFOCOM}, 1387--1395 (2019)
+\item Wang, M. et al.: Survey on large-scale machine learning. \textit{IEEE TKDE} 34(6), 2574--2594 (2022)
+\item Agrawal, S. et al.: FL for IDS: Concepts, challenges, future directions. \textit{Comput. Commun.} (2021)
+\item Oh, Y. et al.: FedQCS: Communication-efficient FL via quantized compressed sensing. \textit{IEEE TWC} 22(2), 1087--1100 (2022)
+\item Oh, Y. et al.: FedVQCS: FL via vector quantized compressed sensing. \textit{IEEE TWC} 23(3), 1755--1770 (2023)
+\item Yi, L. et al.: FedPE: Adaptive model pruning-expanding for FL on mobile. \textit{IEEE TMC} (2024)
+\item Wu, C. et al.: Communication-efficient FL via knowledge distillation. \textit{Nature Commun.} 13(1), 2032 (2022)
+\item Chen, Z. et al.: Resource-aware knowledge distillation for FL. \textit{IEEE TETC} 11(3), 706--719 (2023)
+\item Fotse, Y.S.N. et al.: FL-based DDoS detection in large-scale SDN. \textit{IEEE Trans. Comput.} (2024)
+\item Alhasawi, Y.; Alghamdi, S.: FL-DAD: Decentralized DDoS detection in IoT. \textit{IEEE Access} 12, 42357--42368 (2024)
+\item Satpathy, S. et al.: FL against MITM with GBM and LSTM. In: \textit{IEEE AVSS}, 1--8 (2024)
+\item Kalakoti, R. et al.: Explainable FL for botnet detection in IoT. In: \textit{IEEE CSR}, 1--8 (2024)
+\item Zhang, J. et al.: Detection of zero-day botnet in IoT using FL. In: \textit{IEEE ICC}, 7--12 (2023)
+\item Hdaib, M. et al.: Quantum deep learning-based anomaly detection. \textit{Quantum Mach. Intell.} 6(1), 26 (2024)
+\item Corli, S. et al.: QML algorithms for anomaly detection: A review. \textit{Future Gen. Comput. Syst.} 166, 107632 (2025)
+\item Wang, Z. et al.: Hybrid quantum-enhanced CNN for network attack detection. \textit{Quantum Mach. Intell.} 7(1), 50 (2025)
+\item Abreu, D. et al.: Quantum-NetSec: QML for network security. \textit{Int. J. Netw. Manage.} 35(4), e70018 (2025)
+\item Kumar, R.; Swarnkar, M.: QuIDS: Quantum SVC-based IDS for IoT. \textit{J. Netw. Comput. Appl.} 234, 104072 (2025)
+\item Rahman, M.A. et al.: Quantum GAN-based IDS. In: \textit{IEEE COMPSAC}, 1810--1815 (2023)
+\item Innan, N. et al.: FedQNN: FL using quantum neural networks. In: \textit{IEEE IJCNN}, 1--9 (2024)
+\item Sahu, H.; Gupta, H.P.: NAC-QFL: Noise aware clustered quantum FL. \textit{arXiv:2406.14236} (2024)
+\item Dutta, S. et al.: MQFL-FHE: Multimodal quantum FL with fully HE. \textit{arXiv:2412.01858} (2024)
+\item Qu, Z. et al.: DAQFL: Dynamic aggregation quantum FL for IoMT. \textit{IEEE IoT J.} (2025)
+\item Gurung, D.; Pokhrel, S.R.: Chained continuous quantum FL framework. \textit{Future Gen. Comput. Syst.} 169, 107800 (2025)
+\item Xia, Q.; Li, Q.: QuantumFed: FL framework for collaborative quantum training. In: \textit{IEEE GLOBECOM}, 1--6 (2021)
+\item Chu, C. et al.: CryptoQFL: Quantum FL on encrypted data. In: \textit{IEEE QCE}, 1231--1237 (2023)
+\item Nguyen, D.C. et al.: Quantum federated learning: A comprehensive survey. \textit{arXiv:2508.15998} (2025)
+\item Lu, Z. et al.: FL with non-IID data: A survey. \textit{IEEE IoT J.} (2024)
+\item Li, Q. et al.: FL on non-IID data silos: Experimental study. In: \textit{IEEE ICDE}, 965--978 (2022)
+\item Huang, W. et al.: FL-based IoT intrusion detection on non-IID data. In: \textit{Global IoT Summit}, 326--337 (2022)
+\item Ma, X. et al.: Solving non-IID data in FL: State-of-the-art survey. \textit{Future Gen. Comput. Syst.} 135, 244--258 (2022)
+\item Briggs, C. et al.: FL with hierarchical clustering on non-IID data. In: \textit{IEEE IJCNN}, 1--9 (2020)
+\item Yin, D. et al.: Byzantine-robust distributed learning. In: \textit{ICML}, 5650--5659 (2018)
+\item Zhu, L. et al.: Deep leakage from gradients. \textit{NeurIPS} 32 (2019)
+\item Lyu, L. et al.: Threats to federated learning: A survey. \textit{arXiv:2003.02133} (2020)
+\item Shafahi, A. et al.: Poison frogs! Targeted clean-label poisoning attacks. \textit{NeurIPS} 31 (2018)
+\item Gu, T. et al.: BadNets: Identifying vulnerabilities in ML supply chain. \textit{arXiv:1708.06733} (2017)
+\item Pokhrel, S.R.; Choi, J.: FL with blockchain for autonomous vehicles. \textit{IEEE Trans. Commun.} 68(8), 4734--4746 (2020)
+\item Lu, Y. et al.: Blockchain and FL for privacy-preserved data sharing in IIoT. \textit{IEEE TII} 16(6), 4177--4186 (2020)
+\item Khraisat, A. et al.: Survey on FL for IDS: Concept, architectures, aggregation. \textit{ACM Comput. Surv.} 57(1), Art. 7 (2024)
+\item Chaudhary, D.; Rajasegarar, S.; Pokhrel, S.R.: Towards adapting federated \& quantum ML for NIDS: A survey. (2025)
+\item Liao, H. et al.: Robust in practice: Adversarial attacks on QML. \textit{Physical Review A} 103(4), 042427 (2021)
+\item Shah, S.M.; Lau, V.K.: Model compression for communication efficient FL. \textit{IEEE TNNLS} 34(9), 5937--5951 (2021)
+\item Gurung, D.; Pokhrel, S.R.: Communication efficient adaptive model-driven QFL. \textit{arXiv:2506.04548} (2025)
+\item Hazarika, B. et al.: Quantum-driven context-aware FL in vehicular metaverse. In: \textit{IEEE ICC}, 1533--1538 (2024)
+\end{enumerate}
+
+\end{document}
