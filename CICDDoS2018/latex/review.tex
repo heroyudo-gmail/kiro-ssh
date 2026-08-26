@@ -1,0 +1,63 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{cite}
+\usepackage{pdflscape}  % Untuk orientasi halaman landscape
+\usepackage{tabularx}   % Untuk lebar tabel otomatis
+\usepackage{booktabs}   % Garis tabel standar akademis
+\usepackage[table]{xcolor} % Untuk highlight baris
+
+\begin{document}
+
+% ==========================================
+% TABEL REVIEW LITERATURE (SINGLE COLUMN LANDSCAPE)
+% ==========================================
+\clearpage
+\onecolumn % Beralih sementara ke mode 1 kolom agar tabel melebar penuh
+\pagestyle{empty} % Menghilangkan header/footer pada halaman tabel
+
+\begin{landscape}
+\vspace*{-1.5cm} % Menggeser posisi tabel sedikit ke atas
+\begin{table}[p]
+\centering
+\caption{Ringkasan dan Perbandingan Literatur Survei NIDS dengan Penelitian yang Diusulkan}
+\label{tab:literature_review}
+\small
+\renewcommand{\arraystretch}{1.35} % Mengatur jarak antar baris
+
+% Memaksa tabel melebar memenuhi lebar kertas landscape
+\makebox[\linewidth][c]{%
+  \begin{tabularx}{1.15\textwidth}{>{\centering\arraybackslash}p{0.8cm} >{\centering\arraybackslash}p{1.2cm} >{\raggedright\arraybackslash}p{3.0cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}p{3.0cm} >{\centering\arraybackslash}p{1.5cm} >{\centering\arraybackslash}p{2.2cm} >{\centering\arraybackslash}p{1.8cm} >{\centering\arraybackslash}p{1.5cm}}
+  \toprule
+  \textbf{No} & \textbf{Tahun} & \textbf{Peneliti} & \textbf{Metode} & \textbf{Dataset} & \textbf{Cross Dataset} & \textbf{Arsitektur} & \textbf{Adversarial} & \textbf{Real Trafik} \\
+
+  \midrule
+  \rowcolor[gray]{0.9} % Highlight baris kontribusi utama
+  1 & \textbf{2025} 
+  & \textbf{Penulis}
+  & \textbf{XGBoost, \textit{Adversarial Training}, \textit{Saliency Map}} 
+  & \textbf{CSE-CIC-IDS 2018} 
+  & \textbf{Tidak}
+  & \textbf{Centralized} 
+  & \textbf{Ya}
+  & \textbf{Tidak} \\
+
+  \bottomrule
+  \end{tabularx}%
+}
+
+\vspace{0.5cm}
+\begin{minipage}{0.95\linewidth}
+\hspace{0.5cm}\textbf{Referensi:}
+\begin{enumerate}
+    \item Alauthman M, Aslam N, Al-Qerem A, Aldweesh A, Sureephong P. Generative adversarial networks for intrusion detection systems: A comprehensive survey of applications, challenges, and research directions. \textit{Arabian Journal for Science and Engineering}. 2026 Jan;51(1):179--203.
+    \item Alauthman M, Aslam N, Al-Qerem A, Aldweesh A, Sureephong P. Generative adversarial networks for intrusion detection systems: A comprehensive survey of applications, challenges, and research directions. \textit{Arabian Journal for Science and Engineering}. 2026 Jan;51(1):179--203.
+\end{enumerate}
+\end{minipage}
+
+\end{table}
+\end{landscape}
+
+\clearpage
+\twocolumn % Mengembalikan layout dokumen ke mode dua kolom standar IEEE untuk halaman berikutnya
+\pagestyle{plain}
+
+\end{document}
