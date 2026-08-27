@@ -1,0 +1,730 @@
+[1] Ansam Khraisat and Ammar Alazab. 2021. A critical review of intrusion detection systems in the Internet of Things: Techniques, deployment strategy, validation strategy, attacks, public datasets and challenges. Cybersecurity 4, 1 (March 2021), 18. DOI:http://dx.doi.org/10.1186/s42400-021-00077-7
+[2] Ansam Khraisat, Iqbal Gondal, Peter Vamplew, and Joarder Kamruzzaman. 2019. Survey of intrusion detection systems: Techniques, datasets and challenges. Cybersecurity 2, 1 (Dec. 2019), 20. DOI:http://dx.doi.org/10.1186/s42400- 019-0038-7
+[3] Peter Kairouz, H. Brendan McMahan, Brendan Avent, Aurélien Bellet, Mehdi Bennis, Arjun Nitin Bhagoji, Kallista Bonawitz, Zachary Charles, Graham Cormode, Rachel Cummings, Rafael G. L. D’Oliveira, Hubert Eichner, Salim El Rouayheb, David Evans, Josh Gardner, Zachary Garrett, Adrià Gascón, Badih Ghazi, Phillip B. Gibbons, Marco Gruteser, Zaid Harchaoui, Chaoyang He, Lie He, Zhouyuan Huo, Ben Hutchinson, Justin Hsu, Martin Jaggi, Tara Javidi, Gauri Joshi, Mikhail Khodak, Jakub Konecný, Aleksandra Korolova, Farinaz Koushanfar, Sanmi Koyejo, Tancrède Lepoint, Yang Liu, Prateek Mittal, Mehryar Mohri, Richard Nock, Ayfer Özgür, Rasmus Pagh, Hang Qi,
+ACM Comput. Surv., Vol. 57, No. 1, Article 7. Publication date: October 2024.
+Survey on Federated Learning for Intrusion Detection Systems 7:35
+Daniel Ramage, Ramesh Raskar, Mariana Raykova, Dawn Song, Weikang Song, Sebastian U. Stich, Ziteng Sun, Ananda Theertha Suresh, Florian Tramèr, Praneeth Vepakomma, Jianyu Wang, Li Xiong, Zheng Xu, Qiang Yang, Felix X. Yu, Han Yu, and Sen Zhao. 2021. Advances and open problems in federated learning. Foundations and Trends® in Machine Learning 14, 1-2 (June 2021), 1–210. DOI:http://dx.doi.org/10.1561/2200000083
+[4] Othmane Friha, Mohamed Amine Ferrag, Lei Shu, Leandros Maglaras, Kim-Kwang Choo, and Mehdi Nafaa. 2022.
+FELIDS: Federated learning-based intrusion detection system for agricultural Internet of Things. Journal of Parallel and Distributed Computing 165 (March 2022), 17–31. DOI:http://dx.doi.org/10.1016/j.jpdc.2022.03.003
+[5] Ammar Alazab, Ansam Khraisat, Sarabjot Singh, and Tony Jan. 2023. Enhancing privacy-preserving intrusion detection through federated learning. Electronics 12, 16 (2023), 3382. DOI:http://dx.doi.org/10.3390/electronics12163382
+[6] Léo Lavaur, Marc-Oliver Pahl, Yann Busnel, and Fabien Autrel. 2022. The evolution of federated learning-based intrusion detection and mitigation: A survey. IEEE Transactions on Network and Service Management 19, 3 (Sept. 2022), 2309–2332. DOI:http://dx.doi.org/10.1109/TNSM.2022.3177512
+[7] Tian Li, Anit Kumar Sahu, Ameet Talwalkar, and Virginia Smith. 2020. Federated learning: Challenges, methods, and future directions. IEEE Signal Processing Magazine 37, 3 (May 2020), 50–60. DOI:http://dx.doi.org/10.1109/MSP.2020. 2975749
+[8] Qiang Yang, Yang Liu, Tianjian Chen, and Yongxin Tong. 2019. Federated machine learning: Concept and applications.
+ACM Transactions on Intelligent Systems and Technology 10, 2 (Jan. 2019), Article 12, 19 pages. DOI:http://dx.doi.org/ 10.1145/3298981
+[9] Mamoun Alazab, Swarna Priya RM, Parimala M, Praveen Kumar Reddy Maddikunta, Thippa Reddy Gadekallu, and Quoc-Viet Pham. 2021. Federated learning for cybersecurity: Concepts, challenges, and future directions. IEEE Transactions on Industrial Informatics 18, 5 (Oct. 2021), 3501–3509. DOI:http://dx.doi.org/10.1109/TII.2021.3119038
+[10] Mohamed Amine Ferrag, Othmane Friha, Leandros Maglaras, Helge Janicke, and Lei Shu. 2021. Federated deep learning for cyber security in the Internet of Things: Concepts, applications, and experimental analysis. IEEE Access 9 (2021), 138509–138542. DOI:http://dx.doi.org/10.1109/ACCESS.2021.3118642
+[11] Omar Abdel Wahab, Azzam Mourad, Hadi Otrok, and Tarik Taleb. 2021. Federated machine learning: Survey, multilevel classification, desirable criteria and future directions in communication and networking systems. IEEE Communications Surveys & Tutorials 23, 2 (2021), 1342–1397. DOI:http://dx.doi.org/10.1109/COMST.2021.3058573
+[12] Yanyu Cheng, Jianyuan Lu, Dusit Niyato, Biao Lyu, Jiawen Kang, and Shunmin Zhu. 2022. Federated transfer learning with client selection for intrusion detection in mobile edge computing. IEEE Communications Letters 26, 3 (March 2022), 552–556. DOI:http://dx.doi.org/10.1109/LCOMM.2022.3140273
+[13] Hong Liu, Shuaipeng Zhang, Pengfei Zhang, Xinqiang Zhou, Xuebin Shao, Geguang Pu, and Yan Zhang. 2021. Blockchain and federated learning for collaborative intrusion detection in vehicular edge computing. IEEE Transactions on Vehicular Technology 70, 6 (June 2021), 6073–6084. DOI:http://dx.doi.org/10.1109/TVT.2021.3076780
+[14] Beibei Li, Yuhao Wu, Jiarui Song, Rongxing Lu, Tao Li, and Liang Zhao. 2021. DeepFed: Federated deep learning for intrusion detection in industrial cyber-physical systems. IEEE Transactions on Industrial Informatics 17, 8 (Aug. 2021), 5615–5624. DOI:http://dx.doi.org/10.1109/TII.2020.3023430
+[15] Wei Yang Bryan Lim, Nguyen Cong Luong, Dinh Thai Hoang, Yutao Jiao, Ying-Chang Liang, Qiang Yang, Dusit Niyato, and Chunyan Miao. 2020. Federated learning in mobile edge networks: A comprehensive survey. IEEE Communications Surveys & Tutorials 22, 3 (2020), 2031–2063. DOI:http://dx.doi.org/10.1109/COMST.2020.2986024
+[16] Sawsan Abdulrahman, Hanine Tout, Hakima Ould-Slimane, Azzam Mourad, Chamseddine Talhi, and Mohsen Guizani.
+2020. A survey on federated learning: The journey from centralized to distributed on-site learning and beyond. IEEE
+Internet of Things Journal 8, 7 (Oct. 2020), 5476–5497. DOI:http://dx.doi.org/10.1109/JIOT.2020.3030072
+[17] Qinbin Li, Zeyi Wen, Zhaomin Wu, Sixu Hu, Naibo Wang, Yuan Li, Xu Liu, and Bingsheng He. 2021. A survey on
+federated learning systems: Vision, hype and reality for data privacy and protection. IEEE Transactions on Knowledge and Data Engineering 35, 4 (Nov. 2021), 3347–3366. DOI:http://dx.doi.org/10.1109/TKDE.2021.3124599
+[18] Latif U. Khan, Walid Saad, Zhu Han, Ekram Hossain, and Choong Seon Hong. 2021. Federated learning for Internet of Things: Recent advances, taxonomy, and open challenges. IEEE Communications Surveys & Tutorials 23, 3 (2021), 1759–1799. DOI:http://dx.doi.org/10.1109/COMST.2021.3090430
+[19] Dinh C. Nguyen, Ming Ding, Pubudu N. Pathirana, Aruna Seneviratne, Jun Li, and H. Vincent Poor. 2021. Federated learning for Internet of Things: A comprehensive survey. IEEE Communications Surveys & Tutorials 23, 3 (2021), 1622–1658. DOI:http://dx.doi.org/10.1109/COMST.2021.3075439
+[20] Viraaji Mothukuri, Prachi Khare, Reza M. Parizi, Seyedamin Pouriyeh, Ali Dehghantanha, and Gautam Srivastava. 2021. Federated-learning-based anomaly detection for IoT security attacks. IEEE Internet of Things Journal 9, 4 (May 2021), 2545–2554. DOI:http://dx.doi.org/10.1109/JIOT.2021.3077803
+[21] Yulin Fan, Yang Li, Mengqi Zhan, Huajun Cui, and Yan Zhang. 2020. IoTDefender: A federated transfer learning intrusion detection framework for 5G IoT. In Proceedings of the 2020 IEEE 14th International Conference on Big Data Science and Engineering (BigDataSE ’20). 88–95. DOI:http://dx.doi.org/10.1109/BigDataSE50710.2020.00020
+ACM Comput. Surv., Vol. 57, No. 1, Article 7. Publication date: October 2024.
+7:36 A. Khraisat et al.
+[22] Sawsan Abdul Rahman, Hanine Tout, Chamseddine Talhi, and Azzam Mourad. 2020. Internet of Things intrusion detection: Centralized, on-device, or federated learning? IEEE Network 34, 6 (Nov. 2020), 310–317. DOI:http://dx.doi. org/10.1109/MNET.011.2000286
+[23] Zhuo Chen, Na Lv, Pengfei Liu, Yu Fang, Kun Chen, and Wu Pan. 2020. Intrusion detection for wireless edge networks based on federated learning. IEEE Access 8 (2020), 217463–217472. DOI:http://dx.doi.org/10.1109/ACCESS.2020. 3041793
+[24] Thien Duc Nguyen, Samuel Marchal, Markus Miettinen, Hossein Fereidooni, N. Asokan, and Ahmad-Reza Sadeghi. 2019. DÏoT: A federated self-learning anomaly detection system for IoT. In Proceedings of the 2019 IEEE 39th International Conference on Distributed Computing Systems (ICDCS ’19). IEEE, 756–767. DOI:http://dx.doi.org/10.1109/ICDCS. 2019.00080
+[25] Ticao Zhang and Shiwen Mao. 2022. An introduction to the federated learning standard. GetMobile: Mobile Computing and Communications 25, 3 (Jan. 2022), 18–22. DOI:http://dx.doi.org/10.1145/3511285.3511291
+[26] Yang Liu, Yan Kang, Chaoping Xing, Tianjian Chen, and Qiang Yang. 2020. A secure federated transfer learning framework. IEEE Intelligent Systems 35, 4 (July 2020), 70–82. DOI:http://dx.doi.org/10.1109/MIS.2020.2988525
+[27] Shreya Sharma, Chaoping Xing, Yang Liu, and Yan Kang. 2019. Secure and efficient federated transfer learning. In Proceedings of the 2019 IEEE International Conference on Big Data (Big Data ’19). 2569–2576. DOI:http://dx.doi.org/10. 1109/BigData47090.2019.9006280
+[28] Muhammad Habib Ur Rehman, Ahmed Mukhtar Dirir, Khaled Salah, Ernesto Damiani, and Davor Svetinovic. 2021. TrustFed: A framework for fair and trustworthy cross-device federated learning in IIoT. IEEE Transactions on Industrial Informatics 17 (2021), 8485–8494. DOI:http://dx.doi.org/10.1109/tii.2021.3075706
+[29] Yanxin Xu, Hua Zhang, Shaohua Zhao, Xin Zhang, Wenmin Li, Fei Gao, and Kaixuan Li. 2023. Comments on “VERSA: Verifiable secure aggregation for cross-device federated learning.” IEEE Transactions on Dependable and Secure Computing. Published Online, March 6, 2023. DOI:http://dx.doi.org/10.1109/TDSC.2023.3272338
+[30] Wenti Yang, Naiyu Wang, Zhitao Guan, Longfei Wu, Xiaojiang Du, and Mohsen Guizani. 2022. A practical crossdevice federated learning framework over 5G networks. IEEE Wireless Communications 29, 6 (Dec. 2022), 128–134. DOI:http://dx.doi.org/10.1109/MWC.005.2100435
+[31] Ming Tang and Vincent W. S. Wong. 2021. An incentive mechanism for cross-silo federated learning: A public goods perspective. In Proceedings of the IEEE Conference on Computer Communications (INFOCOM ’21). 1–10. DOI:http://dx. doi.org/10.1109/INFOCOM42981.2021.9488705
+[32] Yansheng Wang, Yongxin Tong, Dingyuan Shi, and Ke Xu. 2021. An efficient approach for cross-silo federated learning to rank. In Proceedings of the 2021 IEEE 37th International Conference on Data Engineering (ICDE ’21). 1128–1139. DOI:
+http://dx.doi.org/10.1109/ICDE51399.2021.00102
+[33] Jinhyun So, Başak Güler, and A. Salman Avestimehr. 2021. Byzantine-resilient secure federated learning. IEEE Journal on Selected Areas in Communications 39, 7 (July 2021), 2168–2181. DOI:http://dx.doi.org/10.1109/JSAC.2020.3041404
+[34] Wenji He, Haipeng Yao, Tianle Mai, Fu Wang, and Mohsen Guizani. 2023. Three-stage Stackelberg game enabled clustered federated learning in heterogeneous UAV swarms. IEEE Transactions on Vehicular Technology 72, 7 (2023), 9366–9380. DOI:http://dx.doi.org/10.1109/TVT.2023.3246636
+[35] Zhe Qu, Xingyu Li, Jie Xu, Bo Tang, Zhuo Lu, and Yao Liu. 2023. On the convergence of multi-server federated learning
+with overlapping area. IEEE Transactions on Mobile Computing 22 (2023), 6647–6662. DOI:http://dx.doi.org/10.1109/ TMC.2022.3200016
+[36] Liangqi Yuan, Lichao Sun, Philip S. Yu, and Ziran Wang. 2024. Decentralized federated learning: A survey and perspective. IEEE Internet of Things Journal. Early Access, May 30, 2024. DOI:http://dx.doi.org/10.48550/arXiv.2306.01603
+[37] Dinesh Chowdary Attota, Viraaji Mothukuri, Reza M. Parizi, and Seyedamin Pouriyeh. 2021. An ensemble multi-view federated learning intrusion detection for IoT. IEEE Access 9 (2021), 117734–117745. DOI:http://dx.doi.org/10.1109/ ACCESS.2021.3107337
+[38] Tao Sun, Dongsheng Li, and Bao Wang. 2023. Decentralized federated averaging. IEEE Transactions on Pattern Analysis and Machine Intelligence 45, 4 (April 2023), 4289–4301. DOI:http://dx.doi.org/10.1109/TPAMI.2022.3196503
+[39] Kenji Nishimoto, Yi-Han Chiang, Hai Lin, and Yusheng Ji. 2023. FedATM: Adaptive trimmed mean based federated learning against model poisoning attacks. In Proceedings of the 2023 IEEE 97th Vehicular Technology Conference (VTC2023-Spring ’23). 1–5. DOI:http://dx.doi.org/10.1109/VTC2023-Spring57618.2023.10200010
+[40] Zhiyuan Zhang, Qi Su, and Xu Sun. 2022. Dim-Krum: Backdoor-resistant federated learning for NLP with dimensionwise Krum-based aggregation. arXiv:2210.06894 (2022). DOI:http://dx.doi.org/10.48550/arXiv.2210.06894
+[41] Dong Yin, Yudong Chen, Kannan Ramchandran, and Peter Bartlett. 2021. Byzantine-robust distributed learning: Towards optimal statistical rates. arXiv:1803.01498 (2021). DOI:http://dx.doi.org/10.48550/arXiv.1803.01498
+[42] Hanchi Ren, Jingjing Deng, and Xianghua Xie. 2022. GRNN: Generative regression neural —A data leakage attack for federated learning. ACM Transactions on Intelligent Systems and Technology 13, 4 (May 2022), Article 65, 24 pages. DOI:
+http://dx.doi.org/10.1145/3510032
+ACM Comput. Surv., Vol. 57, No. 1, Article 7. Publication date: October 2024.
+Survey on Federated Learning for Intrusion Detection Systems 7:37
+[43] Mengnan Bi, Yingjie Wang, Zhipeng Cai, and Xiangrong Tong. 2020. A privacy-preserving mechanism based on local differential privacy in edge computing. China Communications 17, 9 (Sept. 2020), 50–65. DOI:http://dx.doi.org/10. 23919/JCC.2020.09.005
+[44] Lijing Zhou, Licheng Wang, Yiru Sun, and Tianyi Ai. 2018. AntNest: Fully non-interactive secure multi-party computation. IEEE Access 6 (2018), 75639–75649. DOI:http://dx.doi.org/10.1109/ACCESS.2018.2883775
+[45] Jaehyoung Park, Nam Yul Yu, and Hyuk Lim. 2022. Privacy-preserving federated learning using homomorphic encryption with different encryption keys. In Proceedings of the 2022 13th International Conference on Information and Communication Technology Convergence (ICTC ’22). 1869–1871. DOI:http://dx.doi.org/10.1109/ICTC55196.2022.9952531
+[46] Christina Müller, Marcus Brandenburger, Christian Cachin, Pascal Felber, Christian Göttel, and Valerio Schiavoni.
+2020. TZ4Fabric: Executing smart contracts with ARM TrustZone : (Practical experience report). In Proceedings of
+the 2020 International Symposium on Reliable Distributed Systems (SRDS ’20). 31–40. DOI:http://dx.doi.org/10.1109/
+SRDS51746.2020.00011
+[47] Daniel J. Beutel, Taner Topal, Akhil Mathur, Xinchi Qiu, Javier Fernandez-Marques, Yan Gao, Lorenzo Sani, Kwing Hei Li, Titouan Parcollet, Pedro Porto Buarque de Gusmão, and Nicholas D. Lane. 2022. Flower: A friendly federated learning research framework. arXiv preprint arXiv:2007.14390 (March 2022). DOI:http://dx.doi.org/10.48550/arXiv.2007. 14390
+[48] Sebastian Caldas, Sai Meher Karthik Duddu, Peter Wu, Tian Li, Jakub Konečný, H. Brendan McMahan, Virginia Smith,
+and Ameet Talwalkar. 2018. LEAF: A benchmark for federated settings. arXiv:1812.01097v3 (2018). https://arxiv.org/ abs/1812.01097v3
+[49] G. Anthony Reina, Alexey Gruzdev, Patrick Foley, Olga Perepelkina, Mansi Sharma, Igor Davidyuk, Ilya Trushkin,
+Maksim Radionov, Aleksandr Mokrov, Dmitry Agapov, Jason Martin, Brandon Edwards, Micah J. Sheller, Sarthak Pati, Prakash Narayana Moorthy, Shih-Han Wang, Prashant Shah, and Spyridon Bakas. 2021. OpenFL: An open-source framework for federated learning. arXiv:2105.06413 (2021). DOI:http://dx.doi.org/10.1088/1361-6560/ac97d9
+[50] Payman Mohassel and Yupeng Zhang. 2017. SecureML: A system for scalable privacy-preserving machine learning. In Proceedings of the 2017 IEEE Symposium on Security and Privacy (SP ’17). 19–38. DOI:http://dx.doi.org/10.1109/SP. 2017.12
+[51] Fan Lai, Yinwei Dai, Sanjay S. Singapuram, Jiachen Liu, Xiangfeng Zhu, Harsha V. Madhyastha, and Mosharaf Chowdhury. 2021. FedScale: Benchmarking model and system performance of federated learning at scale. arXiv:2105.11367v5 (2021). https://arxiv.org/abs/2105.11367v5
+[52] Lutho Ntantiso, Antoine Bagula, Olasupo Ajayi, and Ferdinand Kahenga-Ngongo. 2023. A review of federated learning: Algorithms, frameworks and applications. In Towards New e-Infrastructure and e-Services for Developing Countries, Rashid A. Saeed, Abubakar D. Bakari, and Yahya Hamad Sheikh (Eds.). Springer Nature Switzerland, Cham, 341–357.
+[53] Xiaoyuan Liu, Tianneng Shi, Chulin Xie, Qinbin Li, Kangping Hu, Haoyu Kim, Xiaojun Xu, Bo Li, and Dawn Song. 2022. UniFed: A benchmark for federated learning frameworks. arXiv preprint arXiv:2207.10308 (2022). DOI:http://dx. doi.org/10.48550/arXiv.2207.10308
+[54] Zilong Zhao, Robert Birke, Aditya Kunar, and Lydia Y. Chen. 2021. Fed-TGAN: Federated learning framework for synthesizing tabular data. arXiv:2108.07927 (2021). DOI:http://dx.doi.org/10.48550/arXiv.2108.07927
+[55] Asma Alotaibi and Ahmed Barnawi. 2023. IDSoft: A federated and softwarized intrusion detection framework for massive Internet of Things in 6G network. Journal of King Saud University—Computer and Information Sciences 35, 6 (June 2023), 101575. DOI:http://dx.doi.org/10.1016/j.jksuci.2023.101575
+[56] Osama Shahid, Seyedamin Pouriyeh, Reza M. Parizi, Quan Z. Sheng, Gautam Srivastava, and Liang Zhao. 2021. Communication efficiency in federated learning: Achievements and challenges. arXiv preprint arXiv:2107.10996 (2021). DOI:
+http://dx.doi.org/10.48550/arXiv.2107.10996
+[57] Yang Zhao, Jun Zhao, Mengmeng Yang, Teng Wang, Ning Wang, Lingjuan Lyu, Dusit Niyato, and Kwok-Yan Lam. 2021. Local differential privacy-based federated learning for Internet of Things. IEEE Internet of Things Journal 8, 11 (June 2021), 8836–8853. DOI:http://dx.doi.org/10.1109/JIOT.2020.3037194
+[58] Zengpeng Li, Vishal Sharma, and Saraju P. Mohanty. 2020. Preserving data privacy via federated learning: Challenges
+and solutions. IEEE Consumer Electronics Magazine 9, 3 (May 2020), 8–16. DOI:http://dx.doi.org/10.1109/MCE.2019. 2959108
+[59] Pengrui Liu, Xiangrui Xu, and Wei Wang. 2022. Threats, attacks and defenses to federated learning: Issues, taxonomy and perspectives. Cybersecurity 5, 1 (Feb. 2022), 4. DOI:http://dx.doi.org/10.1186/s42400-021-00105-6
+[60] Gergely Daniel Nemeth, Miguel Angel Lozano, Novi Quadrianto, and Nuria Oliver. 2023. Addressing membership inference attack in federated learning with model compression. arXiv:2311.17750 (2023). DOI:http://dx.doi.org/10.48550/ arXiv.2311.17750
+[61] Xicong Shen, Ying Liu, Fu Li, and Chunguang Li. 2024. Privacy-preserving federated learning against label-flipping attacks on non-IID data. IEEE Internet of Things Journal 11, 1 (Jan. 2024), 1241–1255. DOI:http://dx.doi.org/10.1109/ JIOT.2023.3288886
+ACM Comput. Surv., Vol. 57, No. 1, Article 7. Publication date: October 2024.
+7:38 A. Khraisat et al.
+[62] Jahid Hasan. 2023. Security and privacy issues of federated learning. arXiv:2307.12181 (2023). DOI:http://dx.doi.org/ 10.48550/arXiv.2307.12181
+[63] Yuan-Cheng Lai, Jheng-Yan Lin, Ying-Dar Lin, Ren-Hung Hwang, Po-Chin Lin, Hsiao-Kuang Wu, and Chung-Kuan Chen. 2023. Two-phase defense against poisoning attacks on federated learning-based intrusion detection. Computers & Security 129 (June 2023), 103205. DOI:http://dx.doi.org/10.1016/j.cose.2023.103205
+[64] Haitian Chen, Xuebin Chen, Lulu Peng, and Ruikui Ma. 2023. FLRAM: Robust aggregation technique for defense against Byzantine poisoning attacks in federated learning. Electronics 12, 21 (Jan. 2023), 4463. DOI:http://dx.doi.org/ 10.3390/electronics12214463
+[65] Nura Aljaafari, Mahmoud Nazzal, Ahmad H. Sawalmeh, Abdallah Khreishah, Muhammad Anan, Abdulelah Algosaibi, Mohammed Abdulaziz Alnaeem, Adel Aldalbahi, Abdulaziz Alhumam, and Conrado P. Vizcarra. 2022. Investigating the factors impacting adversarial attack and defense performances in federated learning. IEEE Transactions on Engineering Management 71 (2022), 12542–12555. DOI:http://dx.doi.org/10.1109/TEM.2022.3155353
+[66] Malhar S. Jere, Tyler Farnan, and Farinaz Koushanfar. 2021. A taxonomy of attacks on federated learning. IEEE Security & Privacy 19, 2 (March 2021), 20–28. DOI:http://dx.doi.org/10.1109/MSEC.2020.3039941
+[67] Kang Wei, Jun Li, Ming Ding, Chuan Ma, Howard H. Yang, Farhad Farokhi, Shi Jin, Tony Q. S. Quek, and H. Vincent Poor. 2020. Federated learning with differential privacy: Algorithms and performance analysis. IEEE Transactions on Information Forensics and Security 15 (2020), 3454–3469. DOI:http://dx.doi.org/10.1109/TIFS.2020.2988575
+[68] Sudipan Saha and Tahir Ahmad. 2021. Federated transfer learning: Concept and applications. Intelligenza Artificiale 15, 1 (Jan. 2021), 35–44. DOI:http://dx.doi.org/10.3233/IA-200075
+[69] Chengxu Yang, Qipeng Wang, Mengwei Xu, Zhenpeng Chen, Kaigui Bian, Yunxin Liu, and Xuanzhe Liu. 2021. Characterizing impacts of heterogeneity in federated learning upon large-scale smartphone data. In Proceedings of the Web Conference 2021 (WWW ’21). ACM, New York, NY, USA, 935–946. DOI:http://dx.doi.org/10.1145/3442381.3449851
+[70] Qinbin Li, Yiqun Diao, Quan Chen, and Bingsheng He. 2022. Federated learning on non-IID data silos: An experimental
+study. In Proceedings of the 2022 IEEE 38th International Conference on Data Engineering (ICDE ’22). 965–978. DOI:
+http://dx.doi.org/10.1109/ICDE53745.2022.00077
+[71] Siqi Luo, Xu Chen, Qiong Wu, Zhi Zhou, and Shuai Yu. 2020. HFEL: Joint edge association and resource allocation for
+cost-efficient hierarchical federated edge learning. IEEE Transactions on Wireless Communications 19, 10 (Oct. 2020), 6535–6548. DOI:http://dx.doi.org/10.1109/TWC.2020.3003744
+[72] Adnan Helmi Azizan, Salama A. Mostafa, Aida Mustapha, Cik Feresa Mohd Foozy, Mohd Helmy Abd Wahab, Mazin Abed Mohammed, and Bashar Ahmad Khalaf. 2021. A machine learning approach for improving the performance of network intrusion detection systems. Annals of Emerging Technologies in Computing 5, 5 (March 2021), 201–208. DOI:http://dx.doi.org/10.33166/AETiC.2021.05.025
+[73] Sen Lin, Guang Yang, and Junshan Zhang. 2020. A collaborative learning framework via federated meta-learning. In Proceedings of the 2020 IEEE 40th International Conference on Distributed Computing Systems (ICDCS ’20). 289–299. DOI:
+http://dx.doi.org/10.1109/ICDCS47774.2020.00032
+[74] Ilya Mironov. 2017. Rényi differential privacy. In Proceedings of the 2017 IEEE 30th Computer Security Foundations Symposium (CSF ’17). 263–275. DOI:http://dx.doi.org/10.1109/CSF.2017.11
+[75] Wenyuan Yang, Yuguo Yin, Gongxi Zhu, Hanlin Gu, Lixin Fan, Xiaochun Cao, and Qiang Yang. 2023. FedZKP: Federated model ownership verification with zero-knowledge proof. arXiv:2305.04507 (2023). DOI:http://dx.doi.org/10. 48550/arXiv.2305.04507
+[76] Harshita Jasoliya and Kaushal Shah. 2022. An exploration to the quantum cryptography technology. In Proceedings of the 2022 9th International Conference on Computing for Sustainable Global Development (INDIACom ’22). 506–510. DOI:
+http://dx.doi.org/10.23919/INDIACom54597.2022.9763109
+[77] Nguyen H. Tran, Wei Bao, Albert Zomaya, Minh N. H. Nguyen, and Choong Seon Hong. 2019. Federated learning over wireless networks: Optimization model design and analysis. In Proceedings of the 2019 IEEE Conference on Computer Communications (INFOCOM ’19). IEEE, 1387–1395. DOI:http://dx.doi.org/10.1109/INFOCOM.2019.8737464
+[78] Meng Wang, Weijie Fu, Xiangnan He, Shijie Hao, and Xindong Wu. 2022. A survey on large-scale machine learning. IEEE Transactions on Knowledge and Data Engineering 34, 6 (June 2022), 2574–2594. DOI:http://dx.doi.org/10.1109/ TKDE.2020.3015777
+[79] Shaashwat Agrawal, Sagnik Sarkar, Ons Aouedi, Gokul Yenduri, Kandaraj Piamrat, Sweta Bhattacharya, Praveen
+Reddy, and Thippa Gadekallu. 2021. Federated learning for intrusion detection system: Concepts, challenges and future directions. Computer Communications. Published Online, June 16, 2021.
+
+REFERENCES
+[1] P. M R and B. Bhowmik, “Iot evolution and recent advancements,”
+in 2023 9th International Conference on Advanced Computing and
+Communication Systems (ICACCS), vol. 1, 2023, pp. 1725–1730.
+[2] R. Dangi, P. Lalwani, G. Choudhary, I. You, and G. Pau, “Study and
+investigation on 5g technology: A systematic review,” Sensors, vol. 22,
+no. 1, p. 26, 2021.
+[3] P. M. Rao and P. Saraswathi, “Evolving cloud security technologies for
+social networks,” in Security in IoT Social Networks. Elsevier, 2021,
+pp. 179–203.
+[4] K. Paul. (2020) Ring home – security camera breach. Accessed: 2025-
+06-04. [Online]. Available: https://www.theguardian.com/technology/
+2020/dec/23/amazon-ring-camera-hack-lawsuit-threats
+[5] Z. Ahmad, A. Shahid Khan, C. Wai Shiang, J. Abdullah, and F. Ahmad,
+“Network intrusion detection system: A systematic study of machine
+learning and deep learning approaches,” Transactions on Emerging
+Telecommunications Technologies, vol. 32, no. 1, p. e4150, 2021.
+[6] A. Khraisat, I. Gondal, P. Vamplew, and J. Kamruzzaman, “Survey
+of intrusion detection systems: techniques, datasets and challenges,”
+Cybersecurity, vol. 2, no. 1, pp. 1–22, 2019.
+[7] S. Sinha, “State of iot 2024,” Sept. 2024, [Online;
+accessed 27-March-2025]. [Online]. Available: https://iot-analytics.
+com/number-connected-iot-devices/
+[8] S. Rajasegarar, C. Leckie, and M. Palaniswami, “Anomaly detection
+in wireless sensor networks,” IEEE Wireless Communications, vol. 15,
+no. 4, pp. 34–40, 2008.
+[9] S. Rajasegarar, C. Leckie, M. Palaniswami, and J. C. Bezdek, “Distributed anomaly detection in wireless sensor networks,” in 2006 10th
+IEEE Singapore international conference on communication systems.
+IEEE, 2006, pp. 1–5.
+[10] S. Rajasegarar, A. Gluhak, M. A. Imran, M. Nati, M. Moshtaghi,
+C. Leckie, and M. Palaniswami, “Ellipsoidal neighbourhood outlier
+factor for distributed anomaly detection in resource constrained networks,” Pattern recognition, vol. 47, no. 9, pp. 2867–2879, 2014.
+[11] P. Zhou, Q. Lin, D. Loghin, B. C. Ooi, Y. Wu, and H. Yu,
+“Communication-efficient decentralized machine learning over heterogeneous networks,” in 2021 IEEE 37th International Conference on
+Data Engineering (ICDE). IEEE, 2021, pp. 384–395.
+[12] E. Dritsas and M. Trigka, “Federated learning for iot: A survey
+of techniques, challenges, and applications,” Journal of Sensor and
+Actuator Networks, vol. 14, no. 1, p. 9, 2025.
+[13] D.-D. Le, A.-K. Tran, T.-B. Pham, and T.-N. Huynh, “A survey of
+model compression and its feedback mechanism in federated learning,”
+in Proceedings of the 5th ACM Workshop on Intelligent Cross-Data
+Analysis and Retrieval, 2024, pp. 37–42.
+[14] Z. Wang, Z. Zhang, Y. Tian, Q. Yang, H. Shan, W. Wang, and T. Q.
+Quek, “Asynchronous federated learning over wireless communication
+networks,” IEEE Transactions on Wireless Communications, vol. 21,
+no. 9, pp. 6961–6978, 2022.
+[15] K. Bonawitz, F. Salehi, J. Konecn ˇ y, B. McMahan, and M. Gruteser, `
+“Federated learning with autotuned communication-efficient secure
+aggregation,” in 2019 53rd Asilomar Conference on Signals, Systems,
+and Computers. IEEE, 2019, pp. 1222–1226.
+[16] C. O’Reilly, A. Gluhak, M. A. Imran, and S. Rajasegarar, “Anomaly
+detection in wireless sensor networks in a non-stationary environment,”
+IEEE Communications Surveys & Tutorials, vol. 16, no. 3, pp. 1413–
+1432, 2014.
+[17] L. Li, Y. Fan, M. Tse, and K.-Y. Lin, “A review of applications in
+federated learning,” Computers & Industrial Engineering, vol. 149, p.
+106854, 2020.
+[18] F. R. Mughal, J. He, B. Das, F. A. Dharejo, N. Zhu, S. B. Khan, and
+S. Alzahrani, “Adaptive federated learning for resource-constrained iot
+devices through edge intelligence and multi-edge clustering,” Scientic
+Reports, vol. 14, no. 1, p. 28746, 2024.
+[19] P. Qi, D. Chiaro, A. Guzzo, M. Ianni, G. Fortino, and F. Piccialli,
+“Model aggregation techniques in federated learning: A comprehensive
+survey,” Future Generation Computer Systems, vol. 150, pp. 272–293,
+2024.
+31
+[20] C. Zhang, Y. Xie, H. Bai, B. Yu, W. Li, and Y. Gao, “A survey on
+federated learning,” Knowledge-Based Systems, vol. 216, p. 106775,
+2021.
+[21] H. Liu and B. Lang, “Machine learning and deep learning methods for
+intrusion detection systems: A survey,” applied sciences, vol. 9, no. 20,
+p. 4396, 2019.
+[22] M. H. Amin, E. Andriyash, J. Rolfe, B. Kulchytskyy, and R. Melko,
+“Quantum boltzmann machine,” Physical Review X, vol. 8, no. 2, p.
+021050, 2018.
+[23] H.-J. Liao, C.-H. R. Lin, Y.-C. Lin, and K.-Y. Tung, “Intrusion detection
+system: A comprehensive review,” Journal of Network and Computer
+Applications, vol. 36, no. 1, pp. 16–24, 2013.
+[24] M. Alazab, S. P. RM, M. Parimala, P. K. R. Maddikunta, T. R.
+Gadekallu, and Q.-V. Pham, “Federated learning for cybersecurity:
+Concepts, challenges, and future directions,” IEEE Transactions on
+Industrial Informatics, vol. 18, no. 5, pp. 3501–3509, 2021.
+[25] Z. Chen, C. K. Yeo, B. S. Lee, and C. T. Lau, “Autoencoder-based
+network anomaly detection,” in 2018 Wireless telecommunications
+symposium (WTS). IEEE, 2018, pp. 1–5.
+[26] L. Mohammadpour, T. C. Ling, C. S. Liew, and A. Aryanfar, “A survey
+of cnn-based network intrusion detection,” Applied Sciences, vol. 12,
+no. 16, p. 8162, 2022.
+[27] T. A. Tang, L. Mhamdi, D. McLernon, S. A. R. Zaidi, and M. Ghogho,
+“Deep recurrent neural network for intrusion detection in sdn-based
+networks,” in 2018 4th IEEE Conference on Network Softwarization
+and Workshops (NetSoft). IEEE, 2018, pp. 202–206.
+[28] J. Kim, J. Kim, H. Kim, M. Shim, and E. Choi, “Cnn-based network intrusion detection against denial-of-service attacks,” Electronics, vol. 9,
+no. 6, p. 916, 2020.
+[29] M. Al-Subaie and M. Zulkernine, “The power of temporal pattern
+processing in anomaly intrusion detection,” in 2007 IEEE International
+Conference on Communications. IEEE, 2007, pp. 1391–1398.
+[30] M. Sajid, K. R. Malik, A. Almogren, T. S. Malik, A. H. Khan,
+J. Tanveer, and A. U. Rehman, “Enhancing intrusion detection: a hybrid
+machine and deep learning approach,” Journal of Cloud Computing,
+vol. 13, no. 1, p. 123, 2024.
+[31] S. Agrawal, S. Sarkar, O. Aouedi, G. Yenduri, K. Piamrat, M. Alazab,
+S. Bhattacharya, P. K. R. Maddikunta, and T. R. Gadekallu, “Federated
+learning for intrusion detection system: Concepts, challenges and future
+directions,” Computer Communications, vol. 195, pp. 346–361, 2022.
+[32] Q. Yang, Y. Liu, T. Chen, and Y. Tong, “Federated machine learning:
+Concept and applications,” ACM Transactions on Intelligent Systems
+and Technology (TIST), vol. 10, no. 2, pp. 1–19, 2019.
+[33] Y. Li, Z. Guo, N. Yang, H. Chen, D. Yuan, and W. Ding, “Threats and
+defenses in federated learning life cycle: A comprehensive survey and
+challenges,” arXiv preprint arXiv:2407.06754, 2024.
+[34] X. Li, K. Huang, W. Yang, S. Wang, and Z. Zhang, “On the convergence of fedavg on non-iid data,” arXiv preprint arXiv:1907.02189,
+2019.
+[35] M. Aledhari, R. Razzak, R. M. Parizi, and F. Saeed, “Federated learning: A survey on enabling technologies, protocols, and applications,”
+IEEE Access, vol. 8, pp. 140 699–140 725, 2020.
+[36] D. C. Nguyen, M. Ding, P. N. Pathirana, A. Seneviratne, J. Li, and
+H. V. Poor, “Federated learning for internet of things: A comprehensive
+survey,” IEEE Communications Surveys & Tutorials, vol. 23, no. 3, pp.
+1622–1658, 2021.
+[37] V. Mothukuri, R. M. Parizi, S. Pouriyeh, Y. Huang, A. Dehghantanha,
+and G. Srivastava, “A survey on security and privacy of federated
+learning,” Future Generation Computer Systems, vol. 115, pp. 619–
+640, 2021.
+[38] S. Abdulrahman, H. Tout, H. Ould-Slimane, A. Mourad, C. Talhi,
+and M. Guizani, “A survey on federated learning: The journey from
+centralized to distributed on-site learning and beyond,” IEEE Internet
+of Things Journal, vol. 8, no. 7, pp. 5476–5497, 2021.
+[39] Q. Li, Z. Wen, Z. Wu, S. Hu, N. Wang, Y. Li, X. Liu, and B. He, “A
+survey on federated learning systems: Vision, hype and reality for data
+privacy and protection,” IEEE Transactions on Knowledge and Data
+Engineering, vol. 35, no. 4, pp. 3347–3366, 2021.
+[40] S. Banabilah, M. Aloqaily, E. Alsayed, N. Malik, and Y. Jararweh,
+“Federated learning review: Fundamentals, enabling technologies, and
+future applications,” Information processing & management, vol. 59,
+no. 6, p. 103061, 2022.
+[41] J. Wen, Z. Zhang, Y. Lan, Z. Cui, J. Cai, and W. Zhang, “A survey on
+federated learning: challenges and applications,” International Journal
+of Machine Learning and Cybernetics, vol. 14, no. 2, pp. 513–535,
+2023.
+[42] A. Khraisat, A. Alazab, S. Singh, T. Jan, and A. Jr. Gomez, “Survey
+on federated learning for intrusion detection system: Concept, architectures, aggregation strategies, challenges, and future directions,” ACM
+Computing Surveys, vol. 57, no. 1, pp. 1–38, 2024.
+[43] T. Zhang and S. Mao, “An introduction to the federated learning
+standard,” GetMobile: Mobile Comp. and Comm., vol. 25, no. 3,
+p. 18–22, Jan. 2022. [Online]. Available: https://doi-org.ezproxy-f.
+deakin.edu.au/10.1145/3511285.3511291
+[44] D. C. Nguyen, Q.-V. Pham, P. N. Pathirana, M. Ding, A. Seneviratne,
+Z. Lin, O. Dobre, and W.-J. Hwang, “Federated learning for smart
+healthcare: A survey,” ACM Computing Surveys (Csur), vol. 55, no. 3,
+pp. 1–37, 2022.
+[45] Y. Liu, Y. Kang, T. Zou, Y. Pu, Y. He, X. Ye, Y. Ouyang, Y.-Q. Zhang,
+and Q. Yang, “Vertical federated learning: Concepts, advances, and
+challenges,” IEEE Transactions on Knowledge and Data Engineering,
+2024.
+[46] Y. Chen, X. Qin, J. Wang, C. Yu, and W. Gao, “Fedhealth: A federated
+transfer learning framework for wearable healthcare,” IEEE Intelligent
+Systems, vol. 35, no. 4, pp. 83–93, 2020.
+[47] L. Yuan, Z. Wang, L. Sun, S. Y. Philip, and C. G. Brinton, “Decentralized federated learning: A survey and perspective,” IEEE Internet
+of Things Journal, 2024.
+[48] S. I. Nanayakkara, S. R. Pokhrel, and G. Li, “Understanding global
+aggregation and optimization of federated learning,” Future Generation
+Computer Systems, vol. 159, pp. 114–133, 2024.
+[49] T. Li, A. K. Sahu, M. Zaheer, M. Sanjabi, A. Talwalkar, and V. Smith,
+“Federated optimization in heterogeneous networks,” Proceedings of
+Machine learning and systems, vol. 2, pp. 429–450, 2020.
+[50] M. S. Islam, S. Javaherian, F. Xu, X. Yuan, L. Chen, and N.-F.
+Tzeng, “Fedclust: Tackling data heterogeneity in federated learning
+through weight-driven client clustering,” in Proceedings of the 53rd
+International Conference on Parallel Processing, 2024, pp. 474–483.
+[51] K. Nishimoto, Y.-H. Chiang, H. Lin, and Y. Ji, “Fedatm: Adaptive
+trimmed mean based federated learning against model poisoning attacks,” in 2023 IEEE 97th Vehicular Technology Conference (VTC2023-
+Spring), 2023, pp. 1–5.
+[52] S. Praneeth Karimireddy, S. Kale, M. Mohri, S. J. Reddi, S. U. Stich,
+and A. Theertha Suresh, “Scaffold: Stochastic controlled averaging for
+federated learning,” arXiv e-prints, pp. arXiv–1910, 2019.
+[53] I. Kholod, E. Yanaki, D. Fomichev, E. Shalugin, E. Novikova, E. Filippov, and M. Nordlund, “Open-source federated learning frameworks
+for iot: A comparative review and analysis,” Sensors, vol. 21, no. 1, p.
+167, 2020.
+[54] R. L. Rivest, L. Adleman, M. L. Dertouzos et al., “On data banks and
+privacy homomorphisms,” Foundations of secure computation, vol. 4,
+no. 11, pp. 169–180, 1978.
+[55] R. Li, Y. Xiao, C. Zhang, T. Song, and C. Hu, “Cryptographic
+algorithms for privacy-preserving online applications.” Math. Found.
+Comput., vol. 1, no. 4, pp. 311–330, 2018.
+[56] A. E. Ouadrhiri and A. Abdelhadi, “Differential privacy for deep and
+federated learning: A survey,” IEEE Access, vol. 10, pp. 22 359–22 380,
+2022.
+[57] Y. Li, Y. Zhou, A. Jolfaei, D. Yu, G. Xu, and X. Zheng, “Privacypreserving federated learning framework based on chained secure
+multiparty computing,” IEEE Internet of Things Journal, vol. 8, no. 8,
+pp. 6178–6186, 2020.
+[58] O. Choudhury, A. Gkoulalas-Divanis, T. Salonidis, I. Sylla, Y. Park,
+G. Hsu, and A. Das, “Anonymizing data for privacy-preserving federated learning. arxiv 2020,” arXiv preprint arXiv:2002.09096.
+[59] M. Hao, H. Li, X. Luo, G. Xu, H. Yang, and S. Liu, “Efficient
+and privacy-enhanced federated learning for industrial artificial intelligence,” IEEE Transactions on Industrial Informatics, vol. 16, no. 10,
+pp. 6532–6542, 2020.
+[60] TensorFlow. (2024) Tensorflow federated. Accessed: 2024-12-12.
+[Online]. Available: https://www.tensorflow.org/federated
+[61] A. Ziller, A. Trask, A. Lopardo, B. Szymkow, B. Wagner, E. Bluemke,
+J.-M. Nounahon, J. Passerat-Palmbach, K. Prakash, N. Rose et al.,
+“Pysyft: A library for easy federated learning,” Federated Learning
+Systems: Towards Next-Generation AI, pp. 111–139, 2021.
+[62] FATE. (2024) Federated ai technology enabler (fate). Accessed:
+2024-12-12. [Online]. Available: https://fate.fedai.org/
+[63] D. J. Beutel, T. Topal, A. Mathur, X. Qiu, J. Fernandez-Marques,
+Y. Gao, L. Sani, K. H. Li, T. Parcollet, P. P. B. de Gusmao ˜ et al.,
+“Flower: A friendly federated learning research framework,” arXiv
+preprint arXiv:2007.14390, 2020.
+[64] G. A. Reina, A. Gruzdev, P. Foley, O. Perepelkina, M. Sharma,
+I. Davidyuk, I. Trushkin, M. Radionov, A. Mokrov, D. Agapov et al.,
+32
+“Openfl: An open-source framework for federated learning,” arXiv
+preprint arXiv:2105.06413, 2021.
+[65] Intel. (2024) Try federated learning with openfl. Accessed: 2024-
+12-12. [Online]. Available: https://www.intel.com/content/www/us/en/
+developer/articles/technical/try-federated-learning-with-openfl.html
+[66] G. Mittone et al., “Pushing federated learning boundaries. three innovative distributed intelligence approaches,” 2024.
+[67] B. Research. (2024) Federated learning: Concept and applications.
+Accessed: 2024-12-12. [Online]. Available: https://research.baidu.com/
+Blog/index-view?id=126
+[68] FedML. (2024) Fedml: A research and production platform for
+federated learning and distributed machine learning. Accessed:
+2024-12-12. [Online]. Available: https://fedml.ai/home/
+[69] S. Caldas, S. M. K. Duddu, P. Wu, T. Li, J. Konecn ˇ y, H. B. McMahan, `
+V. Smith, and A. Talwalkar, “Leaf: A benchmark for federated settings,”
+arXiv preprint arXiv:1812.01097, 2018.
+[70] P. Mohassel and Y. Zhang, “Secureml: A system for scalable privacypreserving machine learning,” in 2017 IEEE Symposium on Security
+and Privacy (SP), 2017, pp. 19–38.
+[71] F. Lai, Y. Dai, S. Singapuram, J. Liu, X. Zhu, H. Madhyastha, and
+M. Chowdhury, “Fedscale: Benchmarking model and system performance of federated learning at scale,” in International conference on
+machine learning. PMLR, 2022, pp. 11 814–11 827.
+[72] FedScale. (2024) Fedscale: Benchmarking large-scale federated
+learning systems. Accessed: 2024-12-12. [Online]. Available: https:
+//fedscale.ai/
+[73] Z. Zhao, R. Birke, A. Kunar, and L. Y. Chen, “Fed-tgan: Federated
+learning framework for synthesizing tabular data,” arXiv preprint
+arXiv:2108.07927, 2021.
+[74] M. H. Garcia, A. Manoel, D. M. Diaz, F. Mireshghallah, R. Sim,
+and D. Dimitriadis, “Flute: A scalable, extensible framework for
+high-performance federated learning simulations,” arXiv preprint
+arXiv:2203.13789, 2022.
+[75] H. Ludwig, N. Baracaldo, G. Thomas, Y. Zhou, A. Anwar, S. Rajamoni,
+Y. Ong, J. Radhakrishnan, A. Verma, M. Sinn et al., “Ibm federated
+learning: an enterprise framework white paper v0. 1,” arXiv preprint
+arXiv:2007.10987, 2020.
+[76] A. Alotaibi and A. Barnawi, “Idsoft: A federated and softwarized
+intrusion detection framework for massive internet of things in 6g
+network,” Journal of King Saud University-Computer and Information
+Sciences, vol. 35, no. 6, p. 101575, 2023.
+[77] P. Riedel, L. Schick, R. von Schwerin, M. Reichert, D. Schaudt, and
+A. Hafner, “Comparative analysis of open-source federated learning
+frameworks-a literature-based survey and review,” International Journal of Machine Learning and Cybernetics, vol. 15, no. 11, pp. 5257–
+5278, 2024.
+[78] P. Kairouz, H. B. McMahan, B. Avent, A. Bellet, M. Bennis, A. N.
+Bhagoji, K. Bonawitz, Z. Charles, G. Cormode, R. Cummings et al.,
+“Advances and open problems in federated learning,” Foundations and
+trends® in machine learning, vol. 14, no. 1–2, pp. 1–210, 2021.
+[79] D.-D. Le, A.-K. Tran, M.-S. Dao, K.-C. Nguyen-Ly, H.-S. Le, X.-
+D. Nguyen-Thi, T.-Q. Pham, V.-L. Nguyen, and B.-Y. Nguyen-Thi,
+“Insights into multi-model federated learning: An advanced approach
+for air quality index forecasting,” Algorithms, vol. 15, no. 11, p. 434,
+2022.
+[80] Y. Liu, W. Zhang, and J. Wang, “Zero-shot adversarial quantization,”
+in Proceedings of the IEEE/CVF Conference on Computer Vision and
+Pattern Recognition, 2021, pp. 1512–1521.
+[81] Y. Cai, Z. Yao, Z. Dong, A. Gholami, M. W. Mahoney, and K. Keutzer,
+“Zeroq: A novel zero shot quantization framework,” in Proceedings of
+the IEEE/CVF conference on computer vision and pattern recognition,
+2020, pp. 13 169–13 178.
+[82] Y. Oh, N. Lee, Y.-S. Jeon, and H. V. Poor, “Communication-efficient
+federated learning via quantized compressed sensing,” IEEE Transactions on Wireless Communications, vol. 22, no. 2, pp. 1087–1100,
+2022.
+[83] Y. Oh, Y.-S. Jeon, M. Chen, and W. Saad, “Fedvqcs: Federated
+learning via vector quantized compressed sensing,” IEEE Transactions
+on Wireless Communications, vol. 23, no. 3, pp. 1755–1770, 2023.
+[84] J. Vila and P. Schniter, “Expectation-maximization bernoulli-gaussian
+approximate message passing,” in 2011 Conference Record of the
+Forty Fifth Asilomar Conference on Signals, Systems and Computers
+(ASILOMAR). IEEE, 2011, pp. 799–803.
+[85] Y. He and L. Xiao, “Structured pruning for deep convolutional neural
+networks: A survey,” IEEE Transactions on Pattern Analysis and
+Machine Intelligence, vol. 46, no. 5, pp. 2900–2919, 2024.
+[86] Z. Jiang, Y. Xu, H. Xu, Z. Wang, J. Liu, Q. Chen, and C. Qiao,
+“Computation and communication efficient federated learning with
+adaptive model pruning,” IEEE Transactions on Mobile Computing,
+vol. 23, no. 3, pp. 2003–2021, 2023.
+[87] L. Yi, X. Shi, N. Wang, J. Zhang, G. Wang, and X. Liu, “Fedpe:
+Adaptive model pruning-expanding for federated learning on mobile
+devices,” IEEE Transactions on Mobile Computing, 2024.
+[88] Y.-W. Hong, J.-S. Leu, M. Faisal, and S. W. Prakosa, “Analysis
+of model compression using knowledge distillation,” IEEE Access,
+vol. 10, pp. 85 095–85 105, 2022.
+[89] H. Ge, S. R. Pokhrel, Z. Liu, J. Wang, and G. Li, “Pfl-dkd: Modeling
+decoupled knowledge fusion with distillation for improving personalized federated learning,” Computer Networks, vol. 254, p. 110758,
+2024.
+[90] C. Wu, F. Wu, L. Lyu, Y. Huang, and X. Xie, “Communication-efficient
+federated learning via knowledge distillation,” Nature communications,
+vol. 13, no. 1, p. 2032, 2022.
+[91] Z. Chen, P. Tian, W. Liao, X. Chen, G. Xu, and W. Yu, “Resource-aware
+knowledge distillation for federated learning,” IEEE Transactions on
+Emerging Topics in Computing, vol. 11, no. 3, pp. 706–719, 2023.
+[92] P. V. Dantas, W. Sabino da Silva Jr, L. C. Cordeiro, and C. B. Carvalho,
+“A comprehensive review of model compression techniques in machine
+learning,” Applied Intelligence, vol. 54, no. 22, pp. 11 804–11 844,
+2024.
+[93] Y. S. N. Fotse, V. K. Tchendji, and M. Velempini, “Federated learning
+based ddos attacks detection in large scale software-defined network,”
+IEEE Transactions on Computers, 2024.
+[94] Y. Alhasawi and S. Alghamdi, “Federated learning for decentralized
+ddos attack detection in iot networks,” IEEE Access, vol. 12, pp.
+42 357–42 368, 2024.
+[95] D. Javeed, U. MohammedBadamasi, C. O. Ndubuisi, F. Soomro,
+and M. Asif, “Man in the middle attacks: Analysis, motivation and
+prevention,” International Journal of Computer Networks and Communications Security, vol. 8, no. 7, pp. 52–58, 2020.
+[96] S. Satpathy, P. K. Swain, S. N. Mohanty, and S. S. Basa, “Enhancing
+security: Federated learning against man-in-the-middle threats with
+gradient boosting machines and lstm,” in 2024 IEEE International
+Conference on Advanced Video and Signal Based Surveillance (AVSS).
+IEEE, 2024, pp. 1–8.
+[97] J. Pathmendre, K. Yapa, S. Rathnayake et al., “Codenexa: A novel
+security framework for federated learning to mitigate man-in-themiddle attacks,” in 2024 IEEE 15th Annual Ubiquitous Computing,
+Electronics & Mobile Communication Conference (UEMCON). IEEE,
+2024, pp. 709–714.
+[98] A. Shamir, “How to share a secret,” Communications of the ACM,
+vol. 22, no. 11, pp. 612–613, 1979.
+[99] R. L. Rivest, A. Shamir, and L. Adleman, “A method for obtaining
+digital signatures and public-key cryptosystems,” Communications of
+the ACM, vol. 21, no. 2, pp. 120–126, 1978.
+[100] P. Samarati, “Protecting respondents identities in microdata release,”
+IEEE transactions on Knowledge and Data Engineering, vol. 13, no. 6,
+pp. 1010–1027, 2001.
+[101] E. Bertino and N. Islam, “Botnets and internet of things security,”
+Computer, vol. 50, no. 2, pp. 76–79, 2017.
+[102] R. Kalakoti, H. Bahsi, and S. Nomm, “Explainable federated learning ˜
+for botnet detection in iot networks,” in 2024 IEEE International
+Conference on Cyber Security and Resilience (CSR), 2024, pp. 01–
+08.
+[103] J. Zhang, S. Liang, F. Ye, R. Q. Hu, and Y. Qian, “Towards detection
+of zero-day botnet attack in iot networks using federated learning,” in
+ICC 2023 - IEEE International Conference on Communications, 2023,
+pp. 7–12.
+[104] M. Hdaib, S. Rajasegarar, and L. Pan, “Quantum deep learning-based
+anomaly detection for enhanced network security,” Quantum Machine
+Intelligence, vol. 6, no. 1, p. 26, 2024.
+[105] D. Deutsch, “Quantum theory, the church–turing principle and the
+universal quantum computer,” Proceedings of the Royal Society of
+London. A. Mathematical and Physical Sciences, vol. 400, no. 1818,
+pp. 97–117, 1985.
+[106] A. Montanaro, “Quantum algorithms: an overview,” npj Quantum
+Information, vol. 2, no. 1, pp. 1–8, 2016.
+[107] S. Corli, L. Moro, D. Dragoni, M. Dispenza, and E. Prati, “Quantum
+machine learning algorithms for anomaly detection: A review,” Future
+Generation Computer Systems, vol. 166, p. 107632, 2025.
+[108] P. A. M. Dirac, The principles of quantum mechanics. Oxford
+university press, 1981, no. 27.
+33
+[109] A. Steane, “Quantum computing,” Reports on Progress in Physics,
+vol. 61, no. 2, p. 117, 1998.
+[110] Pennylane. What are bell states? Accessed: 2025-06-04. [Online].
+Available: https://pennylane.ai/qml/glossary/what-are-bell-states
+[111] S. Ruan, Q. Guan, P. Griffin, Y. Mao, and Y. Wang, “Quantumeyes:
+Towards better interpretability of quantum circuits,” IEEE Transactions
+on Visualization and Computer Graphics, vol. 30, no. 9, pp. 6321–
+6333, 2024.
+[112] S. Bhowmik and H. Thaplival, “Quantum machine learning for anomaly
+detection in consumer electronics,” in 2024 IEEE Computer Society
+Annual Symposium on VLSI (ISVLSI). IEEE, 2024, pp. 544–550.
+[113] M. Schuld and N. Killoran, “Quantum machine learning in feature
+hilbert spaces,” Physical review letters, vol. 122, no. 4, p. 040504,
+2019.
+[114] IBM. Data encoding. Accessed: 2025-08-010. [Online]. Available: https://quantum.cloud.ibm.com/learning/en/courses/
+quantum-machine-learning/data-encoding
+[115] S. Mitchell, “Global iot devices to double by 2030
+despite supply issues,” https://telconews.com.au/story/
+global-iot-devices-to-double-by-2030-despite-supply-issues, 2024,
+accessed: 2025-06-30.
+[116] J. Faouzi and O. Colliot, “Classic machine learning methods,” Machine
+Learning for Brain Disorders, pp. 25–75, 2023.
+[117] A. Zeguendry, Z. Jarir, and M. Quafafou, “Quantum machine learning:
+A review and case studies,” Entropy, vol. 25, no. 2, p. 287, 2023.
+[118] M. Akrom, “Quantum support vector machine for classification task:
+A review,” Journal of Multiscale Materials Informatics, vol. 1, no. 2,
+pp. 1–8, 2024.
+[119] S. Y.-C. Chen, C.-H. H. Yang, J. Qi, P.-Y. Chen, X. Ma, and H.-S.
+Goan, “Variational quantum circuits for deep reinforcement learning,”
+IEEE access, vol. 8, pp. 141 007–141 024, 2020.
+[120] M. Schuld, F. Petruccione, M. Schuld, and F. Petruccione, “Quantum
+models as kernel methods,” Machine Learning with Quantum Computers, pp. 217–245, 2021.
+[121] A. Kukliansky, M. Orescanin, C. Bollmann, and T. Huffmire, “Network
+anomaly detection using quantum neural networks on noisy quantum
+computers,” IEEE Transactions on Quantum Engineering, vol. 5, pp.
+1–11, 2024.
+[122] Z. Wang, K. W. Fok, and V. L. Thing, “Network attack traffic detection
+with hybrid quantum-enhanced convolution neural network,” Quantum
+Machine Intelligence, vol. 7, no. 1, p. 50, 2025.
+[123] P. Rebentrost, M. Mohseni, and S. Lloyd, “Quantum support vector
+machine for big data classification,” Physical review letters, vol. 113,
+no. 13, p. 130503, 2014.
+[124] Qiskit Machine Learning, “Neural networks - qiskit machine
+learning,” https://qiskit-community.github.io/qiskit-machine-learning/
+tutorials/01 neural networks.html, accessed: 2025-06-23.
+[125] A. Basheer, A. Afham, and S. K. Goyal, “Quantum k-nearest neighbors
+algorithm,” arXiv preprint arXiv:2003.09187, 2020.
+[126] J. Li, S. Lin, K. Yu, and G. Guo, “Quantum k-nearest neighbor classification algorithm based on hamming distance,” Quantum Information
+Processing, vol. 21, no. 1, p. 18, 2022.
+[127] E. Zardini, E. Blanzieri, and D. Pastorello, “A quantum k-nearest neighbors algorithm based on the euclidean distance estimation,” Quantum
+Machine Intelligence, vol. 6, no. 1, p. 23, 2024.
+[128] D. Arthur and P. Date, “Hybrid quantum-classical neural networks,”
+in 2022 IEEE International Conference on Quantum Computing and
+Engineering (QCE). IEEE, 2022, pp. 49–55.
+[129] Y.-Q. Ling, J.-H. Zhang, L.-H. Zhang, Y.-R. Li, and H.-L. Huang,
+“Image classification using hybrid classical-quantum neutral networks,”
+International Journal of Theoretical Physics, vol. 63, no. 5, p. 125,
+2024.
+[130] P. Li, Y. Pei, and J. Li, “A comprehensive survey on design and
+application of autoencoder in deep learning,” Applied Soft Computing,
+vol. 138, p. 110176, 2023.
+[131] J. Romero, J. P. Olson, and A. Aspuru-Guzik, “Quantum autoencoders
+for efficient compression of quantum data,” Quantum Science and
+Technology, vol. 2, no. 4, p. 045001, 2017.
+[132] E. A¨ımeur, G. Brassard, and S. Gambs, “Quantum clustering
+algorithms,” in Proceedings of the 24th International Conference on
+Machine Learning, ser. ICML ’07. New York, NY, USA: Association
+for Computing Machinery, 2007, p. 1–8. [Online]. Available:
+https://doi-org.ezproxy-f.deakin.edu.au/10.1145/1273496.1273497
+[133] L. K. Grover, “Quantum mechanics helps in searching for a needle in
+a haystack,” Physical review letters, vol. 79, no. 2, p. 325, 1997.
+[134] A. Macaluso, L. Clissa, S. Lodi, and C. Sartori, “Quantum ensemble
+for classification,” arXiv preprint arXiv:2007.01028, 2020.
+[135] M. Schuld and F. Petruccione, “Quantum ensembles of quantum
+classifiers,” Scientic reports, vol. 8, no. 1, p. 2772, 2018.
+[136] S. Lloyd and C. Weedbrook, “Quantum generative adversarial learning,” Physical review letters, vol. 121, no. 4, p. 040502, 2018.
+[137] S. Lloyd, M. Mohseni, and P. Rebentrost, “Quantum principal component analysis,” Nature physics, vol. 10, no. 9, pp. 631–633, 2014.
+[138] D. Dong, C. Chen, H. Li, and T.-J. Tarn, “Quantum reinforcement
+learning,” IEEE Transactions on Systems, Man, and Cybernetics, Part
+B (Cybernetics), vol. 38, no. 5, pp. 1207–1220, 2008.
+[139] D. Abreu, D. Moura, C. Esteve Rothenberg, and A. Abelem, “Quantum- ´
+netsec: Quantum machine learning for network security,” International
+Journal of Network Management, vol. 35, no. 4, p. e70018, 2025.
+[140] R. Kumar and M. Swarnkar, “Quids: A quantum support vector
+machine-based intrusion detection system for iot networks,” Journal
+of Network and Computer Applications, vol. 234, p. 104072, 2025.
+[141] M. A. Rahman, H. Shahriar, V. Clincy, M. F. Hossain, and M. Rahman,
+“A quantum generative adversarial network-based intrusion detection
+system,” in 2023 IEEE 47th Annual Computers, Software, and Applications Conference (COMPSAC). IEEE, 2023, pp. 1810–1815.
+[142] A. Cross, “The ibm q experience and qiskit open-source quantum
+computing software,” in APS March meeting abstracts, vol. 2018, 2018,
+pp. L58–003.
+[143] V. Omole, A. Tyagi, C. Carey, A. Hanus, A. Hancock, A. Garcia, and
+J. Shedenhelm, “Cirq: A python framework for creating, editing, and
+invoking quantum circuits,” URL https://github. com/quantumlib/Cirq,
+2020.
+[144] N. Killoran, J. Izaac, N. Quesada, V. Bergholm, M. Amy, and C. Weedbrook, “Strawberry fields: A software platform for photonic quantum
+computing,” Quantum, vol. 3, p. 129, 2019.
+[145] J. R. Johansson, P. D. Nation, and F. Nori, “Qutip: An open-source
+python framework for the dynamics of open quantum systems,” Computer physics communications, vol. 183, no. 8, pp. 1760–1772, 2012.
+[146] V. Bergholm, J. Izaac, M. Schuld, C. Gogolin, S. Ahmed, V. Ajith,
+M. S. Alam, G. Alonso-Linaje, B. AkashNarayanan, A. Asadi et al.,
+“Pennylane: Automatic differentiation of hybrid quantum-classical
+computations,” arXiv preprint arXiv:1811.04968, 2018.
+[147] M. Broughton, G. Verdon, T. McCourt, A. J. Martinez, J. H. Yoo,
+S. V. Isakov, P. Massey, R. Halavati, M. Y. Niu, A. Zlokapa et al.,
+“Tensorflow quantum: A software framework for quantum machine
+learning,” arXiv preprint arXiv:2003.02989, 2020.
+[148] Microsoft, “Azure qdk,” https://learn.microsoft.com/en-us/azure/
+quantum/, accessed: 2025-06-30.
+[149] AWS, “Amazon braket,” https://aws.amazon.com/braket/, accessed:
+2025-06-30.
+[150] V. Scarani, H. Bechmann-Pasquinucci, N. J. Cerf, M. Dusek, ˇ
+N. Lutkenhaus, and M. Peev, “The security of practical quantum key ¨
+distribution,” Reviews of modern physics, vol. 81, no. 3, pp. 1301–1350,
+2009.
+[151] C. Crepeau, D. Gottesman, and A. Smith, “Secure multi-party quantum ´
+computation,” in Proceedings of the thiry-fourth annual ACM symposium on Theory of computing, 2002, pp. 643–652.
+[152] Y. Mao, B.-X. Wang, C. Zhao, G. Wang, R. Wang, H. Wang, F. Zhou,
+J. Nie, Q. Chen, Y. Zhao et al., “Integrating quantum key distribution
+with classical communications in backbone fiber network,” Optics
+express, vol. 26, no. 5, pp. 6010–6020, 2018.
+[153] B. Qi, “Simultaneous classical communication and quantum key distribution using continuous variables,” Physical Review A, vol. 94, no. 4,
+p. 042340, 2016.
+[154] D. C. Nguyen, M. R. Uddin, S. Shaon, R. Rahman, O. Dobre, and
+D. Niyato, “Quantum federated learning: A comprehensive survey,”
+arXiv preprint arXiv:2508.15998, 2025.
+[155] W. Zhang, D.-S. Ding, Y.-B. Sheng, L. Zhou, B.-S. Shi, and G.-C.
+Guo, “Quantum secure direct communication with quantum memory,”
+Physical review letters, vol. 118, no. 22, p. 220501, 2017.
+[156] D. Bouwmeester, J.-W. Pan, K. Mattle, M. Eibl, H. Weinfurter, and
+A. Zeilinger, “Experimental quantum teleportation,” Nature, vol. 390,
+no. 6660, pp. 575–579, 1997.
+[157] B. M. Terhal, “Quantum error correction for quantum memories,”
+Reviews of Modern Physics, vol. 87, no. 2, pp. 307–346, 2015.
+[158] N. Innan, M. A.-Z. Khan, A. Marchisio, M. Shafique, and M. Bennai,
+“Fedqnn: Federated learning using quantum neural networks,” in 2024
+International Joint Conference on Neural Networks (IJCNN). IEEE,
+2024, pp. 1–9.
+[159] H. Sahu and H. P. Gupta, “Nac-qfl: Noise aware clustered quantum
+federated learning,” arXiv preprint arXiv:2406.14236, 2024.
+34
+[160] S. Dutta, N. Innan, S. B. Yahia, M. Shafique, and D. E. B. Neira, “Mqflfhe: Multimodal quantum federated learning framework with fully
+homomorphic encryption,” arXiv preprint arXiv:2412.01858, 2024.
+[161] Z. Qu, X. Zhao, L. Sun, and G. Muhammad, “Daqfl: Dynamic aggregation quantum federated learning algorithm for intelligent diagnosis
+in internet of medical things,” IEEE Internet of Things Journal, pp.
+1–1, 2025.
+[162] D. Gurung and S. R. Pokhrel, “Chained continuous quantum federated
+learning framework,” Future Generation Computer Systems, vol. 169,
+p. 107800, 2025.
+[163] Q. Xia and Q. Li, “Quantumfed: A federated learning framework for
+collaborative quantum training,” in 2021 IEEE Global Communications
+Conference (GLOBECOM), 2021, pp. 1–6.
+[164] C. Chu, L. Jiang, and F. Chen, “Cryptoqfl: quantum federated learning
+on encrypted data,” in 2023 IEEE International Conference on Quantum Computing and Engineering (QCE), vol. 1. IEEE, 2023, pp.
+1231–1237.
+[165] Z. Lu, H. Pan, Y. Dai, X. Si, and Y. Zhang, “Federated learning with
+non-iid data: A survey,” IEEE Internet of Things Journal, 2024.
+[166] Q. Li, Y. Diao, Q. Chen, and B. He, “Federated learning on non-iid
+data silos: An experimental study,” in 2022 IEEE 38th international
+conference on data engineering (ICDE). IEEE, 2022, pp. 965–978.
+[167] W. Huang, T. Tiropanis, and G. Konstantinidis, “Federated learningbased iot intrusion detection on non-iid data,” in Global IoT Summit.
+Springer, 2022, pp. 326–337.
+[168] X. Ma, J. Zhu, Z. Lin, S. Chen, and Y. Qin, “A state-of-the-art survey
+on solving non-iid data in federated learning,” Future Generation
+Computer Systems, vol. 135, pp. 244–258, 2022.
+[169] J. Qi, X.-L. Zhang, and J. Tejedor, “Optimizing quantum federated learning based on federated quantum natural gradient descent,”
+in ICASSP 2023-2023 IEEE International Conference on Acoustics,
+Speech and Signal Processing (ICASSP). IEEE, 2023, pp. 1–5.
+[170] B. Recht, C. Re, S. Wright, and F. Niu, “Hogwild!: A lock-free
+approach to parallelizing stochastic gradient descent,” Advances in
+neural information processing systems, vol. 24, 2011.
+[171] T. Nishio and R. Yonetani, “Client selection for federated learning
+with heterogeneous resources in mobile edge,” in ICC 2019-2019 IEEE
+international conference on communications (ICC). IEEE, 2019, pp.
+1–7.
+[172] D. Yin, Y. Chen, R. Kannan, and P. Bartlett, “Byzantine-robust distributed learning: Towards optimal statistical rates,” in International
+conference on machine learning. Pmlr, 2018, pp. 5650–5659.
+[173] K. Bonawitz, “Towards federated learning at scale: Syste m design,”
+arXiv preprint arXiv:1902.01046, 2019.
+[174] D. Gurung and S. R. Pokhrel, “Communication efficient adaptive model-driven quantum federated learning,” arXiv preprint
+arXiv:2506.04548, 2025.
+[175] B. Hazarika, K. Singh, T. Q. Duong, and O. A. Dobre, “Quantumdriven context-aware federated learning in heterogeneous vehicular
+metaverse ecosystem,” in ICC 2024 - IEEE International Conference
+on Communications, 2024, pp. 1533–1538.
+[176] B. Hazarika, K. Singh, O. A. Dobre, C.-P. Li, and T. Q. Duong,
+“Quantum-enhanced federated learning for metaverse-empowered vehicular networks,” IEEE Transactions on Communications, vol. 73,
+no. 6, pp. 4168–4183, 2025.
+[177] L. Zhu, Z. Liu, and S. Han, “Deep leakage from gradients,” Advances
+in neural information processing systems, vol. 32, 2019.
+[178] L. Huang, A. D. Joseph, B. Nelson, B. I. Rubinstein, and J. D.
+Tygar, “Adversarial machine learning,” in Proceedings of the 4th ACM
+workshop on Security and articial intelligence, 2011, pp. 43–58.
+[179] L. Lyu, H. Yu, and Q. Yang, “Threats to federated learning: A survey,”
+arXiv preprint arXiv:2003.02133, 2020.
+[180] A. Shafahi, W. R. Huang, M. Najibi, O. Suciu, C. Studer, T. Dumitras,
+and T. Goldstein, “Poison frogs! targeted clean-label poisoning attacks
+on neural networks,” Advances in neural information processing systems, vol. 31, 2018.
+[181] T. Gu, B. Dolan-Gavitt, and S. Garg, “Badnets: Identifying vulnerabilities in the machine learning model supply chain,” arXiv preprint
+arXiv:1708.06733, 2017.
+[182] G. F. Cretu, A. Stavrou, M. E. Locasto, S. J. Stolfo, and A. D.
+Keromytis, “Casting out demons: Sanitizing training data for anomaly
+sensors,” in 2008 IEEE Symposium on Security and Privacy (sp 2008).
+IEEE, 2008, pp. 81–95.
+[183] R. Renner, “Security of quantum key distribution,” International Journal of Quantum Information, vol. 6, no. 01, pp. 1–127, 2008.
+[184] C. Hirche, C. Rouze, and D. S. Franc¸a, “Quantum differential privacy: ´
+An information theory perspective,” IEEE Transactions on Information
+Theory, vol. 69, no. 9, pp. 5771–5787, 2023.
+[185] O. Shahid, S. Pouriyeh, R. M. Parizi, Q. Z. Sheng, G. Srivastava, and
+L. Zhao, “Communication efficiency in federated learning: Achievements and challenges,” arXiv preprint arXiv:2107.10996, 2021.
+[186] C. Briggs, Z. Fan, and P. Andras, “Federated learning with hierarchical
+clustering of local updates to improve training on non-iid data,” in 2020
+international joint conference on neural networks (IJCNN). IEEE,
+2020, pp. 1–9.
+[187] S. Pirandola, J. Eisert, C. Weedbrook, A. Furusawa, and S. L. Braunstein, “Advances in quantum teleportation,” Nature photonics, vol. 9,
+no. 10, pp. 641–652, 2015.
+[188] M.-H. Hsieh and M. M. Wilde, “Entanglement-assisted communication
+of classical and quantum information,” IEEE Transactions on Information Theory, vol. 56, no. 9, pp. 4682–4704, 2010.
+[189] L. A. Rozema, D. H. Mahler, A. Hayat, P. S. Turner, and A. M.
+Steinberg, “Quantum data compression of a qubit ensemble,” Physical
+review letters, vol. 113, no. 16, p. 160504, 2014.
+[190] I. Kerenidis and A. Prakash, “Quantum gradient descent for linear
+systems and least squares,” Physical Review A, vol. 101, no. 2, p.
+022316, 2020.
+[191] A. Gilyen, S. Arunachalam, and N. Wiebe, “Optimizing quantum ´
+optimization algorithms via faster quantum gradient computation,”
+in Proceedings of the Thirtieth Annual ACM-SIAM Symposium on
+Discrete Algorithms. SIAM, 2019, pp. 1425–1444.
+[192] Gdpr. Accessed: 2025-09-18. [Online]. Available: https://gdpr-info.eu/
+[193] Ccpa. Accessed: 2025-09-18. [Online]. Available: https://oag.ca.gov/
+privacy/ccpa
+[194] Nist. Accessed: 2025-09-18. [Online]. Available: https://www.nist.gov/
+[195] Iso27001:2022. Accessed: 2025-09-18. [Online]. Available: https:
+//www.iso.org/standard/27001
+[196] C. I. Nwakanma, L. A. C. Ahakonye, J. N. Njoku, J. C. Odirichukwu,
+S. A. Okolie, C. Uzondu, C. C. Ndubuisi Nweke, and D.-S. Kim,
+“Explainable artificial intelligence (xai) for intrusion detection and mitigation in intelligent connected vehicles: A review,” Applied Sciences,
+vol. 13, no. 3, p. 1252, 2023.
+[197] N. Moustafa and J. Slay, “Unsw-nb15: a comprehensive data set for
+network intrusion detection systems (unsw-nb15 network data set),” in
+2015 Military Communications and Information Systems Conference
+(MilCIS), 2015, pp. 1–6.
+[198] N. Koroniotis, N. Moustafa, E. Sitnikova, and B. Turnbull, “Towards
+the development of realistic botnet dataset in the internet of things
+for network forensic analytics: Bot-iot dataset,” Future Generation
+Computer Systems, vol. 100, pp. 779–796, 2019.
+[199] S. R. Pokhrel and J. Choi, “Federated learning with blockchain for
+autonomous vehicles: Analysis and design challenges,” IEEE Transactions on Communications, vol. 68, no. 8, pp. 4734–4746, 2020.
+[200] Y. Lu, X. Huang, Y. Dai, S. Maharjan, and Y. Zhang, “Blockchain
+and federated learning for privacy-preserved data sharing in industrial
+iot,” IEEE Transactions on Industrial Informatics, vol. 16, no. 6, pp.
+4177–4186, 2020.
+[201] R. Xu, S. R. Pokhrel, Q. Lan, and G. Li, “Fair-bfl: Flexible and incentive redesign for blockchain-based federated learning,” in Proceedings
+of the 51st International Conference on Parallel Processing, 2022, pp.
+1–11.
+[202] P. Li, T. Chen, and J. Liu, “Enhancing quantum security over
+federated learning via post-quantum cryptography,” arXiv preprint
+arXiv:2409.04637, 2024.
+[203] S. M. Shah and V. K. Lau, “Model compression for communication
+efficient federated learning,” IEEE Transactions on Neural Networks
+and Learning Systems, vol. 34, no. 9, pp. 5937–5951, 2021.
+[204] H. Liao, I. Convy, W. J. Huggins, and K. B. Whaley, “Robust in
+practice: Adversarial attacks on quantum machine learning,” Physical
+Review A, vol. 103, no. 4, p. 042427, 2021.
+

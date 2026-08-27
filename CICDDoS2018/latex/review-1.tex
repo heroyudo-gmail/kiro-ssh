@@ -20,9 +20,9 @@
 \renewcommand{\arraystretch}{1.25}
 
 \noindent
-\begin{tabularx}{\textwidth}{>{\centering\arraybackslash}p{0.6cm} >{\centering\arraybackslash}p{1.4cm} >{\raggedright\arraybackslash}p{2.2cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}p{3.0cm} >{\centering\arraybackslash}p{1.3cm} >{\centering\arraybackslash}p{2.0cm} >{\centering\arraybackslash}p{1.5cm} >{\centering\arraybackslash}p{1.3cm}}
+\begin{tabularx}{\textwidth}{>{\centering\arraybackslash}p{0.6cm} >{\centering\arraybackslash}p{1.4cm} >{\raggedright\arraybackslash}p{2.5cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}p{3.2cm} >{\centering\arraybackslash}p{1.3cm} >{\centering\arraybackslash}p{2.0cm} >{\centering\arraybackslash}p{1.5cm} >{\centering\arraybackslash}p{1.3cm}}
   \toprule
-  \textbf{No} & \textbf{Tahun} & \textbf{Peneliti} & \textbf{Metode} & \textbf{Dataset} & \textbf{Cross Dataset} & \textbf{Arsitektur} & \textbf{Adver-sarial} & \textbf{Real Trafik} \\
+  \textbf{No} & \textbf{Tahun} & \textbf{Peneliti} & \textbf{Metode} & \textbf{Dataset} & \textbf{Cross Dataset} & \textbf{Arsitektur} & \textbf{Adversarial} & \textbf{Real Trafik} \\
 
   \midrule
   \rowcolor[gray]{0.9}
@@ -30,6 +30,13 @@
 
   \rowcolor[gray]{0.9}
   2 & \textbf{2026} & \textbf{Paper 2} & \textbf{Ensemble (XGBoost, LightGBM, CatBoost)} & \textbf{CSE-CIC-IDS 2018} & \textbf{Tidak} & \textbf{Centralized} & \textbf{Ya} & \textbf{Ya} \\
+
+  \rowcolor[gray]{0.85}
+  \multicolumn{9}{p{\textwidth}}{\textit{\textbf{Keunikan Paper 1 \& 2:} Satu-satunya penelitian dalam survei ini yang melakukan validasi pada real network traffic, bukan hanya pada dataset benchmark statis. Pendekatan adversarial training diterapkan langsung pada model ML ringan (XGBoost/Ensemble) tanpa bergantung pada arsitektur Deep Learning yang berat, sehingga lebih feasible untuk deployment di lingkungan produksi. Kombinasi adversarial robustness + real traffic validation tidak ditemukan pada 59 paper lain yang disurvei.}} \\
+  \rowcolor[gray]{0.85}
+  \multicolumn{9}{p{\textwidth}}{\textbf{Paper 1:} \textit{Penguatan Ketangguhan NIDS dengan Reduksi Fitur Berbasis XGBoost Gain-based Importance melalui Adversarial Training terhadap Serangan Evasion Saliency Map}} \\
+  \rowcolor[gray]{0.85}
+  \multicolumn{9}{p{\textwidth}}{\textbf{Paper 2:} \textit{Penguatan Ketangguhan NIDS berbasis Stacking Ensemble (XGBoost, LightGBM, CatBoost) dengan Reduksi Fitur melalui Adversarial Training terhadap Serangan Evasion Saliency Map}} \\
 
   \midrule
   \multicolumn{9}{l}{\textit{\textbf{Kelompok 1: Fondasi \& Teori Generatif (Algoritma Dasar)}}} \\
@@ -70,24 +77,25 @@
 \renewcommand{\arraystretch}{1.25}
 
 \noindent
-\begin{tabularx}{\textwidth}{>{\centering\arraybackslash}p{0.6cm} >{\centering\arraybackslash}p{1.4cm} >{\raggedright\arraybackslash}p{2.2cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}p{3.0cm} >{\centering\arraybackslash}p{1.3cm} >{\centering\arraybackslash}p{2.0cm} >{\centering\arraybackslash}p{1.5cm} >{\centering\arraybackslash}p{1.3cm}}
+\begin{tabularx}{\textwidth}{>{\centering\arraybackslash}p{0.6cm} >{\centering\arraybackslash}p{1.4cm} >{\raggedright\arraybackslash}p{2.5cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}p{3.2cm} >{\centering\arraybackslash}p{1.3cm} >{\centering\arraybackslash}p{2.0cm} >{\centering\arraybackslash}p{1.5cm} >{\centering\arraybackslash}p{1.3cm}}
   \toprule
-  \textbf{No} & \textbf{Tahun} & \textbf{Peneliti} & \textbf{Metode} & \textbf{Dataset} & \textbf{Cross Dataset} & \textbf{Arsitektur} & \textbf{Adver-sarial} & \textbf{Real Trafik} \\
+  \textbf{No} & \textbf{Tahun} & \textbf{Peneliti} & \textbf{Metode} & \textbf{Dataset} & \textbf{Cross Dataset} & \textbf{Arsitektur} & \textbf{Adversarial} & \textbf{Real Trafik} \\
 
   \midrule
-  \multicolumn{9}{l}{\textit{\textbf{Kelompok 6: Pengujian Cross-Dataset}}} \\
+  \multicolumn{9}{l}{\textit{\textbf{Kelompok 6: Pengujian Cross-Dataset \& Generalisasi}}} \\
   \midrule
   8 & 2024 & {[47]} & CTGAN / Diffusion + RF, XGBoost, DNN & CICIDS2017, CSE-CIC-IDS2018, CTU-13 & Ya & Centralized & Ya & Tidak \\
+  9 & 2024 & {[60]} & LDA, Decision Tree, Random Forest, XGBoost (cross-dataset generalization study) & CIC-IDS2017, CSE-CIC-IDS2018, LycoS-IDS2017, LycoS-Unicas-IDS2018 & Ya & Centralized & Tidak & Tidak \\
 
   \midrule
   \multicolumn{9}{l}{\textit{\textbf{Kelompok 7: Arsitektur Terdistribusi \& Federated Learning}}} \\
   \midrule
-  9 & 2023--2024 & {[48], [58]} & Distributed GAN, NIDS-FGPA + Secure Aggregation + DNN & Credit/Traffic Logs, UNSW-NB15, CICIDS2017 (non-IID) & Tidak & Federated / Distributed & Ya & Tidak \\
+  10 & 2023--2024 & {[48], [58]} & Distributed GAN, NIDS-FGPA + Secure Aggregation + DNN & Credit/Traffic Logs, UNSW-NB15, CICIDS2017 (non-IID) & Tidak & Federated / Distributed & Ya & Tidak \\
 
   \midrule
   \multicolumn{9}{l}{\textit{\textbf{Kelompok 8: Survei, Tutorial \& Dataset Benchmark}}} \\
   \midrule
-  10 & 2009--2025 & {[10], [11], [38], [50], [51], [52], [53], [54], [55], [56]} & Survei GAN-IDS, Tutorial GAN, Deskripsi Dataset (KDD Cup 99, UNSW-NB15, CICIDS2017, Bot-IoT, ToN\_IoT, CICIoT2023) & KDD Cup 99, NSL-KDD, UNSW-NB15, CICIDS2017, Bot-IoT, ToN\_IoT, CICIoT2023 & -- & -- & -- & -- \\
+  11 & 2009--2025 & {[10], [11], [38], [50], [51], [52], [53], [54], [55], [56]} & Survei GAN-IDS, Tutorial GAN, Deskripsi Dataset (KDD Cup 99, UNSW-NB15, CICIDS2017, Bot-IoT, ToN\_IoT, CICIoT2023) & KDD Cup 99, NSL-KDD, UNSW-NB15, CICIDS2017, Bot-IoT, ToN\_IoT, CICIoT2023 & -- & -- & -- & -- \\
 
   \bottomrule
 \end{tabularx}
@@ -157,6 +165,7 @@
     \item Xu, C.; Zhan, Y.; Chen, G.; Wang, Z.; Liu, S.; Hu, W.: Elevated few-shot network intrusion detection via self-attention mechanisms and iterative refinement. \textit{PLoS ONE} 20(1), e0317713 (2025)
     \item Wang, J.; Yang, K.; Li, M.: NIDS-FGPA: A federated learning network intrusion detection algorithm based on secure aggregation of gradient similarity models. \textit{PLoS ONE} 19(10), e0308639 (2024)
     \item Devadiga, D.; Jin, G.; Potdar, B.; Koo, H.; Han, A.; Shringi, A.; Singh, A.; Chaudhari, K.; Kumar, S.: GLEAM: GAN and LLM for evasive adversarial malware. In: \textit{2023 14th International Conference on Information and Communication Technology Convergence (ICTC)}, pp. 53--58 (2023)
+    \item Cantone, M.; Marrocco, C.; Bria, A.: Machine learning in network intrusion detection: A cross-dataset generalization study. \textit{IEEE Access} 12, 144491--144509 (2024)
 \end{enumerate}
 
 \end{document}
