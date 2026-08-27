@@ -1,0 +1,83 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: "NIDS01 Testing - EC2 Target (Private Subnet) - SSH + Nginx services"
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: nids01-testing
+
+  InstanceType:
+    Type: String
+    Default: t3.medium
+
+  InstanceAmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
+
+Resources:
+  EC2Role:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${ProjectName}-target-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+
+  EC2Profile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles: [!Ref EC2Role]
+
+  TargetInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      ImageId: !Ref InstanceAmiId
+      SubnetId:
+        Fn::ImportValue: !Sub ${ProjectName}-private-subnet-id
+      SecurityGroupIds:
+        - Fn::ImportValue: !Sub ${ProjectName}-sg-id
+      IamInstanceProfile: !Ref EC2Profile
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: 15
+            VolumeType: gp3
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          yum install -y nginx openssh-server iproute-tc
+
+          # Enable Nginx
+          systemctl enable --now nginx
+
+          # SSH: allow password auth + high MaxAuthTries (untuk brute-force testing)
+          sed -i 's/^PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
+          sed -i 's/^#MaxAuthTries.*/MaxAuthTries 100/' /etc/ssh/sshd_config
+          echo "MaxAuthTries 100" >> /etc/ssh/sshd_config
+          systemctl restart sshd
+
+          # Create test user (password TIDAK ada di wordlist attacker)
+          useradd testuser
+          echo "testuser:S3cur3P@ss!" | chpasswd
+
+          # Signal done
+          echo "TARGET READY" > /tmp/setup_done
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-target
+
+Outputs:
+  TargetInstanceId:
+    Value: !Ref TargetInstance
+  TargetPrivateIp:
+    Value: !GetAtt TargetInstance.PrivateIp
+    Export:
+      Name: !Sub ${ProjectName}-target-ip

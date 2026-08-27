@@ -1,0 +1,92 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: "NIDS01 Testing - EC2 Analyzer (Private Subnet) - tcpdump + NFStream + XGBoost inference"
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: nids01-testing
+
+  InstanceType:
+    Type: String
+    Default: t3.large
+
+  InstanceAmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
+
+Resources:
+  EC2Role:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${ProjectName}-analyzer-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Policies:
+        - PolicyName: S3FullAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: s3:*
+                Resource: '*'
+
+  EC2Profile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles: [!Ref EC2Role]
+
+  AnalyzerInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      ImageId: !Ref InstanceAmiId
+      SubnetId:
+        Fn::ImportValue: !Sub ${ProjectName}-private-subnet-id
+      SecurityGroupIds:
+        - Fn::ImportValue: !Sub ${ProjectName}-sg-id
+      IamInstanceProfile: !Ref EC2Profile
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: 30
+            VolumeType: gp3
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          yum install -y tcpdump libpcap-devel python3 python3-pip python3-devel gcc gcc-c++
+
+          # Python virtual environment
+          python3 -m venv /opt/nids-env
+          source /opt/nids-env/bin/activate
+
+          # Install ML + flow extraction packages
+          pip install --upgrade pip
+          pip install nfstream xgboost scikit-learn numpy pandas matplotlib
+
+          # Directory structure
+          mkdir -p /opt/nids/{models,captures,flows,results,scripts}
+
+          # Download models dari S3 (akan dijalankan manual setelah upload)
+          # aws s3 cp s3://BUCKET/models/ /opt/nids/models/ --recursive
+
+          # Signal done
+          echo "ANALYZER READY" > /tmp/setup_done
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-analyzer
+
+Outputs:
+  AnalyzerInstanceId:
+    Value: !Ref AnalyzerInstance
+  AnalyzerPrivateIp:
+    Value: !GetAtt AnalyzerInstance.PrivateIp
+    Export:
+      Name: !Sub ${ProjectName}-analyzer-ip

@@ -1,0 +1,92 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: "NIDS01 Testing - EC2 Attacker (Public Subnet)"
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: nids01-testing
+
+  InstanceType:
+    Type: String
+    Default: t3.medium
+
+  InstanceAmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
+
+Resources:
+  EC2Role:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${ProjectName}-attacker-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Policies:
+        - PolicyName: S3ReadAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:ListBucket
+                Resource: '*'
+
+  EC2Profile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles: [!Ref EC2Role]
+
+  AttackerInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      ImageId: !Ref InstanceAmiId
+      SubnetId:
+        Fn::ImportValue: !Sub ${ProjectName}-public-subnet-id
+      SecurityGroupIds:
+        - Fn::ImportValue: !Sub ${ProjectName}-sg-id
+      IamInstanceProfile: !Ref EC2Profile
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: 20
+            VolumeType: gp3
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          yum install -y gcc gcc-c++ make cmake openssl-devel libssh-devel nmap python3 python3-pip iproute-tc
+
+          # Hydra
+          cd /tmp
+          git clone https://github.com/vanhauser-thc/thc-hydra.git
+          cd thc-hydra && ./configure && make && make install
+
+          # Slowloris
+          pip3 install slowloris
+
+          # Password list (tanpa password benar target)
+          mkdir -p /opt/attack
+          echo -e "admin\nroot\npassword\n123456\ntest\nqwerty\nletmein\nwelcome\n1234567890\npassword123" > /opt/attack/passwords.txt
+
+          # Signal done
+          echo "ATTACKER READY" > /tmp/setup_done
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-attacker
+
+Outputs:
+  AttackerInstanceId:
+    Value: !Ref AttackerInstance
+  AttackerPublicIp:
+    Value: !GetAtt AttackerInstance.PublicIp
+  AttackerPrivateIp:
+    Value: !GetAtt AttackerInstance.PrivateIp
