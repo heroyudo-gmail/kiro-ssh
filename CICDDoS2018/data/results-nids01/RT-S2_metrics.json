@@ -1,0 +1,18 @@
+{
+  "scenario": "RT-S2",
+  "model": "baseline",
+  "total_flows": 427,
+  "attack_flows_gt": 336,
+  "benign_flows_gt": 91,
+  "MCC": -0.0699,
+  "F1": 0.633,
+  "Precision": 0.7615,
+  "Recall": 0.5417,
+  "Accuracy": 0.5059,
+  "confusion_matrix": {
+    "TN": 34,
+    "FP": 57,
+    "FN": 154,
+    "TP": 182
+  }
+}

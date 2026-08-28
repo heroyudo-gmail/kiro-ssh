@@ -1,0 +1,18 @@
+{
+  "scenario": "RT-S4",
+  "model": "robust",
+  "total_flows": 427,
+  "attack_flows_gt": 336,
+  "benign_flows_gt": 91,
+  "MCC": 0.3889,
+  "F1": 0.6258,
+  "Precision": 1.0,
+  "Recall": 0.4554,
+  "Accuracy": 0.5714,
+  "confusion_matrix": {
+    "TN": 91,
+    "FP": 0,
+    "FN": 183,
+    "TP": 153
+  }
+}

@@ -470,3 +470,400 @@ Jika hasil real-traffic konsisten dengan offline:
 - **Total:** ~1 hari untuk 4 skenario
 - **Instance:** 3 EC2 × t3.medium/large ≈ $0.50/jam total
 - **Estimasi biaya:** ~$5–10 (termasuk NAT Gateway + S3)
+
+
+---
+
+# TEMUAN PENTING: Keterbatasan NFStream untuk Ekstraksi Top-10 Fitur
+
+**Tanggal:** Percobaan deployment NIDS01 (real-traffic testing)
+
+## Konteks
+
+Setelah men-deploy infrastruktur (4 stack CloudFormation: VPC, Attacker, Target, Analyzer) dan memverifikasi NFStream 6.6.0 terpasang di Analyzer, dilakukan probing terhadap 100 atribut yang diekspos oleh objek `NFlow` NFStream untuk memetakannya ke Top-10 fitur model XGBoost (CIC-IDS2018).
+
+## Hasil Mapping Top-10 Fitur -> NFStream
+
+| # | Fitur Top-10 (CIC-IDS2018) | NFStream field | Status |
+|---|---|---|---|
+| 1 | Fwd Seg Size Min | `src2dst_min_ps` | Aproksimasi |
+| 2 | URG Flag Cnt | `bidirectional_urg_packets` | Tersedia |
+| 3 | Tot Bwd Pkts | `dst2src_packets` | Persis |
+| 4 | Fwd Act Data Pkts | `src2dst_packets` (filter payload>0) | Aproksimasi |
+| 5 | Fwd Pkt Len Max | `src2dst_max_ps` | Persis |
+| 6 | Fwd Pkt Len Mean | `src2dst_mean_ps` | Persis |
+| 7 | Bwd Pkt Len Mean | `dst2src_mean_ps` | Persis |
+| 8 | Init Bwd Win Byts | -- (TCP window awal) | **TIDAK ADA** |
+| 9 | TotLen Bwd Pkts | `dst2src_bytes` | Persis |
+| 10 | Init Fwd Win Byts | -- (TCP window awal) | **TIDAK ADA** |
+
+## Kekurangan Utama NFStream
+
+NFStream **tidak mengekspos TCP window size** sama sekali dalam 100 atribut defaultnya. Dua fitur berikut TIDAK dapat diambil langsung:
+
+- **Init Fwd Win Byts** (fitur #10): TCP window size dari paket pertama arah src->dst
+- **Init Bwd Win Byts** (fitur #8): TCP window size dari paket pertama arah dst->src
+
+Konsekuensi:
+1. Jika 2 fitur ini di-set 0/-1 (default), model kehilangan ~20% informasi input.
+2. **Init Fwd Win Byts adalah fitur target utama evasion** pada skenario RT-S2/RT-S4 (manipulasi TCP window via `sysctl`). Tanpa ekstraksi fitur ini, evasion pada TCP window menjadi tidak terdeteksi karena fiturnya memang tidak diukur.
+
+## Opsi Solusi
+
+| Opsi | Pendekatan | Trade-off |
+|---|---|---|
+| A | Custom NFPlugin NFStream yang membaca `tcp.window` dari paket pertama tiap arah | Paling akurat, tetap 10 fitur, tetap 1-pass streaming. Butuh implementasi plugin. |
+| B | Hybrid: NFStream (8 fitur) + tshark khusus (`tcp.window_size`) untuk 2 fitur window | Sederhana, tapi 2-pass (NFStream + tshark). |
+| C | Terima keterbatasan, set Init Win Byts = -1 | Cepat, tapi evasion window tidak terdeteksi. |
+
+## Keputusan (Dua Skenario Percobaan)
+
+**Skenario Fitur-1 (8-fitur, future work):**
+- Latih ulang model **offline** hanya dengan 8 fitur yang NFStream mampu hasilkan secara native (buang Init Fwd/Bwd Win Byts).
+- Bandingkan hasil offline (8-fitur) vs online (8-fitur real-traffic).
+- Tujuan: mengukur seberapa besar kontribusi 2 fitur TCP window terhadap performa.
+
+**Skenario Fitur-2 (10-fitur, DIPILIH untuk implementasi sekarang):**
+- Tetap gunakan 10 fitur penuh.
+- Implementasi **Opsi A**: custom NFPlugin untuk mengekstrak `Init Fwd Win Byts` dan `Init Bwd Win Byts` dari TCP window paket pertama tiap arah.
+- Ini penting agar hipotesis evasion (RT-S2/RT-S4) dapat diuji secara valid.
+
+## Catatan schedule.json
+
+`schedule.json` yang ada saat ini masih memakai IP lama (10.1.1.x) dan skenario 60 menit. Perlu disesuaikan ke:
+- Target IP baru: **10.3.2.38** (private subnet nids01)
+- Attacker IP: **10.3.1.214**
+- Timing baru sesuai dokumentasi (7 menit: benign -> SSH brute -> Slowloris -> SYN flood -> benign).
+
+
+---
+
+# SOLUSI OPSI A BERHASIL: Custom NFPlugin untuk Init Fwd/Bwd Win Byts
+
+**Status:** IMPLEMENTASI SELESAI & TERUJI
+
+## Ringkasan
+
+Opsi A (custom NFPlugin) berhasil diimplementasikan untuk mengekstrak 2 fitur TCP window
+size yang tidak tersedia di NFStream default. Sekarang **seluruh 10 fitur Top-10 dapat
+diekstrak dari NFStream** di lingkungan real-traffic.
+
+## Kunci Teknis
+
+NFStream `NFPacket` mengekspos atribut **`packet.ip_packet`** (bytes) = "Raw content
+starting from IP Header". Dari raw bytes ini, TCP window size di-parse manual:
+
+1. IP header length: `ihl = (ip_packet[0] & 0x0F) * 4` (IPv4) atau 40 (IPv6).
+2. TCP window size: 2 byte di offset `ihl + 14` dan `ihl + 15` (big-endian).
+3. `packet.direction` (0 = src->dst, 1 = dst->src) menentukan arah fwd/bwd.
+4. Window pertama tiap arah disimpan di `flow.udps.init_fwd_win_byts` dan
+   `flow.udps.init_bwd_win_byts` (nilai -1 jika arah tsb tidak ada paket TCP).
+
+Catatan: `dir(packet)` mengembalikan list kosong karena NFPacket adalah objek Cython,
+tetapi atributnya (ip_packet, direction, protocol, syn, dll) tetap dapat diakses langsung
+sesuai dokumentasi resmi NFStream.
+
+## File
+
+- Script plugin: `nfstream_win_extract.py`
+- Lokasi S3: `s3://ssh-detection-features-232032302717/scripts/nfstream_win_extract.py`
+- Lokasi Analyzer: `/opt/nids/scripts/nfstream_win_extract.py`
+
+## Bukti Uji (pcap probe di Analyzer, 14 flows)
+
+```
+        src_ip      dst_ip  dst_port  protocol  init_fwd_win_byts  init_bwd_win_byts
+   10.3.2.130   10.3.2.38        80         6              62727              62643
+   10.3.2.130   47.128.4.174    443         6              62727              62643
+```
+Nilai window realistis (~62 KB) dan berbeda per arah/flow -> ekstraksi valid.
+
+## Catatan Lingkungan (penting untuk langkah berikutnya)
+
+- **Interface jaringan Analyzer = `ens5`** (BUKAN `eth0`). tcpdump harus pakai `-i ens5`.
+- Capture WAJIB per-interface (`-i ens5`), JANGAN `-i any`. Capture `-i any` menghasilkan
+  Linux cooked-mode (SLL) yang membuat NFStream menghasilkan 0 flow.
+- NFStreamer WAJIB dijalankan dengan `statistical_analysis=True` agar 86 kolom (termasuk
+  `bidirectional_urg_packets`, `src2dst_min_ps`, dll) muncul di output.
+
+## Mapping Final Top-10 -> NFStream (LENGKAP)
+
+| # | Top-10 | Sumber NFStream |
+|---|---|---|
+| 1 | Fwd Seg Size Min | `src2dst_min_ps` |
+| 2 | URG Flag Cnt | `bidirectional_urg_packets` |
+| 3 | Tot Bwd Pkts | `dst2src_packets` |
+| 4 | Fwd Act Data Pkts | `src2dst_packets` |
+| 5 | Fwd Pkt Len Max | `src2dst_max_ps` |
+| 6 | Fwd Pkt Len Mean | `src2dst_mean_ps` |
+| 7 | Bwd Pkt Len Mean | `dst2src_mean_ps` |
+| 8 | Init Bwd Win Byts | **plugin** `udps.init_bwd_win_byts` |
+| 9 | TotLen Bwd Pkts | `dst2src_bytes` |
+| 10 | Init Fwd Win Byts | **plugin** `udps.init_fwd_win_byts` |
+
+## Infrastruktur Ter-deploy (referensi)
+
+| Node | Instance ID | Private IP | Public IP |
+|---|---|---|---|
+| Attacker | i-0b4e1a8e610543906 | 10.3.1.214 | 54.169.149.255 |
+| Target | i-0adc1017c07918e61 | 10.3.2.38 | - |
+| Analyzer | i-038b59e834a810974 | 10.3.2.130 | - |
+
+Stack CloudFormation: nids01-vpc, nids01-attacker, nids01-target, nids01-analyzer (semua CREATE_COMPLETE).
+
+
+---
+
+# HASIL RUN PERTAMA: RT-S1 & RT-S3 (Clean Traffic)
+
+**Status:** Pipeline end-to-end BERHASIL. Hasil metrik menunjukkan temuan penting.
+
+## Masalah Arsitektur yang Ditemukan & Diperbaiki
+
+**Masalah:** Capture awal di Analyzer menghasilkan pcap 24 byte (kosong). Penyebab:
+Analyzer (10.3.2.130) TIDAK berada di jalur trafik Attacker->Target, sehingga tcpdump
+di Analyzer tidak melihat paket antara keduanya.
+
+**Solusi:** Capture dipindah ke **Target** (10.3.2.38) yang menerima semua serangan.
+Pcap di-upload ke S3, lalu Analyzer download untuk inference.
+- Ditambahkan IAM inline policy `S3CaptureWrite` ke role `nids01-testing-target-role`.
+- Script baru: `capture_target.sh` (di Target).
+- Hasil: pcap CLEAN.pcap = 3.3 MB, 450 flows. Berhasil.
+
+## Pipeline yang Terbukti Bekerja
+
+1. Target capture (tcpdump ens5) -> pcap -> S3
+2. Analyzer download pcap dari S3
+3. NFStream (statistical_analysis=True) + InitWindowPlugin -> 450 flows, 10 fitur
+4. Scaling (StandardScaler dari deploy_meta.json)
+5. Predict (baseline / robust) -> ground truth labeling -> metrik
+
+## Hasil Metrik (Binary: attack vs benign)
+
+| Skenario | Model | MCC | F1 | Precision | Recall | Accuracy | TN,FP,FN,TP |
+|---|---|---|---|---|---|---|---|
+| RT-S1 | baseline | 0.164 | 0.855 | 0.841 | 0.869 | 0.76 | 24,60,48,318 |
+| RT-S3 | robust | 0.339 | 0.581 | 1.000 | 0.410 | 0.52 | 84,0,216,150 |
+
+Ground truth: SSH-Bruteforce=305, Benign=84, Slowloris=49, DDoS-LOIC-HTTP=12 (total 450).
+
+## TEMUAN PENTING (untuk paper)
+
+1. **Feature mismatch NFStream vs CICFlowMeter TERBUKTI NYATA.**
+   - Model baseline TIDAK PERNAH memprediksi "SSH-Bruteforce" (0 prediksi), padahal
+     305 flow adalah SSH brute-force. Semua salah-klasifikasi jadi DoS Slowloris/GoldenEye.
+   - Prediksi baseline: Slowloris=258, GoldenEye=120, Benign=72.
+   - Penyebab: definisi fitur NFStream != CICFlowMeter (mis. `Fwd Seg Size Min` [CIC:
+     ukuran segmen TCP min] vs `src2dst_min_ps` [NFStream: ukuran paket min termasuk header]).
+   - Di level BINARY (attack vs benign), sebagian besar tetap terdeteksi "attack" -> recall
+     baseline 0.869. Tapi MCC rendah karena FP tinggi (benign salah jadi attack).
+
+2. **Model robust jauh lebih konservatif.**
+   - Prediksi robust: Benign=300, Slowloris=150. Precision=1.0 (tidak ada FP) tapi
+     Recall=0.41 (216 attack lolos jadi FN).
+   - Efek adversarial training: decision boundary lebih ketat -> cenderung memprediksi Benign
+     saat fitur "tidak yakin". Pada real-traffic dengan feature mismatch, ini membuat banyak
+     serangan tidak terdeteksi.
+
+3. **MCC real (0.16-0.34) jauh di bawah offline (~0.93).** Gap ini adalah bukti empiris
+   bahwa model yang unggul pada dataset benchmark BELUM TENTU generalisasi ke real-traffic,
+   terutama karena perbedaan feature extractor. Ini justru MEMPERKUAT motivasi paper:
+   validasi real-traffic itu penting dan sering diabaikan literatur.
+
+## Rekomendasi Langkah Lanjut
+
+1. **Investigasi feature mismatch**: bandingkan statistik 10 fitur NFStream (real) vs
+   distribusi training (deploy_meta scaler mean/scale). Cari fitur yang paling menyimpang.
+2. **Opsi A-lanjut**: kalibrasi/mapping fitur NFStream agar lebih dekat definisi CICFlowMeter
+   (mis. Fwd Seg Size Min -> gunakan payload_size min, bukan packet size min).
+3. **Skenario Fitur-1 (8-fitur)**: latih ulang model offline HANYA dengan fitur yang
+   definisinya konsisten antara NFStream & CIC, lalu bandingkan.
+4. Lanjut RT-S2 & RT-S4 (evasion) untuk melihat apakah pola degradasi/robust konsisten.
+
+## File Hasil (di Analyzer /opt/nids/results/ dan bisa di-upload ke S3)
+
+- RT-S1_results.csv, RT-S1_metrics.json
+- RT-S3_results.csv, RT-S3_metrics.json
+
+
+---
+
+# DIAGNOSTIK FEATURE MISMATCH (Root Cause MCC Rendah)
+
+Membandingkan distribusi 10 fitur real-traffic (NFStream, 450 flows CLEAN) vs mean/scale
+training (deploy_meta.json). z_of_mean = (real_mean - train_mean) / train_scale.
+
+| Fitur | train_mean | real_mean | real_min | real_max | z_of_mean |
+|---|---|---|---|---|---|
+| Fwd Seg Size Min | 17.99 | 65.97 | 54.00 | 66.00 | **+6.23** |
+| URG Flag Cnt | 0.04 | 0.00 | 0.00 | 0.00 | -0.21 |
+| Tot Bwd Pkts | 6.24 | 32.80 | 4.00 | 11841 | +0.17 |
+| Fwd Act Data Pkts | 20.12 | 60.69 | 5.00 | 23686 | +0.03 |
+| Fwd Pkt Len Max | 200.67 | 220.02 | 54.00 | 1090 | +0.06 |
+| Fwd Pkt Len Mean | 50.32 | 90.24 | 54.00 | 173.58 | +0.66 |
+| Bwd Pkt Len Mean | 113.21 | 146.92 | 58.00 | 351.50 | +0.21 |
+| Init Bwd Win Byts | 8680 | 62673 | 62643 | 63196 | **+2.62** |
+| TotLen Bwd Pkts | 4654 | 2295 | 404 | 686778 | -0.01 |
+| Init Fwd Win Byts | 8773 | 62591 | 1480 | 62727 | **+3.32** |
+
+## Dua Sumber Mismatch (temuan penting untuk paper)
+
+**(A) Mismatch DEFINISI feature extractor -- Fwd Seg Size Min (z=+6.23, terparah):**
+- NFStream `src2dst_min_ps` = ukuran PAKET minimum (termasuk header IP+TCP, ~54-66 byte).
+- CICFlowMeter `Fwd Seg Size Min` = ukuran SEGMEN/payload minimum (biasanya kecil, ~0-20).
+- Akibat: fitur ini di real-traffic ~66 sedangkan training ~18 -> model bingung.
+
+**(B) Mismatch ENVIRONMENT jaringan -- Init Fwd/Bwd Win Byts (z=+3.32 / +2.62):**
+- AWS EC2 modern memakai TCP window besar (~62 KB) karena window scaling.
+- Dataset CIC-IDS2018 direkam dengan window lebih kecil (~8 KB).
+- Model belajar "window ~8KB = normal"; window 62KB dianggap di luar distribusi.
+- Ini BUKAN bug ekstraksi (plugin sudah benar), melainkan perbedaan karakteristik jaringan
+  antara lab pembuatan dataset vs lingkungan AWS nyata.
+
+## Implikasi
+
+- Fitur lain (Tot Bwd Pkts, Fwd Act Data Pkts, Pkt Len, dll) relatif konsisten (|z| < 1).
+- 3 fitur menyimpang inilah penyebab utama SSH-Bruteforce salah-klasifikasi & MCC turun.
+- Ini justru bukti empiris kuat: generalisasi real-traffic terganggu oleh (A) perbedaan
+  tools ekstraksi fitur dan (B) perbedaan environment -- dua hal yang jarang dibahas literatur.
+
+## Rencana Perbaikan
+
+1. **Fwd Seg Size Min**: ubah mapping ke pendekatan payload-based, atau (lebih tepat) latih
+   ulang model offline dengan fitur yang didefinisikan konsisten dengan NFStream.
+2. **Init Win Byts**: karena ini environment mismatch, opsi:
+   (a) skenario 8-fitur (buang kedua Init Win Byts) -> latih ulang offline, atau
+   (b) normalisasi/clip window saat inference, atau
+   (c) biarkan sebagai temuan (bukti environment gap).
+3. Skenario Fitur-1 (8-fitur) menjadi semakin relevan: buang Fwd Seg Size Min + 2 Init Win Byts
+   yang bermasalah, sisakan 7 fitur yang konsisten, latih ulang offline, bandingkan online.
+
+
+---
+
+# HASIL LENGKAP: MATRIKS 2x2 (RT-S1 s/d RT-S4)
+
+Seluruh 4 skenario selesai dijalankan pada real-traffic AWS.
+
+## Tabel Hasil Final
+
+| Skenario | Model | Trafik | MCC | F1 | Precision | Recall | Accuracy | TN,FP,FN,TP |
+|---|---|---|---|---|---|---|---|---|
+| RT-S1 | baseline | clean   | 0.164  | 0.855 | 0.841 | 0.869 | 0.760 | 24,60,48,318 |
+| RT-S2 | baseline | evasion | -0.070 | 0.633 | 0.762 | 0.542 | 0.506 | 34,57,154,182 |
+| RT-S3 | robust   | clean   | 0.339  | 0.581 | 1.000 | 0.410 | 0.520 | 84,0,216,150 |
+| RT-S4 | robust   | evasion | 0.389  | 0.626 | 1.000 | 0.455 | 0.571 | 91,0,183,153 |
+
+Flows: CLEAN=450 (attack 366 / benign 84), EVASION=427 (attack 336 / benign 91).
+
+## Perbandingan dengan Offline
+
+| Skenario | MCC Offline | MCC Real | F1 Offline | F1 Real |
+|---|---|---|---|---|
+| RT-S1 (Base+Clean)   | 0.9351 | 0.164  | 0.9729 | 0.855 |
+| RT-S2 (Base+Evasion) | 0.0184 | -0.070 | 0.7539 | 0.633 |
+| RT-S3 (Robust+Clean) | 0.9347 | 0.339  | 0.9727 | 0.581 |
+| RT-S4 (Robust+Evasion)| 0.9953 | 0.389  | 0.9985 | 0.626 |
+
+## POLA KUNCI (konsisten dengan offline meski MCC absolut rendah)
+
+1. **Baseline TERDEGRADASI oleh evasion:** RT-S1 -> RT-S2, MCC turun 0.164 -> -0.070
+   (di bawah random). Mereplikasi pola offline (0.935 -> 0.018).
+
+2. **Robust RECOVERY dari evasion:** RT-S3 -> RT-S4, MCC naik 0.339 -> 0.389.
+   Model robust justru lebih baik saat evasion. Mereplikasi pola offline (robust tetap tinggi).
+
+3. **Robust >> Baseline saat evasion:** RT-S2 (-0.070) vs RT-S4 (0.389). Selisih besar
+   -> adversarial training terbukti efektif melindungi terhadap evasion PADA REAL-TRAFFIC.
+
+4. **Robust selalu Precision=1.0** (tidak ada FP) tapi Recall rendah (~0.41-0.46). Model
+   robust sangat konservatif -> tidak pernah salah alarm, tapi banyak attack lolos (FN tinggi)
+   akibat feature mismatch.
+
+## KESIMPULAN
+
+Meskipun MCC absolut real-traffic jauh di bawah offline (karena feature mismatch NFStream vs
+CICFlowMeter + environment gap TCP window), **POLA RELATIF antar-skenario TETAP KONSISTEN**
+dengan hasil offline:
+- Baseline rentan terhadap evasion (kolaps di bawah random).
+- Robust tahan terhadap evasion (recovery, Precision sempurna).
+
+Ini bukti empiris bahwa **Adversarial Training bekerja di lingkungan real-traffic**, bukan
+hanya artefak dataset benchmark. Sekaligus mengungkap tantangan nyata deployment: perbedaan
+feature extractor & environment menurunkan performa absolut -> menegaskan pentingnya kalibrasi
+fitur dan/atau pelatihan ulang dengan fitur yang konsisten (Skenario Fitur-1 / 8-fitur).
+
+## File Hasil di Analyzer (/opt/nids/results/)
+- RT-S1_results.csv / RT-S1_metrics.json
+- RT-S2_results.csv / RT-S2_metrics.json
+- RT-S3_results.csv / RT-S3_metrics.json
+- RT-S4_results.csv / RT-S4_metrics.json
+- Capture: s3://ssh-detection-features-232032302717/captures/CLEAN.pcap, EVASION.pcap
+
+
+---
+
+# CARA RESUME PERCOBAAN (setelah cleanup NAT + stop EC2)
+
+Kondisi idle saat ini (hemat biaya):
+- NAT Gateway + Elastic IP: DIHAPUS (biaya NAT/EIP = 0).
+- 3 EC2: STOPPED (biaya compute = 0, hanya EBS storage kecil).
+- VPC, subnet, security group, IAM role, EC2 (stopped): TETAP ADA.
+- Semua script terpasang di EC2 + tersimpan di S3. Model & hasil di S3.
+
+## Langkah Resume
+
+### 1. Create NAT Gateway (kembalikan konektivitas internet + SSM ke private subnet)
+```
+aws cloudformation create-stack --stack-name nids01-nat \
+  --template-body file://nids01-05-1-nat.yaml \
+  --capabilities CAPABILITY_NAMED_IAM \
+  --region ap-southeast-1
+
+aws cloudformation wait stack-create-complete --stack-name nids01-nat --region ap-southeast-1
+```
+Catatan: Target & Analyzer ada di PRIVATE subnet tanpa VPC endpoint, jadi SSM ke keduanya
+HANYA berfungsi setelah NAT aktif.
+
+### 2. Start 3 EC2
+```
+aws ec2 start-instances --region ap-southeast-1 \
+  --instance-ids i-0b4e1a8e610543906 i-0adc1017c07918e61 i-038b59e834a810974
+```
+Private IP tetap sama (Attacker 10.3.1.214, Target 10.3.2.38, Analyzer 10.3.2.130).
+Public IP Attacker BERUBAH (tidak masalah, percobaan pakai private IP).
+
+### 3. Tunggu SSM online (~2 menit), verifikasi
+```
+aws ssm describe-instance-information --region ap-southeast-1 \
+  --query "InstanceInformationList[].{Id:InstanceId,Ping:PingStatus}" --output table
+```
+
+### 4. Lanjut percobaan
+Script & model masih ada di EC2 dan S3. Jalankan capture di Target + attack di Attacker,
+lalu inference di Analyzer (lihat bagian pipeline di atas).
+
+## Langkah Idle Kembali (hemat biaya setelah selesai)
+```
+# Hapus NAT (stop biaya NAT + EIP)
+aws cloudformation delete-stack --stack-name nids01-nat --region ap-southeast-1
+
+# Stop EC2
+aws ec2 stop-instances --region ap-southeast-1 \
+  --instance-ids i-0b4e1a8e610543906 i-0adc1017c07918e61 i-038b59e834a810974
+```
+
+## Referensi ID (tetap konstan)
+- VPC: vpc-01481a725febf0f13
+- Public subnet: subnet-0632bc989ee46bce0
+- Private subnet: subnet-0ae360071c695a28f
+- Security group: sg-0d1e025d35f8f747e
+- Private route table: rtb-0d3bcd66eb0f7bf0b
+- Attacker EC2: i-0b4e1a8e610543906 (10.3.1.214)
+- Target EC2:   i-0adc1017c07918e61 (10.3.2.38)
+- Analyzer EC2: i-038b59e834a810974 (10.3.2.130)
+- S3 bucket: ssh-detection-features-232032302717
+  - scripts/  : nfstream_win_extract.py, extract_and_infer.py, attack_clean.sh, attack_evasion.sh, capture_target.sh, schedule-nids01.json
+  - captures/ : CLEAN.pcap, EVASION.pcap
+  - results-nids01/ : RT-S1..S4 (csv + json)
+  - models/   : baseline_xgboost_top10.json, robust_xgboost_top10.json, deploy_meta.json

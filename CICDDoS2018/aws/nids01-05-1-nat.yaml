@@ -1,0 +1,123 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  NIDS01 Testing - NAT Gateway (stack terpisah).
+  Membuat NAT Gateway baru di public subnet stack nids01-vpc, lalu menambahkan
+  route 0.0.0.0/0 ke private route table (lookup by tag via custom resource).
+  Deploy stack ini saat ingin melanjutkan percobaan; hapus stack ini saat idle
+  untuk stop biaya NAT + EIP. VPC/subnet/EC2 TIDAK terpengaruh.
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: nids01-testing
+    Description: Harus sama dengan ProjectName stack VPC (nids01-vpc)
+
+Resources:
+  # --- Elastic IP untuk NAT ---
+  NatEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-nat-eip
+
+  # --- NAT Gateway di public subnet ---
+  NatGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatEIP.AllocationId
+      SubnetId:
+        Fn::ImportValue: !Sub ${ProjectName}-public-subnet-id
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-nat
+
+  # --- Custom resource: lookup private route table by tag ---
+  PrivateRouteTableLookup:
+    Type: Custom::RouteTableLookup
+    Properties:
+      ServiceToken: !GetAtt LookupFunction.Arn
+      VpcId:
+        Fn::ImportValue: !Sub ${ProjectName}-vpc-id
+      TagName: !Sub ${ProjectName}-private-rt
+
+  # --- Route 0.0.0.0/0 -> NAT pada private route table ---
+  PrivateNatRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !GetAtt PrivateRouteTableLookup.RouteTableId
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway
+
+  # --- Lambda untuk lookup + cleanup route table ---
+  LookupRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${ProjectName}-nat-lookup-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: EC2RouteTableAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ec2:DescribeRouteTables
+                Resource: '*'
+
+  LookupFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub ${ProjectName}-nat-rt-lookup
+      Runtime: python3.12
+      Handler: index.handler
+      Timeout: 30
+      Role: !GetAtt LookupRole.Arn
+      Code:
+        ZipFile: |
+          import boto3
+          import cfnresponse
+
+          def handler(event, context):
+              try:
+                  if event['RequestType'] == 'Delete':
+                      cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+                      return
+                  ec2 = boto3.client('ec2')
+                  vpc_id = event['ResourceProperties']['VpcId']
+                  tag_name = event['ResourceProperties']['TagName']
+                  resp = ec2.describe_route_tables(
+                      Filters=[
+                          {'Name': 'vpc-id', 'Values': [vpc_id]},
+                          {'Name': 'tag:Name', 'Values': [tag_name]}
+                      ]
+                  )
+                  if resp['RouteTables']:
+                      rt_id = resp['RouteTables'][0]['RouteTableId']
+                      cfnresponse.send(event, context, cfnresponse.SUCCESS,
+                                       {'RouteTableId': rt_id}, rt_id)
+                  else:
+                      cfnresponse.send(event, context, cfnresponse.FAILED,
+                                       {'Error': 'Private route table not found'})
+              except Exception as e:
+                  cfnresponse.send(event, context, cfnresponse.FAILED, {'Error': str(e)})
+
+Outputs:
+  NatGatewayId:
+    Value: !Ref NatGateway
+    Description: NAT Gateway ID (hapus stack ini untuk stop biaya NAT + EIP)
+  NatEIP:
+    Value: !Ref NatEIP
+    Description: Public IP NAT Gateway
+  PrivateRouteTableId:
+    Value: !GetAtt PrivateRouteTableLookup.RouteTableId
+    Description: Private route table yang ditambahkan route ke NAT
