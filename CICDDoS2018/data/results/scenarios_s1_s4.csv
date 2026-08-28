@@ -1,0 +1,5 @@
+Skenario,Model,Data Uji,MCC,F1,Precision,Recall
+S1,Baseline,Murni,0.9351,0.9729,0.9720,0.9800
+S2,Baseline,Evasion,0.0184,0.7539,0.6905,0.8300
+S3,Robust,Murni,0.9347,0.9727,0.9718,0.9800
+S4,Robust,Evasion,0.9953,0.9985,0.9985,0.9990

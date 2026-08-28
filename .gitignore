@@ -221,6 +221,8 @@ __marimo__/
 # Dataset
 *.csv
 *.xlsx
+# Pengecualian: CSV hasil kecil yang dibutuhkan notebook/paper (bukan dataset besar)
+!CICDDoS2018/data/results/scenarios_s1_s4.csv
 
 
 # Model files
