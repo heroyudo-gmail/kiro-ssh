@@ -1,0 +1,678 @@
+\documentclass[11pt, a4paper]{article}
+
+% --- Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage[indonesian]{babel}
+\usepackage[margin=2cm]{geometry}
+\usepackage{amsmath, amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, backgrounds, calc}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!60!black,
+    urlcolor=blue!60!black,
+    citecolor=blue!60!black
+}
+
+% --- Listing style untuk kode / perintah ---
+\definecolor{codebg}{RGB}{245,245,245}
+\definecolor{codekey}{RGB}{0,90,160}
+\definecolor{codecomment}{RGB}{100,120,100}
+\lstset{
+    backgroundcolor=\color{codebg},
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{codekey}\bfseries,
+    commentstyle=\color{codecomment}\itshape,
+    breaklines=true,
+    frame=single,
+    framesep=4pt,
+    rulecolor=\color{gray!40},
+    showstringspaces=false,
+    columns=fullflexible,
+    xleftmargin=6pt,
+    xrightmargin=4pt
+}
+\lstdefinestyle{bash}{language=bash, morekeywords={aws, tcpdump, python, source, sudo, bash, hydra, slowloris, nping, sysctl, tc, chmod, mkdir}}
+\lstdefinestyle{py}{language=Python}
+
+\titleformat{\section}{\large\bfseries}{\thesection.}{0.5em}{}
+\titleformat{\subsection}{\normalfont\bfseries}{\thesubsection}{0.5em}{}
+
+\begin{document}
+
+\begin{center}
+    {\Large \bfseries Panduan Teknis Eksperimen Validasi Real-Traffic NIDS01\par}
+    \vspace{0.2cm}
+    {\normalsize Dokumen Pendamping Paper 1: Penguatan Ketangguhan NIDS dengan Reduksi Fitur \\ Berbasis XGBoost Gain-based Importance melalui Adversarial Training \par}
+    \vspace{0.15cm}
+    {\small Lingkungan Uji: Amazon Web Services (AWS) --- Region \texttt{ap-southeast-1} \par}
+\end{center}
+
+\vspace{0.3cm}
+
+\noindent\textbf{Ringkasan.} Dokumen ini memaparkan secara teknis dan reproduktif seluruh tahapan eksperimen: mulai dari pembentukan model (\textit{baseline} dan \textit{robust}) dari dataset CSE-CIC-IDS2018 secara \textit{offline}, hingga validasi ketangguhan model pada \textit{trafik jaringan nyata} (\textit{real-traffic}) di lingkungan cloud AWS. Berbeda dengan pengujian \textit{offline} yang memakai dataset statis, tahap validasi membangun infrastruktur jaringan aktif (penyerang, korban, penganalisis), membangkitkan serangan sungguhan, menangkap trafik mentah, mengekstraksi fitur aliran menggunakan NFStream, lalu menjalankan inferensi model. Dokumen ditujukan untuk keperluan verifikasi metodologis oleh promotor/pembimbing.
+
+\tableofcontents
+
+\vspace{0.3cm}
+
+% ======================================================
+\section{Tujuan dan Hipotesis}
+
+\subsection{Tujuan}
+Memvalidasi bahwa model XGBoost \textit{robust} (hasil \textit{Adversarial Training}) yang unggul pada pengujian \textit{offline} juga mampu mempertahankan pola ketangguhannya pada \textit{trafik jaringan real-time}. Eksperimen mereplikasi matriks evaluasi $2\times 2$ (S1--S4) dari pengujian offline ke dalam empat skenario real-traffic (RT-S1--RT-S4).
+
+\subsection{Hipotesis}
+\begin{enumerate}[leftmargin=1.4cm]
+    \item Model \textit{baseline} mengalami degradasi performa saat menghadapi trafik yang mengandung pola \textit{evasion} (perturbasi pada fitur jaringan).
+    \item Model \textit{robust} mempertahankan ketangguhan deteksi pada trafik ter-\textit{evasion}.
+    \item Pola relatif antar-skenario pada real-traffic konsisten dengan hasil offline, meskipun nilai metrik absolut dapat berbeda akibat perbedaan perkakas ekstraksi fitur.
+\end{enumerate}
+
+% ======================================================
+\section{Alur Data dan Pembentukan Model (Offline)}
+
+\subsection{Dataset CSE-CIC-IDS2018}
+Penelitian menggunakan dataset CSE-CIC-IDS2018 dari \textit{Canadian Institute for Cybersecurity}. Dataset ini mencakup $\approx 15{,}7$ juta sampel trafik jaringan (ukuran mentah $\approx 6{,}7$ GB) dengan profil trafik normal (\textit{benign}) dan tujuh kategori serangan utama. Secara rinci, label pada dataset ini terbagi menjadi \textbf{15 kelas} (satu \textit{benign} dan 14 varian serangan) yang dikelompokkan ke dalam enam kategori sebagaimana disajikan pada Tabel \ref{tab:dataset_class}.
+
+\begin{table}[htbp]
+\centering
+\caption{Rincian Kelas Serangan pada Dataset CSE-CIC-IDS2018}
+\label{tab:dataset_class}
+\small
+\begin{tabularx}{\linewidth}{@{} l c X @{}}
+\toprule
+\textbf{Kategori} & \textbf{Jumlah Varian} & \textbf{Label Kelas} \\ \midrule
+Benign & 1 & Benign (trafik normal) \\ \addlinespace
+Brute-Force & 3 & FTP-BruteForce, SSH-Bruteforce, Brute Force -Web \\ \addlinespace
+DoS & 4 & DoS attacks-GoldenEye, DoS attacks-Hulk, DoS attacks-SlowHTTPTest, DoS attacks-Slowloris \\ \addlinespace
+DDoS & 3 & DDoS attacks-LOIC-HTTP, DDOS attack-LOIC-UDP, DDOS attack-HOIC \\ \addlinespace
+Web Attack & 2 & Brute Force -XSS, SQL Injection \\ \addlinespace
+Infiltration & 1 & Infilteration \\ \addlinespace
+Botnet & 1 & Bot \\ \midrule
+\textbf{Total} & \textbf{15 kelas} & 1 Benign + 14 varian serangan \\ \bottomrule
+\end{tabularx}
+\end{table}
+
+Adapun distribusi jumlah sampel per kategori --- sebelum dan sesudah proses \textit{stratified sampling} 10\% --- disajikan pada Tabel \ref{tab:dataset_dist}. Sampling ini mempertahankan proporsi kelas asli agar subset tetap representatif.
+
+\begin{table}[htbp]
+\centering
+\caption{Distribusi Sampel per Kategori Sebelum dan Sesudah Sampling 10\%}
+\label{tab:dataset_dist}
+\small
+\begin{tabularx}{\linewidth}{@{} l r r X @{}}
+\toprule
+\textbf{Kategori} & \textbf{Data Awal} & \textbf{Subset 10\%} & \textbf{Deskripsi} \\ \midrule
+Benign & 13.484.708 & 1.348.470 & Trafik normal \\ \addlinespace
+DDoS / DoS & 1.391.082 & 139.108 & \textit{Flooding} volumetrik \\ \addlinespace
+Brute-Force & 380.943 & 38.094 & \textit{Login} SSH/FTP \\ \addlinespace
+Botnet & 286.191 & 28.619 & Komando \textit{C2} \\ \addlinespace
+Infiltration & 161.934 & 16.193 & Penetrasi internal \\ \addlinespace
+Web Attacks & 928 & 93 & \textit{SQLi} / XSS \\ \midrule
+\textbf{Total} & \textbf{15.705.786} & \textbf{1.570.577} & --- \\ \bottomrule
+\end{tabularx}
+\end{table}
+
+Terlihat bahwa dataset memiliki karakteristik \textit{class imbalance} yang ekstrem: trafik \textit{benign} mendominasi ($\approx 85{,}9\%$), sementara \textit{Web Attacks} hanya berjumlah ratusan sampel. Ketimpangan inilah yang menjadi salah satu motivasi pemilihan metrik \textit{Matthews Correlation Coefficient} (MCC) sebagai metrik evaluasi utama, karena MCC lebih tahan terhadap bias kelas mayoritas dibanding akurasi.
+
+\subsection{Diagram Alur Data hingga Pembentukan Model}
+Gambar \ref{fig:pipeline_model} menggambarkan aliran data secara menyeluruh: dari dataset mentah, pemisahan data latih/uji, pelatihan dengan beberapa metode, hingga menghasilkan dua jenis model --- \textit{baseline} dan \textit{robust}.
+
+\begin{figure}[htbp]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+    node distance=1.0cm and 1.3cm,
+    data/.style={cylinder, shape border rotate=90, aspect=0.3, draw=blue!70, fill=blue!8, thick, align=center, minimum height=1.4cm, minimum width=2.5cm, font=\small},
+    proc/.style={rectangle, draw=gray!70, fill=gray!8, thick, rounded corners, align=center, minimum height=1.2cm, minimum width=2.8cm, font=\small},
+    advproc/.style={rectangle, draw=orange!80, fill=orange!10, thick, rounded corners, align=center, minimum height=1.2cm, minimum width=2.8cm, font=\small},
+    modelbase/.style={ellipse, draw=blue!70, fill=blue!8, thick, align=center, minimum height=1.2cm, minimum width=2.8cm, font=\small},
+    modelrob/.style={ellipse, draw=green!60!black, fill=green!10, thick, align=center, minimum height=1.2cm, minimum width=2.8cm, font=\small},
+    arrow/.style={-Stealth, thick, draw=gray!80}
+]
+    % Baris atas: pipeline data
+    \node (ds) [data] {CSE-CIC-\\IDS2018\\(15,7 jt sampel)};
+    \node (clean) [proc, right=of ds] {Pra-pemrosesan\\\& Sampling 10\%\\(68 fitur)};
+    \node (fs) [proc, right=of clean] {Seleksi Fitur\\XGBoost Gain\\(Top-10)};
+    \node (split) [proc, right=of fs] {Split Data\\Training : Testing\\(80 : 20)};
+
+    % Baris tengah: pelatihan baseline
+    \node (train_b) [proc, below=1.5cm of fs] {Pelatihan XGBoost\\(data latih murni)};
+    \node (model_b) [modelbase, left=1.6cm of train_b] {\textbf{Model Baseline}\\\texttt{baseline\_top10}};
+
+    % Baris bawah: jalur adversarial
+    \node (saliency) [advproc, right=1.6cm of train_b] {Saliency Map\\$x_{adv}=x+\epsilon\,\mathrm{sign}(\nabla_x L)$};
+    \node (augment) [advproc, below=1.3cm of saliency] {Augmentasi Data\\$D_{robust}=D_{clean}\cup D_{adv}$};
+    \node (train_r) [advproc, left=1.6cm of augment] {Adversarial Training\\(pelatihan ulang)};
+    \node (model_r) [modelrob, left=1.6cm of train_r] {\textbf{Model Robust}\\\texttt{robust\_top10}};
+
+    % Panah pipeline atas
+    \draw [arrow] (ds) -- (clean);
+    \draw [arrow] (clean) -- (fs);
+    \draw [arrow] (fs) -- (split);
+    % Split -> pelatihan baseline
+    \draw [arrow] (split.south) |- node[near start,right,font=\scriptsize]{data latih} (train_b.east);
+    % Baseline
+    \draw [arrow] (train_b) -- (model_b);
+    % Baseline -> saliency (gradien baseline membangkitkan adversarial)
+    \draw [arrow] (train_b.south) -- ++(0,-0.25) -| node[near start,above,font=\scriptsize]{gradien} (saliency.north);
+    \draw [arrow] (saliency) -- (augment);
+    \draw [arrow] (split.south) |- node[near end,above,font=\scriptsize]{$D_{clean}$} (augment.east);
+    \draw [arrow] (augment) -- (train_r);
+    \draw [arrow] (train_r) -- (model_r);
+\end{tikzpicture}%
+}
+\caption{Alur data \textit{offline} dari dataset CSE-CIC-IDS2018 hingga terbentuk dua jenis model. Model \textit{baseline} dilatih pada data murni; model \textit{robust} dilatih ulang melalui \textit{Adversarial Training} menggunakan sampel \textit{adversarial} yang dibangkitkan dari gradien model \textit{baseline}.}
+\label{fig:pipeline_model}
+\end{figure}
+
+\subsection{Penjelasan Tiap Tahap}
+\begin{enumerate}[leftmargin=1.4cm]
+    \item \textbf{Pra-pemrosesan \& Sampling.} Data dibersihkan (penanganan \textit{NaN/Infinity}, eliminasi fitur identitas aliran, reduksi variansi nol) lalu di-\textit{sampling} secara \textit{stratified} 10\% untuk mempertahankan proporsi kelas, menghasilkan 68 fitur numerik.
+    \item \textbf{Seleksi Fitur.} Fitur diperingkat berdasarkan metrik \textit{Gain} XGBoost; 10 fitur teratas (Top-10) dipilih karena menyumbang $>85\%$ akumulasi \textit{Gain}, sekaligus menekan ukuran model.
+    \item \textbf{Split Data.} Dataset dibagi menjadi data latih (\textit{training}) dan data uji (\textit{testing}) dengan rasio $80:20$.
+    \item \textbf{Pelatihan Model Baseline.} XGBoost dilatih pada data latih murni menggunakan konfigurasi \texttt{max\_depth}=6, \texttt{learning\_rate}=0.1, \texttt{n\_estimators}=100. Hasilnya adalah \textbf{Model Baseline}.
+    \item \textbf{Adversarial Training (Model Robust).} Sampel \textit{adversarial} dibangkitkan dari gradien model \textit{baseline} melalui metode \textit{Saliency Map} ($x_{adv}=x+\epsilon\,\mathrm{sign}(\nabla_x L)$), digabung dengan data murni membentuk $D_{robust}=D_{clean}\cup D_{adv}$, lalu model dilatih ulang. Hasilnya adalah \textbf{Model Robust}.
+\end{enumerate}
+
+\subsection{Penentuan Jumlah Fitur Optimal (Ablation Study)}
+Jumlah fitur yang dipakai tidak ditetapkan secara sembarang, melainkan melalui \textit{ablation study}: model dilatih dan diuji ulang pada beberapa konfigurasi subset fitur, lalu performa serta efisiensinya dibandingkan. Empat konfigurasi diuji: \textit{Full Features} (68 fitur), Top-20, Top-15, dan Top-10, sebagaimana Tabel \ref{tab:ablation}.
+
+\begin{table}[htbp]
+\centering
+\caption{Perbandingan Konfigurasi Jumlah Fitur (Seleksi Berbasis XGBoost Gain)}
+\label{tab:ablation}
+\small
+\begin{tabularx}{\linewidth}{@{} l c c c c X @{}}
+\toprule
+\textbf{Konfigurasi} & \textbf{Fitur} & \textbf{$F_1$} & \textbf{ROC-AUC} & \textbf{Ukuran Model} & \textbf{Keterangan} \\ \midrule
+Full Features & 68 & 0,9798 & 0,9911 & 7,17 MB & Performa tertinggi, model besar \\ \addlinespace
+Top-20 & 20 & 0,9795 & 0,9900 & 6,82 MB & Nyaris identik dengan Full \\ \addlinespace
+Top-15 & 15 & 0,9717 & 0,9883 & 5,91 MB & Penurunan marginal \\ \addlinespace
+\textbf{Top-10} & \textbf{10} & \textbf{0,9717} & \textbf{0,9865} & \textbf{5,65 MB} & \textbf{Sweet spot (dipilih)} \\ \bottomrule
+\end{tabularx}
+\end{table}
+
+Dari perbandingan tersebut ditetapkan bahwa \textbf{Top-10 adalah titik keseimbangan optimal (\textit{sweet spot})} dengan pertimbangan:
+\begin{enumerate}[leftmargin=1.4cm]
+    \item \textbf{Retensi performa:} penurunan $F_1$ dari 68 fitur ke Top-10 hanya $0{,}83\%$ (dari $0{,}9798$ ke $0{,}9717$) --- praktis tidak signifikan.
+    \item \textbf{Efisiensi ukuran:} ukuran model tereduksi $21{,}2\%$ (dari $7{,}17$ MB menjadi $5{,}65$ MB), lebih ringan untuk \textit{deployment} pada perangkat \textit{edge}.
+    \item \textbf{Kesetaraan dengan Top-15:} Top-10 mencapai $F_1$ identik dengan Top-15 ($0{,}9717$) namun dengan model lebih ringkas, sehingga fitur ke-11 hingga ke-15 tidak menambah performa.
+\end{enumerate}
+
+Konfigurasi Top-10 inilah yang kemudian digunakan sebagai basis pelatihan model \textit{baseline} dan \textit{robust}, serta seluruh eksperimen validasi real-traffic.
+
+\subsection{Hasil Percobaan Seleksi Fitur (Metrik Lengkap)}
+Sebelum menetapkan Top-10, dilakukan percobaan pelatihan dan pengujian pada tiap konfigurasi fitur. Tabel \ref{tab:ablation_full} menyajikan hasil aktual model XGBoost pada konfigurasi \textit{Full} (68), Top-20, Top-15, dan Top-10 untuk kondisi trafik murni.
+
+\begin{table}[htbp]
+\centering
+\caption{Hasil Percobaan XGBoost per Konfigurasi Fitur (Trafik Murni)}
+\label{tab:ablation_full}
+\small
+\begin{tabularx}{\linewidth}{@{} l c c c c c @{}}
+\toprule
+\textbf{Konfigurasi} & \textbf{Fitur} & \textbf{Accuracy} & \textbf{Precision} & \textbf{Recall} & \textbf{F1} \\ \midrule
+Full Features & 68 & 98,43\% & 98,07\% & 98,43\% & 97,98\% \\ \addlinespace
+Top-20 & 20 & 98,40\% & 97,98\% & 98,40\% & 97,95\% \\ \addlinespace
+Top-15 & 15 & 97,94\% & 97,03\% & 97,94\% & 97,17\% \\ \addlinespace
+\textbf{Top-10} & \textbf{10} & \textbf{97,94\%} & \textbf{97,05\%} & \textbf{97,94\%} & \textbf{97,17\%} \\ \bottomrule
+\end{tabularx}
+\end{table}
+
+Tabel \ref{tab:ablation_full} menunjukkan bahwa dari 68 fitur hingga Top-10, penurunan seluruh metrik sangat kecil ($< 1\%$ pada F1 dan Accuracy). Perbedaan antara Top-15 dan Top-10 bahkan hampir tidak ada (F1 identik $97{,}17\%$), sementara Top-10 menawarkan model yang lebih ringkas. Karena itu Top-10 dipilih sebagai konfigurasi final.
+
+Konfigurasi Top-10 kemudian dievaluasi secara penuh pada matriks $2\times 2$ (S1--S4) untuk kondisi trafik murni maupun \textit{evasion}, menggunakan model \textit{baseline} dan \textit{robust}. Hasilnya disajikan pada Tabel \ref{tab:s1s4_offline}.
+
+\begin{table}[htbp]
+\centering
+\caption{Hasil Evaluasi Top-10 pada Empat Skenario Offline (S1--S4, $\epsilon = 0{,}10$)}
+\label{tab:s1s4_offline}
+\small
+\begin{tabularx}{\linewidth}{@{} l l l c c c X @{}}
+\toprule
+\textbf{Skenario} & \textbf{Model} & \textbf{Data Uji} & \textbf{MCC} & \textbf{F1} & \textbf{Precision} & \textbf{Keterangan} \\ \midrule
+S1 & Baseline & Murni & 0,9351 & 0,9729 & 0,9720 & Performa awal (normal) \\ \addlinespace
+S2 & Baseline & Evasion & 0,0184 & 0,7539 & 0,6905 & Celah keamanan (kolaps) \\ \addlinespace
+S3 & Robust & Murni & 0,9347 & 0,9727 & 0,9718 & Integritas terjaga \\ \addlinespace
+S4 & Robust & Evasion & 0,9953 & 0,9985 & 0,9985 & Ketangguhan pulih \\ \bottomrule
+\end{tabularx}
+\end{table}
+
+Hasil pada Tabel \ref{tab:s1s4_offline} menegaskan pilihan Top-10: pada trafik murni model tetap akurat (S1, S3), sementara \textit{Adversarial Training} memulihkan ketangguhan dari kondisi kolaps akibat \textit{evasion} (S2, MCC $0{,}0184$) menjadi sangat tangguh (S4, MCC $0{,}9953$). Untuk memperjelas kontras antar-skenario, Gambar \ref{fig:s1s4_bar} memvisualisasikan ketiga metrik tersebut dalam bentuk grafik batang.
+
+\begin{figure}[htbp]
+\centering
+\resizebox{0.75\linewidth}{!}{%
+\begin{tikzpicture}
+\begin{axis}[
+    ybar,
+    enlargelimits=0.15,
+    legend style={at={(0.5,-0.18)}, anchor=north, legend columns=-1, font=\footnotesize},
+    ylabel={Skor Metrik},
+    symbolic x coords={S1, S2, S3, S4},
+    xtick=data,
+    nodes near coords,
+    nodes near coords style={font=\scriptsize, /pgf/number format/fixed, /pgf/number format/precision=3},
+    every node near coord/.append style={rotate=90, anchor=west},
+    ymin=0, ymax=1.18,
+    bar width=10pt,
+    grid=major,
+    grid style={dashed, gray!30},
+    width=13cm,
+    height=8cm
+]
+\addplot[draw=blue!80, fill=blue!30] coordinates {(S1,0.9351) (S2,0.0184) (S3,0.9347) (S4,0.9953)};
+\addplot[draw=orange!80, fill=orange!30] coordinates {(S1,0.9729) (S2,0.7539) (S3,0.9727) (S4,0.9985)};
+\addplot[draw=green!60!black, fill=green!25] coordinates {(S1,0.9720) (S2,0.6905) (S3,0.9718) (S4,0.9985)};
+\legend{MCC, $F_1$-score, Precision}
+\end{axis}
+\end{tikzpicture}%
+}
+\caption{Perbandingan metrik MCC, $F_1$-score, dan Precision pada empat skenario evaluasi Top-10 ($\epsilon = 0{,}10$). Terlihat model \textit{baseline} kolaps pada S2 (khususnya MCC $\approx 0$), sedangkan model \textit{robust} pulih penuh pada S4.}
+\label{fig:s1s4_bar}
+\end{figure}
+
+\subsection{Artefak Model yang Dihasilkan}
+Dua model XGBoost Top-10 diekspor untuk dipakai pada tahap validasi real-traffic tanpa pelatihan ulang:
+\begin{itemize}[leftmargin=1.4cm]
+    \item \texttt{baseline\_xgboost\_top10.json} --- model tanpa \textit{Adversarial Training}.
+    \item \texttt{robust\_xgboost\_top10.json} --- model dengan \textit{Adversarial Training}.
+    \item \texttt{deploy\_meta.json} --- metadata berisi nama 10 fitur, parameter \texttt{StandardScaler} (\textit{mean} dan \textit{scale}), serta pemetaan label 15 kelas.
+\end{itemize}
+Pemilihan model pada tahap validasi bersifat otomatis: skenario RT-S1/RT-S2 memakai model \textit{baseline}, sedangkan RT-S3/RT-S4 memakai model \textit{robust}.
+
+% ======================================================
+\section{Pemetaan Fitur ke NFStream}
+
+\subsection{Latar Belakang Masalah}
+Pada tahap pelatihan \textit{offline}, 10 fitur Top-10 diambil dari berkas CSV dataset CSE-CIC-IDS2018 yang telah diekstraksi menggunakan \textbf{CICFlowMeter}. Namun pada validasi real-traffic, satu-satunya data yang tersedia adalah \textit{paket mentah} (\textit{pcap}) hasil \texttt{tcpdump} --- belum berbentuk fitur aliran. Oleh karena itu, 10 fitur tersebut harus diekstraksi ulang dari \textit{pcap} secara mandiri.
+
+Ekstraksi ini menggunakan pustaka \textbf{NFStream} yang memiliki \textit{backend} C dan bekerja secara \textit{streaming} (tidak memuat seluruh \textit{pcap} ke memori), sehingga sanggup menangani berkas berukuran besar tanpa kehabisan RAM --- masalah yang sebelumnya dijumpai pada pendekatan berbasis \textit{scapy} dan CICFlowMeter. Tantangannya, penamaan dan definisi fitur NFStream \textbf{berbeda} dari CIC-IDS2018, sehingga setiap fitur perlu dipetakan secara eksplisit. Gambar \ref{fig:feature_pipeline} menggambarkan alur ekstraksi fitur dari \textit{pcap} hingga vektor 10 fitur yang siap diinferensi.
+
+\begin{figure}[htbp]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+    node distance=0.9cm and 1.5cm,
+    io/.style={cylinder, shape border rotate=90, aspect=0.3, draw=blue!70, fill=blue!8, thick, align=center, minimum height=1.3cm, minimum width=2.2cm, font=\small},
+    proc/.style={rectangle, draw=gray!70, fill=gray!8, thick, rounded corners, align=center, minimum height=1.2cm, minimum width=3cm, font=\small},
+    plugin/.style={rectangle, draw=orange!80, fill=orange!10, thick, rounded corners, align=center, minimum height=1.2cm, minimum width=3cm, font=\small},
+    out/.style={rectangle, draw=green!60!black, fill=green!10, thick, rounded corners, align=center, minimum height=1.2cm, minimum width=3cm, font=\small},
+    arrow/.style={-Stealth, thick, draw=gray!80}
+]
+    \node (pcap) [io] {pcap\\(paket mentah)};
+    \node (nf) [proc, right=of pcap] {NFStream\\\texttt{statistical\_analysis}\\(streaming, backend C)};
+    \node (feat8) [proc, right=of nf] {8 fitur aliran\\(paket, byte,\\flag, dsb)};
+    \node (plug) [plugin, below=1.3cm of nf] {Custom NFPlugin\\parsing TCP window\\dari \texttt{ip\_packet}};
+    \node (feat2) [plugin, right=of plug] {2 fitur\\Init Fwd/Bwd\\Win Byts};
+    \node (merge) [out, right=1.5cm of feat8] {Vektor\\10 Fitur\\(Top-10)};
+
+    \draw [arrow] (pcap) -- (nf);
+    \draw [arrow] (nf) -- (feat8);
+    \draw [arrow] (nf.south) -- (plug.north);
+    \draw [arrow] (plug) -- (feat2);
+    \draw [arrow] (feat8) -- (merge);
+    \draw [arrow] (feat2.east) -| (merge.south);
+\end{tikzpicture}%
+}
+\caption{Alur ekstraksi fitur real-traffic: NFStream menghasilkan 8 dari 10 fitur secara langsung, sedangkan 2 fitur TCP window (\textit{Init Fwd/Bwd Win Byts}) diekstraksi oleh \textit{custom plugin}; keduanya digabung menjadi vektor 10 fitur yang siap diinferensi.}
+\label{fig:feature_pipeline}
+\end{figure}
+
+\subsection{Pemetaan 10 Fitur}
+NFStream dijalankan dengan opsi \texttt{statistical\_analysis=True} agar menghasilkan medan statistik lengkap (86 kolom). Tabel \ref{tab:mapping} menyajikan pemetaan setiap fitur Top-10 ke medan (\textit{field}) NFStream. Dari 10 fitur, \textbf{8 fitur} dapat dipetakan langsung (7 persis, 1 aproksimasi), sedangkan \textbf{2 fitur} TCP window memerlukan \textit{plugin} kustom (dijelaskan pada Bagian \ref{sec:winplugin}).
+
+\begin{table}[htbp]
+\centering
+\caption{Pemetaan Fitur Top-10 (CIC-IDS2018) ke Medan NFStream}
+\label{tab:mapping}
+\small
+\begin{tabularx}{\linewidth}{@{} c l l X @{}}
+\toprule
+\textbf{\#} & \textbf{Fitur Top-10} & \textbf{Medan NFStream} & \textbf{Keterangan (Status --- Makna Fitur)} \\ \midrule
+1 & Fwd Seg Size Min & \texttt{src2dst\_min\_ps} & Aproksimasi --- ukuran segmen/paket terkecil arah maju (klien$\to$server); membedakan paket kontrol kecil dari paket data \\
+2 & URG Flag Cnt & \texttt{bidirectional\_urg\_packets} & Persis --- jumlah paket ber-\textit{flag} URG (\textit{urgent}); jarang pada trafik normal, indikator pola tak lazim \\
+3 & Tot Bwd Pkts & \texttt{dst2src\_packets} & Persis --- total paket arah balik (server$\to$klien); mencerminkan tingkat respons layanan \\
+4 & Fwd Act Data Pkts & \texttt{src2dst\_packets} & Aproksimasi --- jumlah paket maju berpayload data; membedakan koneksi aktif dari sekadar \textit{handshake} \\
+5 & Fwd Pkt Len Max & \texttt{src2dst\_max\_ps} & Persis --- ukuran paket maju terbesar; menandai keberadaan \textit{payload} besar dari klien \\
+6 & Fwd Pkt Len Mean & \texttt{src2dst\_mean\_ps} & Persis --- rata-rata ukuran paket maju; karakter volume trafik dari klien \\
+7 & Bwd Pkt Len Mean & \texttt{dst2src\_mean\_ps} & Persis --- rata-rata ukuran paket balik; karakter volume respons server \\
+8 & Init Bwd Win Byts & \texttt{udps.init\_bwd\_win\_byts} & \textbf{Plugin kustom} --- ukuran \textit{TCP window} awal arah balik; mencerminkan kapasitas buffer server saat inisiasi koneksi \\
+9 & TotLen Bwd Pkts & \texttt{dst2src\_bytes} & Persis --- total byte arah balik; volume data yang dikirim server \\
+10 & Init Fwd Win Byts & \texttt{udps.init\_fwd\_win\_byts} & \textbf{Plugin kustom} --- ukuran \textit{TCP window} awal arah maju; fitur paling sensitif terhadap \textit{evasion} (target manipulasi) \\ \bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Kendala Teknis: Ekstraksi TCP Window Size}
+\label{sec:winplugin}
+NFStream secara bawaan \textbf{tidak mengekspos TCP window size} dalam 100 atributnya. Dua fitur, yakni \textit{Init Fwd Win Byts} (\#10) dan \textit{Init Bwd Win Byts} (\#8), tidak dapat diambil langsung. Hal ini kritis karena \textit{Init Fwd Win Byts} merupakan fitur yang paling sensitif terhadap perturbasi (target utama \textit{evasion} pada RT-S2/RT-S4).
+
+\textbf{Solusi (Custom NFPlugin).} Objek \texttt{NFPacket} pada NFStream mengekspos atribut \texttt{packet.ip\_packet} berupa \textit{raw bytes} mulai dari \textit{header} IP. Dari sini, TCP window size di-\textit{parsing} secara manual:
+\begin{enumerate}[leftmargin=1.4cm]
+    \item Panjang \textit{header} IP: \texttt{ihl = (ip\_packet[0] \& 0x0F) * 4} untuk IPv4 (atau 40 untuk IPv6).
+    \item TCP window size: 2 \textit{byte} pada \textit{offset} \texttt{ihl + 14} dan \texttt{ihl + 15} (\textit{big-endian}).
+    \item Arah paket ditentukan oleh \texttt{packet.direction} (0 = src$\to$dst, 1 = dst$\to$src).
+    \item Nilai window pertama tiap arah disimpan ke \texttt{flow.udps.init\_fwd\_win\_byts} dan \texttt{flow.udps.init\_bwd\_win\_byts} (bernilai $-1$ bila arah tersebut tidak memiliki paket TCP).
+\end{enumerate}
+
+\begin{lstlisting}[style=py, caption={Inti plugin ekstraksi TCP window size (nfstream\_win\_extract.py)}]
+def _tcp_window_from_ip_packet(ip_packet, protocol):
+    if protocol != 6 or ip_packet is None:   # 6 = TCP
+        return -1
+    b = ip_packet
+    version = b[0] >> 4
+    ihl = (b[0] & 0x0F) * 4 if version == 4 else 40
+    if len(b) < ihl + 16:
+        return -1
+    return (b[ihl + 14] << 8) | b[ihl + 15]   # window size (big-endian)
+
+class InitWindowPlugin(NFPlugin):
+    def on_init(self, packet, flow):
+        flow.udps.init_fwd_win_byts = -1
+        flow.udps.init_bwd_win_byts = -1
+        win = _tcp_window_from_ip_packet(packet.ip_packet, packet.protocol)
+        if packet.direction == 0:
+            flow.udps.init_fwd_win_byts = win
+        else:
+            flow.udps.init_bwd_win_byts = win
+    def on_update(self, packet, flow):
+        if packet.direction == 1 and flow.udps.init_bwd_win_byts == -1:
+            flow.udps.init_bwd_win_byts = _tcp_window_from_ip_packet(
+                packet.ip_packet, packet.protocol)
+        elif packet.direction == 0 and flow.udps.init_fwd_win_byts == -1:
+            flow.udps.init_fwd_win_byts = _tcp_window_from_ip_packet(
+                packet.ip_packet, packet.protocol)
+\end{lstlisting}
+
+% ======================================================
+\section{Skenario Serangan dan Ground Truth}
+
+\subsection{Timeline Serangan (7 Menit)}
+Setiap sesi capture berlangsung selama tujuh menit dengan urutan fase pada Tabel \ref{tab:timeline}. Serangan dibangkitkan dari node Attacker menuju Target dengan \textit{rate} rendah agar ukuran \textit{pcap} tetap kecil dan ekstraksi lancar.
+
+\begin{table}[htbp]
+\centering
+\caption{Timeline Fase Trafik per Sesi Capture}
+\label{tab:timeline}
+\small
+\begin{tabularx}{\linewidth}{@{} c l l X @{}}
+\toprule
+\textbf{Menit} & \textbf{Fase} & \textbf{Label Ground Truth} & \textbf{Perkakas} \\ \midrule
+0--1 & Benign (\textit{warm-up}) & Benign & \texttt{curl} loop \\
+1--3 & SSH Brute-Force & SSH-Bruteforce & Hydra (port 22) \\
+3--5 & DoS Slowloris & DoS attacks-Slowloris & Slowloris (port 80) \\
+5--6 & DDoS SYN Flood & DDoS attacks-LOIC-HTTP & nping (port 80, \textit{rate} 200/s) \\
+6--7 & Benign (\textit{cool-down}) & Benign & \texttt{curl} loop \\ \bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Pelabelan Ground Truth}
+Pelabelan menggunakan kebijakan \textit{phase-and-attacker-ip}: suatu aliran diberi label serangan hanya jika (a) waktu aliran jatuh pada fase serangan \textbf{dan} (b) IP penyerang ($10.3.1.214$) terlibat dalam aliran tersebut. Selain itu, aliran dilabeli Benign. Waktu aliran relatif dihitung dari selisih \texttt{bidirectional\_first\_seen\_ms} terhadap awal sesi. Konfigurasi disimpan pada \texttt{schedule-nids01.json}.
+
+\subsection{Skenario Clean vs. Evasion}
+\begin{itemize}[leftmargin=1.4cm]
+    \item \textbf{Clean} (RT-S1, RT-S3): serangan standar tanpa manipulasi paket.
+    \item \textbf{Evasion} (RT-S2, RT-S4): serangan yang sama, tetapi dengan perturbasi pada level jaringan yang diaktifkan di node Attacker:
+    \begin{itemize}
+        \item Modifikasi TCP window (menyasar fitur \textit{Init Fwd Win Byts}) melalui \texttt{sysctl}.
+        \item Penambahan \textit{jitter} antar-paket (menyasar fitur berbasis IAT) melalui \texttt{tc netem}.
+    \end{itemize}
+\end{itemize}
+
+\begin{lstlisting}[style=bash, caption={Aktivasi perturbasi evasion (potongan attack\_evasion.sh)}]
+# Ubah TCP window awal (memengaruhi Init Fwd Win Byts)
+sudo sysctl -w net.ipv4.tcp_window_scaling=0
+sudo sysctl -w net.ipv4.tcp_rmem="4096 8192 16384"
+# Tambah jitter 10ms +/- 5ms (memengaruhi IAT)
+sudo tc qdisc add dev ens5 root netem delay 10ms 5ms
+\end{lstlisting}
+
+% ======================================================
+\section{Arsitektur Infrastruktur AWS untuk Pengujian}
+
+Setelah model dan skenario pengujian ditetapkan, tahap validasi real-traffic dilakukan di atas infrastruktur jaringan aktif di AWS. Bagian ini merinci desain arsitektur tersebut.
+
+\subsection{Topologi Jaringan}
+Infrastruktur dibangun menggunakan beberapa \textit{stack} AWS CloudFormation di dalam satu VPC ($10.3.0.0/16$). Tabel \ref{tab:infra} merinci komponen yang digunakan, dan Gambar \ref{fig:aws_arch} menampilkan desain arsitektur beserta aliran datanya.
+
+\begin{table}[htbp]
+\centering
+\caption{Komponen Infrastruktur Pengujian}
+\label{tab:infra}
+\small
+\begin{tabularx}{\linewidth}{@{} l l l X @{}}
+\toprule
+\textbf{Node} & \textbf{Tipe} & \textbf{Subnet / IP} & \textbf{Fungsi} \\ \midrule
+Attacker & \texttt{t3.medium} & Publik / $10.3.1.214$ & Membangkitkan serangan (Hydra, Slowloris, nping) \\ \addlinespace
+Target & \texttt{t3.medium} & Privat / $10.3.2.38$ & Menjalankan layanan SSH + Nginx (HTTP); lokasi \textit{capture} \\ \addlinespace
+Analyzer & \texttt{t3.large} & Privat / $10.3.2.130$ & Ekstraksi fitur (NFStream) + inferensi model XGBoost \\ \addlinespace
+Amazon S3 & --- & --- & Perantara \textit{pcap}, model, dan hasil \\ \bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{figure}[htbp]
+\centering
+\resizebox{0.95\linewidth}{!}{%
+\begin{tikzpicture}[
+    node distance=2.2cm and 4cm,
+    attacker/.style={rectangle, draw=red!70, fill=red!5, thick, rounded corners, align=center, minimum height=1.5cm, minimum width=4.4cm, font=\large},
+    target/.style={rectangle, draw=blue!70, fill=blue!5, thick, rounded corners, align=center, minimum height=1.5cm, minimum width=4.4cm, font=\large},
+    analyzer/.style={rectangle, draw=green!60!black, fill=green!8, thick, rounded corners, align=center, minimum height=1.5cm, minimum width=4.4cm, font=\large},
+    store/.style={cylinder, shape border rotate=90, aspect=0.35, draw=orange!80, fill=orange!10, thick, align=center, minimum height=1.7cm, minimum width=3cm, font=\large},
+    subnetpub/.style={draw=red!40, dashed, rounded corners, inner sep=0.6cm, label={[red!60!black,font=\large\bfseries]above:Subnet Publik (10.3.1.0/24)}},
+    subnetpriv/.style={draw=blue!40, dashed, rounded corners, inner sep=0.6cm, label={[blue!70!black,font=\large\bfseries]above:Subnet Privat (10.3.2.0/24)}},
+    flow/.style={-Stealth, very thick, draw=red!70},
+    dataflow/.style={-Stealth, thick, draw=orange!80, dashed}
+]
+    \node (att) [attacker] {\textbf{Attacker} (\texttt{t3.medium})\\[2pt]Hydra / Slowloris / nping\\[2pt]10.3.1.214};
+    \node (tgt) [target, right=4.5cm of att] {\textbf{Target} (\texttt{t3.medium})\\[2pt]SSH + Nginx (HTTP) + tcpdump\\[2pt]10.3.2.38};
+    \node (anl) [analyzer, below=2.8cm of tgt] {\textbf{Analyzer} (\texttt{t3.large})\\[2pt]NFStream + XGBoost\\[2pt]10.3.2.130};
+    \node (s3) [store, below=2.8cm of att] {Amazon S3\\[2pt](pcap + model)};
+
+    \begin{scope}[on background layer]
+        \node (pub) [subnetpub, fit=(att)] {};
+        \node (priv) [subnetpriv, fit=(tgt)(anl)] {};
+    \end{scope}
+
+    \draw [flow] (att) -- node[above, font=\large, text=red!70!black]{Serangan} node[below, font=\normalsize]{SSH:22 / HTTP:80} (tgt);
+    \draw [dataflow] (tgt.south) |- node[pos=0.75, above, font=\normalsize]{unggah pcap} (s3.east);
+    \draw [dataflow] (s3.south) |- node[pos=0.75, below, font=\normalsize]{unduh pcap + model} (anl.west);
+    \node (infnote) [below=0.5cm of anl, font=\normalsize, text=green!45!black, align=center] {Ekstraksi 10 fitur $\rightarrow$ inferensi (baseline/robust) $\rightarrow$ metrik};
+    \node [below=0.4cm of infnote, font=\large\bfseries, text=gray!60!black] {VPC 10.3.0.0/16 (AWS \textit{ap-southeast-1})};
+\end{tikzpicture}%
+}
+\caption{Desain arsitektur jaringan pengujian real-traffic di AWS. Node \textit{Attacker} (subnet publik) menyerang node \textit{Target} (subnet privat); trafik ditangkap di Target, disalurkan melalui Amazon S3, lalu diproses oleh node \textit{Analyzer} untuk ekstraksi fitur dan inferensi.}
+\label{fig:aws_arch}
+\end{figure}
+
+\subsection{Daftar Stack CloudFormation}
+\begin{itemize}[leftmargin=1.4cm]
+    \item \texttt{nids01-05-vpc.yaml} --- VPC, subnet publik/privat, IGW, NAT Gateway, \textit{security group}.
+    \item \texttt{nids01-06-attacker.yaml} --- EC2 Attacker (subnet publik).
+    \item \texttt{nids01-07-target.yaml} --- EC2 Target (subnet privat, SSH \texttt{MaxAuthTries 100} + Nginx).
+    \item \texttt{nids01-08-analyzer.yaml} --- EC2 Analyzer (subnet privat, NFStream + XGBoost).
+    \item \texttt{nids01-05-1-nat.yaml} --- Stack NAT terpisah (dibuat saat resume, dihapus saat idle untuk menekan biaya).
+\end{itemize}
+
+\subsection{Catatan Penting Lingkungan}
+\begin{enumerate}[leftmargin=1.4cm]
+    \item \textbf{Antarmuka jaringan} pada EC2 adalah \texttt{ens5} (\textbf{bukan} \texttt{eth0}). Seluruh perintah \texttt{tcpdump} harus memakai \texttt{-i ens5}.
+    \item \textbf{Capture wajib per-antarmuka} (\texttt{-i ens5}), \textbf{tidak boleh} \texttt{-i any}. Capture \texttt{-i any} menghasilkan format \textit{Linux cooked-mode} (SLL) yang membuat NFStream menghasilkan 0 aliran.
+    \item Node Target dan Analyzer berada di subnet privat tanpa \textit{VPC endpoint}, sehingga konektivitas AWS Systems Manager (SSM) dan internet ke keduanya bergantung sepenuhnya pada NAT Gateway.
+    \item \textbf{Capture dilakukan di Target}, bukan di Analyzer, karena Analyzer tidak berada di jalur trafik Attacker$\to$Target (bukan \textit{gateway}/\textit{mirror}). Percobaan awal dengan capture di Analyzer menghasilkan \textit{pcap} kosong (24 \textit{byte}). Karena itu, \textit{role} IAM Target ditambahkan izin tulis S3.
+\end{enumerate}
+
+% ======================================================
+\section{Pipeline Eksekusi}
+
+\subsection{Alur Keseluruhan}
+\begin{enumerate}[leftmargin=1.4cm]
+    \item Node Target menjalankan \texttt{tcpdump} pada \texttt{ens5} untuk menangkap trafik yang melibatkan IP penyerang.
+    \item Bersamaan, node Attacker menjalankan skrip serangan (\texttt{attack\_clean.sh} atau \texttt{attack\_evasion.sh}).
+    \item Setelah 7 menit, \textit{pcap} diunggah otomatis dari Target ke Amazon S3.
+    \item Node Analyzer mengunduh \textit{pcap} dari S3, mengekstraksi fitur dengan NFStream + plugin kustom, lalu menjalankan inferensi.
+    \item Metrik (MCC, F1, Precision, Recall, Accuracy) dihitung dan disimpan.
+\end{enumerate}
+
+\subsection{Perintah Eksekusi}
+\begin{lstlisting}[style=bash, caption={Menjalankan satu sesi capture + serangan (via AWS SSM)}]
+# Di Target: mulai capture (7 menit + buffer), auto-upload ke S3
+bash capture_target.sh CLEAN 440 10.3.1.214 ens5
+
+# Di Attacker (dijalankan segera setelah capture dimulai):
+sudo bash attack_clean.sh 10.3.2.38        # skenario clean
+# atau
+sudo bash attack_evasion.sh 10.3.2.38 ens5 # skenario evasion
+\end{lstlisting}
+
+\begin{lstlisting}[style=bash, caption={Menjalankan inferensi di Analyzer}]
+source /opt/nids-env/bin/activate
+# RT-S1 (baseline) dan RT-S3 (robust) memakai pcap CLEAN yang sama
+python extract_and_infer.py --scenario RT-S1 --pcap /opt/nids/captures/CLEAN.pcap
+python extract_and_infer.py --scenario RT-S3 --pcap /opt/nids/captures/CLEAN.pcap
+# RT-S2 (baseline) dan RT-S4 (robust) memakai pcap EVASION yang sama
+python extract_and_infer.py --scenario RT-S2 --pcap /opt/nids/captures/EVASION.pcap
+python extract_and_infer.py --scenario RT-S4 --pcap /opt/nids/captures/EVASION.pcap
+\end{lstlisting}
+
+\noindent Efisiensi: karena RT-S1/RT-S3 berbagi satu \textit{capture clean} dan RT-S2/RT-S4 berbagi satu \textit{capture evasion}, empat skenario cukup memerlukan \textbf{dua kali} sesi capture.
+
+\subsection{Inti Pipeline Inferensi}
+\begin{lstlisting}[style=py, caption={Alur inti extract\_and\_infer.py}]
+# 1. Ekstraksi flow (NFStream + plugin window)
+streamer = NFStreamer(source=pcap, statistical_analysis=True,
+                      udps=[InitWindowPlugin()])
+df = streamer.to_pandas()
+
+# 2. Bangun matriks 10 fitur sesuai urutan deploy_meta.json
+X = build_feature_matrix(df, feature_names)
+
+# 3. Standardisasi dengan scaler dari metadata
+X_scaled = (X - scaler_mean) / scaler_scale
+
+# 4. Muat model (baseline/robust) lalu prediksi
+model = xgb.XGBClassifier(); model.load_model(model_file)
+pred = model.predict(X_scaled)
+
+# 5. Pelabelan ground truth (fase waktu + IP penyerang) & metrik biner
+mcc = matthews_corrcoef(y_true_bin, y_pred_bin)
+\end{lstlisting}
+
+% ======================================================
+\section{Hasil Eksperimen}
+
+\subsection{Hasil Kuantitatif Empat Skenario}
+Tabel \ref{tab:hasil} menyajikan hasil real-traffic (450 aliran pada capture \textit{clean}; 427 aliran pada capture \textit{evasion}) beserta perbandingannya terhadap hasil offline.
+
+\begin{table}[htbp]
+\centering
+\caption{Perbandingan Metrik Lengkap Offline vs. Real-Traffic (RT-S1--RT-S4, konfigurasi Top-10, $\epsilon = 0{,}10$)}
+\label{tab:hasil}
+\small
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{@{} l l l cccc cccc @{}}
+\toprule
+ & & & \multicolumn{4}{c}{\textbf{Offline (dataset)}} & \multicolumn{4}{c}{\textbf{Real-Traffic (AWS)}} \\
+\cmidrule(lr){4-7} \cmidrule(lr){8-11}
+\textbf{Skenario} & \textbf{Model} & \textbf{Trafik} & \textbf{MCC} & \textbf{Prec.} & \textbf{Recall} & \textbf{F1} & \textbf{MCC} & \textbf{Prec.} & \textbf{Recall} & \textbf{F1} \\ \midrule
+RT-S1 & Baseline & Clean   & 0,9351 & 0,9720 & n/a & 0,9729 & 0,164  & 0,841 & 0,869 & 0,855 \\ \addlinespace
+RT-S2 & Baseline & Evasion & 0,0184 & 0,6905 & n/a & 0,7539 & $-0{,}070$ & 0,762 & 0,542 & 0,633 \\ \addlinespace
+RT-S3 & Robust   & Clean   & 0,9347 & 0,9718 & n/a & 0,9727 & 0,339  & 1,000 & 0,410 & 0,581 \\ \addlinespace
+RT-S4 & Robust   & Evasion & 0,9953 & 0,9985 & n/a & 0,9985 & 0,389  & 1,000 & 0,455 & 0,626 \\ \bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\noindent\footnotesize\textit{Catatan:} nilai Recall pada kolom Offline ditandai ``n/a'' karena tidak dilaporkan secara terpisah pada eksperimen offline (paper hanya melaporkan MCC, Precision, dan F1). Seluruh metrik Real-Traffic dihitung sebagai klasifikasi biner (\textit{attack} vs. \textit{benign}).\normalsize
+
+\subsection{Catatan Interpretasi Nilai MCC}
+\textit{Matthews Correlation Coefficient} (MCC) memiliki rentang nilai $[-1, +1]$ dengan interpretasi:
+\begin{itemize}[leftmargin=1.4cm]
+    \item \textbf{$+1$} --- prediksi sempurna (seluruh prediksi benar).
+    \item \textbf{$0$} --- prediksi setara tebakan acak; model tidak lebih baik daripada menebak.
+    \item \textbf{$-1$} --- prediksi terbalik total; model selalu salah.
+\end{itemize}
+Nilai MCC \textbf{negatif} (misalnya RT-S2 $= -0{,}070$) berarti prediksi model berkorelasi terbalik dengan kebenaran, yakni cenderung salah secara sistematis (misalnya melabeli serangan sebagai \textit{benign} dan sebaliknya) --- sedikit lebih buruk daripada tebakan acak. Secara praktis, nilai $-0{,}070$ sangat dekat dengan nol, sehingga menandakan model \textit{baseline} kolaps ke tingkat ``tidak berguna'' saat menghadapi \textit{evasion}. Kondisi ini konsisten dengan hasil offline (S2 $= 0{,}0184$, juga mendekati nol).
+
+\subsection{Interpretasi}
+\begin{enumerate}[leftmargin=1.4cm]
+    \item \textbf{Pola relatif konsisten dengan offline.} Model \textit{baseline} terdegradasi oleh evasion (RT-S1 $\to$ RT-S2: MCC $0{,}164 \to -0{,}070$, di bawah tebakan acak), sedangkan model \textit{robust} justru pulih (RT-S3 $\to$ RT-S4: MCC $0{,}339 \to 0{,}389$). Model \textit{robust} juga mencatat \textit{Precision} $=1{,}0$ (tanpa \textit{false alarm}). Ini membuktikan \textit{Adversarial Training} tetap efektif pada trafik nyata.
+    \item \textbf{Penurunan MCC absolut} disebabkan oleh \textit{feature mismatch} (dibahas pada Bagian \ref{sec:mismatch}).
+\end{enumerate}
+
+% ======================================================
+\section{Diagnostik Feature Mismatch}
+\label{sec:mismatch}
+
+Untuk menjelaskan penurunan MCC absolut, distribusi 10 fitur real-traffic dibandingkan terhadap parameter \texttt{StandardScaler} pelatihan. Metrik \textit{z-score} rata-rata dihitung sebagai $z = (\bar{x}_{\text{real}} - \mu_{\text{train}}) / \sigma_{\text{train}}$. Tiga fitur menyimpang signifikan ($|z| > 2$), sebagaimana Tabel \ref{tab:diag}.
+
+\begin{table}[htbp]
+\centering
+\caption{Fitur dengan Penyimpangan Distribusi Terbesar (Real vs. Training)}
+\label{tab:diag}
+\small
+\begin{tabularx}{\linewidth}{@{} l c c c X @{}}
+\toprule
+\textbf{Fitur} & \textbf{Mean Train} & \textbf{Mean Real} & \textbf{$z$} & \textbf{Sumber Mismatch} \\ \midrule
+Fwd Seg Size Min & $17{,}99$ & $65{,}97$ & $+6{,}23$ & Definisi \textit{extractor} berbeda \\
+Init Fwd Win Byts & $8773$ & $62591$ & $+3{,}32$ & Environment (TCP window AWS) \\
+Init Bwd Win Byts & $8680$ & $62673$ & $+2{,}62$ & Environment (TCP window AWS) \\ \bottomrule
+\end{tabularx}
+\end{table}
+
+\noindent Terdapat dua sumber \textit{mismatch}:
+\begin{enumerate}[leftmargin=1.4cm]
+    \item \textbf{Definisi antar-\textit{extractor}.} \texttt{src2dst\_min\_ps} NFStream mengukur ukuran \textit{paket} minimum (termasuk \textit{header}, $\approx 66$ \textit{byte}), sedangkan CICFlowMeter mengukur ukuran \textit{segmen} minimum ($\approx 18$ \textit{byte}) saat pelatihan.
+    \item \textbf{Karakteristik lingkungan.} Instans EC2 modern memakai TCP window besar ($\approx 62$ KB) karena \textit{window scaling}, sementara dataset CIC-IDS2018 direkam dengan window lebih kecil ($\approx 8$ KB). Model belajar ``window $\approx 8$ KB = normal'', sehingga window 62 KB dianggap di luar distribusi.
+\end{enumerate}
+
+\noindent Temuan ini memperkuat argumen inti penelitian: keunggulan model pada \textit{benchmark} tidak menjamin generalisasi ke trafik nyata, terutama akibat perbedaan perkakas ekstraksi fitur dan lingkungan jaringan.
+
+% ======================================================
+\section{Manajemen Biaya dan Reproduksi}
+
+\subsection{Kondisi Idle (Hemat Biaya)}
+Setelah eksperimen, sumber daya berbayar dinonaktifkan: NAT Gateway dihapus, Elastic IP di-\textit{release}, dan ketiga EC2 di-\texttt{stop}. VPC, subnet, \textit{security group}, dan EC2 (kondisi \textit{stopped}) tetap dipertahankan agar dapat dilanjutkan tanpa \textit{setup} ulang. Biaya idle hanya dari penyimpanan EBS dan S3.
+
+\subsection{Prosedur Resume}
+\begin{lstlisting}[style=bash, caption={Melanjutkan eksperimen}]
+# 1. Buat kembali NAT Gateway (mengembalikan konektivitas SSM + internet)
+aws cloudformation create-stack --stack-name nids01-nat \
+  --template-body file://nids01-05-1-nat.yaml \
+  --capabilities CAPABILITY_NAMED_IAM --region ap-southeast-1
+
+# 2. Start ketiga EC2 (private IP tetap sama)
+aws ec2 start-instances --region ap-southeast-1 \
+  --instance-ids i-0b4e1a8e610543906 i-0adc1017c07918e61 i-038b59e834a810974
+\end{lstlisting}
+
+\subsection{Daftar Berkas Pendukung}
+\begin{itemize}[leftmargin=1.4cm]
+    \item \texttt{nfstream\_win\_extract.py} --- plugin ekstraksi TCP window.
+    \item \texttt{extract\_and\_infer.py} --- pipeline ekstraksi fitur + inferensi + metrik.
+    \item \texttt{attack\_clean.sh}, \texttt{attack\_evasion.sh} --- skrip serangan (di Attacker).
+    \item \texttt{capture\_target.sh} --- skrip capture + unggah S3 (di Target).
+    \item \texttt{schedule-nids01.json} --- konfigurasi \textit{ground truth}.
+    \item \texttt{skenario-testing-nids01.md} --- catatan lengkap perjalanan eksperimen.
+    \item Hasil: \texttt{RT-S1..S4\_results.csv} dan \texttt{RT-S1..S4\_metrics.json}.
+\end{itemize}
+
+% ======================================================
+\section{Kesimpulan Teknis}
+Eksperimen berhasil memvalidasi model NIDS pada trafik jaringan nyata melalui pipeline yang sepenuhnya reproduktif: pembentukan model \textit{baseline} dan \textit{robust} dari dataset CSE-CIC-IDS2018, pembangkitan serangan aktif, penangkapan paket, ekstraksi fitur berbasis NFStream dengan plugin kustom untuk TCP window, dan inferensi model. Hasil menunjukkan bahwa pola ketangguhan model tetap konsisten dengan pengujian offline --- \textit{baseline} rentan terhadap \textit{evasion}, \textit{robust} bertahan --- sekaligus mengungkap tantangan generalisasi akibat perbedaan perkakas ekstraksi fitur dan lingkungan jaringan. Dokumen ini beserta seluruh berkas pendukung memungkinkan verifikasi dan reproduksi eksperimen secara menyeluruh.
+
+\end{document}
