@@ -466,11 +466,10 @@ Jika hasil real-traffic konsisten dengan offline:
 
 ## Estimasi Biaya dan Waktu
 
-- **Durasi testing:** ~2–3 jam per skenario (setup + attack + analysis)
-- **Total:** ~1 hari untuk 4 skenario
+- **Durasi testing:** ~12 menit per-run (5 serangan + warm-up/cool-down)
+- **Total:** ~26 menit untuk 4 skenario (2 run × 12 menit + jeda 2 menit)
 - **Instance:** 3 EC2 × t3.medium/large ≈ $0.50/jam total
 - **Estimasi biaya:** ~$5–10 (termasuk NAT Gateway + S3)
-
 
 ---
 
@@ -867,3 +866,52 @@ aws ec2 stop-instances --region ap-southeast-1 \
   - captures/ : CLEAN.pcap, EVASION.pcap
   - results-nids01/ : RT-S1..S4 (csv + json)
   - models/   : baseline_xgboost_top10.json, robust_xgboost_top10.json, deploy_meta.json
+
+---
+
+## Penyimpanan Output ke S3
+
+Setelah testing selesai, semua output otomatis diupload ke S3 oleh script `nids01_extract_infer.py`:
+
+```bash
+# Otomatis dijalankan di akhir script, atau manual:
+aws s3 cp /opt/nids/results/ s3://ssh-detection-features-232032302717/results/nids01/ --recursive
+aws s3 cp /opt/nids/captures/ s3://ssh-detection-features-232032302717/captures/nids01/ --recursive
+aws s3 cp /opt/nids/flows/ s3://ssh-detection-features-232032302717/flows/nids01/ --recursive
+```
+
+**Catatan:** Folder di S3 otomatis terbentuk saat upload — tidak perlu create manual.
+
+### Struktur Output di S3
+
+```
+s3://ssh-detection-features-232032302717/
+├── models/nids01/
+│   ├── baseline_xgboost_top10.json
+│   ├── robust_xgboost_top10.json
+│   └── deploy_meta.json
+├── results/nids01/
+│   ├── nids01_clean_results.csv      (per-flow: ground truth + prediksi)
+│   ├── nids01_evasion_results.csv
+│   ├── nids01_clean_summary.txt      (ringkasan metrik RT-S1 + RT-S3)
+│   └── nids01_evasion_summary.txt    (ringkasan metrik RT-S2 + RT-S4)
+├── captures/nids01/
+│   ├── nids01_clean.pcap             (raw packet capture — backup)
+│   └── nids01_evasion.pcap
+└── flows/nids01/
+    ├── nids01_clean_flows.csv        (extracted flow features)
+    └── nids01_evasion_flows.csv
+```
+
+### Mengakses Hasil dari Mana Saja
+
+```bash
+# Download results ke lokal/SageMaker untuk analisis lanjutan
+aws s3 cp s3://ssh-detection-features-232032302717/results/nids01/ ./results/ --recursive
+
+# Cek isi
+cat results/nids01_clean_summary.txt
+cat results/nids01_evasion_summary.txt
+```
+
+Setelah output tersimpan di S3, EC2 (Attacker/Target/Analyzer) bisa dihapus untuk menghemat biaya.
