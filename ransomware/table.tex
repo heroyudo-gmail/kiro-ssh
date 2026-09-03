@@ -1,0 +1,74 @@
+% =====================================================================
+%  Dokumen LaTeX lengkap (standalone) — siap copy-paste ke Overleaf.
+%  Berisi tabel perbandingan fitur: penelitian terkait vs penelitian ini.
+%
+%  Cara pakai di Overleaf:
+%   1. Buat project baru, pilih compiler pdfLaTeX.
+%   2. Copy-paste seluruh isi berkas ini ke main.tex, lalu Recompile.
+%
+%  Untuk menyisipkan tabelnya saja ke naskah IJECE Anda, salin hanya
+%  blok di antara "=== TABEL MULAI ===" dan "=== TABEL SELESAI ===".
+%  Pastikan preamble naskah memuat: booktabs, tabularx, amssymb.
+% =====================================================================
+\documentclass[10pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[margin=2cm]{geometry}
+\usepackage{booktabs}     % \toprule \midrule \bottomrule
+\usepackage{tabularx}     % kolom lebar otomatis
+\usepackage{amssymb}      % \checkmark
+\usepackage{array}
+
+\begin{document}
+
+% =====================================================================
+%  === TABEL MULAI ===
+%  (Dalam naskah dua kolom seperti IJECE, ganti {table} -> {table*}
+%   agar tabel melebar penuh melintasi dua kolom.)
+% =====================================================================
+\begin{table}[htbp]
+\caption{Perbandingan fitur antara penelitian terkait dan penelitian yang diusulkan}
+\label{tab:feature_comparison}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{@{} p{2.9cm} c c c c c c c @{}}
+\toprule
+\textbf{Studi} &
+\textbf{\shortstack{Air-gapped\\backup}} &
+\textbf{\shortstack{Kompresi\\multi-algoritma}} &
+\textbf{\shortstack{Seleksi\\adaptif}} &
+\textbf{\shortstack{Enkripsi\\AES-256}} &
+\textbf{\shortstack{Deteksi\\anomali}} &
+\textbf{\shortstack{Recovery\\otomatis}} &
+\textbf{\shortstack{Integrasi\\end-to-end}} \\
+\midrule
+Smith \& Lee (2023)          & --          & \checkmark & --          & --          & --          & --          & -- \\
+Kumar \& Patel (2022)        & --          & \checkmark & --          & --          & --          & --          & -- \\
+Novak et al. (2021)          & \checkmark  & --          & --          & --          & \checkmark & \checkmark  & -- \\
+Sahu \& Panda (2025)         & --          & \checkmark & --          & --          & --          & --          & -- \\
+Thomas et al. (backup)       & \checkmark  & --          & --          & --          & --          & \checkmark  & -- \\
+Kim et al. (CryptoSniffer)   & --          & --          & --          & --          & \checkmark & --          & -- \\
+Kumar et al. (XGBoost)       & --          & --          & --          & --          & \checkmark & --          & -- \\
+NIST SP 800-209 (2024)       & \checkmark  & --          & --          & --          & --          & --          & -- \\
+\midrule
+\textbf{Penelitian ini}      & \checkmark  & \checkmark & \checkmark  & \checkmark  & \checkmark & \checkmark  & \checkmark \\
+\bottomrule
+\end{tabularx}
+
+\vspace{4pt}
+\raggedright\footnotesize
+\textit{Keterangan}: \checkmark{} = fitur tersedia; -- = tidak tersedia/tidak dibahas.
+Kolom \textit{Seleksi adaptif} (pemilihan algoritma kompresi berbasis aturan menurut tipe
+dan ukuran berkas) serta \textit{Integrasi end-to-end} (menggabungkan air-gapped, kompresi
+adaptif, enkripsi AES-256, deteksi anomali, dan recovery otomatis dalam satu kerangka kerja)
+merupakan fitur yang \textbf{hanya dimiliki oleh penelitian ini} dan menjadi pembeda utama
+(\textit{novelty}) dari studi terdahulu.
+\end{table}
+% =====================================================================
+%  === TABEL SELESAI ===
+% =====================================================================
+
+\end{document}

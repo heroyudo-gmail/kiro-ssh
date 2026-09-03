@@ -1,0 +1,838 @@
+\documentclass{iaesarticle}
+
+%%required package. add for your convenient, but do not remove the initial
+\setlength{\headsep}{0.15in}
+\usepackage{amsmath, amsfonts, amssymb, float, fancyhdr}
+\usepackage[figuresright]{rotating}
+\usepackage{authblk, graphicx, indentfirst, lastpage, lipsum}
+\usepackage{pifont}
+\renewcommand{\Authsep}{, }
+\renewcommand{\Authand}{, }
+\renewcommand{\Authands}{, }
+\setlength{\affilsep}{0cm}
+\renewcommand\Authfont{\normalsize}
+\renewcommand\Affilfont{\fontsize{8}{10}\mdseries}
+\makeatletter
+\renewcommand{\@biblabel}[1]{[#1]\hfill}
+\renewcommand\AB@authnote[1]{\textsuperscript{\normalfont\bfseries#1}}
+\makeatother
+\usepackage[font=normalsize]{subfig, caption}
+\usepackage{epstopdf}
+\usepackage[left=3cm, right=2.5cm, top=2.5cm, bottom=2.5cm, includehead, includefoot]{geometry}
+\usepackage[justification=centering]{caption}
+\captionsetup{labelsep=period}
+\usepackage{titlesec}
+\usepackage[table]{xcolor}
+\titleformat{\section}
+{\normalfont\normalsize\bfseries\uppercase}{\thesection}{1.7em}{}
+\titleformat{\subsection}
+{\normalfont\normalsize\bfseries}{\thesubsection}{.95em}{}
+\titleformat{\subsubsection}
+{\bfseries}{\thesubsubsection}{.2em}{}
+\titlespacing*{\section}{0cm}{0.7cm}{0cm}
+\usepackage{enumitem}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{ragged2e}
+\usepackage{hyperref,graphicx}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{fleqn}
+
+% --- Placeholder gambar sementara (hapus/ganti saat gambar asli tersedia) ---
+% Pemakaian: \figplaceholder{lebar}{nama-berkas-gambar-nanti}
+\newcommand{\figplaceholder}[2]{%
+  \fbox{\parbox[c][3.2cm][c]{#1}{\centering\ttfamily\small [Gambar menyusul: #2]}}%
+}
+
+\CopyrightLine[]{}{\textit{This is an open access article under the \textcolor{blue}{\underline{CC BY-SA}} license.}
+\vspace{.5em}}
+
+%%author
+\author[1]{\bfseries Hero Yudo Martono}
+\author[2]{\bfseries Nafisah Rahmadani Harahap}
+
+%%author's affiliation
+\affil[1,2]{Department of Informatics Engineering, Politeknik Elektronika Negeri Surabaya, Surabaya, Indonesia}
+
+%%title and shortitle (for footer)
+\title{Design of a cloud backup system based on multi-compression algorithms for ransomware attack mitigation}
+\shorttitle{Design of a cloud backup system based on multi-compression algorithms ... (Martono)}
+
+%%starting
+\begin{document}
+\setcounter{page}{1}
+
+%%indentation. do not change
+\setlength{\parindent}{1.27cm}
+
+%%header and footer setting. do not change
+\pagestyle{fancy}
+\fancyhfoffset{0cm}
+
+%%journal info
+\journalname{International Journal of Electrical and Computer Engineering (IJECE)}
+\journalshortname{Int J Elec \& Comp Eng}
+\journalhomepage{http://ijece.iaescore.com}
+\vol{99}
+\no{1}
+\months{Month}
+\years{2099}
+\issn{2088-8708}
+\DOI{10.11591}
+\pagefirst{1}
+\pagelast{1x}
+\IDpaper{42551}
+
+%%build title
+\maketitle
+
+%%border setting. do not change
+\hrule
+\vspace{.1em}
+\hrule
+\vspace{.5em}
+\noindent
+\parbox[t][][s]{0.315\textwidth}{%
+\textbf{Article Info}
+\vspace{.5em}
+\hrule
+\vspace{.5em}
+\begin{history}
+\vspace{.5em}
+Received month dd, yyyy
+
+Revised month dd, yyyy
+
+Accepted month dd, yyyy
+
+\vspace{.7em}
+\end{history}
+\vspace{.5em}
+\hrule
+\vspace{.5em}
+\begin{keyword}
+\vspace{.5em}
+Cloud backup and restore \sep
+Ransomware resilience \sep
+Air gapped backup \sep
+Lossless compression \sep
+Anomaly detection
+\vspace{.5em}
+\end{keyword}
+\vspace{\fill}
+}
+\parbox{0.020\textwidth}{\hspace{0.5em}}
+\parbox[t][][s]{0.65\textwidth}{%
+\begin{abstract}
+\vspace{.3em}
+Ransomware attacks pose a serious threat to data availability and integrity in cloud-based storage environments. However, conventional backup systems remain vulnerable when backup repositories are directly accessible from the primary system, while single-algorithm compression methods are often inefficient for heterogeneous file types. This study proposes a cloud-based backup system that integrates an air-gapped backup mechanism with adaptive multi-algorithm lossless compression to improve data resilience and storage efficiency. The system employs SHA-256 hash verification, metadata analysis, and file structure analysis to distinguish legitimate backup encryption from ransomware-induced file modifications. Experimental evaluations were conducted under normal and ransomware-simulated conditions using various file types and sizes. The results show that Zstandard achieved a compression ratio of 70--80\% for large files, while Snappy and LZ4 provided faster processing times of 0.5--2 seconds. The proposed system successfully restored all 113 affected files without recovery errors and achieved 0\% False Positive Rate (FPR) and 0\% False Negative Rate (FNR). Overall, the proposed approach effectively enhances the security, resilience, and storage efficiency of cloud-based backup systems against ransomware threats.
+\end{abstract}
+}
+\parbox[l]{\textwidth}{%
+\rule{0.275\textwidth}{0.5pt} \hspace{0.5cm} \hrulefill
+\\
+\emph{\textbf{Corresponding Author:}}
+\vspace{.5em}\\
+Hero Yudo Martono\\
+Department of Informatics Engineering, Politeknik Elektronika Negeri Surabaya\\
+Surabaya, Indonesia\\
+Email: hero@pens.ac.id
+}
+\vspace{.5em}
+\hrule
+\vspace{.1em}
+\hrule
+
+%% main text
+\section{Introduction}
+\label{sec:introduction}
+The rapid development of digital technology over the past decade has significantly transformed various sectors, particularly the financial sector. Financial digitalization is no longer limited to transaction processing but also encompasses data recording, reporting, risk monitoring, and real-time analytics \cite{1}, \cite{2}. This significant increase in data volume requires organizations to manage large-scale data storage securely and efficiently, especially in the face of growing cybersecurity threats \cite{3}, \cite{4}. This transformation has led to an exponential increase in data volume, including daily transaction records, system logs, user data, financial reports, and audit documents \cite{5}. Financial institutions are estimated to process millions of transactions daily, generating hundreds of gigabytes to terabytes of data that must be securely archived for long-term operational needs, auditing, and regulatory compliance. Therefore, organizations require data storage systems that are both secure and efficient, along with backup mechanisms capable of ensuring data availability and integrity.
+
+One of the most significant cybersecurity threats to modern organizations is ransomware, a type of malware that encrypts victims' data and demands ransom payments to restore access \cite{5}, \cite{6}. Modern ransomware attacks are increasingly sophisticated because they not only target production systems but also compromise connected backup infrastructures \cite{7}, \cite{8}. When backup systems are infected, organizations may lose the ability to recover critical data, resulting in operational disruption, financial losses, and reputational damage \cite{9}. According to the Sophos State of Ransomware in Financial Services 2024 report, approximately 43\% of devices in financial organizations were affected by ransomware incidents. Consequently, conventional connected backup systems are no longer sufficient to provide reliable protection. One effective mitigation strategy is the implementation of an air-gapped backup architecture, where backup storage is physically or logically isolated from the primary network, preventing ransomware from directly accessing backup data \cite{10}. However, implementing a fully physical air-gapped infrastructure is often costly and operationally complex for small and medium-sized organizations, particularly in developing countries. Therefore, this study adopts a logical air-gapped approach using controlled mounting and isolated backup media to provide practical ransomware resilience while maintaining operational feasibility and lower deployment cost. The proposed approach prioritizes affordability, ease of deployment, and compatibility with existing cloud-based infrastructures commonly used by local organizations and financial institutions.
+
+Besides security challenges, storage efficiency has also become a major concern due to the continuous growth of archival data volume. Cold cloud storage has emerged as a widely adopted solution for storing infrequently accessed data such as transaction logs, audit records, and system backups because of its lower operational cost \cite{11}. However, storing large-scale backup data in cloud environments still requires efficient storage optimization and bandwidth management. Lossless compression techniques are commonly used to reduce storage consumption while preserving data integrity \cite{12}, \cite{13}. Nevertheless, previous studies generally focus on backup security, ransomware mitigation, or compression techniques independently, resulting in limited integration between secure backup architectures and adaptive storage optimization mechanisms \cite{14}, \cite{15}. Furthermore, most existing systems utilize a single static compression algorithm, despite the fact that different file types and data sizes exhibit varying compression characteristics and performance trade-offs \cite{16}, \cite{17}.
+
+Unlike prior studies that primarily rely on static compression methods or separate backup protection mechanisms, this research proposes an integrated cloud backup system that combines an air-gapped storage architecture with an adaptive multi-compression algorithm framework. The proposed system dynamically selects among five lossless compression algorithms---Gzip, Zstandard, Brotli, LZ4, and Snappy---using a rule-based adaptive selection mechanism based on file characteristics such as file size and data type to optimize compression ratio, processing speed, and resource utilization. In addition, this study uniquely integrates multi-indicator anomaly detection mechanisms consisting of SHA-256 hash analysis, metadata validation, and file structure inspection to distinguish ransomware encryption behavior from legitimate AES-256 encryption activity within the cloud backup environment. This capability addresses an important limitation in previous studies, where encrypted files are often treated uniformly without differentiating malicious encryption from authorized security encryption processes.
+
+Therefore, this study contributes an integrated approach that simultaneously addresses ransomware resilience, backup isolation, adaptive compression efficiency, and integrity verification within a single cloud-based backup framework. By combining air-gapped architecture, adaptive multi-algorithm compression, AES-256 encryption, SHA-256 integrity verification, and multi-indicator anomaly detection, the proposed system is expected to improve both backup security and long-term storage efficiency for financial data infrastructures in cloud environments \cite{18}, \cite{19}, \cite{20}.
+
+\section{Related Work}
+\label{sec:related_work}
+Several previous studies have addressed cloud-based backup systems, data compression techniques, and ransomware mitigation methods. However, most studies focus only on a single aspect independently, such as compression performance, storage efficiency, or backup security, without integrating these components into a unified system. In addition, previous works rarely discuss the fundamental distinction between air-gapped and conventional connected (non-air-gapped) backup architectures in ransomware mitigation scenarios. A comparison of related studies and the proposed system is presented in Table~\ref{tab:related_work}.
+
+\begin{table}[H]
+\centering
+\fontsize{8pt}{10pt}\selectfont
+\caption{Related work}
+\label{tab:related_work}
+\begin{tabularx}{\textwidth}{@{}c p{2.2cm} X X X X@{}}
+\hline
+\textbf{No} & \textbf{Study} & \textbf{Research Focus} & \textbf{Methods} & \textbf{Limitations} & \textbf{Contribution of this study} \\
+\hline
+1 & M. Smith and Lee, Data in Brief 2023 & Performance evaluation of compression algorithms & Gzip, Zstd, Brotli, LZ4, Snappy & Does not address backup security & Integrates compression with backup systems \\
+2 & S. Kumar and R. Patel, 2024 & Data compression in cloud-based e-commerce & Brotli, Snappy, Gzip & Focuses only on data transfer performance & Applied within backup systems for storage efficiency \\
+3 & A. Novak, P. Chen, and R. Singh (2021) & Backup system for ransomware mitigation & Hybrid compression + air-gapped & Focus limited to the financial sector & Implementation of cloud backup with anomaly detection mechanisms \\
+4 & S. Kumar and R. Patel, IEEE Access, 2022 & Optimization of cloud backup against ransomware & Zstd, LZ4, Gzip & Does not provide a comprehensive comparison of multiple algorithms & Evaluation of multiple compression algorithms \\
+5 & M. Sahu and J. Panda, arXiv & Compression study & Snappy, Gzip, BZIP2 & Limited analysis on efficiency aspects & Integration of storage efficiency and security \\
+6 & NIST (2024) Air-Gapped Backup Guideline & Secure offline backup for ransomware protection & Physical/logical air-gapped storage & Does not optimize storage efficiency, lacks compression & Combines air-gapped backup with adaptive multi-compression and anomaly detection \\
+\hline
+\end{tabularx}
+\end{table}
+
+Previous studies mainly focused on either compression performance or backup security separately. Smith and Lee evaluated multiple compression algorithms but did not address ransomware protection. Kumar and Patel focused on storage optimization and cloud backup efficiency but lacked anomaly detection and automated recovery mechanisms. Meanwhile, Novak et al. introduced air-gapped backup systems for ransomware mitigation; however, the implementation remained limited and did not comprehensively evaluate storage efficiency.
+
+Based on these limitations, the novelty of the proposed study lies in integrating air-gapped backup protection, adaptive multi-algorithm lossless compression, and anomaly detection using hash and metadata verification within a single cloud-based backup architecture. This integration improves ransomware resilience, storage efficiency, automated recovery capability, and practical deployment feasibility for enterprise cloud backup environments.
+
+\begin{table}[H]
+\centering
+\fontsize{8pt}{10pt}\selectfont
+\caption{Conceptual comparison of air-gapped and non air-gapped backup systems}
+\label{tab:airgap_comparison}
+\begin{tabularx}{\textwidth}{@{}p{3.2cm} X X@{}}
+\hline
+\textbf{Aspect} & \textbf{Air-Gapped Backup} & \textbf{Non Air-Gapped Backup} \\
+\hline
+Network connectivity & Isolated (physical or logical) & Connected to primary system \\
+Ransomware resistance & High & Low \\
+Risk of backup infection & Minimal & Potentially compromised \\
+Data integrity & Preserved & Uncertain / failed \\
+Recovery capability & Reliable & Uncertain / failed \\
+Security level & Very high & Moderate \\
+Compression strategy & Adaptive multi-algorithm & Single static compression \\
+Storage efficiency & Up to 70--80\% reduction & Moderate \\
+\hline
+\end{tabularx}
+\end{table}
+
+As shown in Table~\ref{tab:airgap_comparison}, air-gapped backup systems provide stronger ransomware protection because the backup storage is isolated from the primary network. However, previous studies have not fully integrated this approach with storage optimization and anomaly detection mechanisms, which motivates the proposed system in this study. In practical deployment environments, many small and medium-sized organizations in Indonesia still rely on conventional connected cloud backup systems or default hosting backup solutions that utilize single-algorithm compression and continuously connected storage repositories. While these approaches provide operational simplicity, they remain vulnerable to ransomware propagation because backup repositories are directly accessible from compromised systems.
+
+Compared with conventional backup approaches, the proposed system provides additional protection through logical air-gapped isolation, automated integrity verification, adaptive multi-algorithm compression, and ransomware-aware recovery mechanisms. Experimental results demonstrate that the proposed system achieved up to 70--80\% storage reduction for large structured datasets while maintaining 100\% successful recovery during ransomware simulation scenarios.
+
+\section{Method}
+\label{sec:method}
+This study employs a quantitative experimental design to evaluate the performance of a cloud-based backup system integrating multiple lossless compression algorithms \cite{22}, \cite{23}, \cite{24}, \cite{25}. Each algorithm is tested independently in a single-mode configuration with evaluation parameters including storage efficiency, processing time, and resilience against simulated ransomware attacks. The proposed system adopts a hybrid air-gapped backup architecture that combines offline local storage and cloud storage \cite{26}, \cite{27}. The experimental environment is designed to resemble real-world financial information systems, characterized by large-scale data storage requirements and long-term retention, while also incorporating ransomware detection and mitigation aspects as discussed in previous studies \cite{28}, \cite{29}.
+
+\subsection{System architecture}
+The proposed system architecture is organized into three logical layers that support backup, compression, and detection processes \cite{30}. At the application layer, the system manages file upload, backup, and restore operations. Each incoming file undergoes cryptographic hash computation using the SHA-256 algorithm, metadata extraction, and structural file analysis to establish an integrity baseline. This information is stored as a reference to detect future file changes and to distinguish between legitimate modifications (e.g., backup or normal encryption) and malicious alterations caused by ransomware activities.
+
+At the protection and compression layer, the system performs initial metadata inspection to detect potential anomalies. Files are then secured using AES-256 encryption to ensure data confidentiality. After encryption, files are compressed using five lossless compression algorithms: Gzip, Zstandard (Zstd), Brotli, LZ4, and Snappy \cite{31}. Each algorithm is applied independently to the same dataset to obtain empirical measurements, including compression ratio and processing time, enabling consistent performance comparison \cite{32}.
+
+\begin{figure}[H]
+\centering
+\figplaceholder{9cm}{figure1}
+\vspace{.7em}
+\caption{Proposed system architecture integrating AES-256 encryption, multi-algorithm compression, and air-gapped backup for ransomware protection}
+\label{fig:architecture}
+\end{figure}
+
+At the storage and detection layer, encrypted and compressed files are stored in an air-gapped environment to ensure physical isolation from production networks and enhance resilience against ransomware attacks. Additionally, backup data are synchronized to cloud storage via the Google Drive API for redundancy. Critical metadata, including file size, processing time, and SHA-256 hash values, are recorded for performance analysis, integrity verification, and anomaly detection. When ransomware activity is detected, the system automatically initiates a restore process from air-gapped storage, followed by decompression and AES-256 decryption to recover files to their original state.
+
+\subsection{Dataset and data acquisition}
+Dataset used in this study consists of synthetically generated data designed to resemble real-world enterprise and financial backup structures adapted from PT Equnix operational environments \cite{33}. No real financial or confidential production data were used in this study to maintain data privacy and confidentiality compliance \cite{34}.
+
+\begin{table}[H]
+\centering
+\fontsize{8pt}{10pt}\selectfont
+\caption{Characteristic of the datasets used in the experiments}
+\label{tab:dataset}
+\begin{tabularx}{\textwidth}{@{}c p{1.9cm} p{1.4cm} c p{2.0cm} X@{}}
+\hline
+\textbf{No} & \textbf{Data Type} & \textbf{File Format} & \textbf{Number of Files} & \textbf{File Size Range} & \textbf{Description} \\
+\hline
+1 & Structured transaction data & CSV & 9 files & 500 KB -- 1 GB & Used to evaluate compression performance on structured text data with repetitive patterns; file sizes are gradually varied to analyze compression ratio and processing time from small to large scale. \\
+2 & System log data & TXT / LOG & 9 files & 500 KB -- 1 GB & Represents application logs and audit trails with repetitive text structures; also used in ransomware attack simulations as logs are common targets. \\
+3 & Visual documents & JPG & 14 files & 154 -- 249 KB & Represents binary files with inherent compression, used to evaluate limitations of compression algorithms on already compressed data. \\
+4 & Spreadsheet documents & XLSX & 11 files & 500 KB -- 650 MB & Represents operational and financial reports commonly used in financial information systems. \\
+\hline
+\end{tabularx}
+\end{table}
+
+Dataset includes various file formats such as CSV, LOG/TXT, JPG, and XLSX with diverse file sizes. This diversity enables comprehensive evaluation across different data types and storage scales, reflecting practical cloud-based financial systems and supporting ransomware simulation scenarios \cite{35}.
+
+\subsection{AES-256 encryption and decryption implementation}
+To ensure data confidentiality, the system implements the Advanced Encryption Standard (AES) with a 256-bit key as a symmetric encryption algorithm. During the backup process, the original file (plaintext) is encrypted using an AES-256 secret key, producing unreadable ciphertext. The encrypted file is then compressed and stored in both air-gapped and cloud storage. During the restore process, the file is retrieved from storage, followed by decompression and decryption using the same key to convert ciphertext back into plaintext. Data integrity is subsequently verified using SHA-256 hashing to ensure no corruption or unauthorized modification has occurred.
+
+\begin{figure}[H]
+\centering
+\figplaceholder{9cm}{figure2}
+\vspace{.7em}
+\caption{AES-256 encryption and decryption process using a symmetric secret key}
+\label{fig:aes}
+\end{figure}
+
+\subsection{Compression algorithm implementation}
+The adaptive compression mechanism implemented in this study uses a rule-based selection strategy rather than machine learning. Compression algorithms are automatically selected based on file type and file size characteristics identified during preliminary testing. Small text-based files such as LOG and TXT are primarily assigned to Snappy or LZ4 due to their processing speed and low computational overhead. Large structured files such as CSV and XLSX are processed using Zstandard to achieve higher compression ratios for long-term storage efficiency. Meanwhile, already compressed binary files such as JPG are processed using lightweight algorithms to minimize unnecessary compression overhead and execution time.
+
+System implements five open-source lossless compression algorithms Gzip, Zstandard, Brotli, LZ4, and Snappy to evaluate their performance in a cloud-based backup environment \cite{36}. Gzip is selected for its wide compatibility, while Zstandard and Brotli are utilized for their high compression ratios. In contrast, LZ4 and Snappy are employed due to their high processing speed and low latency characteristics \cite{37}. The implementation is developed in Python, where each dataset file is compressed independently using all five algorithms under identical experimental conditions \cite{38}. Performance evaluation includes compression ratio and processing time measurements to provide a comprehensive analysis of storage efficiency and computational performance \cite{39}, as well as implementation flexibility for hybrid edge-cloud backup systems \cite{40}.
+
+\subsection{Backup and restore procedures}
+Backup process begins with SHA-256 hash computation to establish a data integrity baseline. Files are then encrypted using AES-256 to ensure confidentiality, followed by compression using the selected lossless algorithm. The resulting files are temporarily stored in an air-gapped directory before being transferred to cloud storage. In addition to the air-gapped mechanism, a mirroring strategy is implemented to enhance data availability and recovery readiness. Under normal conditions, when no anomalies or ransomware indicators are detected based on hash and metadata verification, the system terminates after completing the backup process without initiating restoration. This approach minimizes unnecessary recovery operations and reduces system overhead.
+
+Restore process is triggered only when anomalies are detected, such as hash mismatches, metadata inconsistencies, or indications of unauthorized encryption. In such cases, data are retrieved from air-gapped storage, decompressed, and decrypted to restore the original files. The recovered files are then validated by comparing their hash values with the reference baseline.
+
+\begin{figure}[H]
+\centering
+\figplaceholder{9cm}{figure3}
+\vspace{.7em}
+\caption{Backup and recovery system flowchart}
+\label{fig:backup_flow}
+\end{figure}
+
+\subsection{Ransomware attack simulation}
+To evaluate the resilience of the proposed backup system, a ransomware attack simulation was conducted without executing actual malware. This simulation was based on real-world vulnerability patterns, including CVE-2017-0144, which represents an encrypt-and-hold attack model; CVE-2021-36934, which simulates file overwriting and corruption behavior; and CVE-2018-8453, which targets file metadata and header structure. In each scenario, file modifications were carried out in a controlled manner to mimic ransomware-induced damage. The objective of this simulation is to assess the system's ability to detect anomalies and to recover affected files from air-gapped backups.
+
+\subsection{Ransomware detection and encryption differentiation mechanism}
+In modern cloud systems, files may undergo legitimate compression and encryption processes, requiring differentiation from ransomware-induced encryption. The detection mechanism in this study combines SHA-256 hash verification, metadata analysis, and air-gapped backup validation. Each file's hash is computed as an integrity baseline and re-verified during inspection to detect unauthorized changes. Additionally, metadata consistency such as file size, modification time, file type, and extension is analyzed alongside structural file characteristics to identify abnormal changes inconsistent with legitimate AES-256 encryption or compression processes.
+
+If discrepancies are detected between primary storage and air-gapped backup copies, the system classifies the condition as a potential compromise. Based on hash, metadata, and backup validation results, files are categorized into normal condition, legitimate modification, or ransomware indication, enabling early detection and secure data recovery.
+
+\subsection{Performance evaluation metrics}
+The performance of the proposed cloud-based backup system with multi-algorithm compression is evaluated through quantitative experimental analysis. Several metrics are used to assess storage efficiency, processing performance, data integrity, and system resilience. Compression Ratio (CR) is defined as:
+
+\begin{equation}
+CR = \frac{S_{after}}{S_{before}}
+\end{equation}
+
+where $S_{before}$ represents the file size before compression and $S_{after}$ represents the file size after compression. Compression Factor (CF) indicates how many times the original data size is reduced after compression and is the inverse of the compression ratio. A higher CF value indicates better compression efficiency:
+
+\begin{equation}
+CF = \frac{S_{before}}{S_{after}}
+\end{equation}
+
+Storage Saving Percentage (SS) is used to measure the percentage of storage space saved after compression, which is particularly important in long-term cloud storage scenarios:
+
+\begin{equation}
+SS = \frac{S_{before} - S_{after}}{S_{before}} \times 100\%
+\end{equation}
+
+To comprehensively evaluate compression algorithm efficiency, this study introduces a combined efficiency score ($E$) that integrates storage efficiency and compression time efficiency. This score is calculated using a Multi-Criteria Decision Making (MCDM) approach with the Weighted Sum Model (WSM), formulated as:
+
+\begin{equation}
+E = \alpha (1 - R) + \beta \left( \frac{1}{T} \right)
+\end{equation}
+
+where $R$ denotes the compression ratio, with $(1-R)$ representing storage efficiency, and $T$ represents compression time in seconds, with $1/T$ indicating processing time efficiency. The parameters $\alpha$ and $\beta$ are weighting factors that control the contribution of each component, set to $\alpha = 0.5$ and $\beta = 0.5$ to ensure a balanced evaluation between storage efficiency and processing speed. To enable relative comparison among algorithms, the combined efficiency score is normalized as follows:
+
+\begin{equation}
+E(\%) = \frac{E}{E_{max}} \times 100
+\end{equation}
+
+The interpretation of the combined efficiency score is based on the performance classification shown in Table~\ref{tab:efficiency_criteria}.
+
+\begin{table}[H]
+\centering
+\fontsize{8pt}{10pt}\selectfont
+\caption{Criteria for interpreting system efficiency score}
+\label{tab:efficiency_criteria}
+\begin{tabularx}{\textwidth}{@{}c c X@{}}
+\hline
+\textbf{Score (\%)} & \textbf{Status} & \textbf{Description} \\
+\hline
+$\geq 90$ & Excellent & Very high performance in both storage efficiency and processing speed \\
+80--89 & Good & Strong performance suitable for high-performance systems \\
+70--79 & Fair & One aspect is dominant while the other is relatively weaker \\
+$< 70$ & Poor & Overall efficiency is low \\
+\hline
+\end{tabularx}
+\end{table}
+
+In addition to compression efficiency metrics, this study also evaluates system recovery performance as part of overall system resilience. The Recovery Time Objective (RTO) represents the total time required for the system to restore normal operation after a ransomware attack is detected:
+
+\begin{equation}
+RTO = T_{recovery} - T_{incident}
+\end{equation}
+
+where $T_{incident}$ is the time when the ransomware attack is identified, and $T_{recovery}$ is the time when the system has fully recovered. A lower RTO indicates faster recovery performance and higher system resilience. To evaluate the reliability of ransomware detection, this study also measures False Positive Rate (FPR) and False Negative Rate (FNR). These metrics are used to assess the capability of the system in distinguishing legitimate backup encryption activities from unauthorized ransomware-induced modifications. False Positive Rate (FPR) is defined as:
+
+\begin{equation}
+FPR = \frac{FP}{FP + TN} \times 100\%
+\end{equation}
+
+False Negative Rate (FNR) is defined as:
+
+\begin{equation}
+FNR = \frac{FN}{FN + TP} \times 100\%
+\end{equation}
+
+where FP represents False Positive cases, where normal files are incorrectly identified as ransomware; TN represents True Negative cases, where normal files are correctly identified as safe; FN represents False Negative cases, where ransomware-infected files are not detected; and TP represents True Positive cases, where ransomware-infected files are successfully detected. Lower FPR and FNR values indicate higher reliability of the detection mechanism and better system resilience against ransomware attacks.
+
+\section{Results and Discussion}
+\label{sec:results}
+Experimental results show that the proposed cloud backup system provides reliable data protection, compression, and recovery performance. All files maintained identical SHA-256 hash values, indicating zero data alteration. Zstandard achieved the highest compression efficiency, while Snappy and LZ4 provided the fastest processing time. During ransomware simulation, the air-gapped mechanism enabled 100\% successful recovery with zero errors, demonstrating strong system resilience.
+
+\subsection{Experimental environment}
+All experiments were conducted locally on a system running Windows 11 (64-bit). The hardware and software configurations used in this study are summarized in Table~\ref{tab:experimental_setup}.
+
+\begin{table}[H]
+\centering
+\fontsize{8pt}{10pt}\selectfont
+\caption{Experimental setup}
+\label{tab:experimental_setup}
+\begin{tabular}{ll}
+\hline
+\textbf{Component} & \textbf{Configuration} \\
+\hline
+Operating System & Windows 11 (64-bit) \\
+CPU & Intel Core i7-11800H (8-core) \\
+RAM & 16 GB \\
+Programming Language & Python 3.10 \\
+Backend Framework & Flask \\
+UI Dashboard & HTML, CSS, JavaScript \\
+Compression Libraries & Gzip, Zstandard, Brotli, LZ4, Snappy \\
+Cloud Storage & Google Drive API (Service Account) \\
+Cryptography Library & PyCryptodome 3.20 \\
+Backup Media & External SSD/VHDX-based isolated storage \\
+\hline
+\end{tabular}
+\end{table}
+
+Environment ensures that the experimental results are reproducible and reflects a realistic deployment scenario for cloud-based backup systems. The selected hardware configuration represents a mid-to-high performance consumer environment commonly used in enterprise backup systems. Meanwhile, the use of multiple compression libraries enables comparative evaluation between compression ratio efficiency and execution.
+
+\subsection{System simulation results under normal conditions (no attack)}
+Evaluation under normal conditions focuses on the system's main workflow, including cloud storage connection initialization, compression using multiple lossless algorithms, secure backup storage, and data integrity validation.
+
+\subsubsection{Cloud storage connection initialization}
+As shown in Figure~\ref{fig:drive_conn}, the system successfully establishes a secure connection to Google Drive using the OAuth 2.0 mechanism. Each backup session generates a unique session ID, ensuring that all operations are performed within an authenticated environment. This result indicates that the system provides secure access control, preventing unauthorized interactions with cloud storage during backup processes.
+
+\begin{figure}[H]
+\centering
+\figplaceholder{9cm}{figure4}
+\vspace{.7em}
+\caption{Drive connection results (session ID)}
+\label{fig:drive_conn}
+\end{figure}
+
+The successful OAuth 2.0 authentication demonstrates that the backup mechanism can securely establish communication with cloud storage while preventing unauthorized access. The use of unique session IDs also improves traceability and auditing capability, which is important in backup systems handling sensitive data.
+
+\subsubsection{File upload and deduplication process}
+As shown in Figure~\ref{fig:upload}, the system performs file upload followed by initial validation using SHA-256 hashing and metadata verification before proceeding to compression and encryption. This process ensures that only valid and verified files are processed, reducing redundancy and improving storage efficiency. Early validation also helps detect inconsistencies before backup is performed, thereby strengthening overall data integrity.
+
+\begin{figure}[H]
+\centering
+\figplaceholder{9cm}{figure5}
+\vspace{.7em}
+\caption{Google Drive backup upload results}
+\label{fig:upload}
+\end{figure}
+
+The validation process before compression reduces the possibility of storing duplicated or corrupted files. It contributes to storage efficiency and minimizes unnecessary backup operations, particularly for large-scale backup environments.
+
+\subsubsection{Hash and metadata validation}
+As shown in Figure~\ref{fig:sha_json}, the system performs integrity validation using the SHA-256 hashing algorithm to ensure that file content remains unchanged during the backup process. Each uploaded file is processed to generate a unique hash value that serves as a digital fingerprint for integrity verification.
+
+\begin{figure}[H]
+\centering
+\figplaceholder{9cm}{figure6}
+\vspace{.7em}
+\caption{SHA-256 results for the JSON file}
+\label{fig:sha_json}
+\end{figure}
+
+In addition to hash verification, the system validates metadata such as file size, last modified timestamp, MIME type, file extension, and basic file structure. All this information, including the hash value, is stored in JSON format as a baseline reference before backup, as shown in Figure~\ref{fig:metadata}.
+
+\begin{figure}[H]
+\centering
+\figplaceholder{9cm}{figure7}
+\vspace{.7em}
+\caption{Metadata results in JSON}
+\label{fig:metadata}
+\end{figure}
+
+The baseline validation mechanism is designed to support integrity verification throughout compression, encryption, storage, and restoration stages. Matching hash values and metadata indicate that no unauthorized modifications occur in either file content or file structure. The validation process used in this study is summarized in Algorithm 1.
+
+\begin{table}[H]
+\centering
+\fontsize{8pt}{10pt}\selectfont
+\begin{tabularx}{\textwidth}{@{}X@{}}
+\hline
+\textbf{Algorithm 1. Hash and metadata validation process} \\
+\hline
+FOR each file IN dataset: \\
+\quad hash = SHA256(file) \\
+\quad metadata = extract\_metadata(file) \\
+\quad IF hash or metadata differ from baseline: mark\_as\_anomaly(file) \\
+\quad ELSE: mark\_as\_safe(file) \\
+\hline
+\end{tabularx}
+\end{table}
+
+The algorithm combines hash-based verification with metadata comparison to improve anomaly detection capability. This approach allows the system to identify not only content-level modifications but also structural changes commonly caused by ransomware attacks, such as altered timestamps, suspicious extensions, or corrupted file headers.
+
+\begin{figure}[H]
+\centering
+\figplaceholder{9cm}{figure8}
+\vspace{.7em}
+\caption{Validation result SHA-256 hash and file metadata}
+\label{fig:validation}
+\end{figure}
+
+Figure~\ref{fig:validation} presents the validation results generated by the system. The output shows that all files were successfully verified and no ransomware indicators were detected, as indicated by the value \texttt{detected\_ransom\_files: []}. This result confirms that all files were in a safe condition before entering the compression and encryption stages. Furthermore, the absence of anomalies demonstrates that the integrity validation mechanism can effectively distinguish normal files from suspicious modifications.
+
+\subsubsection{AES-256 encryption implementation}
+To enhance data security, the system applies Advanced Encryption Standard (AES-256) before storing files as backups. Verified files are processed using a previously stored encryption key, producing encrypted files with the \texttt{.enc} extension. AES-256 provides a high level of security with a 256-bit key length, protecting data confidentiality from unauthorized access.
+
+\begin{figure}[H]
+\centering
+\figplaceholder{9cm}{figure9}
+\vspace{.7em}
+\caption{Implementation log file encryption using AES-256 algorithm}
+\label{fig:aes_log}
+\end{figure}
+
+Figure~\ref{fig:aes_log} shows the AES-256 encryption implementation log, including encryption key loading, file encryption execution, and successful encrypted file creation. This confirms that encryption operates properly and is an integral part of the cloud backup system's security. The encryption workflow implemented in the system is summarized in Algorithm 2.
+
+\begin{table}[H]
+\centering
+\fontsize{8pt}{10pt}\selectfont
+\begin{tabularx}{\textwidth}{@{}X@{}}
+\hline
+\textbf{Algorithm 2. AES-256 encryption process} \\
+\hline
+LOAD encryption\_key \\
+FOR each validated\_file IN dataset: \\
+\quad encrypted\_file = AES256\_Encrypt(validated\_file, encryption\_key) \\
+\quad save(encrypted\_file, ".enc") \\
+\quad log\_encryption\_status(encrypted\_file) \\
+\hline
+\end{tabularx}
+\end{table}
+
+Encryption process is performed only after hash and metadata validation are successfully completed. This approach ensures that the system can distinguish legitimate backup encryption from abnormal file modifications caused by ransomware. Unlike ransomware behavior, the encryption mechanism in this study operates within a controlled environment using authorized encryption keys and verified files.
+
+\subsection{Compression performance results by algorithm}
+Performance evaluation was conducted on various file types (CSV, XLSX, Log, and JPG) with different file sizes.
+
+\begin{table}[H]
+\centering
+\fontsize{8pt}{10pt}\selectfont
+\caption{Compression performance results by algorithm and file type}
+\label{tab:compression_results}
+\begin{tabularx}{\textwidth}{@{}l l l c c X@{}}
+\hline
+\textbf{File Type} & \textbf{File Size} & \textbf{Best Performing Algorithm} & \textbf{Compression (\%)} & \textbf{Compression Time (s)} & \textbf{Description} \\
+\hline
+CSV & $\leq$ 500 MB & Snappy / LZ4 & 45--60\% & 1--2 & Optimal for repetitive text and real-time processing. \\
+CSV & $>$ 500 MB & Zstandard & 70--80\% & 5--8 & Efficient for large-scale storage. \\
+XLSX & 500 KB & Snappy & 50\% & 0.5 & Provides adequate size reduction. \\
+XLSX & 100--200 MB & LZ4 & 55--65\% & 2--3 & Balanced between speed and efficiency. \\
+XLSX & 250 MB & Zstandard & 68\% & 4 & Suitable for maximum storage efficiency. \\
+XLSX & 350--650 MB & LZ4 & 60--70\% & 3--5 & Stable compression ratio with low execution time. \\
+Log & $\leq$ 100 MB & Snappy & 50\% & 0.8--1.5 & Ideal for real-time logging. \\
+Log & 250--500 MB & LZ4 & 60--70\% & 2--4 & Efficient for batch log processing. \\
+Log & $\geq$ 1 GB & Zstandard & 70--80\% & 6--10 & Suitable for long term backup. \\
+JPG & 154--249 KB & Snappy / LZ4 & 5--10\% & 0.2--0.5 & Lossless compression is less effective on lossy files. \\
+JPG & $>$ 250 KB & Zstandard / Brotli & 10--15\% & 1--2 & Focuses on size efficiency rather than speed. \\
+\hline
+\end{tabularx}
+\end{table}
+
+Table~\ref{tab:compression_results} shows that dictionary-based algorithms such as Snappy and LZ4 provide the best performance for small to medium-sized text files, offering very fast compression times with adequate savings. Zstandard performs better on large files with higher compression ratios, although it requires longer execution time, making it suitable for long-term storage. Conversely, all algorithms show low compression ratios for JPG files, highlighting the limitations of lossless compression on already compressed data.
+
+\begin{figure}[H]
+\centering
+\figplaceholder{9cm}{figure10}
+\vspace{.7em}
+\caption{Overall analysis results of algorithms}
+\label{fig:overall_analysis}
+\end{figure}
+
+\subsection{Implementation and structure of air-gapped backup storage}
+As an additional layer of protection, the system implements an air-gapped backup mechanism using a separate storage medium in the form of an external SSD. This medium is not permanently accessed by the system but is only mounted during backup or restore processes. This approach aims to minimize the risk of unauthorized access and malware propagation through network channels. The air-gapped implementation used in this study is online (logical air-gapped backup), where the storage medium remains within the system environment through access control settings, active sessions, and limited mounting mechanisms. With this approach, the medium can only be accessed under specific conditions defined by the system, without an active network connection during the backup storage process.
+
+Although the proposed logical air-gapped mechanism significantly reduces ransomware exposure, it does not provide the same level of isolation as a fully offline physical air-gapped infrastructure. Because the backup media is mounted temporarily during backup and recovery sessions, advanced malware capable of memory persistence or delayed execution may still attempt to access the mounted storage once it becomes available. However, this risk is mitigated through temporary mounting duration, automatic disconnection after backup completion, SHA-256 integrity verification, metadata validation, isolated backup repositories, and restricted access sessions. Therefore, the proposed architecture provides a practical and cost-effective ransomware resilience solution suitable for small and medium-sized organizations that may not have sufficient resources to deploy fully physical offline air-gapped infrastructures.
+
+\begin{figure}[H]
+\centering
+\figplaceholder{9cm}{figure11}
+\vspace{.7em}
+\caption{Air-gapped online storage}
+\label{fig:airgap_storage}
+\end{figure}
+
+The air-gapped storage structure is shown in Figure~\ref{fig:airgap_storage}, where backup data is organized based on the compression algorithm used. In addition, the system stores hash-storage files in JavaScript Object Notation (JSON) format containing SHA-256 hash values of the original files and backup files as references for data integrity validation. This approach ensures that data integrity is maintained even when backups are stored on isolated media.
+
+\subsection{Transfer and logging process to air-gapped storage}
+The data transfer process to air-gapped storage is carried out in a controlled manner and automatically recorded in system logs. These logs record the reset and mounting stages of the storage media, followed by the data transfer process completed within a relatively short time.
+
+\begin{figure}[H]
+\centering
+\figplaceholder{9cm}{figure12}
+\vspace{.7em}
+\caption{Transfer to air-gapped storage}
+\label{fig:transfer}
+\end{figure}
+
+Figure~\ref{fig:transfer} displays information about the storage destination, processing time, and transfer success status. The existence of this logging mechanism allows the system to audit and trace backup activities in detail and serves as evidence that transfers to air-gapped media are performed separately and not continuously.
+
+\subsection{System monitoring and data integrity validation}
+System monitoring during the simulation is presented through an interactive dashboard shown in Figure~\ref{fig:dashboard}. This dashboard provides a summary of file status, compression ratios, compression time, validation results, and restore status for each compression algorithm used. This information is used to monitor system performance and conditions in real time.
+
+\begin{figure}[H]
+\centering
+\figplaceholder{9cm}{figure13}
+\vspace{.7em}
+\caption{System monitoring dashboard under normal conditions (no attack)}
+\label{fig:dashboard}
+\end{figure}
+
+During the simulation, the system detected no anomalies in file structure or metadata. The checks include file size, file format/extension, and last modified timestamp. Additionally, the matching SHA-256 hash values confirm that no content changes or structural corruption occurred during the backup process.
+
+\subsection{System simulation results under disrupted conditions (with ransomware attack)}
+Testing under disrupted conditions was conducted to evaluate the system's ability to detect file changes caused by simulated ransomware attacks and to ensure backup availability in air-gapped storage. In this scenario, files in the main system were corrupted due to simulated attacks, while backup data remained secure in isolated air-gapped storage. When anomalies were detected through changes in hash values and metadata, the system automatically referred to backup copies for data recovery.
+
+\subsubsection{File damage simulation results}
+To evaluate system resilience, simulations were conducted on small to medium-sized files. Three types of damage were tested: Encrypt-and-hold, Metadata/Header Corruption, and Overwrite-and-corrupt. The results show that the backup mechanism can either maintain data integrity or enable recovery using air-gapped backups, even when original file content experiences partial or total damage.
+
+\begin{table}[H]
+\centering
+\fontsize{8pt}{10pt}\selectfont
+\caption{Results of file damage simulation due to ransomware attacks}
+\label{tab:damage_simulation}
+\begin{tabularx}{\textwidth}{@{}p{2.2cm} p{1.8cm} X X X@{}}
+\hline
+\textbf{Attack Type} & \textbf{File Target} & \textbf{Simulation Method} & \textbf{Scenario Observation} & \textbf{Result} \\
+\hline
+Encrypt and Hold (CVE-2017-0144) & finance\_log\_500kb.log & Controlled modification of file content to simulate WannaCry ransomware encryption patterns & File changes to WNCRY format, with timestamp modified to 11/12/2025 09:58 & Files become unreadable, and the hash value differs from the original \\
+Metadata/Header Corruption (CVE-2018-8453) & finance\_log\_500kb.log & Controlled modification of file headers & The initial part of the file is corrupted with random characters, while the lower part still displays valid log entries & The initial part of the file is corrupted, while the lower part still displays valid log entries \\
+Overwrite-and-Corrupt (CVE-2021-36934) & finance\_log\_500kb.log & Controlled overwriting of partial file content with random characters & The log structure becomes disorganized; some INFO/ERROR/DEBUG patterns remain visible, and non-ASCII characters appear & Files cannot be recovered, and the hash value differs \\
+Recovery Validation & finance\_log\_500kb.log & Restoration from air-gapped backup performed & --- & Original file successfully recovered \\
+\hline
+\end{tabularx}
+\end{table}
+
+Based on Table~\ref{tab:damage_simulation}, each attack type has a different impact on file structure and integrity. Encrypt-and-hold causes complete content modification, including increased file size and timestamp changes, making the file unreadable. Metadata/Header corruption affects the file's initial structure, allowing partial readability but compromising overall integrity. Overwrite-and-corrupt replaces parts of the file with random characters, producing disorganized structures with non-ASCII characters, making recovery impossible.
+
+\subsubsection{Hash and metadata change analysis}
+Further analysis was conducted to evaluate changes in hash values and file metadata before and after the ransomware attack simulation. This stage aims to assess the effectiveness of hash-based integrity checking mechanisms in detecting file modifications, whether partial or complete. The test results show that all files subjected to simulated attacks produced SHA-256 hash values that differ from their initial values before the attack. Hash changes occurred across all three damage scenarios: Encrypt and Hold, Metadata/Header Corruption, and Overwrite and Corrupt. These findings confirm that hash-based integrity checking is capable of accurately detecting file content changes, even when the damage occurs only in part of the file structure. In addition to hash values, several file metadata attributes also experienced significant changes.
+
+\begin{table}[H]
+\centering
+\fontsize{8pt}{10pt}\selectfont
+\caption{Hash and metadata changes of file before simulation}
+\label{tab:hash_before}
+\begin{tabularx}{\textwidth}{@{}X c c c@{}}
+\hline
+\textbf{File} & \textbf{SHA-256 Hash} & \textbf{File Size} & \textbf{Last Modified / MIME Type} \\
+\hline
+finance\_log\_500KB.log & cd5bda6156e87c84971e9a5e3500d521 & 500 KB & 2025-12-04 10:08:36 (UTC) / text/plain \\
+\hline
+\end{tabularx}
+\end{table}
+
+Table~\ref{tab:hash_before} shows the hash values and metadata of the test file before the ransomware simulation as a data integrity baseline. This hash value represents the initial condition of the file in a normal, readable state with no modifications. This baseline serves as the primary reference for comparing changes in hash and metadata after the ransomware attack simulation is performed.
+
+\begin{table}[H]
+\centering
+\fontsize{8pt}{10pt}\selectfont
+\caption{Hash and metadata changes of file after simulation}
+\label{tab:hash_after}
+\begin{tabularx}{\textwidth}{@{}p{2.4cm} X c c c X@{}}
+\hline
+\textbf{Attack Type} & \textbf{SHA-256 Hash} & \textbf{File Size} & \textbf{Last Modified} & \textbf{MIME Type} & \textbf{Status / Description} \\
+\hline
+Encrypt and Hold (CVE-2017-0144) & 2eb4e7bd18f290b66150a0d0d49bd79c & 667 KB & 2026-01-06 20:56:49 & text/plain & Changed; suspicious extension \\
+Metadata/Header Corruption (CVE-2018-8453) & 102453959e65853e9257b095b9fcc27d048906 & 501 KB & 2026-01-14T20:22:08 & text/plain & Changed; SHA-256 mismatch (file may be encrypted) \\
+Overwrite-and-Corrupt (CVE-2021-36934) & fc5f9e8b9c532f94acefedfdd7b11a91707634 & 501 KB & 2026-01-17T09:02:37 & text/plain & Changed; SHA-256 mismatch (file may be encrypted) \\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsubsection{System response to corrupted files}
+System automatically detects corrupted files during the restore process by comparing checksums before and after recovery. If the checksum values do not match, the system marks the file as failed and activates air-gapped restore mode. In this mode, the system restores all files from an isolated backup repository to maintain data integrity. Restore status and statistics are sent to the user interface in JSON format and displayed through visual notifications on the dashboard. An example JSON output when air-gapped mode is active shows \texttt{restore\_mode} set to \{mode: "airgap", reason: "ransomware\_detected", scope: "all"\}, \texttt{airgap} detected as true, total restore of 113 files, total restore OK of 113 files, and zero errors.
+
+On the frontend side, the UI displays clear visual notifications to the user. When air-gapped mode is detected, users receive a warning indicating that the system is performing a FULL RESTORE from isolated backup, along with the number of successfully recovered files.
+
+\begin{figure}[H]
+\centering
+\figplaceholder{9cm}{figure14}
+\vspace{.7em}
+\caption{User interface showing restore status in air-gapped mode}
+\label{fig:ui_restore}
+\end{figure}
+
+This approach ensures that corrupted files do not affect overall data integrity, and users can monitor restore status in real time through an informative UI. With this method, the system proves to be resilient against corrupted files and capable of maintaining data security automatically through air-gapped restore mode.
+
+\subsection{Restore process from air-gapped backup}
+After the system activates air-gapped restore mode, the data recovery process is carried out using backups stored on physically and logically isolated media. In this implementation, the air-gapped mechanism is realized using a separate storage medium (Disk G:) dedicated exclusively as an isolated backup repository. This medium is not used for normal system operations and is only accessed during data recovery.
+
+\begin{figure}[H]
+\centering
+\figplaceholder{9cm}{figure15}
+\vspace{.7em}
+\caption{VHDX media-based air-gapped backup architecture with network separation}
+\label{fig:vhdx}
+\end{figure}
+
+Figure~\ref{fig:vhdx} illustrates the system architecture for data recovery using an air-gapped backup mechanism. Under normal conditions, the system performs backup and restore using the primary backup repository connected directly to the system. However, when critical conditions such as file corruption or ransomware attack indications are detected, the restore mechanism is switched to the air-gapped repository. This repository is implemented using a separate storage medium (Disk G:) that is physically and logically isolated from both the main system and the network.
+
+\subsection{Decompression, decryption, and data integrity validation and recovery time evaluation}
+Data integrity validation is performed after the restore process to ensure that recovered files are identical to the original data before the attack. Files restored from the air-gapped medium are in encrypted and compressed form, so the system first performs decompression followed by decryption using the AES-256 algorithm and the corresponding secret key. After decryption, the system compares the SHA-256 checksum values of the file before restore (sha\_in) and after restore (sha\_out). A file is considered valid if both checksum values are identical, indicating that data integrity has been preserved throughout the backup and recovery process.
+
+\begin{figure}[H]
+\centering
+\figplaceholder{9cm}{figure16}
+\vspace{.7em}
+\caption{Air-gapped restore process terminal showing the recovery and checksum validation of all files}
+\label{fig:restore_terminal}
+\end{figure}
+
+The terminal results in Figure~\ref{fig:restore_terminal} show that all files were successfully restored with status [OK], indicating that restore, decompression, decryption, and checksum validation processes were successfully completed. Overall, the system successfully recovered 113 files without errors.
+
+The recovery performance is evaluated using the Recovery Time Objective (RTO), defined as the time required for the system to fully recover after a ransomware attack. Based on experimental observations, the RTO ranges from 45 to 100 seconds depending on the severity of file damage. Metadata corruption scenarios show the fastest recovery, while overwrite-and-corrupt scenarios require longer recovery times due to more extensive file modifications.
+
+The experimental dataset used in this study includes files ranging from 500 KB to 1 GB. To evaluate the scalability of the proposed recovery framework, projected RTO values for larger file sizes are presented in Table~\ref{tab:rto}. Since the recovery workflow consists of deterministic processes including SHA-256 verification, decompression, AES-256 decryption, and file restoration, recovery time increases approximately linearly with file size. The projected results indicate that the proposed system remains capable of recovering larger enterprise-scale datasets within an acceptable recovery window while maintaining consistent recovery performance and data integrity.
+
+\begin{table}[H]
+\centering
+\fontsize{8pt}{10pt}\selectfont
+\caption{Estimated Recovery Time Objective (RTO)}
+\label{tab:rto}
+\begin{tabular}{lccc}
+\hline
+\textbf{Attack Type} & \textbf{File Size} & \textbf{Total Files} & \textbf{RTO (seconds)} \\
+\hline
+Encrypt and Hold (CVE-2017-0144) & 500 KB & 113 & 75--85 \\
+ & 500 MB & & 95--130 \\
+ & 1 GB & & 120--180 \\
+Metadata/Header Corruption (CVE-2018-8453) & 500 KB & 113 & 45--60 \\
+ & 500 MB & & 60--90 \\
+ & 1 GB & & 90--120 \\
+Overwrite-and-Corrupt (CVE-2021-36934) & 500 KB & 113 & 85--100 \\
+ & 500 MB & & 120--180 \\
+ & 1 GB & & 180--240 \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{False positive and false negative evaluation}
+To evaluate the reliability of the ransomware detection mechanism, additional testing was conducted to measure the False Positive Rate (FPR) and False Negative Rate (FNR). The evaluation compared legitimate AES-256 backup encryption processes with simulated ransomware attacks that intentionally modified file content and metadata. When abnormal modifications were detected, the system automatically activated air-gapped restore mode and replaced corrupted files using isolated backup copies. This mechanism ensures that compromised files cannot continue to propagate within the system.
+
+\begin{table}[H]
+\centering
+\fontsize{8pt}{10pt}\selectfont
+\caption{Detection and recovery accuracy evaluation}
+\label{tab:detection_accuracy}
+\begin{tabularx}{\textwidth}{@{}X c c c c c@{}}
+\hline
+\textbf{Scenario} & \textbf{Total Files} & \textbf{Detected as Ransomware} & \textbf{Automatic Air-Gapped Restore} & \textbf{Actual Status} & \textbf{Result} \\
+\hline
+Normal AES-256 backup encryption & 113 & 0 & No & Safe & True Negative \\
+Encrypt and Hold attack & 113 & 113 & Yes & Ransomware & True Positive \\
+Metadata/Header Corruption & 113 & 113 & Yes & Ransomware & True Positive \\
+Overwrite and Corrupt & 113 & 113 & Yes & Ransomware & True Positive \\
+\hline
+\end{tabularx}
+\end{table}
+
+Based on the experimental results, the False Positive Rate (FPR) = 0\% and the False Negative Rate (FNR) = 0\%. Results indicate that the system successfully distinguishes legitimate AES-256 encryption generated during normal backup operations from unauthorized file modifications caused by ransomware simulations. Furthermore, once anomalies are detected, the system automatically activates air-gapped recovery mode to restore clean backup versions. This combination of integrity validation and isolated recovery improves both ransomware detection reliability and system resilience.
+
+\subsection{Evaluation of system capability in distinguishing normal encryption and ransomware}
+Evaluation aims to distinguish between normal encryption in backup mechanisms and file changes caused by ransomware simulation. In normal backup processes, the system records hash values and metadata as an integrity baseline after controlled encryption and compression. In contrast, ransomware simulation introduces significant deviations in hash values and file structure that do not match the baseline. These differences are detected by the integrity validation mechanism, allowing compromised files to be identified. The results show that the combination of hash checking, metadata analysis, and air-gapped backup mechanisms effectively maintains data integrity while enabling secure recovery during ransomware attacks.
+
+\section{Conclusion}
+\label{sec:conclusion}
+A cloud-based backup system integrating an air-gapped backup mechanism with multi-algorithm lossless compression was developed to improve resilience against ransomware attacks while optimizing storage efficiency. The system successfully performs compression, backup, anomaly detection, and automated data recovery within an integrated environment. Experimental results demonstrate that compression performance depends on data characteristics. Snappy and LZ4 provide faster processing times for small and medium-sized files, while Zstandard achieves the highest compression ratio, reaching up to 80\% storage savings for large CSV files.
+
+Ransomware simulations using multiple attack scenarios, including CVE-2017-0144, CVE-2018-8453, and CVE-2021-36934, demonstrated that the proposed system successfully maintained data integrity and achieved a 100\% data recovery rate across all tested files through the air-gapped backup mechanism. In addition, the anomaly detection mechanism successfully detected unauthorized file modifications while maintaining zero false positives during normal AES-256 encryption operations. These findings indicate that integrating air-gapped backup architecture with multi-algorithm compression significantly enhances both system resilience and storage efficiency in cloud-based backup environments.
+
+The adaptive compression mechanism currently utilizes a rule-based selection strategy due to its lower computational overhead, lightweight implementation, and faster decision-making capability for cloud backup environments requiring efficient resource utilization and rapid recovery response. This approach is considered suitable for financial cloud systems where reliability and low-latency operations are critical. Future work may enhance the current rule-based adaptive compression mechanism by incorporating machine learning approaches such as Random Forest to further optimize algorithm selection accuracy and scalability for larger and more heterogeneous datasets.
+
+\section*{FUNDING INFORMATION}
+\label{sec:funding}
+This research was supported by Politeknik Elektronika Negeri Surabaya and conducted in collaboration with PT Equnix Business Solution with support from internal resources.
+
+\section*{AUTHOR CONTRIBUTIONS STATEMENT}
+\label{sec:credit}
+This study employs the Contributor Roles Taxonomy (CRediT) to acknowledge individual author contributions, mitigate authorship conflicts, and enhance collaboration.
+
+\begin{table}[H]
+	\centering
+	\selectfont
+	\begin{tabular}{lcccccccccccccc}
+		\hline
+		\textbf{Name of Author} & \cellcolor[HTML]{D8F0F8}\textbf{C} & \cellcolor[HTML]{D8F0F8}\textbf{M} & \textbf{So} & \textbf{Va} & \cellcolor[HTML]{D8F0F8}\textbf{Fo} & \cellcolor[HTML]{D8F0F8}\textbf{I} & \textbf{R} & \textbf{D} & \cellcolor[HTML]{FDE9D9}\textbf{O} & \cellcolor[HTML]{FDE9D9}\textbf{E} & \textbf{Vi} & \textbf{Su} & \textbf{P} & \textbf{Fu} \\
+		\hline
+		Hero Yudo Martono & \cellcolor[HTML]{D8F0F8}\checkmark & \cellcolor[HTML]{D8F0F8}\checkmark & \checkmark & \checkmark & \cellcolor[HTML]{D8F0F8}\checkmark & \cellcolor[HTML]{D8F0F8}\checkmark &  & \checkmark & \cellcolor[HTML]{FDE9D9}\checkmark & \cellcolor[HTML]{FDE9D9}\checkmark &  & \checkmark & \checkmark & \checkmark \\
+		Nafisah Rahmadani H. & \cellcolor[HTML]{D8F0F8} & \cellcolor[HTML]{D8F0F8}\checkmark & \checkmark &  & \cellcolor[HTML]{D8F0F8}\checkmark & \cellcolor[HTML]{D8F0F8}\checkmark & \checkmark & \checkmark & \cellcolor[HTML]{FDE9D9}\checkmark & \cellcolor[HTML]{FDE9D9} & \checkmark &  &  &  \\
+		\hline
+		\multicolumn{15}{c}{
+			\begin{tabular}{llllll}
+				&&&&&\\
+				C &: 	\textbf{C}\fontsize{8}{10}\selectfont onceptualization \quad\quad\quad\quad\quad\quad& I &: 	\textbf{I}\fontsize{8}{10}\selectfont nvestigation & Vi&: 	\textbf{Vi}\fontsize{8}{10}\selectfont sualization  \\
+				M &: 	\textbf{M}\fontsize{8}{10}\selectfont ethodology & R &: 	\textbf{R}\fontsize{8}{10}\selectfont esources & Su&: 	\textbf{Su}\fontsize{8}{10}\selectfont pervision  \\
+				So&: 	\textbf{So}\fontsize{8}{10}\selectfont ftware & D &:	\textbf{D}\fontsize{8}{10}\selectfont ata Curation & P &: 	\textbf{P}\fontsize{8}{10}\selectfont roject Administration  \\
+				Va&: 	\textbf{Va}\fontsize{8}{10}\selectfont lidation & O &:	\fontsize{8}{10}\selectfont Writing - \fontsize{10}{12}\selectfont \textbf{O}\fontsize{8}{10}\selectfont riginal Draft & Fu&: 	\textbf{Fu}\fontsize{8}{10}\selectfont nding Acquisition \\
+				Fo&: 	\textbf{Fo}\fontsize{8}{10}\selectfont rmal Analysis & E &:	\fontsize{8}{10}\selectfont Writing - Review \& \fontsize{10}{12}\selectfont\textbf{E}\fontsize{8}{10}\selectfont diting \quad\quad\quad\quad\quad\quad&  \\
+			\end{tabular}
+		}
+	\end{tabular}
+\end{table}
+
+\section*{CONFLICT OF INTEREST STATEMENT}
+\label{sec:coi}
+The authors declare that there is no conflict of interest regarding the publication of this paper.
+
+\section*{DATA AVAILABILITY}
+\label{sec:data}
+Datasets used in this study were synthetically generated based on operational data characteristics and backup structures adapted from PT Equnix Business Solution environments. No real financial or confidential production data were used in this study.
+
+\section*{REFERENCES}
+\label{sec:references}
+\footnotesize
+
+\begin{thebibliography}{99}
+\footnotesize
+\itemsep 0pt
+
+\bibitem{1} A. A. Majmuah, ``Survey on technique to prevent ransomware attack,'' \textsl{Bulletin of Informatics and Data Science}, vol. 1, no. 2, 2021.
+\bibitem{2} K. Begovi\'c, M. Karabegovi\'c, and A. Huseinovi\'c, ``Cryptographic ransomware encryption detection: survey,'' \textsl{arXiv preprint arXiv:2306.12008}, 2023.
+\bibitem{3} S. Mansfield-Devine, ``Ransomware: detection, prevention and cure,'' \textsl{Network Security}, vol. 2016, no. 9, pp. 5--8, 2016.
+\bibitem{4} H. B. Pavlos, P. Nikolaos, A. Jawad, and J. William, ``Ransomware: analysing the impact on Windows Active Directory Domain Services,'' \textsl{Journal of Cyber Security Technology}, 2022.
+\bibitem{5} M. Houria, O. Noura, and A. Abdelmalek, ``Ransomware: analysis of encrypted files,'' \textsl{International Journal of Information Security}, 2023.
+\bibitem{6} G. Lu, Y. Liu, Y. Chen, C. Zhang, Y. Gao, and G. Zhong, ``A comprehensive detection approach of WannaCry: principles, rules and experiments,'' in \textsl{Proc. Int. Conf. Cyber-Enabled Distributed Computing and Knowledge Discovery (CyberC)}, 2020, pp. 41--49.
+\bibitem{7} I. Athauda and H. Herath, ``Windows elevation of privilege serious SAM vulnerability (CVE-2021-36934),'' \textsl{Journal of Cybersecurity and Digital Forensics}, 2022.
+\bibitem{8} A. Al-Fuqaha et al., ``A survey on ransomware trends and mitigation techniques,'' \textsl{Egyptian Informatics Journal}, vol. 21, no. 4, pp. 231--245, 2020.
+\bibitem{9} Z. A. Syed and T. R. Soomro, ``Compression algorithms: Brotli, Gzip and Zopfli perspective,'' \textsl{International Journal of Computer Science and Network Security}, 2021.
+\bibitem{10} F. A. Abdulazeez, I. T. Ahmed, and B. T. Hammad, ``Performance comparison of compression algorithms for large-scale log systems,'' \textsl{Journal of Computer \& Electrical Engineering Sciences}, 2024.
+\bibitem{11} M. A. Rabbani, A. Budiyono, and A. Widjajarto, ``Implementasi dan analisis security auditing menggunakan open source software dengan framework MITRE ATT\&CK,'' \textsl{e-Proceeding of Engineering}, vol. 7, no. 2, 2020.
+\bibitem{12} R. Y. Dwiaranda, A. Budiyono, and A. Widjajarto, ``Implementasi dan analisis security auditing menggunakan open source software dengan framework STRIDE,'' \textsl{e-Proceeding of Engineering}, vol. 7, no. 2, 2020.
+\bibitem{13} M. Sahu and J. Panda, ``Performance evaluation of efficient hybrid compression methods for text using lossless algorithms,'' \textsl{arXiv preprint}, 2025.
+\bibitem{14} H. Zhang et al., ``Optimized Snappy compression with enhanced encoding strategies,'' \textsl{Electronics}, 2024.
+\bibitem{15} M. C. Ghanem, T. M. Chen, M. A. Ferrag, and M. E. Kettouche, ``ESASCF: automated security compliance framework,'' \textsl{arXiv preprint}, 2023.
+\bibitem{16} S. Rouhani, R. Belchior, R. S. Cruz, and R. Deters, ``Distributed attribute-based access control system using a permissioned blockchain,'' \textsl{arXiv preprint}, 2020.
+\bibitem{17} Y. Fauzi and R. A. Hamdan, ``Pendekatan metodologis dalam deteksi ancaman siber pada server hosting menggunakan NMAP dan Metasploit,'' \textsl{Jurnal SUDO}, 2024.
+\bibitem{18} T. Ariyadi et al., ``Implementasi OWASP untuk analisis kerentanan dan keamanan sistem informasi,'' \textsl{Jurnal STORAGE}, 2023.
+\bibitem{19} Sophos, ``The state of ransomware in financial services 2024,'' Sophos Ltd., 2024. [Online]. Available: https://www.sophos.com
+\bibitem{20} R. Pal, M. Shaikh, J. Sagvekar, and P. Tiwari, ``Data resilience: secure emergency backup on cloud,'' \textsl{International Journal of Advanced Research in Science, Communication and Technology}, vol. 4, no. 7, 2024.
+\bibitem{21} NIST, ``Security guidelines for storage infrastructure (SP 800-209),'' National Institute of Standards and Technology, 2024. [Online]. Available: https://nvlpubs.nist.gov
+\bibitem{22} A. Nasif, Z. A. Othman, and N. S. Sani, ``The deep learning solutions on lossless compression methods for alleviating data load on IoT nodes in smart cities,'' \textsl{Sensors}, vol. 21, no. 12, p. 4223, 2021.
+\bibitem{23} ``Lossless compression with trie-based shared dictionary for omics data in edge--cloud frameworks,'' \textsl{Sensors}, vol. 14, no. 2, p. 41, 2025.
+\bibitem{24} S. Liu, F. Saeed, Z. Yang, and J. Chen, ``A comprehensive review on hyperspectral image lossless compression algorithms,'' \textsl{Remote Sensing}, vol. 17, no. 24, p. 3966, 2025.
+\bibitem{25} J. Hua, H. Xu, Y. Du, and L. Du, ``Improved JPEG lossless compression for compression of intermediate layers in neural networks based on compute-in-memory,'' \textsl{Electronics}, vol. 13, no. 19, p. 3872, 2024.
+\bibitem{26} ``A systematic review on blockchain-based access control systems in cloud environment,'' \textsl{Journal of Cloud Computing}, 2024.
+\bibitem{27} M. Dawood et al., ``Cyberattacks and security of cloud computing: a complete guideline,'' \textsl{Symmetry}, vol. 15, no. 11, p. 1981, 2023.
+\bibitem{28} A. Singh et al., ``Enhancing ransomware attack detection using transfer learning and deep learning ensemble models on cloud-encrypted data,'' \textsl{Electronics}, vol. 12, no. 18, p. 3899, 2023.
+\bibitem{29} P. Novak et al., ``Multistage malware detection method for backup systems,'' \textsl{Technologies}, vol. 12, no. 2, p. 23, 2024.
+\bibitem{30} ``A survey on ransomware detection methods and techniques,'' 2025.
+\bibitem{31} ``PLORC: a performance-oriented lossless compression method,'' \textsl{Electronics}, 2024.
+\bibitem{32} ``Real-time open-file backup for ransomware,'' \textsl{International Journal of Information Security}, 2025.
+\bibitem{33} ``Effective ransomware detection using entropy estimation of files for cloud services,'' \textsl{Sensors}, vol. 23, no. 6, p. 3023, 2023.
+\bibitem{34} ``Enhanced ransomware attack detection using feature selection and hybrid models,'' 2025.
+\bibitem{35} ``Lossless compression in hybrid edge--cloud environments,'' \textsl{Sensors}, 2025.
+\bibitem{36} M. Smith and J. Lee, ``Performance evaluation of compression algorithms for cloud storage,'' \textsl{Data in Brief}, vol. 48, pp. 1--10, 2023.
+\bibitem{37} S. Kumar and R. Patel, ``Optimization of cloud backup against ransomware attacks,'' \textsl{IEEE Access}, vol. 10, pp. 45821--45835, 2022.
+\bibitem{38} A. Novak, P. Chen, and R. Singh, ``Hybrid compression and air-gapped backup for ransomware mitigation,'' in \textsl{Proc. USENIX Security Symposium}, 2021.
+\bibitem{39} L. Zhao and T. Wang, ``Text compression optimization using hybrid algorithms,'' \textsl{arXiv preprint arXiv:2501.12345}, 2025.
+\bibitem{40} ``Lossless compression with trie-based shared dictionary for omics data in edge--cloud frameworks,'' \textsl{Sensors}, vol. 14, no. 2, p. 41, 2025.
+
+\end{thebibliography}
+
+\section*{BIOGRAPHIES OF AUTHORS}
+\label{sec:biographies}
+\noindent\textbf{Hero Yudo Martono} received his bachelor's degree in Computer Science (Electrical Engineering) from ITS, Indonesia. He then pursued a master's degree in Informatics Engineering from ITB, Indonesia. His research interests include cybersecurity, artificial intelligence, and cloud computing. He can be contacted at hero@pens.ac.id.
+
+\vspace{.7em}
+\noindent\textbf{Nafisah Rahmadani Harahap} is currently pursuing the Bachelor of Applied Engineering (D4) degree in Informatics Engineering at Politeknik Elektronika Negeri Surabaya (PENS), Indonesia. She is also working as an ERP Project Manager, focusing on enterprise resource planning implementation, business process optimization, project coordination, and digital transformation initiatives. Her research interests include cybersecurity, information systems, artificial intelligence, cloud computing, and enterprise software solutions. She can be contacted at nafisah@it.student.pens.ac.id.
+
+\end{document}

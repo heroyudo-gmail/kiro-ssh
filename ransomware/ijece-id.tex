@@ -1,0 +1,843 @@
+% =====================================================================
+%  VERSI KERJA BAHASA INDONESIA (working draft) untuk revisi.
+%  Baseline English asli ada di ijece.tex (jangan diubah).
+%  Setelah semua revisi selesai & disetujui, versi ini akan
+%  diterjemahkan kembali ke Bahasa Inggris untuk submission ke IJECE.
+% =====================================================================
+\documentclass{iaesarticle}
+
+%%required package. add for your convenient, but do not remove the initial
+\setlength{\headsep}{0.15in}
+\usepackage{amsmath, amsfonts, amssymb, float, fancyhdr}
+\usepackage[figuresright]{rotating}
+\usepackage{authblk, graphicx, indentfirst, lastpage, lipsum}
+\usepackage{pifont}
+\renewcommand{\Authsep}{, }
+\renewcommand{\Authand}{, }
+\renewcommand{\Authands}{, }
+\setlength{\affilsep}{0cm}
+\renewcommand\Authfont{\normalsize}
+\renewcommand\Affilfont{\fontsize{8}{10}\mdseries}
+\makeatletter
+\renewcommand{\@biblabel}[1]{[#1]\hfill}
+\renewcommand\AB@authnote[1]{\textsuperscript{\normalfont\bfseries#1}}
+\makeatother
+\usepackage[font=normalsize]{subfig, caption}
+\usepackage{epstopdf}
+\usepackage[left=3cm, right=2.5cm, top=2.5cm, bottom=2.5cm, includehead, includefoot]{geometry}
+\usepackage[justification=centering]{caption}
+\captionsetup{labelsep=period}
+\usepackage{titlesec}
+\usepackage[table]{xcolor}
+\titleformat{\section}
+{\normalfont\normalsize\bfseries\uppercase}{\thesection}{1.7em}{}
+\titleformat{\subsection}
+{\normalfont\normalsize\bfseries}{\thesubsection}{.95em}{}
+\titleformat{\subsubsection}
+{\bfseries}{\thesubsubsection}{.2em}{}
+\titlespacing*{\section}{0cm}{0.7cm}{0cm}
+\usepackage{enumitem}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{ragged2e}
+\usepackage{hyperref,graphicx}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{fleqn}
+
+% --- Placeholder gambar sementara (hapus/ganti saat gambar asli tersedia) ---
+\newcommand{\figplaceholder}[2]{%
+  \fbox{\parbox[c][3.2cm][c]{#1}{\centering\ttfamily\small [Gambar menyusul: #2]}}%
+}
+
+\CopyrightLine[]{}{\textit{This is an open access article under the \textcolor{blue}{\underline{CC BY-SA}} license.}
+\vspace{.5em}}
+
+%%author
+\author[1]{\bfseries Hero Yudo Martono}
+\author[2]{\bfseries Nafisah Rahmadani Harahap}
+
+%%author's affiliation
+\affil[1,2]{Departemen Teknik Informatika, Politeknik Elektronika Negeri Surabaya, Surabaya, Indonesia}
+
+%%title and shortitle (for footer)
+\title{Perancangan sistem cadangan berbasis awan menggunakan algoritma multi-kompresi untuk mitigasi serangan ransomware}
+\shorttitle{Perancangan sistem cadangan berbasis awan menggunakan algoritma multi-kompresi ... (Martono)}
+
+%%starting
+\begin{document}
+\setcounter{page}{1}
+
+%%indentation. do not change
+\setlength{\parindent}{1.27cm}
+
+%%header and footer setting. do not change
+\pagestyle{fancy}
+\fancyhfoffset{0cm}
+
+%%journal info
+\journalname{International Journal of Electrical and Computer Engineering (IJECE)}
+\journalshortname{Int J Elec \& Comp Eng}
+\journalhomepage{http://ijece.iaescore.com}
+\vol{99}
+\no{1}
+\months{Month}
+\years{2099}
+\issn{2088-8708}
+\DOI{10.11591}
+\pagefirst{1}
+\pagelast{1x}
+\IDpaper{42551}
+
+%%build title
+\maketitle
+
+%%border setting. do not change
+\hrule
+\vspace{.1em}
+\hrule
+\vspace{.5em}
+\noindent
+\parbox[t][][s]{0.315\textwidth}{%
+\textbf{Info Artikel}
+\vspace{.5em}
+\hrule
+\vspace{.5em}
+\begin{history}
+\vspace{.5em}
+Received month dd, yyyy
+
+Revised month dd, yyyy
+
+Accepted month dd, yyyy
+
+\vspace{.7em}
+\end{history}
+\vspace{.5em}
+\hrule
+\vspace{.5em}
+\begin{keyword}
+\vspace{.5em}
+Cadangan dan pemulihan awan \sep
+Ketahanan ransomware \sep
+Cadangan air-gapped \sep
+Kompresi lossless \sep
+Deteksi anomali
+\vspace{.5em}
+\end{keyword}
+\vspace{\fill}
+}
+\parbox{0.020\textwidth}{\hspace{0.5em}}
+\parbox[t][][s]{0.65\textwidth}{%
+\begin{abstract}
+\vspace{.3em}
+Serangan ransomware menjadi ancaman serius terhadap ketersediaan dan integritas data pada lingkungan penyimpanan berbasis awan. Namun, sistem cadangan konvensional tetap rentan ketika repositori cadangan dapat diakses langsung dari sistem utama, sementara metode kompresi algoritma tunggal sering kali tidak efisien untuk tipe berkas yang heterogen. Penelitian ini mengusulkan sistem cadangan berbasis awan yang mengintegrasikan mekanisme cadangan \textit{air-gapped} dengan kompresi \textit{lossless} multi-algoritma adaptif untuk meningkatkan ketahanan data dan efisiensi penyimpanan. Sistem menggunakan verifikasi \textit{hash} SHA-256, analisis metadata, dan analisis struktur berkas untuk membedakan enkripsi cadangan yang sah dari modifikasi berkas akibat ransomware. Evaluasi eksperimental dilakukan pada kondisi normal dan kondisi tersimulasi-ransomware menggunakan berbagai tipe dan ukuran berkas. Hasil menunjukkan Zstandard mencapai rasio kompresi 70--80\% untuk berkas besar, sedangkan Snappy dan LZ4 memberikan waktu proses lebih cepat 0,5--2 detik. Sistem yang diusulkan berhasil memulihkan seluruh 113 berkas terdampak tanpa galat pemulihan dan mencapai \textit{False Positive Rate} (FPR) 0\% serta \textit{False Negative Rate} (FNR) 0\%. Secara keseluruhan, pendekatan yang diusulkan secara efektif meningkatkan keamanan, ketahanan, dan efisiensi penyimpanan sistem cadangan berbasis awan terhadap ancaman ransomware.
+\end{abstract}
+}
+\parbox[l]{\textwidth}{%
+\rule{0.275\textwidth}{0.5pt} \hspace{0.5cm} \hrulefill
+\\
+\emph{\textbf{Penulis Korespondensi:}}
+\vspace{.5em}\\
+Hero Yudo Martono\\
+Departemen Teknik Informatika, Politeknik Elektronika Negeri Surabaya\\
+Surabaya, Indonesia\\
+Email: hero@pens.ac.id
+}
+\vspace{.5em}
+\hrule
+\vspace{.1em}
+\hrule
+
+%% main text
+\section{Pendahuluan}
+\label{sec:pendahuluan}
+Perkembangan teknologi digital yang pesat selama dekade terakhir telah mengubah berbagai sektor secara signifikan, khususnya sektor keuangan. Digitalisasi keuangan tidak lagi terbatas pada pemrosesan transaksi, melainkan juga mencakup pencatatan data, pelaporan, pemantauan risiko, dan analitik waktu-nyata \cite{1}, \cite{2}. Peningkatan volume data yang signifikan ini menuntut organisasi untuk mengelola penyimpanan data berskala besar secara aman dan efisien, terutama dalam menghadapi ancaman keamanan siber yang terus tumbuh \cite{3}, \cite{4}. Transformasi ini menyebabkan peningkatan volume data secara eksponensial, mencakup catatan transaksi harian, log sistem, data pengguna, laporan keuangan, dan dokumen audit \cite{5}. Institusi keuangan diperkirakan memproses jutaan transaksi setiap hari, menghasilkan ratusan gigabyte hingga terabyte data yang harus diarsipkan secara aman untuk kebutuhan operasional jangka panjang, audit, dan kepatuhan regulasi. Oleh karena itu, organisasi memerlukan sistem penyimpanan data yang aman sekaligus efisien, disertai mekanisme cadangan yang mampu menjamin ketersediaan dan integritas data.
+
+Salah satu ancaman keamanan siber paling signifikan bagi organisasi modern adalah ransomware, yaitu jenis \textit{malware} yang mengenkripsi data korban dan menuntut pembayaran tebusan untuk memulihkan akses \cite{5}, \cite{6}. Serangan ransomware modern semakin canggih karena tidak hanya menargetkan sistem produksi, tetapi juga mengompromikan infrastruktur cadangan yang terhubung \cite{7}, \cite{8}. Ketika sistem cadangan terinfeksi, organisasi dapat kehilangan kemampuan memulihkan data kritis, yang berujung pada gangguan operasional, kerugian finansial, dan kerusakan reputasi \cite{9}. Menurut laporan Sophos \textit{State of Ransomware in Financial Services 2024}, sekitar 43\% perangkat pada organisasi keuangan terdampak insiden ransomware. Akibatnya, sistem cadangan konvensional yang terhubung tidak lagi memadai untuk memberikan perlindungan yang andal. Salah satu strategi mitigasi yang efektif adalah penerapan arsitektur cadangan \textit{air-gapped}, di mana penyimpanan cadangan diisolasi secara fisik atau logis dari jaringan utama, sehingga mencegah ransomware mengakses data cadangan secara langsung \cite{10}. Namun, penerapan infrastruktur \textit{air-gapped} fisik sepenuhnya sering kali mahal dan kompleks secara operasional bagi organisasi kecil dan menengah, khususnya di negara berkembang. Oleh karena itu, penelitian ini mengadopsi pendekatan \textit{air-gapped} logis menggunakan \textit{mounting} terkontrol dan media cadangan terisolasi untuk memberikan ketahanan ransomware yang praktis sekaligus menjaga kelayakan operasional dan biaya penerapan yang lebih rendah. Pendekatan yang diusulkan memprioritaskan keterjangkauan, kemudahan penerapan, dan kompatibilitas dengan infrastruktur berbasis awan yang umum digunakan oleh organisasi lokal dan institusi keuangan.
+
+Selain tantangan keamanan, efisiensi penyimpanan juga menjadi perhatian utama akibat pertumbuhan volume data arsip yang terus-menerus. Penyimpanan awan dingin (\textit{cold cloud storage}) telah menjadi solusi yang banyak diadopsi untuk menyimpan data yang jarang diakses seperti log transaksi, catatan audit, dan cadangan sistem karena biaya operasionalnya yang lebih rendah \cite{11}. Namun, penyimpanan data cadangan berskala besar di lingkungan awan tetap memerlukan optimasi penyimpanan dan manajemen bandwidth yang efisien. Teknik kompresi \textit{lossless} umum digunakan untuk mengurangi konsumsi penyimpanan sambil menjaga integritas data \cite{12}, \cite{13}. Meskipun demikian, penelitian terdahulu umumnya berfokus pada keamanan cadangan, mitigasi ransomware, atau teknik kompresi secara terpisah, sehingga integrasi antara arsitektur cadangan aman dan mekanisme optimasi penyimpanan adaptif menjadi terbatas \cite{14}, \cite{15}. Lebih lanjut, sebagian besar sistem yang ada menggunakan algoritma kompresi statis tunggal, padahal tipe berkas dan ukuran data yang berbeda menunjukkan karakteristik kompresi dan \textit{trade-off} kinerja yang bervariasi \cite{16}, \cite{17}.
+
+Berbeda dengan penelitian terdahulu yang umumnya mengandalkan metode kompresi statis atau mekanisme perlindungan cadangan yang terpisah, penelitian ini mengusulkan sistem cadangan awan terintegrasi yang menggabungkan arsitektur penyimpanan \textit{air-gapped} dengan kerangka kerja algoritma multi-kompresi adaptif. Sistem yang diusulkan secara dinamis memilih di antara lima algoritma kompresi \textit{lossless}---Gzip, Zstandard, Brotli, LZ4, dan Snappy---menggunakan mekanisme seleksi adaptif berbasis aturan berdasarkan karakteristik berkas seperti ukuran berkas dan tipe data untuk mengoptimalkan rasio kompresi, kecepatan proses, dan pemanfaatan sumber daya. Selain itu, penelitian ini secara khas mengintegrasikan mekanisme deteksi anomali multi-indikator yang terdiri dari analisis \textit{hash} SHA-256, validasi metadata, dan inspeksi struktur berkas untuk membedakan perilaku enkripsi ransomware dari aktivitas enkripsi AES-256 yang sah dalam lingkungan cadangan awan. Kemampuan ini menjawab keterbatasan penting pada penelitian terdahulu, di mana berkas terenkripsi sering diperlakukan secara seragam tanpa membedakan enkripsi jahat dari proses enkripsi keamanan yang terotorisasi.
+
+Oleh karena itu, penelitian ini memberikan kontribusi berupa pendekatan terintegrasi yang secara simultan menangani ketahanan ransomware, isolasi cadangan, efisiensi kompresi adaptif, dan verifikasi integritas dalam satu kerangka kerja cadangan berbasis awan. Dengan menggabungkan arsitektur \textit{air-gapped}, kompresi multi-algoritma adaptif, enkripsi AES-256, verifikasi integritas SHA-256, dan deteksi anomali multi-indikator, sistem yang diusulkan diharapkan dapat meningkatkan baik keamanan cadangan maupun efisiensi penyimpanan jangka panjang bagi infrastruktur data keuangan di lingkungan awan \cite{18}, \cite{19}, \cite{20}.
+
+\section{Penelitian Terkait}
+\label{sec:terkait}
+Beberapa penelitian terdahulu telah membahas sistem cadangan berbasis awan, teknik kompresi data, dan metode mitigasi ransomware. Namun, sebagian besar penelitian hanya berfokus pada satu aspek secara terpisah, seperti kinerja kompresi, efisiensi penyimpanan, atau keamanan cadangan, tanpa mengintegrasikan komponen-komponen tersebut ke dalam satu sistem terpadu. Selain itu, penelitian sebelumnya jarang membahas perbedaan mendasar antara arsitektur cadangan \textit{air-gapped} dan konvensional (non-\textit{air-gapped}) dalam skenario mitigasi ransomware. Perbandingan penelitian terkait dan sistem yang diusulkan disajikan pada Tabel~\ref{tab:related_work}.
+
+\begin{table}[H]
+\centering
+\fontsize{8pt}{10pt}\selectfont
+\caption{Penelitian terkait}
+\label{tab:related_work}
+\begin{tabularx}{\textwidth}{@{}c p{2.2cm} X X X X@{}}
+\hline
+\textbf{No} & \textbf{Studi} & \textbf{Fokus Penelitian} & \textbf{Metode} & \textbf{Keterbatasan} & \textbf{Kontribusi penelitian ini} \\
+\hline
+1 & M. Smith dan Lee, Data in Brief 2023 & Evaluasi kinerja algoritma kompresi & Gzip, Zstd, Brotli, LZ4, Snappy & Tidak membahas keamanan cadangan & Mengintegrasikan kompresi dengan sistem cadangan \\
+2 & S. Kumar dan R. Patel, 2024 & Kompresi data pada e-commerce berbasis awan & Brotli, Snappy, Gzip & Hanya berfokus pada kinerja transfer data & Diterapkan dalam sistem cadangan untuk efisiensi penyimpanan \\
+3 & A. Novak, P. Chen, dan R. Singh (2021) & Sistem cadangan untuk mitigasi ransomware & Kompresi hibrida + air-gapped & Fokus terbatas pada sektor keuangan & Implementasi cadangan awan dengan mekanisme deteksi anomali \\
+4 & S. Kumar dan R. Patel, IEEE Access, 2022 & Optimasi cadangan awan terhadap ransomware & Zstd, LZ4, Gzip & Tidak memberikan perbandingan komprehensif banyak algoritma & Evaluasi banyak algoritma kompresi \\
+5 & M. Sahu dan J. Panda, arXiv & Studi kompresi & Snappy, Gzip, BZIP2 & Analisis aspek efisiensi terbatas & Integrasi efisiensi penyimpanan dan keamanan \\
+6 & NIST (2024) Panduan Cadangan Air-Gapped & Cadangan luring aman untuk perlindungan ransomware & Penyimpanan air-gapped fisik/logis & Tidak mengoptimalkan efisiensi penyimpanan, tanpa kompresi & Menggabungkan cadangan air-gapped dengan multi-kompresi adaptif dan deteksi anomali \\
+\hline
+\end{tabularx}
+\end{table}
+
+Penelitian terdahulu umumnya berfokus pada kinerja kompresi atau keamanan cadangan secara terpisah. Smith dan Lee mengevaluasi beberapa algoritma kompresi tetapi tidak membahas perlindungan ransomware. Kumar dan Patel berfokus pada optimasi penyimpanan dan efisiensi cadangan awan tetapi tidak memiliki mekanisme deteksi anomali dan pemulihan otomatis. Sementara itu, Novak dkk. memperkenalkan sistem cadangan \textit{air-gapped} untuk mitigasi ransomware; namun, implementasinya masih terbatas dan tidak mengevaluasi efisiensi penyimpanan secara komprehensif.
+
+Berdasarkan keterbatasan tersebut, kebaruan (\textit{novelty}) penelitian yang diusulkan terletak pada pengintegrasian perlindungan cadangan \textit{air-gapped}, kompresi \textit{lossless} multi-algoritma adaptif, dan deteksi anomali menggunakan verifikasi \textit{hash} dan metadata dalam satu arsitektur cadangan berbasis awan. Integrasi ini meningkatkan ketahanan ransomware, efisiensi penyimpanan, kemampuan pemulihan otomatis, dan kelayakan penerapan praktis untuk lingkungan cadangan awan skala perusahaan.
+
+\begin{table}[H]
+\centering
+\fontsize{8pt}{10pt}\selectfont
+\caption{Perbandingan konseptual sistem cadangan air-gapped dan non air-gapped}
+\label{tab:airgap_comparison}
+\begin{tabularx}{\textwidth}{@{}p{3.2cm} X X@{}}
+\hline
+\textbf{Aspek} & \textbf{Cadangan Air-Gapped} & \textbf{Cadangan Non Air-Gapped} \\
+\hline
+Konektivitas jaringan & Terisolasi (fisik atau logis) & Terhubung ke sistem utama \\
+Ketahanan ransomware & Tinggi & Rendah \\
+Risiko infeksi cadangan & Minimal & Berpotensi terkompromi \\
+Integritas data & Terjaga & Tidak pasti / gagal \\
+Kemampuan pemulihan & Andal & Tidak pasti / gagal \\
+Tingkat keamanan & Sangat tinggi & Sedang \\
+Strategi kompresi & Multi-algoritma adaptif & Kompresi statis tunggal \\
+Efisiensi penyimpanan & Reduksi hingga 70--80\% & Sedang \\
+\hline
+\end{tabularx}
+\end{table}
+
+Sebagaimana ditunjukkan pada Tabel~\ref{tab:airgap_comparison}, sistem cadangan \textit{air-gapped} memberikan perlindungan ransomware yang lebih kuat karena penyimpanan cadangan diisolasi dari jaringan utama. Namun, penelitian terdahulu belum sepenuhnya mengintegrasikan pendekatan ini dengan optimasi penyimpanan dan mekanisme deteksi anomali, yang memotivasi sistem yang diusulkan dalam penelitian ini. Dalam lingkungan penerapan praktis, banyak organisasi kecil dan menengah di Indonesia masih mengandalkan sistem cadangan awan konvensional yang terhubung atau solusi cadangan \textit{hosting} bawaan yang menggunakan kompresi algoritma tunggal dan repositori penyimpanan yang terus terhubung. Meskipun pendekatan ini memberikan kesederhanaan operasional, mereka tetap rentan terhadap propagasi ransomware karena repositori cadangan dapat diakses langsung dari sistem yang terkompromi.
+
+Dibandingkan dengan pendekatan cadangan konvensional, sistem yang diusulkan memberikan perlindungan tambahan melalui isolasi \textit{air-gapped} logis, verifikasi integritas otomatis, kompresi multi-algoritma adaptif, dan mekanisme pemulihan yang sadar-ransomware. Hasil eksperimen menunjukkan bahwa sistem yang diusulkan mencapai reduksi penyimpanan hingga 70--80\% untuk dataset terstruktur berukuran besar sambil mempertahankan pemulihan berhasil 100\% selama skenario simulasi ransomware.
+
+\section{Metode}
+\label{sec:metode}
+Penelitian ini menggunakan desain eksperimen kuantitatif untuk mengevaluasi kinerja sistem cadangan berbasis awan yang mengintegrasikan beberapa algoritma kompresi \textit{lossless} \cite{22}, \cite{23}, \cite{24}, \cite{25}. Setiap algoritma diuji secara independen dalam konfigurasi mode-tunggal dengan parameter evaluasi mencakup efisiensi penyimpanan, waktu proses, dan ketahanan terhadap serangan ransomware tersimulasi. Sistem yang diusulkan mengadopsi arsitektur cadangan \textit{air-gapped} hibrida yang menggabungkan penyimpanan lokal luring dan penyimpanan awan \cite{26}, \cite{27}. Lingkungan eksperimen dirancang menyerupai sistem informasi keuangan dunia nyata, yang dicirikan oleh kebutuhan penyimpanan data berskala besar dan retensi jangka panjang, sekaligus memasukkan aspek deteksi dan mitigasi ransomware sebagaimana dibahas pada penelitian terdahulu \cite{28}, \cite{29}.
+
+\subsection{Arsitektur sistem}
+Arsitektur sistem yang diusulkan disusun menjadi tiga lapisan logis yang mendukung proses cadangan, kompresi, dan deteksi \cite{30}. Pada lapisan aplikasi, sistem mengelola operasi unggah berkas, cadangan, dan pemulihan. Setiap berkas masuk menjalani komputasi \textit{hash} kriptografis menggunakan algoritma SHA-256, ekstraksi metadata, dan analisis struktur berkas untuk membentuk garis dasar (\textit{baseline}) integritas. Informasi ini disimpan sebagai referensi untuk mendeteksi perubahan berkas di masa mendatang dan untuk membedakan modifikasi yang sah (misalnya cadangan atau enkripsi normal) dari perubahan jahat akibat aktivitas ransomware.
+
+Pada lapisan perlindungan dan kompresi, sistem melakukan inspeksi metadata awal untuk mendeteksi potensi anomali. Berkas kemudian diamankan menggunakan enkripsi AES-256 untuk menjamin kerahasiaan data. Setelah enkripsi, berkas dikompresi menggunakan lima algoritma kompresi \textit{lossless}: Gzip, Zstandard (Zstd), Brotli, LZ4, dan Snappy \cite{31}. Setiap algoritma diterapkan secara independen pada dataset yang sama untuk memperoleh pengukuran empiris, termasuk rasio kompresi dan waktu proses, yang memungkinkan perbandingan kinerja yang konsisten \cite{32}.
+
+\begin{figure}[H]
+\centering
+\figplaceholder{9cm}{figure1}
+\vspace{.7em}
+\caption{Arsitektur sistem yang diusulkan mengintegrasikan enkripsi AES-256, kompresi multi-algoritma, dan cadangan air-gapped untuk perlindungan ransomware}
+\label{fig:architecture}
+\end{figure}
+
+Pada lapisan penyimpanan dan deteksi, berkas terenkripsi dan terkompresi disimpan dalam lingkungan \textit{air-gapped} untuk menjamin isolasi fisik dari jaringan produksi dan meningkatkan ketahanan terhadap serangan ransomware. Selain itu, data cadangan disinkronkan ke penyimpanan awan melalui Google Drive API untuk redundansi. Metadata kritis, termasuk ukuran berkas, waktu proses, dan nilai \textit{hash} SHA-256, dicatat untuk analisis kinerja, verifikasi integritas, dan deteksi anomali. Ketika aktivitas ransomware terdeteksi, sistem secara otomatis memulai proses pemulihan dari penyimpanan \textit{air-gapped}, diikuti dekompresi dan dekripsi AES-256 untuk memulihkan berkas ke keadaan aslinya.
+
+\subsection{Dataset dan akuisisi data}
+Dataset yang digunakan dalam penelitian ini terdiri dari data yang dibangkitkan secara sintetis yang dirancang menyerupai struktur cadangan perusahaan dan keuangan dunia nyata yang diadaptasi dari lingkungan operasional PT Equnix \cite{33}. Tidak ada data keuangan atau data produksi rahasia yang nyata yang digunakan dalam penelitian ini untuk menjaga kepatuhan privasi dan kerahasiaan data \cite{34}.
+
+\begin{table}[H]
+\centering
+\fontsize{8pt}{10pt}\selectfont
+\caption{Karakteristik dataset yang digunakan dalam eksperimen}
+\label{tab:dataset}
+\begin{tabularx}{\textwidth}{@{}c p{1.9cm} p{1.4cm} c p{2.0cm} X@{}}
+\hline
+\textbf{No} & \textbf{Tipe Data} & \textbf{Format Berkas} & \textbf{Jumlah Berkas} & \textbf{Rentang Ukuran} & \textbf{Deskripsi} \\
+\hline
+1 & Data transaksi terstruktur & CSV & 9 berkas & 500 KB -- 1 GB & Digunakan untuk mengevaluasi kinerja kompresi pada data teks terstruktur dengan pola berulang; ukuran berkas divariasikan bertahap untuk menganalisis rasio kompresi dan waktu proses dari skala kecil ke besar. \\
+2 & Data log sistem & TXT / LOG & 9 berkas & 500 KB -- 1 GB & Mewakili log aplikasi dan jejak audit dengan struktur teks berulang; juga digunakan dalam simulasi serangan ransomware karena log adalah target umum. \\
+3 & Dokumen visual & JPG & 14 berkas & 154 -- 249 KB & Mewakili berkas biner dengan kompresi inheren, digunakan untuk mengevaluasi keterbatasan algoritma kompresi pada data yang sudah terkompresi. \\
+4 & Dokumen spreadsheet & XLSX & 11 berkas & 500 KB -- 650 MB & Mewakili laporan operasional dan keuangan yang umum digunakan pada sistem informasi keuangan. \\
+\hline
+\end{tabularx}
+\end{table}
+
+Dataset mencakup berbagai format berkas seperti CSV, LOG/TXT, JPG, dan XLSX dengan ukuran berkas yang beragam. Keberagaman ini memungkinkan evaluasi komprehensif lintas tipe data dan skala penyimpanan yang berbeda, mencerminkan sistem keuangan berbasis awan praktis dan mendukung skenario simulasi ransomware \cite{35}.
+
+\subsection{Implementasi enkripsi dan dekripsi AES-256}
+Untuk menjamin kerahasiaan data, sistem mengimplementasikan \textit{Advanced Encryption Standard} (AES) dengan kunci 256-bit sebagai algoritma enkripsi simetris. Selama proses cadangan, berkas asli (\textit{plaintext}) dienkripsi menggunakan kunci rahasia AES-256, menghasilkan \textit{ciphertext} yang tidak terbaca. Berkas terenkripsi kemudian dikompresi dan disimpan pada penyimpanan \textit{air-gapped} dan awan. Selama proses pemulihan, berkas diambil dari penyimpanan, diikuti dekompresi dan dekripsi menggunakan kunci yang sama untuk mengubah \textit{ciphertext} kembali menjadi \textit{plaintext}. Integritas data selanjutnya diverifikasi menggunakan \textit{hashing} SHA-256 untuk memastikan tidak ada kerusakan atau modifikasi tidak sah.
+
+\begin{figure}[H]
+\centering
+\figplaceholder{9cm}{figure2}
+\vspace{.7em}
+\caption{Proses enkripsi dan dekripsi AES-256 menggunakan kunci rahasia simetris}
+\label{fig:aes}
+\end{figure}
+
+\subsection{Implementasi algoritma kompresi}
+Mekanisme kompresi adaptif yang diimplementasikan dalam penelitian ini menggunakan strategi seleksi berbasis aturan alih-alih \textit{machine learning}. Algoritma kompresi dipilih secara otomatis berdasarkan karakteristik tipe dan ukuran berkas yang diidentifikasi selama pengujian awal. Berkas berbasis teks kecil seperti LOG dan TXT terutama ditugaskan ke Snappy atau LZ4 karena kecepatan proses dan \textit{overhead} komputasi yang rendah. Berkas terstruktur besar seperti CSV dan XLSX diproses menggunakan Zstandard untuk mencapai rasio kompresi lebih tinggi demi efisiensi penyimpanan jangka panjang. Sementara itu, berkas biner yang sudah terkompresi seperti JPG diproses menggunakan algoritma ringan untuk meminimalkan \textit{overhead} kompresi yang tidak perlu dan waktu eksekusi.
+
+Sistem mengimplementasikan lima algoritma kompresi \textit{lossless} sumber terbuka Gzip, Zstandard, Brotli, LZ4, dan Snappy untuk mengevaluasi kinerjanya dalam lingkungan cadangan berbasis awan \cite{36}. Gzip dipilih karena kompatibilitasnya yang luas, sementara Zstandard dan Brotli digunakan karena rasio kompresinya yang tinggi. Sebaliknya, LZ4 dan Snappy digunakan karena karakteristik kecepatan proses tinggi dan latensi rendah \cite{37}. Implementasi dikembangkan dalam Python, di mana setiap berkas dataset dikompresi secara independen menggunakan kelima algoritma pada kondisi eksperimen yang identik \cite{38}. Evaluasi kinerja mencakup pengukuran rasio kompresi dan waktu proses untuk memberikan analisis komprehensif atas efisiensi penyimpanan dan kinerja komputasi \cite{39}, serta fleksibilitas implementasi untuk sistem cadangan hibrida \textit{edge}-awan \cite{40}.
+
+\subsection{Prosedur cadangan dan pemulihan}
+Proses cadangan dimulai dengan komputasi \textit{hash} SHA-256 untuk membentuk garis dasar integritas data. Berkas kemudian dienkripsi menggunakan AES-256 untuk menjamin kerahasiaan, diikuti kompresi menggunakan algoritma \textit{lossless} terpilih. Berkas hasil disimpan sementara dalam direktori \textit{air-gapped} sebelum ditransfer ke penyimpanan awan. Selain mekanisme \textit{air-gapped}, strategi \textit{mirroring} diterapkan untuk meningkatkan ketersediaan data dan kesiapan pemulihan. Pada kondisi normal, ketika tidak ada anomali atau indikator ransomware yang terdeteksi berdasarkan verifikasi \textit{hash} dan metadata, sistem berhenti setelah menyelesaikan proses cadangan tanpa memulai pemulihan. Pendekatan ini meminimalkan operasi pemulihan yang tidak perlu dan mengurangi \textit{overhead} sistem.
+
+Proses pemulihan dipicu hanya ketika anomali terdeteksi, seperti ketidakcocokan \textit{hash}, inkonsistensi metadata, atau indikasi enkripsi tidak sah. Dalam kasus tersebut, data diambil dari penyimpanan \textit{air-gapped}, didekompresi, dan didekripsi untuk memulihkan berkas asli. Berkas yang dipulihkan kemudian divalidasi dengan membandingkan nilai \textit{hash}-nya terhadap garis dasar referensi.
+
+\begin{figure}[H]
+\centering
+\figplaceholder{9cm}{figure3}
+\vspace{.7em}
+\caption{Diagram alir sistem cadangan dan pemulihan}
+\label{fig:backup_flow}
+\end{figure}
+
+\subsection{Simulasi serangan ransomware}
+Untuk mengevaluasi ketahanan sistem cadangan yang diusulkan, simulasi serangan ransomware dilakukan tanpa mengeksekusi \textit{malware} yang sebenarnya. Simulasi ini didasarkan pada pola kerentanan dunia nyata, termasuk CVE-2017-0144 yang mewakili model serangan \textit{encrypt-and-hold}; CVE-2021-36934 yang mensimulasikan perilaku penimpaan dan perusakan berkas; serta CVE-2018-8453 yang menargetkan metadata dan struktur \textit{header} berkas. Pada setiap skenario, modifikasi berkas dilakukan secara terkontrol untuk meniru kerusakan akibat ransomware. Tujuan simulasi ini adalah menilai kemampuan sistem dalam mendeteksi anomali dan memulihkan berkas terdampak dari cadangan \textit{air-gapped}.
+
+\subsection{Mekanisme deteksi ransomware dan pembedaan enkripsi}
+Pada sistem awan modern, berkas dapat menjalani proses kompresi dan enkripsi yang sah, sehingga memerlukan pembedaan dari enkripsi akibat ransomware. Mekanisme deteksi dalam penelitian ini menggabungkan verifikasi \textit{hash} SHA-256, analisis metadata, dan validasi cadangan \textit{air-gapped}. \textit{Hash} setiap berkas dihitung sebagai garis dasar integritas dan diverifikasi ulang selama inspeksi untuk mendeteksi perubahan tidak sah. Selain itu, konsistensi metadata seperti ukuran berkas, waktu modifikasi, tipe berkas, dan ekstensi dianalisis bersama karakteristik struktur berkas untuk mengidentifikasi perubahan abnormal yang tidak konsisten dengan proses enkripsi atau kompresi AES-256 yang sah.
+
+Jika ditemukan ketidaksesuaian antara penyimpanan utama dan salinan cadangan \textit{air-gapped}, sistem mengklasifikasikan kondisi tersebut sebagai potensi kompromi. Berdasarkan hasil validasi \textit{hash}, metadata, dan cadangan, berkas dikategorikan menjadi kondisi normal, modifikasi sah, atau indikasi ransomware, sehingga memungkinkan deteksi dini dan pemulihan data yang aman.
+
+\subsection{Metrik evaluasi kinerja}
+Kinerja sistem cadangan berbasis awan dengan kompresi multi-algoritma dievaluasi melalui analisis eksperimen kuantitatif. Beberapa metrik digunakan untuk menilai efisiensi penyimpanan, kinerja proses, integritas data, dan ketahanan sistem. \textit{Compression Ratio} (CR) didefinisikan sebagai:
+
+\begin{equation}
+CR = \frac{S_{after}}{S_{before}}
+\end{equation}
+
+dengan $S_{before}$ merepresentasikan ukuran berkas sebelum kompresi dan $S_{after}$ merepresentasikan ukuran berkas setelah kompresi. \textit{Compression Factor} (CF) menunjukkan berapa kali ukuran data asli tereduksi setelah kompresi dan merupakan kebalikan dari rasio kompresi. Nilai CF yang lebih tinggi menunjukkan efisiensi kompresi yang lebih baik:
+
+\begin{equation}
+CF = \frac{S_{before}}{S_{after}}
+\end{equation}
+
+\textit{Storage Saving Percentage} (SS) digunakan untuk mengukur persentase ruang penyimpanan yang dihemat setelah kompresi, yang sangat penting dalam skenario penyimpanan awan jangka panjang:
+
+\begin{equation}
+SS = \frac{S_{before} - S_{after}}{S_{before}} \times 100\%
+\end{equation}
+
+Untuk mengevaluasi efisiensi algoritma kompresi secara komprehensif, penelitian ini memperkenalkan skor efisiensi gabungan ($E$) yang mengintegrasikan efisiensi penyimpanan dan efisiensi waktu kompresi. Skor ini dihitung menggunakan pendekatan \textit{Multi-Criteria Decision Making} (MCDM) dengan \textit{Weighted Sum Model} (WSM), dirumuskan sebagai:
+
+\begin{equation}
+E = \alpha (1 - R) + \beta \left( \frac{1}{T} \right)
+\end{equation}
+
+dengan $R$ menyatakan rasio kompresi, di mana $(1-R)$ merepresentasikan efisiensi penyimpanan, dan $T$ merepresentasikan waktu kompresi dalam detik, dengan $1/T$ menunjukkan efisiensi waktu proses. Parameter $\alpha$ dan $\beta$ adalah faktor pembobot yang mengontrol kontribusi masing-masing komponen, ditetapkan $\alpha = 0{,}5$ dan $\beta = 0{,}5$ untuk memastikan evaluasi yang seimbang antara efisiensi penyimpanan dan kecepatan proses. Untuk memungkinkan perbandingan relatif antar-algoritma, skor efisiensi gabungan dinormalisasi sebagai berikut:
+
+\begin{equation}
+E(\%) = \frac{E}{E_{max}} \times 100
+\end{equation}
+
+Interpretasi skor efisiensi gabungan didasarkan pada klasifikasi kinerja yang ditunjukkan pada Tabel~\ref{tab:efficiency_criteria}.
+
+\begin{table}[H]
+\centering
+\fontsize{8pt}{10pt}\selectfont
+\caption{Kriteria interpretasi skor efisiensi sistem}
+\label{tab:efficiency_criteria}
+\begin{tabularx}{\textwidth}{@{}c c X@{}}
+\hline
+\textbf{Skor (\%)} & \textbf{Status} & \textbf{Deskripsi} \\
+\hline
+$\geq 90$ & Sangat baik & Kinerja sangat tinggi baik pada efisiensi penyimpanan maupun kecepatan proses \\
+80--89 & Baik & Kinerja kuat, sesuai untuk sistem berkinerja tinggi \\
+70--79 & Cukup & Salah satu aspek dominan sementara aspek lain relatif lebih lemah \\
+$< 70$ & Kurang & Efisiensi keseluruhan rendah \\
+\hline
+\end{tabularx}
+\end{table}
+
+Selain metrik efisiensi kompresi, penelitian ini juga mengevaluasi kinerja pemulihan sistem sebagai bagian dari ketahanan sistem secara keseluruhan. \textit{Recovery Time Objective} (RTO) merepresentasikan total waktu yang diperlukan sistem untuk memulihkan operasi normal setelah serangan ransomware terdeteksi:
+
+\begin{equation}
+RTO = T_{recovery} - T_{incident}
+\end{equation}
+
+dengan $T_{incident}$ adalah waktu ketika serangan ransomware teridentifikasi, dan $T_{recovery}$ adalah waktu ketika sistem telah pulih sepenuhnya. Nilai RTO yang lebih rendah menunjukkan kinerja pemulihan yang lebih cepat dan ketahanan sistem yang lebih tinggi. Untuk mengevaluasi keandalan deteksi ransomware, penelitian ini juga mengukur \textit{False Positive Rate} (FPR) dan \textit{False Negative Rate} (FNR). Metrik ini digunakan untuk menilai kemampuan sistem dalam membedakan aktivitas enkripsi cadangan yang sah dari modifikasi tidak sah akibat ransomware. \textit{False Positive Rate} (FPR) didefinisikan sebagai:
+
+\begin{equation}
+FPR = \frac{FP}{FP + TN} \times 100\%
+\end{equation}
+
+\textit{False Negative Rate} (FNR) didefinisikan sebagai:
+
+\begin{equation}
+FNR = \frac{FN}{FN + TP} \times 100\%
+\end{equation}
+
+dengan FP merepresentasikan kasus \textit{False Positive}, di mana berkas normal keliru diidentifikasi sebagai ransomware; TN merepresentasikan kasus \textit{True Negative}, di mana berkas normal benar diidentifikasi sebagai aman; FN merepresentasikan kasus \textit{False Negative}, di mana berkas terinfeksi ransomware tidak terdeteksi; dan TP merepresentasikan kasus \textit{True Positive}, di mana berkas terinfeksi ransomware berhasil terdeteksi. Nilai FPR dan FNR yang lebih rendah menunjukkan keandalan mekanisme deteksi yang lebih tinggi dan ketahanan sistem yang lebih baik terhadap serangan ransomware.
+
+\section{Hasil dan Pembahasan}
+\label{sec:hasil}
+Hasil eksperimen menunjukkan bahwa sistem cadangan awan yang diusulkan memberikan perlindungan data, kompresi, dan kinerja pemulihan yang andal. Seluruh berkas mempertahankan nilai \textit{hash} SHA-256 yang identik, menandakan tidak adanya perubahan data. Zstandard mencapai efisiensi kompresi tertinggi, sementara Snappy dan LZ4 memberikan waktu proses tercepat. Selama simulasi ransomware, mekanisme \textit{air-gapped} memungkinkan pemulihan berhasil 100\% tanpa galat, menunjukkan ketahanan sistem yang kuat.
+
+\subsection{Lingkungan eksperimen}
+Seluruh eksperimen dilakukan secara lokal pada sistem yang menjalankan Windows 11 (64-bit). Konfigurasi perangkat keras dan perangkat lunak yang digunakan dalam penelitian ini diringkas pada Tabel~\ref{tab:experimental_setup}.
+
+\begin{table}[H]
+\centering
+\fontsize{8pt}{10pt}\selectfont
+\caption{Pengaturan eksperimen}
+\label{tab:experimental_setup}
+\begin{tabular}{ll}
+\hline
+\textbf{Komponen} & \textbf{Konfigurasi} \\
+\hline
+Sistem Operasi & Windows 11 (64-bit) \\
+CPU & Intel Core i7-11800H (8-core) \\
+RAM & 16 GB \\
+Bahasa Pemrograman & Python 3.10 \\
+\textit{Backend Framework} & Flask \\
+\textit{UI Dashboard} & HTML, CSS, JavaScript \\
+Pustaka Kompresi & Gzip, Zstandard, Brotli, LZ4, Snappy \\
+Penyimpanan Awan & Google Drive API (Service Account) \\
+Pustaka Kriptografi & PyCryptodome 3.20 \\
+Media Cadangan & Penyimpanan terisolasi berbasis SSD eksternal/VHDX \\
+\hline
+\end{tabular}
+\end{table}
+
+Lingkungan tersebut memastikan bahwa hasil eksperimen dapat direproduksi dan mencerminkan skenario penerapan realistis untuk sistem cadangan berbasis awan. Konfigurasi perangkat keras yang dipilih merepresentasikan lingkungan konsumen berkinerja menengah-ke-tinggi yang umum digunakan pada sistem cadangan perusahaan. Sementara itu, penggunaan beberapa pustaka kompresi memungkinkan evaluasi komparatif antara efisiensi rasio kompresi dan eksekusi.
+
+\subsection{Hasil simulasi sistem pada kondisi normal (tanpa serangan)}
+Evaluasi pada kondisi normal berfokus pada alur kerja utama sistem, mencakup inisialisasi koneksi penyimpanan awan, kompresi menggunakan beberapa algoritma \textit{lossless}, penyimpanan cadangan aman, dan validasi integritas data.
+
+\subsubsection{Inisialisasi koneksi penyimpanan awan}
+Sebagaimana ditunjukkan pada Gambar~\ref{fig:drive_conn}, sistem berhasil membangun koneksi aman ke Google Drive menggunakan mekanisme OAuth 2.0. Setiap sesi cadangan menghasilkan ID sesi unik, memastikan seluruh operasi dilakukan dalam lingkungan terotentikasi. Hasil ini menunjukkan bahwa sistem menyediakan kontrol akses aman, mencegah interaksi tidak sah dengan penyimpanan awan selama proses cadangan.
+
+\begin{figure}[H]
+\centering
+\figplaceholder{9cm}{figure4}
+\vspace{.7em}
+\caption{Hasil koneksi Drive (ID sesi)}
+\label{fig:drive_conn}
+\end{figure}
+
+Keberhasilan otentikasi OAuth 2.0 menunjukkan bahwa mekanisme cadangan dapat membangun komunikasi secara aman dengan penyimpanan awan sekaligus mencegah akses tidak sah. Penggunaan ID sesi unik juga meningkatkan kemampuan penelusuran dan audit, yang penting pada sistem cadangan yang menangani data sensitif.
+
+\subsubsection{Proses unggah berkas dan deduplikasi}
+Sebagaimana ditunjukkan pada Gambar~\ref{fig:upload}, sistem melakukan unggah berkas diikuti validasi awal menggunakan \textit{hashing} SHA-256 dan verifikasi metadata sebelum melanjutkan ke kompresi dan enkripsi. Proses ini memastikan hanya berkas yang valid dan terverifikasi yang diproses, mengurangi redundansi dan meningkatkan efisiensi penyimpanan. Validasi awal juga membantu mendeteksi inkonsistensi sebelum cadangan dilakukan, sehingga memperkuat integritas data secara keseluruhan.
+
+\begin{figure}[H]
+\centering
+\figplaceholder{9cm}{figure5}
+\vspace{.7em}
+\caption{Hasil unggah cadangan Google Drive}
+\label{fig:upload}
+\end{figure}
+
+Proses validasi sebelum kompresi mengurangi kemungkinan menyimpan berkas duplikat atau rusak. Hal ini berkontribusi pada efisiensi penyimpanan dan meminimalkan operasi cadangan yang tidak perlu, khususnya untuk lingkungan cadangan berskala besar.
+
+\subsubsection{Validasi hash dan metadata}
+Sebagaimana ditunjukkan pada Gambar~\ref{fig:sha_json}, sistem melakukan validasi integritas menggunakan algoritma \textit{hashing} SHA-256 untuk memastikan konten berkas tetap tidak berubah selama proses cadangan. Setiap berkas yang diunggah diproses untuk menghasilkan nilai \textit{hash} unik yang berfungsi sebagai sidik jari digital untuk verifikasi integritas.
+
+\begin{figure}[H]
+\centering
+\figplaceholder{9cm}{figure6}
+\vspace{.7em}
+\caption{Hasil SHA-256 untuk berkas JSON}
+\label{fig:sha_json}
+\end{figure}
+
+Selain verifikasi \textit{hash}, sistem memvalidasi metadata seperti ukuran berkas, waktu modifikasi terakhir, tipe MIME, ekstensi berkas, dan struktur berkas dasar. Seluruh informasi ini, termasuk nilai \textit{hash}, disimpan dalam format JSON sebagai referensi garis dasar sebelum cadangan, sebagaimana ditunjukkan pada Gambar~\ref{fig:metadata}.
+
+\begin{figure}[H]
+\centering
+\figplaceholder{9cm}{figure7}
+\vspace{.7em}
+\caption{Hasil metadata dalam format JSON}
+\label{fig:metadata}
+\end{figure}
+
+Mekanisme validasi garis dasar dirancang untuk mendukung verifikasi integritas di sepanjang tahap kompresi, enkripsi, penyimpanan, dan pemulihan. Nilai \textit{hash} dan metadata yang cocok menunjukkan tidak adanya modifikasi tidak sah baik pada konten maupun struktur berkas. Proses validasi yang digunakan dalam penelitian ini diringkas pada Algoritma 1.
+
+\begin{table}[H]
+\centering
+\fontsize{8pt}{10pt}\selectfont
+\begin{tabularx}{\textwidth}{@{}X@{}}
+\hline
+\textbf{Algoritma 1. Proses validasi hash dan metadata} \\
+\hline
+FOR each file IN dataset: \\
+\quad hash = SHA256(file) \\
+\quad metadata = extract\_metadata(file) \\
+\quad IF hash or metadata differ from baseline: mark\_as\_anomaly(file) \\
+\quad ELSE: mark\_as\_safe(file) \\
+\hline
+\end{tabularx}
+\end{table}
+
+Algoritma tersebut menggabungkan verifikasi berbasis \textit{hash} dengan perbandingan metadata untuk meningkatkan kemampuan deteksi anomali. Pendekatan ini memungkinkan sistem mengidentifikasi tidak hanya modifikasi pada level konten tetapi juga perubahan struktural yang umum disebabkan oleh serangan ransomware, seperti perubahan \textit{timestamp}, ekstensi mencurigakan, atau \textit{header} berkas yang rusak.
+
+\begin{figure}[H]
+\centering
+\figplaceholder{9cm}{figure8}
+\vspace{.7em}
+\caption{Hasil validasi hash SHA-256 dan metadata berkas}
+\label{fig:validation}
+\end{figure}
+
+Gambar~\ref{fig:validation} menyajikan hasil validasi yang dihasilkan sistem. Keluaran menunjukkan seluruh berkas berhasil diverifikasi dan tidak ada indikator ransomware yang terdeteksi, sebagaimana ditandai oleh nilai \texttt{detected\_ransom\_files: []}. Hasil ini mengonfirmasi bahwa seluruh berkas berada dalam kondisi aman sebelum memasuki tahap kompresi dan enkripsi. Lebih lanjut, ketiadaan anomali menunjukkan bahwa mekanisme validasi integritas dapat secara efektif membedakan berkas normal dari modifikasi mencurigakan.
+
+\subsubsection{Implementasi enkripsi AES-256}
+Untuk meningkatkan keamanan data, sistem menerapkan \textit{Advanced Encryption Standard} (AES-256) sebelum menyimpan berkas sebagai cadangan. Berkas terverifikasi diproses menggunakan kunci enkripsi yang telah disimpan sebelumnya, menghasilkan berkas terenkripsi berekstensi \texttt{.enc}. AES-256 memberikan tingkat keamanan tinggi dengan panjang kunci 256-bit, melindungi kerahasiaan data dari akses tidak sah.
+
+\begin{figure}[H]
+\centering
+\figplaceholder{9cm}{figure9}
+\vspace{.7em}
+\caption{Log implementasi enkripsi berkas menggunakan algoritma AES-256}
+\label{fig:aes_log}
+\end{figure}
+
+Gambar~\ref{fig:aes_log} menunjukkan log implementasi enkripsi AES-256, mencakup pemuatan kunci enkripsi, eksekusi enkripsi berkas, dan keberhasilan pembuatan berkas terenkripsi. Ini mengonfirmasi bahwa enkripsi beroperasi dengan benar dan menjadi bagian integral dari keamanan sistem cadangan awan. Alur kerja enkripsi yang diimplementasikan pada sistem diringkas pada Algoritma 2.
+
+\begin{table}[H]
+\centering
+\fontsize{8pt}{10pt}\selectfont
+\begin{tabularx}{\textwidth}{@{}X@{}}
+\hline
+\textbf{Algoritma 2. Proses enkripsi AES-256} \\
+\hline
+LOAD encryption\_key \\
+FOR each validated\_file IN dataset: \\
+\quad encrypted\_file = AES256\_Encrypt(validated\_file, encryption\_key) \\
+\quad save(encrypted\_file, ".enc") \\
+\quad log\_encryption\_status(encrypted\_file) \\
+\hline
+\end{tabularx}
+\end{table}
+
+Proses enkripsi dilakukan hanya setelah validasi \textit{hash} dan metadata berhasil diselesaikan. Pendekatan ini memastikan sistem dapat membedakan enkripsi cadangan yang sah dari modifikasi berkas abnormal akibat ransomware. Berbeda dengan perilaku ransomware, mekanisme enkripsi dalam penelitian ini beroperasi dalam lingkungan terkontrol menggunakan kunci enkripsi terotorisasi dan berkas terverifikasi.
+
+\subsection{Hasil kinerja kompresi per algoritma}
+Evaluasi kinerja dilakukan pada berbagai tipe berkas (CSV, XLSX, Log, dan JPG) dengan ukuran berkas yang berbeda.
+
+\begin{table}[H]
+\centering
+\fontsize{8pt}{10pt}\selectfont
+\caption{Hasil kinerja kompresi berdasarkan algoritma dan tipe berkas}
+\label{tab:compression_results}
+\begin{tabularx}{\textwidth}{@{}l l l c c X@{}}
+\hline
+\textbf{Tipe Berkas} & \textbf{Ukuran Berkas} & \textbf{Algoritma Terbaik} & \textbf{Kompresi (\%)} & \textbf{Waktu Kompresi (s)} & \textbf{Deskripsi} \\
+\hline
+CSV & $\leq$ 500 MB & Snappy / LZ4 & 45--60\% & 1--2 & Optimal untuk teks berulang dan proses waktu-nyata. \\
+CSV & $>$ 500 MB & Zstandard & 70--80\% & 5--8 & Efisien untuk penyimpanan skala besar. \\
+XLSX & 500 KB & Snappy & 50\% & 0,5 & Memberikan reduksi ukuran yang memadai. \\
+XLSX & 100--200 MB & LZ4 & 55--65\% & 2--3 & Seimbang antara kecepatan dan efisiensi. \\
+XLSX & 250 MB & Zstandard & 68\% & 4 & Cocok untuk efisiensi penyimpanan maksimum. \\
+XLSX & 350--650 MB & LZ4 & 60--70\% & 3--5 & Rasio kompresi stabil dengan waktu eksekusi rendah. \\
+Log & $\leq$ 100 MB & Snappy & 50\% & 0,8--1,5 & Ideal untuk pencatatan waktu-nyata. \\
+Log & 250--500 MB & LZ4 & 60--70\% & 2--4 & Efisien untuk pemrosesan log secara batch. \\
+Log & $\geq$ 1 GB & Zstandard & 70--80\% & 6--10 & Cocok untuk cadangan jangka panjang. \\
+JPG & 154--249 KB & Snappy / LZ4 & 5--10\% & 0,2--0,5 & Kompresi lossless kurang efektif pada berkas lossy. \\
+JPG & $>$ 250 KB & Zstandard / Brotli & 10--15\% & 1--2 & Fokus pada efisiensi ukuran alih-alih kecepatan. \\
+\hline
+\end{tabularx}
+\end{table}
+
+Tabel~\ref{tab:compression_results} menunjukkan bahwa algoritma berbasis kamus seperti Snappy dan LZ4 memberikan kinerja terbaik untuk berkas teks kecil hingga menengah, menawarkan waktu kompresi sangat cepat dengan penghematan yang memadai. Zstandard berkinerja lebih baik pada berkas besar dengan rasio kompresi lebih tinggi, meskipun memerlukan waktu eksekusi lebih lama, sehingga cocok untuk penyimpanan jangka panjang. Sebaliknya, seluruh algoritma menunjukkan rasio kompresi rendah untuk berkas JPG, menyoroti keterbatasan kompresi \textit{lossless} pada data yang sudah terkompresi.
+
+\begin{figure}[H]
+\centering
+\figplaceholder{9cm}{figure10}
+\vspace{.7em}
+\caption{Hasil analisis keseluruhan algoritma}
+\label{fig:overall_analysis}
+\end{figure}
+
+\subsection{Implementasi dan struktur penyimpanan cadangan air-gapped}
+Sebagai lapisan perlindungan tambahan, sistem menerapkan mekanisme cadangan \textit{air-gapped} menggunakan media penyimpanan terpisah berupa SSD eksternal. Media ini tidak diakses secara permanen oleh sistem, melainkan hanya di-\textit{mount} selama proses cadangan atau pemulihan. Pendekatan ini bertujuan meminimalkan risiko akses tidak sah dan propagasi \textit{malware} melalui kanal jaringan. Implementasi \textit{air-gapped} yang digunakan dalam penelitian ini bersifat daring (\textit{air-gapped} logis), di mana media penyimpanan tetap berada dalam lingkungan sistem melalui pengaturan kontrol akses, sesi aktif, dan mekanisme \textit{mounting} terbatas. Dengan pendekatan ini, media hanya dapat diakses pada kondisi tertentu yang ditetapkan sistem, tanpa koneksi jaringan aktif selama proses penyimpanan cadangan.
+
+Meskipun mekanisme \textit{air-gapped} logis yang diusulkan secara signifikan mengurangi paparan ransomware, ia tidak memberikan tingkat isolasi yang sama dengan infrastruktur \textit{air-gapped} fisik luring sepenuhnya. Karena media cadangan di-\textit{mount} sementara selama sesi cadangan dan pemulihan, \textit{malware} canggih yang mampu bertahan di memori atau eksekusi tertunda mungkin masih berupaya mengakses penyimpanan yang ter-\textit{mount} begitu tersedia. Namun, risiko ini dimitigasi melalui durasi \textit{mounting} sementara, pemutusan otomatis setelah cadangan selesai, verifikasi integritas SHA-256, validasi metadata, repositori cadangan terisolasi, dan sesi akses terbatas. Oleh karena itu, arsitektur yang diusulkan memberikan solusi ketahanan ransomware yang praktis dan hemat biaya, cocok untuk organisasi kecil dan menengah yang mungkin tidak memiliki sumber daya cukup untuk menerapkan infrastruktur \textit{air-gapped} luring fisik sepenuhnya.
+
+\begin{figure}[H]
+\centering
+\figplaceholder{9cm}{figure11}
+\vspace{.7em}
+\caption{Penyimpanan air-gapped daring}
+\label{fig:airgap_storage}
+\end{figure}
+
+Struktur penyimpanan \textit{air-gapped} ditunjukkan pada Gambar~\ref{fig:airgap_storage}, di mana data cadangan diorganisasikan berdasarkan algoritma kompresi yang digunakan. Selain itu, sistem menyimpan berkas \textit{hash-storage} dalam format \textit{JavaScript Object Notation} (JSON) yang berisi nilai \textit{hash} SHA-256 dari berkas asli dan berkas cadangan sebagai referensi untuk validasi integritas data. Pendekatan ini memastikan integritas data tetap terjaga bahkan ketika cadangan disimpan pada media terisolasi.
+
+\subsection{Proses transfer dan pencatatan ke penyimpanan air-gapped}
+Proses transfer data ke penyimpanan \textit{air-gapped} dilakukan secara terkontrol dan otomatis tercatat dalam log sistem. Log ini mencatat tahap reset dan \textit{mounting} media penyimpanan, diikuti proses transfer data yang selesai dalam waktu relatif singkat.
+
+\begin{figure}[H]
+\centering
+\figplaceholder{9cm}{figure12}
+\vspace{.7em}
+\caption{Transfer ke penyimpanan air-gapped}
+\label{fig:transfer}
+\end{figure}
+
+Gambar~\ref{fig:transfer} menampilkan informasi tentang tujuan penyimpanan, waktu proses, dan status keberhasilan transfer. Keberadaan mekanisme pencatatan ini memungkinkan sistem mengaudit dan menelusuri aktivitas cadangan secara rinci dan menjadi bukti bahwa transfer ke media \textit{air-gapped} dilakukan secara terpisah dan tidak berkelanjutan.
+
+\subsection{Pemantauan sistem dan validasi integritas data}
+Pemantauan sistem selama simulasi disajikan melalui \textit{dashboard} interaktif yang ditunjukkan pada Gambar~\ref{fig:dashboard}. \textit{Dashboard} ini menyediakan ringkasan status berkas, rasio kompresi, waktu kompresi, hasil validasi, dan status pemulihan untuk setiap algoritma kompresi yang digunakan. Informasi ini digunakan untuk memantau kinerja dan kondisi sistem secara waktu-nyata.
+
+\begin{figure}[H]
+\centering
+\figplaceholder{9cm}{figure13}
+\vspace{.7em}
+\caption{Dashboard pemantauan sistem pada kondisi normal (tanpa serangan)}
+\label{fig:dashboard}
+\end{figure}
+
+Selama simulasi, sistem tidak mendeteksi anomali pada struktur berkas atau metadata. Pemeriksaan mencakup ukuran berkas, format/ekstensi berkas, dan waktu modifikasi terakhir. Selain itu, nilai \textit{hash} SHA-256 yang cocok mengonfirmasi tidak ada perubahan konten atau kerusakan struktural yang terjadi selama proses cadangan.
+
+\subsection{Hasil simulasi sistem pada kondisi terganggu (dengan serangan ransomware)}
+Pengujian pada kondisi terganggu dilakukan untuk mengevaluasi kemampuan sistem mendeteksi perubahan berkas akibat serangan ransomware tersimulasi dan memastikan ketersediaan cadangan pada penyimpanan \textit{air-gapped}. Dalam skenario ini, berkas pada sistem utama dirusak akibat serangan tersimulasi, sementara data cadangan tetap aman pada penyimpanan \textit{air-gapped} terisolasi. Ketika anomali terdeteksi melalui perubahan nilai \textit{hash} dan metadata, sistem secara otomatis merujuk pada salinan cadangan untuk pemulihan data.
+
+\subsubsection{Hasil simulasi kerusakan berkas}
+Untuk mengevaluasi ketahanan sistem, simulasi dilakukan pada berkas kecil hingga menengah. Tiga tipe kerusakan diuji: \textit{Encrypt-and-hold}, \textit{Metadata/Header Corruption}, dan \textit{Overwrite-and-corrupt}. Hasil menunjukkan mekanisme cadangan dapat mempertahankan integritas data atau memungkinkan pemulihan menggunakan cadangan \textit{air-gapped}, bahkan ketika konten berkas asli mengalami kerusakan sebagian atau total.
+
+\begin{table}[H]
+\centering
+\fontsize{8pt}{10pt}\selectfont
+\caption{Hasil simulasi kerusakan berkas akibat serangan ransomware}
+\label{tab:damage_simulation}
+\begin{tabularx}{\textwidth}{@{}p{2.2cm} p{1.8cm} X X X@{}}
+\hline
+\textbf{Tipe Serangan} & \textbf{Target Berkas} & \textbf{Metode Simulasi} & \textbf{Observasi Skenario} & \textbf{Hasil} \\
+\hline
+Encrypt and Hold (CVE-2017-0144) & finance\_log\_500kb.log & Modifikasi terkontrol konten berkas untuk mensimulasikan pola enkripsi ransomware WannaCry & Berkas berubah ke format WNCRY, dengan \textit{timestamp} dimodifikasi menjadi 11/12/2025 09:58 & Berkas menjadi tidak terbaca, dan nilai \textit{hash} berbeda dari aslinya \\
+Metadata/Header Corruption (CVE-2018-8453) & finance\_log\_500kb.log & Modifikasi terkontrol pada \textit{header} berkas & Bagian awal berkas rusak dengan karakter acak, sementara bagian bawah masih menampilkan entri log valid & Bagian awal berkas rusak, sementara bagian bawah masih menampilkan entri log valid \\
+Overwrite-and-Corrupt (CVE-2021-36934) & finance\_log\_500kb.log & Penimpaan terkontrol sebagian konten berkas dengan karakter acak & Struktur log menjadi tidak teratur; sebagian pola INFO/ERROR/DEBUG masih terlihat, dan karakter non-ASCII muncul & Berkas tidak dapat dipulihkan, dan nilai \textit{hash} berbeda \\
+Validasi Pemulihan & finance\_log\_500kb.log & Pemulihan dari cadangan \textit{air-gapped} dilakukan & --- & Berkas asli berhasil dipulihkan \\
+\hline
+\end{tabularx}
+\end{table}
+
+Berdasarkan Tabel~\ref{tab:damage_simulation}, setiap tipe serangan memiliki dampak berbeda pada struktur dan integritas berkas. \textit{Encrypt-and-hold} menyebabkan modifikasi konten menyeluruh, termasuk peningkatan ukuran berkas dan perubahan \textit{timestamp}, membuat berkas tidak terbaca. \textit{Metadata/Header corruption} memengaruhi struktur awal berkas, memungkinkan keterbacaan parsial tetapi mengompromikan integritas keseluruhan. \textit{Overwrite-and-corrupt} mengganti sebagian berkas dengan karakter acak, menghasilkan struktur tidak teratur dengan karakter non-ASCII, membuat pemulihan tidak memungkinkan.
+
+\subsubsection{Analisis perubahan hash dan metadata}
+Analisis lebih lanjut dilakukan untuk mengevaluasi perubahan nilai \textit{hash} dan metadata berkas sebelum dan sesudah simulasi serangan ransomware. Tahap ini bertujuan menilai efektivitas mekanisme pemeriksaan integritas berbasis \textit{hash} dalam mendeteksi modifikasi berkas, baik sebagian maupun menyeluruh. Hasil pengujian menunjukkan seluruh berkas yang dikenai serangan tersimulasi menghasilkan nilai \textit{hash} SHA-256 yang berbeda dari nilai awalnya sebelum serangan. Perubahan \textit{hash} terjadi pada ketiga skenario kerusakan: \textit{Encrypt and Hold}, \textit{Metadata/Header Corruption}, dan \textit{Overwrite and Corrupt}. Temuan ini mengonfirmasi bahwa pemeriksaan integritas berbasis \textit{hash} mampu mendeteksi perubahan konten berkas secara akurat, bahkan ketika kerusakan hanya terjadi pada sebagian struktur berkas. Selain nilai \textit{hash}, beberapa atribut metadata berkas juga mengalami perubahan signifikan.
+
+\begin{table}[H]
+\centering
+\fontsize{8pt}{10pt}\selectfont
+\caption{Perubahan hash dan metadata berkas sebelum simulasi}
+\label{tab:hash_before}
+\begin{tabularx}{\textwidth}{@{}X c c c@{}}
+\hline
+\textbf{Berkas} & \textbf{Hash SHA-256} & \textbf{Ukuran Berkas} & \textbf{Modifikasi Terakhir / Tipe MIME} \\
+\hline
+finance\_log\_500KB.log & cd5bda6156e87c84971e9a5e3500d521 & 500 KB & 2025-12-04 10:08:36 (UTC) / text/plain \\
+\hline
+\end{tabularx}
+\end{table}
+
+Tabel~\ref{tab:hash_before} menunjukkan nilai \textit{hash} dan metadata berkas uji sebelum simulasi ransomware sebagai garis dasar integritas data. Nilai \textit{hash} ini merepresentasikan kondisi awal berkas dalam keadaan normal, terbaca, tanpa modifikasi. Garis dasar ini menjadi referensi utama untuk membandingkan perubahan \textit{hash} dan metadata setelah simulasi serangan ransomware dilakukan.
+
+\begin{table}[H]
+\centering
+\fontsize{8pt}{10pt}\selectfont
+\caption{Perubahan hash dan metadata berkas setelah simulasi}
+\label{tab:hash_after}
+\begin{tabularx}{\textwidth}{@{}p{2.4cm} X c c c X@{}}
+\hline
+\textbf{Tipe Serangan} & \textbf{Hash SHA-256} & \textbf{Ukuran Berkas} & \textbf{Modifikasi Terakhir} & \textbf{Tipe MIME} & \textbf{Status / Keterangan} \\
+\hline
+Encrypt and Hold (CVE-2017-0144) & 2eb4e7bd18f290b66150a0d0d49bd79c & 667 KB & 2026-01-06 20:56:49 & text/plain & Berubah; ekstensi mencurigakan \\
+Metadata/Header Corruption (CVE-2018-8453) & 102453959e65853e9257b095b9fcc27d048906 & 501 KB & 2026-01-14T20:22:08 & text/plain & Berubah; ketidakcocokan SHA-256 (berkas mungkin terenkripsi) \\
+Overwrite-and-Corrupt (CVE-2021-36934) & fc5f9e8b9c532f94acefedfdd7b11a91707634 & 501 KB & 2026-01-17T09:02:37 & text/plain & Berubah; ketidakcocokan SHA-256 (berkas mungkin terenkripsi) \\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsubsection{Respons sistem terhadap berkas rusak}
+Sistem secara otomatis mendeteksi berkas rusak selama proses pemulihan dengan membandingkan \textit{checksum} sebelum dan sesudah pemulihan. Jika nilai \textit{checksum} tidak cocok, sistem menandai berkas sebagai gagal dan mengaktifkan mode pemulihan \textit{air-gapped}. Dalam mode ini, sistem memulihkan seluruh berkas dari repositori cadangan terisolasi untuk menjaga integritas data. Status dan statistik pemulihan dikirim ke antarmuka pengguna dalam format JSON dan ditampilkan melalui notifikasi visual pada \textit{dashboard}. Contoh keluaran JSON saat mode \textit{air-gapped} aktif menunjukkan \texttt{restore\_mode} bernilai \{mode: "airgap", reason: "ransomware\_detected", scope: "all"\}, \texttt{airgap} terdeteksi \textit{true}, total pemulihan 113 berkas, total pemulihan OK 113 berkas, dan nol galat.
+
+Pada sisi \textit{frontend}, antarmuka menampilkan notifikasi visual yang jelas kepada pengguna. Ketika mode \textit{air-gapped} terdeteksi, pengguna menerima peringatan yang menunjukkan sistem sedang melakukan PEMULIHAN PENUH dari cadangan terisolasi, beserta jumlah berkas yang berhasil dipulihkan.
+
+\begin{figure}[H]
+\centering
+\figplaceholder{9cm}{figure14}
+\vspace{.7em}
+\caption{Antarmuka pengguna menampilkan status pemulihan dalam mode air-gapped}
+\label{fig:ui_restore}
+\end{figure}
+
+Pendekatan ini memastikan berkas rusak tidak memengaruhi integritas data secara keseluruhan, dan pengguna dapat memantau status pemulihan secara waktu-nyata melalui antarmuka yang informatif. Dengan metode ini, sistem terbukti tangguh terhadap berkas rusak dan mampu menjaga keamanan data secara otomatis melalui mode pemulihan \textit{air-gapped}.
+
+\subsection{Proses pemulihan dari cadangan air-gapped}
+Setelah sistem mengaktifkan mode pemulihan \textit{air-gapped}, proses pemulihan data dilakukan menggunakan cadangan yang disimpan pada media terisolasi secara fisik dan logis. Dalam implementasi ini, mekanisme \textit{air-gapped} direalisasikan menggunakan media penyimpanan terpisah (Disk G:) yang didedikasikan secara khusus sebagai repositori cadangan terisolasi. Media ini tidak digunakan untuk operasi sistem normal dan hanya diakses selama pemulihan data.
+
+\begin{figure}[H]
+\centering
+\figplaceholder{9cm}{figure15}
+\vspace{.7em}
+\caption{Arsitektur cadangan air-gapped berbasis media VHDX dengan pemisahan jaringan}
+\label{fig:vhdx}
+\end{figure}
+
+Gambar~\ref{fig:vhdx} mengilustrasikan arsitektur sistem untuk pemulihan data menggunakan mekanisme cadangan \textit{air-gapped}. Pada kondisi normal, sistem melakukan cadangan dan pemulihan menggunakan repositori cadangan utama yang terhubung langsung ke sistem. Namun, ketika kondisi kritis seperti kerusakan berkas atau indikasi serangan ransomware terdeteksi, mekanisme pemulihan dialihkan ke repositori \textit{air-gapped}. Repositori ini diimplementasikan menggunakan media penyimpanan terpisah (Disk G:) yang terisolasi secara fisik dan logis dari sistem utama maupun jaringan.
+
+\subsection{Dekompresi, dekripsi, validasi integritas data, dan evaluasi waktu pemulihan}
+Validasi integritas data dilakukan setelah proses pemulihan untuk memastikan berkas yang dipulihkan identik dengan data asli sebelum serangan. Berkas yang dipulihkan dari media \textit{air-gapped} berada dalam bentuk terenkripsi dan terkompresi, sehingga sistem terlebih dahulu melakukan dekompresi diikuti dekripsi menggunakan algoritma AES-256 dan kunci rahasia yang sesuai. Setelah dekripsi, sistem membandingkan nilai \textit{checksum} SHA-256 berkas sebelum pemulihan (sha\_in) dan setelah pemulihan (sha\_out). Sebuah berkas dianggap valid jika kedua nilai \textit{checksum} identik, menunjukkan integritas data telah terjaga di sepanjang proses cadangan dan pemulihan.
+
+\begin{figure}[H]
+\centering
+\figplaceholder{9cm}{figure16}
+\vspace{.7em}
+\caption{Terminal proses pemulihan air-gapped yang menunjukkan pemulihan dan validasi checksum seluruh berkas}
+\label{fig:restore_terminal}
+\end{figure}
+
+Hasil terminal pada Gambar~\ref{fig:restore_terminal} menunjukkan seluruh berkas berhasil dipulihkan dengan status [OK], menandakan proses pemulihan, dekompresi, dekripsi, dan validasi \textit{checksum} berhasil diselesaikan. Secara keseluruhan, sistem berhasil memulihkan 113 berkas tanpa galat.
+
+Kinerja pemulihan dievaluasi menggunakan \textit{Recovery Time Objective} (RTO), yang didefinisikan sebagai waktu yang diperlukan sistem untuk pulih sepenuhnya setelah serangan ransomware. Berdasarkan observasi eksperimen, RTO berkisar antara 45 hingga 100 detik bergantung pada tingkat keparahan kerusakan berkas. Skenario \textit{metadata corruption} menunjukkan pemulihan tercepat, sementara skenario \textit{overwrite-and-corrupt} memerlukan waktu pemulihan lebih lama karena modifikasi berkas yang lebih ekstensif.
+
+Dataset eksperimen yang digunakan dalam penelitian ini mencakup berkas berukuran 500 KB hingga 1 GB. Untuk mengevaluasi skalabilitas kerangka pemulihan yang diusulkan, nilai RTO terproyeksi untuk ukuran berkas yang lebih besar disajikan pada Tabel~\ref{tab:rto}. Karena alur kerja pemulihan terdiri dari proses deterministik meliputi verifikasi SHA-256, dekompresi, dekripsi AES-256, dan restorasi berkas, waktu pemulihan meningkat kira-kira secara linear terhadap ukuran berkas. Hasil proyeksi menunjukkan sistem yang diusulkan tetap mampu memulihkan dataset skala perusahaan yang lebih besar dalam jendela pemulihan yang dapat diterima sambil menjaga kinerja pemulihan dan integritas data yang konsisten.
+
+\begin{table}[H]
+\centering
+\fontsize{8pt}{10pt}\selectfont
+\caption{Estimasi Recovery Time Objective (RTO)}
+\label{tab:rto}
+\begin{tabular}{lccc}
+\hline
+\textbf{Tipe Serangan} & \textbf{Ukuran Berkas} & \textbf{Total Berkas} & \textbf{RTO (detik)} \\
+\hline
+Encrypt and Hold (CVE-2017-0144) & 500 KB & 113 & 75--85 \\
+ & 500 MB & & 95--130 \\
+ & 1 GB & & 120--180 \\
+Metadata/Header Corruption (CVE-2018-8453) & 500 KB & 113 & 45--60 \\
+ & 500 MB & & 60--90 \\
+ & 1 GB & & 90--120 \\
+Overwrite-and-Corrupt (CVE-2021-36934) & 500 KB & 113 & 85--100 \\
+ & 500 MB & & 120--180 \\
+ & 1 GB & & 180--240 \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Evaluasi false positive dan false negative}
+Untuk mengevaluasi keandalan mekanisme deteksi ransomware, pengujian tambahan dilakukan untuk mengukur \textit{False Positive Rate} (FPR) dan \textit{False Negative Rate} (FNR). Evaluasi membandingkan proses enkripsi cadangan AES-256 yang sah dengan serangan ransomware tersimulasi yang secara sengaja memodifikasi konten dan metadata berkas. Ketika modifikasi abnormal terdeteksi, sistem secara otomatis mengaktifkan mode pemulihan \textit{air-gapped} dan mengganti berkas rusak menggunakan salinan cadangan terisolasi. Mekanisme ini memastikan berkas terkompromi tidak dapat terus menyebar dalam sistem.
+
+\begin{table}[H]
+\centering
+\fontsize{8pt}{10pt}\selectfont
+\caption{Evaluasi akurasi deteksi dan pemulihan}
+\label{tab:detection_accuracy}
+\begin{tabularx}{\textwidth}{@{}X c c c c c@{}}
+\hline
+\textbf{Skenario} & \textbf{Total Berkas} & \textbf{Terdeteksi Ransomware} & \textbf{Pemulihan Air-Gapped Otomatis} & \textbf{Status Aktual} & \textbf{Hasil} \\
+\hline
+Enkripsi cadangan AES-256 normal & 113 & 0 & Tidak & Aman & True Negative \\
+Serangan Encrypt and Hold & 113 & 113 & Ya & Ransomware & True Positive \\
+Metadata/Header Corruption & 113 & 113 & Ya & Ransomware & True Positive \\
+Overwrite and Corrupt & 113 & 113 & Ya & Ransomware & True Positive \\
+\hline
+\end{tabularx}
+\end{table}
+
+Berdasarkan hasil eksperimen, \textit{False Positive Rate} (FPR) = 0\% dan \textit{False Negative Rate} (FNR) = 0\%. Hasil menunjukkan sistem berhasil membedakan enkripsi AES-256 yang sah yang dihasilkan selama operasi cadangan normal dari modifikasi berkas tidak sah akibat simulasi ransomware. Lebih lanjut, begitu anomali terdeteksi, sistem secara otomatis mengaktifkan mode pemulihan \textit{air-gapped} untuk memulihkan versi cadangan bersih. Kombinasi validasi integritas dan pemulihan terisolasi ini meningkatkan keandalan deteksi ransomware sekaligus ketahanan sistem.
+
+\subsection{Evaluasi kemampuan sistem membedakan enkripsi normal dan ransomware}
+Evaluasi ini bertujuan membedakan enkripsi normal pada mekanisme cadangan dari perubahan berkas akibat simulasi ransomware. Pada proses cadangan normal, sistem mencatat nilai \textit{hash} dan metadata sebagai garis dasar integritas setelah enkripsi dan kompresi terkontrol. Sebaliknya, simulasi ransomware menimbulkan deviasi signifikan pada nilai \textit{hash} dan struktur berkas yang tidak cocok dengan garis dasar. Perbedaan ini terdeteksi oleh mekanisme validasi integritas, sehingga berkas terkompromi dapat diidentifikasi. Hasil menunjukkan bahwa kombinasi pemeriksaan \textit{hash}, analisis metadata, dan mekanisme cadangan \textit{air-gapped} secara efektif menjaga integritas data sekaligus memungkinkan pemulihan aman selama serangan ransomware.
+
+\section{Kesimpulan}
+\label{sec:kesimpulan}
+Sebuah sistem cadangan berbasis awan yang mengintegrasikan mekanisme cadangan \textit{air-gapped} dengan kompresi \textit{lossless} multi-algoritma telah dikembangkan untuk meningkatkan ketahanan terhadap serangan ransomware sekaligus mengoptimalkan efisiensi penyimpanan. Sistem berhasil melakukan kompresi, cadangan, deteksi anomali, dan pemulihan data otomatis dalam lingkungan terintegrasi. Hasil eksperimen menunjukkan bahwa kinerja kompresi bergantung pada karakteristik data. Snappy dan LZ4 memberikan waktu proses lebih cepat untuk berkas kecil dan menengah, sementara Zstandard mencapai rasio kompresi tertinggi, mencapai penghematan penyimpanan hingga 80\% untuk berkas CSV besar.
+
+Simulasi ransomware menggunakan beberapa skenario serangan, termasuk CVE-2017-0144, CVE-2018-8453, dan CVE-2021-36934, menunjukkan bahwa sistem yang diusulkan berhasil mempertahankan integritas data dan mencapai tingkat pemulihan data 100\% pada seluruh berkas yang diuji melalui mekanisme cadangan \textit{air-gapped}. Selain itu, mekanisme deteksi anomali berhasil mendeteksi modifikasi berkas tidak sah sambil mempertahankan nol \textit{false positive} selama operasi enkripsi AES-256 normal. Temuan ini menunjukkan bahwa pengintegrasian arsitektur cadangan \textit{air-gapped} dengan kompresi multi-algoritma secara signifikan meningkatkan baik ketahanan sistem maupun efisiensi penyimpanan pada lingkungan cadangan berbasis awan.
+
+Mekanisme kompresi adaptif saat ini menggunakan strategi seleksi berbasis aturan karena \textit{overhead} komputasi yang lebih rendah, implementasi ringan, dan kemampuan pengambilan keputusan yang lebih cepat untuk lingkungan cadangan awan yang membutuhkan pemanfaatan sumber daya efisien dan respons pemulihan cepat. Pendekatan ini dinilai cocok untuk sistem awan keuangan di mana keandalan dan operasi latensi-rendah menjadi kritis. Penelitian mendatang dapat meningkatkan mekanisme kompresi adaptif berbasis aturan saat ini dengan menggabungkan pendekatan \textit{machine learning} seperti \textit{Random Forest} untuk lebih mengoptimalkan akurasi seleksi algoritma dan skalabilitas untuk dataset yang lebih besar dan heterogen.
+
+\section*{INFORMASI PENDANAAN}
+\label{sec:funding}
+Penelitian ini didukung oleh Politeknik Elektronika Negeri Surabaya dan dilaksanakan dalam kolaborasi dengan PT Equnix Business Solution dengan dukungan sumber daya internal.
+
+\section*{PERNYATAAN KONTRIBUSI PENULIS}
+\label{sec:credit}
+Penelitian ini menggunakan \textit{Contributor Roles Taxonomy} (CRediT) untuk mengakui kontribusi masing-masing penulis, mengurangi konflik kepenulisan, dan meningkatkan kolaborasi.
+
+\begin{table}[H]
+	\centering
+	\selectfont
+	\begin{tabular}{lcccccccccccccc}
+		\hline
+		\textbf{Nama Penulis} & \cellcolor[HTML]{D8F0F8}\textbf{C} & \cellcolor[HTML]{D8F0F8}\textbf{M} & \textbf{So} & \textbf{Va} & \cellcolor[HTML]{D8F0F8}\textbf{Fo} & \cellcolor[HTML]{D8F0F8}\textbf{I} & \textbf{R} & \textbf{D} & \cellcolor[HTML]{FDE9D9}\textbf{O} & \cellcolor[HTML]{FDE9D9}\textbf{E} & \textbf{Vi} & \textbf{Su} & \textbf{P} & \textbf{Fu} \\
+		\hline
+		Hero Yudo Martono & \cellcolor[HTML]{D8F0F8}\checkmark & \cellcolor[HTML]{D8F0F8}\checkmark & \checkmark & \checkmark & \cellcolor[HTML]{D8F0F8}\checkmark & \cellcolor[HTML]{D8F0F8}\checkmark &  & \checkmark & \cellcolor[HTML]{FDE9D9}\checkmark & \cellcolor[HTML]{FDE9D9}\checkmark &  & \checkmark & \checkmark & \checkmark \\
+		Nafisah Rahmadani H. & \cellcolor[HTML]{D8F0F8} & \cellcolor[HTML]{D8F0F8}\checkmark & \checkmark &  & \cellcolor[HTML]{D8F0F8}\checkmark & \cellcolor[HTML]{D8F0F8}\checkmark & \checkmark & \checkmark & \cellcolor[HTML]{FDE9D9}\checkmark & \cellcolor[HTML]{FDE9D9} & \checkmark &  &  &  \\
+		\hline
+		\multicolumn{15}{c}{
+			\begin{tabular}{llllll}
+				&&&&&\\
+				C &: 	\textbf{C}\fontsize{8}{10}\selectfont onceptualization \quad\quad\quad\quad\quad\quad& I &: 	\textbf{I}\fontsize{8}{10}\selectfont nvestigation & Vi&: 	\textbf{Vi}\fontsize{8}{10}\selectfont sualization  \\
+				M &: 	\textbf{M}\fontsize{8}{10}\selectfont ethodology & R &: 	\textbf{R}\fontsize{8}{10}\selectfont esources & Su&: 	\textbf{Su}\fontsize{8}{10}\selectfont pervision  \\
+				So&: 	\textbf{So}\fontsize{8}{10}\selectfont ftware & D &:	\textbf{D}\fontsize{8}{10}\selectfont ata Curation & P &: 	\textbf{P}\fontsize{8}{10}\selectfont roject Administration  \\
+				Va&: 	\textbf{Va}\fontsize{8}{10}\selectfont lidation & O &:	\fontsize{8}{10}\selectfont Writing - \fontsize{10}{12}\selectfont \textbf{O}\fontsize{8}{10}\selectfont riginal Draft & Fu&: 	\textbf{Fu}\fontsize{8}{10}\selectfont nding Acquisition \\
+				Fo&: 	\textbf{Fo}\fontsize{8}{10}\selectfont rmal Analysis & E &:	\fontsize{8}{10}\selectfont Writing - Review \& \fontsize{10}{12}\selectfont\textbf{E}\fontsize{8}{10}\selectfont diting \quad\quad\quad\quad\quad\quad&  \\
+			\end{tabular}
+		}
+	\end{tabular}
+\end{table}
+
+\section*{PERNYATAAN KONFLIK KEPENTINGAN}
+\label{sec:coi}
+Penulis menyatakan tidak ada konflik kepentingan terkait publikasi makalah ini.
+
+\section*{KETERSEDIAAN DATA}
+\label{sec:data}
+Dataset yang digunakan dalam penelitian ini dibangkitkan secara sintetis berdasarkan karakteristik data operasional dan struktur cadangan yang diadaptasi dari lingkungan PT Equnix Business Solution. Tidak ada data keuangan atau data produksi rahasia yang nyata yang digunakan dalam penelitian ini.
+
+\section*{DAFTAR PUSTAKA}
+\label{sec:references}
+\footnotesize
+
+\begin{thebibliography}{99}
+\footnotesize
+\itemsep 0pt
+
+\bibitem{1} A. A. Majmuah, ``Survey on technique to prevent ransomware attack,'' \textsl{Bulletin of Informatics and Data Science}, vol. 1, no. 2, 2021.
+\bibitem{2} K. Begovi\'c, M. Karabegovi\'c, and A. Huseinovi\'c, ``Cryptographic ransomware encryption detection: survey,'' \textsl{arXiv preprint arXiv:2306.12008}, 2023.
+\bibitem{3} S. Mansfield-Devine, ``Ransomware: detection, prevention and cure,'' \textsl{Network Security}, vol. 2016, no. 9, pp. 5--8, 2016.
+\bibitem{4} H. B. Pavlos, P. Nikolaos, A. Jawad, and J. William, ``Ransomware: analysing the impact on Windows Active Directory Domain Services,'' \textsl{Journal of Cyber Security Technology}, 2022.
+\bibitem{5} M. Houria, O. Noura, and A. Abdelmalek, ``Ransomware: analysis of encrypted files,'' \textsl{International Journal of Information Security}, 2023.
+\bibitem{6} G. Lu, Y. Liu, Y. Chen, C. Zhang, Y. Gao, and G. Zhong, ``A comprehensive detection approach of WannaCry: principles, rules and experiments,'' in \textsl{Proc. Int. Conf. Cyber-Enabled Distributed Computing and Knowledge Discovery (CyberC)}, 2020, pp. 41--49.
+\bibitem{7} I. Athauda and H. Herath, ``Windows elevation of privilege serious SAM vulnerability (CVE-2021-36934),'' \textsl{Journal of Cybersecurity and Digital Forensics}, 2022.
+\bibitem{8} A. Al-Fuqaha et al., ``A survey on ransomware trends and mitigation techniques,'' \textsl{Egyptian Informatics Journal}, vol. 21, no. 4, pp. 231--245, 2020.
+\bibitem{9} Z. A. Syed and T. R. Soomro, ``Compression algorithms: Brotli, Gzip and Zopfli perspective,'' \textsl{International Journal of Computer Science and Network Security}, 2021.
+\bibitem{10} F. A. Abdulazeez, I. T. Ahmed, and B. T. Hammad, ``Performance comparison of compression algorithms for large-scale log systems,'' \textsl{Journal of Computer \& Electrical Engineering Sciences}, 2024.
+\bibitem{11} M. A. Rabbani, A. Budiyono, and A. Widjajarto, ``Implementasi dan analisis security auditing menggunakan open source software dengan framework MITRE ATT\&CK,'' \textsl{e-Proceeding of Engineering}, vol. 7, no. 2, 2020.
+\bibitem{12} R. Y. Dwiaranda, A. Budiyono, and A. Widjajarto, ``Implementasi dan analisis security auditing menggunakan open source software dengan framework STRIDE,'' \textsl{e-Proceeding of Engineering}, vol. 7, no. 2, 2020.
+\bibitem{13} M. Sahu and J. Panda, ``Performance evaluation of efficient hybrid compression methods for text using lossless algorithms,'' \textsl{arXiv preprint}, 2025.
+\bibitem{14} H. Zhang et al., ``Optimized Snappy compression with enhanced encoding strategies,'' \textsl{Electronics}, 2024.
+\bibitem{15} M. C. Ghanem, T. M. Chen, M. A. Ferrag, and M. E. Kettouche, ``ESASCF: automated security compliance framework,'' \textsl{arXiv preprint}, 2023.
+\bibitem{16} S. Rouhani, R. Belchior, R. S. Cruz, and R. Deters, ``Distributed attribute-based access control system using a permissioned blockchain,'' \textsl{arXiv preprint}, 2020.
+\bibitem{17} Y. Fauzi and R. A. Hamdan, ``Pendekatan metodologis dalam deteksi ancaman siber pada server hosting menggunakan NMAP dan Metasploit,'' \textsl{Jurnal SUDO}, 2024.
+\bibitem{18} T. Ariyadi et al., ``Implementasi OWASP untuk analisis kerentanan dan keamanan sistem informasi,'' \textsl{Jurnal STORAGE}, 2023.
+\bibitem{19} Sophos, ``The state of ransomware in financial services 2024,'' Sophos Ltd., 2024. [Online]. Available: https://www.sophos.com
+\bibitem{20} R. Pal, M. Shaikh, J. Sagvekar, and P. Tiwari, ``Data resilience: secure emergency backup on cloud,'' \textsl{International Journal of Advanced Research in Science, Communication and Technology}, vol. 4, no. 7, 2024.
+\bibitem{21} NIST, ``Security guidelines for storage infrastructure (SP 800-209),'' National Institute of Standards and Technology, 2024. [Online]. Available: https://nvlpubs.nist.gov
+\bibitem{22} A. Nasif, Z. A. Othman, and N. S. Sani, ``The deep learning solutions on lossless compression methods for alleviating data load on IoT nodes in smart cities,'' \textsl{Sensors}, vol. 21, no. 12, p. 4223, 2021.
+\bibitem{23} ``Lossless compression with trie-based shared dictionary for omics data in edge--cloud frameworks,'' \textsl{Sensors}, vol. 14, no. 2, p. 41, 2025.
+\bibitem{24} S. Liu, F. Saeed, Z. Yang, and J. Chen, ``A comprehensive review on hyperspectral image lossless compression algorithms,'' \textsl{Remote Sensing}, vol. 17, no. 24, p. 3966, 2025.
+\bibitem{25} J. Hua, H. Xu, Y. Du, and L. Du, ``Improved JPEG lossless compression for compression of intermediate layers in neural networks based on compute-in-memory,'' \textsl{Electronics}, vol. 13, no. 19, p. 3872, 2024.
+\bibitem{26} ``A systematic review on blockchain-based access control systems in cloud environment,'' \textsl{Journal of Cloud Computing}, 2024.
+\bibitem{27} M. Dawood et al., ``Cyberattacks and security of cloud computing: a complete guideline,'' \textsl{Symmetry}, vol. 15, no. 11, p. 1981, 2023.
+\bibitem{28} A. Singh et al., ``Enhancing ransomware attack detection using transfer learning and deep learning ensemble models on cloud-encrypted data,'' \textsl{Electronics}, vol. 12, no. 18, p. 3899, 2023.
+\bibitem{29} P. Novak et al., ``Multistage malware detection method for backup systems,'' \textsl{Technologies}, vol. 12, no. 2, p. 23, 2024.
+\bibitem{30} ``A survey on ransomware detection methods and techniques,'' 2025.
+\bibitem{31} ``PLORC: a performance-oriented lossless compression method,'' \textsl{Electronics}, 2024.
+\bibitem{32} ``Real-time open-file backup for ransomware,'' \textsl{International Journal of Information Security}, 2025.
+\bibitem{33} ``Effective ransomware detection using entropy estimation of files for cloud services,'' \textsl{Sensors}, vol. 23, no. 6, p. 3023, 2023.
+\bibitem{34} ``Enhanced ransomware attack detection using feature selection and hybrid models,'' 2025.
+\bibitem{35} ``Lossless compression in hybrid edge--cloud environments,'' \textsl{Sensors}, 2025.
+\bibitem{36} M. Smith and J. Lee, ``Performance evaluation of compression algorithms for cloud storage,'' \textsl{Data in Brief}, vol. 48, pp. 1--10, 2023.
+\bibitem{37} S. Kumar and R. Patel, ``Optimization of cloud backup against ransomware attacks,'' \textsl{IEEE Access}, vol. 10, pp. 45821--45835, 2022.
+\bibitem{38} A. Novak, P. Chen, and R. Singh, ``Hybrid compression and air-gapped backup for ransomware mitigation,'' in \textsl{Proc. USENIX Security Symposium}, 2021.
+\bibitem{39} L. Zhao and T. Wang, ``Text compression optimization using hybrid algorithms,'' \textsl{arXiv preprint arXiv:2501.12345}, 2025.
+\bibitem{40} ``Lossless compression with trie-based shared dictionary for omics data in edge--cloud frameworks,'' \textsl{Sensors}, vol. 14, no. 2, p. 41, 2025.
+
+\end{thebibliography}
+
+\section*{BIOGRAFI PENULIS}
+\label{sec:biographies}
+\noindent\textbf{Hero Yudo Martono} memperoleh gelar sarjana Ilmu Komputer (Teknik Elektro) dari ITS, Indonesia. Ia kemudian menempuh gelar magister Teknik Informatika dari ITB, Indonesia. Minat penelitiannya meliputi keamanan siber, kecerdasan buatan, dan komputasi awan. Ia dapat dihubungi di hero@pens.ac.id.
+
+\vspace{.7em}
+\noindent\textbf{Nafisah Rahmadani Harahap} saat ini sedang menempuh gelar Sarjana Terapan (D4) Teknik Informatika di Politeknik Elektronika Negeri Surabaya (PENS), Indonesia. Ia juga bekerja sebagai ERP Project Manager, berfokus pada implementasi \textit{enterprise resource planning}, optimasi proses bisnis, koordinasi proyek, dan inisiatif transformasi digital. Minat penelitiannya meliputi keamanan siber, sistem informasi, kecerdasan buatan, komputasi awan, dan solusi perangkat lunak perusahaan. Ia dapat dihubungi di nafisah@it.student.pens.ac.id.
+
+\end{document}

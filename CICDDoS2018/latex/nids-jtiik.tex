@@ -72,8 +72,6 @@
     {\fontsize{10}{12}\selectfont \textsuperscript{1,2,3}Politeknik Elektronika Negeri Surabaya, Surabaya, Indonesia\par}
     {\fontsize{10}{12}\selectfont Email: \textsuperscript{1}hero@pens.ac.id, \textsuperscript{2}iwanarif@pens.ac.id, \textsuperscript{3}ferryas@pens.ac.id\par}
     {\fontsize{10}{12}\selectfont *Penulis Korespondensi\par}
-    \vspace{4pt}
-    {\fontsize{10}{12}\selectfont (Naskah masuk: dd mmm yyyy, diterima untuk diterbitkan: dd mmm yyyy)\par}
     \vspace{10pt}
   \end{center}
 
@@ -289,7 +287,7 @@ Model XGBoost dilatih ulang pada empat konfigurasi subset fitur. Perbandingan pe
 Full (68) & 0,9798 & 0,9911 & 7,17 MB & 0,2400 s \\
 Top-20 & 0,9795 & 0,9900 & 6,82 MB & 0,2266 s \\
 Top-15 & 0,9717 & 0,9883 & 5,91 MB & 0,1930 s \\
-Top-10 & 0,9717 & 0,9865 & 5,65 MB & 0,1826 s \\ \bottomrule
+\textbf{Top-10} & \textbf{0,9717} & \textbf{0,9865} & \textbf{5,65 MB} & \textbf{0,1826 s} \\ \bottomrule
 \end{tabularx}
 \end{table}
 
@@ -309,7 +307,7 @@ Efektivitas \textit{Adversarial Training} dievaluasi melintasi empat skenario si
 S1 & Baseline & Murni & 0,9351 & 0,9729 & 0,9720 \\
 S2 & Baseline & Manip. & 0,0184 & 0,7539 & 0,6905 \\
 S3 & Robust & Murni & 0,9347 & 0,9727 & 0,9718 \\
-S4 & Robust & Manip. & 0,9953 & 0,9985 & 0,9985 \\ \bottomrule
+\textbf{S4} & \textbf{Robust} & \textbf{Manip.} & \textbf{0,9953} & \textbf{0,9985} & \textbf{0,9985} \\ \bottomrule
 \end{tabularx}
 \end{table}
 
@@ -481,7 +479,7 @@ Pipeline inferensi di node \textit{Analyzer} berjalan lima tahap: (1) ekstraksi 
 RT-S1 (Base+Murni) & 0,9351 & 0,164 & 0,9729 & 0,855 \\
 RT-S2 (Base+Evasi) & 0,0184 & $-0{,}070$ & 0,7539 & 0,633 \\
 RT-S3 (Robust+Murni) & 0,9347 & 0,339 & 0,9727 & 0,581 \\
-RT-S4 (Robust+Evasi) & 0,9953 & 0,389 & 0,9985 & 0,626 \\ \bottomrule
+\textbf{RT-S4 (Robust+Evasi)} & \textbf{0,9953} & \textbf{0,389} & \textbf{0,9985} & \textbf{0,626} \\ \bottomrule
 \end{tabularx}
 \end{table}
 
