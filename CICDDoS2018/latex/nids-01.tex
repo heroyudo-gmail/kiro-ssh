@@ -108,15 +108,15 @@ Metodologi penelitian ini dirancang secara sistematis untuk mengevaluasi dan men
 \end{figure}
 
 \subsection{Dataset dan Pra-pemrosesan Data}
-Penelitian ini menggunakan dataset CSE-CIC-IDS2018 yang disediakan oleh \textit{Canadian Institute for Cybersecurity} (CIC). Dataset ini dipilih karena memiliki cakupan serangan yang sangat luas dan mencerminkan skenario jaringan modern, yang terdiri dari 10 file CSV dengan total ukuran data mencapai kurang lebih 6,7 GB. Dataset ini mencakup profil trafik normal (\textit{benign}) serta tujuh kategori serangan utama, yaitu: \textit{Brute-Force} (SSH/FTP), DoS, DDoS, \textit{Web Attacks}, \textit{Infiltration}, dan \textit{Botnet}.
+Penelitian ini menggunakan dataset CSE-CIC-IDS2018 yang disediakan oleh \textit{Canadian Institute for Cybersecurity} (CIC) \cite{ref_cicids}. Dataset ini dipilih karena memiliki cakupan serangan yang sangat luas dan mencerminkan skenario jaringan modern, yang terdiri dari 10 file CSV dengan total ukuran data mencapai kurang lebih 6,7 GB. Dataset ini mencakup profil trafik normal (\textit{benign}) serta tujuh kategori serangan utama, yaitu: \textit{Brute-Force} (SSH/FTP), DoS, DDoS, \textit{Web Attacks}, \textit{Infiltration}, dan \textit{Botnet}.
 
-Mengingat volume data yang sangat masif, khususnya pada file trafik tanggal 20 Februari yang mencapai 3,8 GB, penelitian ini menerapkan strategi \textit{Stratified Sampling} sebesar 10\% untuk menjaga distribusi label serangan asli tetap representatif dalam subset data yang digunakan. Hasil sampling menghasilkan 1.570.577 sampel dari total 15.705.786 sampel populasi asli. Proses pembersihan data (\textit{data cleaning}) dilakukan secara sistematis melalui beberapa tahapan krusial untuk menjamin integritas model:
+Mengingat volume data yang sangat masif, khususnya pada file trafik tanggal 20 Februari yang mencapai 3,8 GB, penelitian ini menerapkan strategi \textit{Stratified Sampling} sebesar 10\% \cite{ref_stratified} untuk menjaga distribusi label serangan asli tetap representatif dalam subset data yang digunakan. Hasil sampling menghasilkan 1.570.577 sampel dari total 15.705.786 sampel populasi asli. Proses pembersihan data (\textit{data cleaning}) dilakukan secara sistematis melalui beberapa tahapan krusial untuk menjamin integritas model:
 
 \begin{enumerate}
     \item \textbf{Penanganan Nilai Singular:} Semua sampel yang mengandung nilai \textit{Missing Values} (NaN) dihapus secara permanen dari dataset. Nilai \textit{Infinity} pada fitur numerik ditangani dengan metode imputasi menggunakan nilai finit maksimal pada kolom terkait guna mencegah kegagalan matematis pada saat pelatihan model.
     \item \textbf{Eliminasi Fitur Bias:} Fitur-fitur identitas aliran (\textit{flow identifiers}) seperti \textit{Flow ID}, \textit{Source IP}, \textit{Destination IP}, \textit{Source Port}, \textit{Destination Port}, dan \textit{Protocol} dibuang karena tidak memberikan kontribusi pada generalisasi pola serangan dan berisiko menimbulkan bias pelatihan. Kolom \textit{Timestamp} juga dihilangkan untuk memastikan model tidak mempelajari urutan waktu melainkan karakteristik statistik trafik.
     \item \textbf{Reduksi Variansi Rendah:} Dilakukan pemindaian terhadap fitur-fitur dengan \textit{zero-variance} (nilai konstan), di mana fitur yang tidak memiliki variabilitas data dibuang karena tidak mengandung informasi diskriminatif bagi algoritma klasifikasi.
-    \item \textbf{Normalisasi dan Encoding:} Label serangan yang bersifat kualitatif dikonversi menjadi representasi numerik menggunakan \texttt{LabelEncoder}. Fitur numerik lainnya dinormalisasi menggunakan \texttt{StandardScaler} atau \texttt{MinMax Scaling} untuk memastikan distribusi data berada pada rentang yang seragam, sehingga mempercepat konvergensi algoritma XGBoost.
+    \item \textbf{Normalisasi dan Encoding:} Label serangan yang bersifat kualitatif dikonversi menjadi representasi numerik menggunakan \texttt{LabelEncoder}. Fitur numerik lainnya dinormalisasi menggunakan \texttt{StandardScaler} atau \texttt{MinMax Scaling} dari pustaka \textit{scikit-learn} \cite{ref_sklearn} untuk memastikan distribusi data berada pada rentang yang seragam, sehingga mempercepat konvergensi algoritma XGBoost.
 \end{enumerate}
 
 Hasil akhir dari proses ini adalah file yang telah dibersihkan (\texttt{cleaned\_100.pkl/csv}) yang mengandung 68 fitur trafik teknis yang siap digunakan sebagai basis untuk tahap seleksi fitur berbasis \textit{Gain-based Importance}.
@@ -124,10 +124,10 @@ Hasil akhir dari proses ini adalah file yang telah dibersihkan (\texttt{cleaned\
 
 % Bab 2.2
 \subsection{Optimasi Fitur Berbasis XGBoost Gain-based Importance}
-Tahap ini bertujuan untuk mencapai efisiensi komputasi yang tinggi tanpa mengorbankan informasi krusial yang diperlukan untuk mendeteksi anomali. Mengingat dataset CSE-CIC-IDS2018 memiliki dimensi fitur yang besar (68 kolom setelah pra-pemrosesan), reduksi fitur berbasis \textit{Gain-based Importance} dilakukan melalui tahapan teknis sistematis berikut:
+Tahap ini bertujuan untuk mencapai efisiensi komputasi yang tinggi tanpa mengorbankan informasi krusial yang diperlukan untuk mendeteksi anomali. Mengingat dataset CSE-CIC-IDS2018 memiliki dimensi fitur yang besar (68 kolom setelah pra-pemrosesan), reduksi fitur berbasis \textit{Gain-based Importance} \cite{ref_xgboost} dilakukan melalui tahapan teknis sistematis berikut:
 
 \begin{enumerate}
-    \item \textbf{Pelatihan Model Awal (\textit{Baseline Training}):} Tahap awal diawali dengan melatih model XGBoost \textit{baseline} menggunakan seluruh fitur yang tersedia ($68$ fitur). Dataset dibagi menjadi subset data latih (\textit{training set}) dan data uji (\textit{test set}) menggunakan rasio $80:20$.
+    \item \textbf{Pelatihan Model Awal (\textit{Baseline Training}):} Tahap awal diawali dengan melatih model XGBoost \cite{ref_xgboost} \textit{baseline} menggunakan seluruh fitur yang tersedia ($68$ fitur). Dataset dibagi menjadi subset data latih (\textit{training set}) dan data uji (\textit{test set}) menggunakan rasio $80:20$.
     
     \item \textbf{Ekstraksi Metrik \textit{Gain}:} Setelah proses pelatihan \textit{baseline} selesai, metrik \textit{Gain} diekstraksi dari fungsi internal XGBoost. Metrik \textit{Gain} merepresentasikan kontribusi rata-rata dari suatu fitur dalam menurunkan fungsi kerugian (\textit{loss function}) pada setiap pemisahan (\textit{split}) di percabangan pohon keputusan. Fitur dengan nilai \textit{Gain} tertinggi mengindikasikan kekuatan diskriminatif paling dominan dalam membedakan trafik normal (\textit{benign}) dari berbagai kategori serangan.
     
@@ -140,10 +140,10 @@ Tahap ini bertujuan untuk mencapai efisiensi komputasi yang tinggi tanpa mengorb
 
 % 2.3
 \subsection{Pembangkitan Sampel Adversarial (\textit{Evasion Attack})}
-Tahap ini bertujuan untuk mensimulasikan skenario penyerang yang berusaha mengelabui model NIDS melalui serangan \textit{evasion}. Pembangkitan sampel \textit{adversarial} memanfaatkan teknik berbasis gradien matematis untuk mengidentifikasi kerentanan model dan memberikan perturbasi halus pada fitur-fitur kritis.
+Tahap ini bertujuan untuk mensimulasikan skenario penyerang yang berusaha mengelabui model NIDS melalui serangan \textit{evasion}. Serangan semacam ini telah terbukti efektif menurunkan performa berbagai klasifikator IDS pada literatur terkini \cite{ref_idsgan, ref_attackgan, ref_demgan}. Pembangkitan sampel \textit{adversarial} memanfaatkan teknik berbasis gradien matematis \cite{ref_szegedy} untuk mengidentifikasi kerentanan model dan memberikan perturbasi halus pada fitur-fitur kritis.
 
 \subsubsection{Landasan Matematis \textit{Saliency Map}}
-Misalkan model NIDS didefinisikan sebagai fungsi keputusan $f(\mathbf{x})$ dengan parameter $\theta$, di mana $\mathbf{x} = [x_1, x_2, \dots, x_d]^T \in \mathbb{R}^d$ merepresentasikan vektor fitur trafik jaringan dan $y \in \{0, 1\}$ adalah label kebenaran (\textit{ground truth}). Tingkat sensitivitas fungsi kerugian (\textit{loss function}) $L(\theta, \mathbf{x}, y)$ terhadap perubahan setiap elemen fitur diukur melalui vektor gradien:
+Pendekatan \textit{Saliency Map} yang digunakan pada tahap ini bertumpu pada gagasan sensitivitas keluaran model terhadap perubahan masukan yang diperkenalkan oleh Simonyan dkk. \cite{ref_saliency}. Misalkan model NIDS didefinisikan sebagai fungsi keputusan $f(\mathbf{x})$ dengan parameter $\theta$, di mana $\mathbf{x} = [x_1, x_2, \dots, x_d]^T \in \mathbb{R}^d$ merepresentasikan vektor fitur trafik jaringan dan $y \in \{0, 1\}$ adalah label kebenaran (\textit{ground truth}). Tingkat sensitivitas fungsi kerugian (\textit{loss function}) $L(\theta, \mathbf{x}, y)$ terhadap perubahan setiap elemen fitur diukur melalui vektor gradien:
 
 \begin{equation}
 \nabla_{\mathbf{x}} L(\theta, \mathbf{x}, y) = \left[ \frac{\partial L}{\partial x_1}, \frac{\partial L}{\partial x_2}, \dots, \frac{\partial L}{\partial x_d} \right]^T
@@ -164,7 +164,7 @@ Setelah fitur-fitur paling sensitif diidentifikasi, sampel \textit{adversarial} 
 \mathbf{x}_{adv} = \mathbf{x} + \boldsymbol{\delta}, \quad \text{dengan } \|\boldsymbol{\delta}\|_\infty \le \epsilon
 \end{equation}
 
-Secara eksplisit, proses pembentukan sampel \textit{adversarial} mengikuti formulasi arah gradien:
+Secara eksplisit, proses pembentukan sampel \textit{adversarial} mengikuti formulasi arah gradien sebagaimana metode \textit{Fast Gradient Sign Method} (FGSM) yang diperkenalkan oleh Goodfellow dkk. \cite{ref_fgsm}:
 
 \begin{equation}
 \mathbf{x}_{adv} = \mathbf{x} + \epsilon \cdot \text{sign}\left( \nabla_{\mathbf{x}} L(\theta, \mathbf{x}, y) \right)
@@ -225,7 +225,7 @@ Alur kerja mekanisme \textit{Adversarial Training} secara menyeluruh diilustrasi
 Model NIDS dibangun menggunakan algoritma \textit{Extreme Gradient Boosting} (XGBoost) yang dioptimasi pada subset fitur tereduksi hasil seleksi metrik \textit{Gain} (konfigurasi optimal ditentukan melalui \textit{Ablation Study} pada Bagian 3.3). Fungsi tujuan (\textit{objective function}) yang digunakan adalah \texttt{multi:softprob} untuk mengklasifikasikan trafik ke dalam kelas \textit{benign} dan berbagai variasi serangan jaringan. Hiperparameter utama disesuaikan untuk mencegah \textit{overfitting}, dengan kedalaman pohon maksimum (\texttt{max\_depth}) sebesar $6$, tingkat pembelajaran (\texttt{learning\_rate}) $0.1$, dan jumlah estimator (\texttt{n\_estimators}) $100$.
 
 \subsubsection{Formulasi Matematis \textit{Adversarial Training}}
-\textit{Adversarial Training} diformulasikan sebagai masalah optimasi \textit{Min-Max} (\textit{Saddle-Point Optimization}). Secara intuitif, tujuannya adalah meminimalkan kerugian maksimum (\textit{worst-case loss}) yang diakibatkan oleh perturbasi penyerang:
+\textit{Adversarial Training} diformulasikan sebagai masalah optimasi \textit{Min-Max} (\textit{Saddle-Point Optimization}) sebagaimana kerangka ketangguhan yang diusulkan oleh Madry dkk. \cite{ref_madry}. Secara intuitif, tujuannya adalah meminimalkan kerugian maksimum (\textit{worst-case loss}) yang diakibatkan oleh perturbasi penyerang:
 
 \begin{equation}
 \min_{\theta} \mathbb{E}_{(\mathbf{x}, y) \sim \mathcal{D}} \left[ \max_{\|\boldsymbol{\delta}\|_\infty \le \epsilon} L(\theta, \mathbf{x} + \boldsymbol{\delta}, y) \right]
@@ -308,7 +308,7 @@ S4 & \textit{Robustness} & \textit{Robust} & Manipulasi & Membuktikan peningkata
 \end{table*}
 
 \subsubsection{Metrik Evaluasi Utama: Matthews Correlation Coefficient (MCC)}
-Dataset NIDS seperti CSE-CIC-IDS2018 memiliki karakteristik ketidakseimbangan kelas (\textit{class imbalance}) yang sangat ekstrem antara trafik normal (\textit{benign}) dan serangan. Oleh karena itu, \textit{Matthews Correlation Coefficient} (MCC) dipilih sebagai metrik evaluasi utama. Berbeda dengan akurasi konvensional yang dapat memberikan gambaran bias pada data tidak seimbang, MCC memperhitungkan keempat kuadran \textit{Confusion Matrix} secara proporsional. Formulasi matematis MCC didefinisikan sebagai:
+Dataset NIDS seperti CSE-CIC-IDS2018 memiliki karakteristik ketidakseimbangan kelas (\textit{class imbalance}) yang sangat ekstrem antara trafik normal (\textit{benign}) dan serangan. Oleh karena itu, \textit{Matthews Correlation Coefficient} (MCC) \cite{ref_matthews} dipilih sebagai metrik evaluasi utama. Berbeda dengan akurasi konvensional yang dapat memberikan gambaran bias pada data tidak seimbang, MCC memperhitungkan keempat kuadran \textit{Confusion Matrix} secara proporsional sehingga lebih andal untuk evaluasi klasifikasi biner pada data tidak seimbang \cite{ref_chicco}. Formulasi matematis MCC didefinisikan sebagai:
 
 \begin{equation}
 \text{MCC} = \frac{(TP \times TN) - (FP \times FN)}{\sqrt{(TP + FP)(TP + FN)(TN + FP)(TN + FN)}}
@@ -1206,6 +1206,33 @@ Aceto, G., Giampaolo, F., Guida, C., Izzo, S., Pescap\`{e}, A., Piccialli, F., P
 
 \bibitem{ref_challenges}
 Educative: What are the challenges in training GAN? Online. https://www.educative.io/answers/what-are-the-challenges-in-training-gan. Accessed 10 Sep 2025 (2025)
+
+\bibitem{ref_xgboost}
+Chen, T., Guestrin, C.: XGBoost: A scalable tree boosting system. In: Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining, pp. 785--794 (2016)
+
+\bibitem{ref_szegedy}
+Szegedy, C., Zaremba, W., Sutskever, I., Bruna, J., Erhan, D., Goodfellow, I., Fergus, R.: Intriguing properties of neural networks. In: International Conference on Learning Representations (ICLR) (2014)
+
+\bibitem{ref_fgsm}
+Goodfellow, I.J., Shlens, J., Szegedy, C.: Explaining and harnessing adversarial examples. In: International Conference on Learning Representations (ICLR) (2015)
+
+\bibitem{ref_saliency}
+Simonyan, K., Vedaldi, A., Zisserman, A.: Deep inside convolutional networks: Visualising image classification models and saliency maps. In: Workshop at International Conference on Learning Representations (ICLR) (2014)
+
+\bibitem{ref_madry}
+Madry, A., Makelov, A., Schmidt, L., Tsipras, D., Vladu, A.: Towards deep learning models resistant to adversarial attacks. In: International Conference on Learning Representations (ICLR) (2018)
+
+\bibitem{ref_matthews}
+Matthews, B.W.: Comparison of the predicted and observed secondary structure of T4 phage lysozyme. Biochim. Biophys. Acta (BBA) - Protein Structure 405(2), 442--451 (1975)
+
+\bibitem{ref_chicco}
+Chicco, D., Jurman, G.: The advantages of the Matthews correlation coefficient (MCC) over F1 score and accuracy in binary classification evaluation. BMC Genomics 21(1), 6 (2020)
+
+\bibitem{ref_sklearn}
+Pedregosa, F., Varoquaux, G., Gramfort, A., Michel, V., Thirion, B., Grisel, O., Blondel, M., Prettenhofer, P., Weiss, R., Dubourg, V., Vanderplas, J., Passos, A., Cournapeau, D., Brucher, M., Perrot, M., Duchesnay, E.: Scikit-learn: Machine learning in Python. J. Mach. Learn. Res. 12, 2825--2830 (2011)
+
+\bibitem{ref_stratified}
+Kohavi, R.: A study of cross-validation and bootstrap for accuracy estimation and model selection. In: Proceedings of the 14th International Joint Conference on Artificial Intelligence (IJCAI), pp. 1137--1143 (1995)
 
 \end{thebibliography}
 

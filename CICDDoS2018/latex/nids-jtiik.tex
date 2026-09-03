@@ -1,0 +1,661 @@
+% =====================================================================
+%  NIDS-01 - Versi format Jurnal JTIIK (Jurnal Teknologi Informasi dan
+%  Ilmu Komputer, FILKOM Universitas Brawijaya)
+%  Dua kolom, Times New Roman 10pt, margin 3-3-2-2 cm, sitasi
+%  Harvard-Anglia (author-year) via natbib.
+%
+%  CATATAN: Template resmi JTIIK berupa .docx. Berkas ini menyusun ulang
+%  konten paper (nids-01.tex) agar mengikuti gaya JTIIK. Sesuaikan lagi
+%  detail tipografi bila redaksi menyediakan berkas kelas (.cls) resmi.
+% =====================================================================
+\documentclass[10pt,twocolumn,a4paper]{extarticle}
+
+% --- Encoding & Bahasa ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[indonesian,english]{babel}
+
+% --- Font Times New Roman-like ---
+\usepackage{mathptmx}
+
+% --- Margin 3-3-2-2 cm (left-top-right-bottom), kolom & gutter ---
+\usepackage[a4paper,left=3cm,top=3cm,right=2cm,bottom=2cm,columnsep=1cm]{geometry}
+
+% --- Matematika, tabel, gambar ---
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{enumitem}
+
+% --- Grafik vektor (diagram & plot) ---
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, backgrounds, calc}
+
+% --- Sitasi Harvard-Anglia (author-year) ---
+\usepackage[round,authoryear]{natbib}
+\bibliographystyle{agsm}
+% agsm menghasilkan gaya Harvard (author, year). Jika 'agsm' tidak
+% tersedia di distribusi, ganti dengan 'apalike' atau 'plainnat'.
+
+% --- Judul bab: HURUF BESAR 10pt tebal (gaya JTIIK) ---
+\usepackage{titlesec}
+\titleformat{\section}{\normalsize\bfseries}{\thesection.}{0.5em}{\MakeUppercase}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection.}{0.5em}{}
+\titleformat{\subsubsection}{\normalsize\itshape}{\thesubsubsection.}{0.5em}{}
+
+% --- Caption tabel/gambar 8pt ---
+\usepackage[font=small,labelfont=bf]{caption}
+\captionsetup{font=footnotesize}
+
+\usepackage[hidelinks]{hyperref}
+
+\setlength{\parindent}{0.5cm}
+\setlength{\columnsep}{1cm}
+
+\begin{document}
+
+% =====================================================================
+%  JUDUL, PENULIS, ABSTRAK  (rentang satu kolom penuh)
+% =====================================================================
+\twocolumn[
+  \begin{@twocolumnfalse}
+  \begin{center}
+    {\fontsize{12}{14}\selectfont \bfseries \MakeUppercase{Penguatan Ketangguhan NIDS dengan Reduksi Fitur Berbasis XGBoost Gain-based Importance melalui Adversarial Training terhadap Serangan Evasion Saliency Map}\par}
+    \vspace{6pt}
+    {\fontsize{10}{12}\selectfont \bfseries Hero Yudo Martono\textsuperscript{*1}, Iwan Syarif\textsuperscript{2}, Ferry Astika Saputra\textsuperscript{3}\par}
+    \vspace{4pt}
+    {\fontsize{10}{12}\selectfont \textsuperscript{1,2,3}Politeknik Elektronika Negeri Surabaya, Surabaya, Indonesia\par}
+    {\fontsize{10}{12}\selectfont Email: \textsuperscript{1}hero@pens.ac.id, \textsuperscript{2}iwanarif@pens.ac.id, \textsuperscript{3}ferryas@pens.ac.id\par}
+    {\fontsize{10}{12}\selectfont *Penulis Korespondensi\par}
+    \vspace{4pt}
+    {\fontsize{10}{12}\selectfont (Naskah masuk: dd mmm yyyy, diterima untuk diterbitkan: dd mmm yyyy)\par}
+    \vspace{10pt}
+  \end{center}
+
+  % --- Abstrak Bahasa Indonesia ---
+  \begin{center}\textbf{Abstrak}\end{center}
+  \noindent\small
+  Keberhasilan \textit{Machine Learning} dalam \textit{Network Intrusion Detection System} (NIDS) seringkali terbatas pada kondisi trafik laboratorium yang bersih dan rentan terhadap manipulasi sengaja pada fase pengujian. Optimasi model melalui reduksi dimensi fitur diperlukan untuk efisiensi sistem, namun berpotensi memperluas permukaan serangan (\textit{attack surface}). Penelitian ini bertujuan mengevaluasi dan meningkatkan ketangguhan (\textit{robustness}) model XGBoost yang telah dioptimasi fiturnya menggunakan metode \textit{Gain-based Importance}. Penelitian menggunakan dataset CSE-CIC-IDS2018 yang mencakup 15,7 juta sampel trafik jaringan dari tujuh kategori serangan. Metodologi mencakup tiga tahap utama: reduksi fitur dari 68 menjadi 10 fitur menggunakan metrik \textit{Gain} XGBoost; simulasi serangan \textit{evasion} berbasis \textit{Saliency Map} dengan variasi epsilon ($\epsilon \in \{0{,}01; 0{,}05; 0{,}1\}$); dan implementasi \textit{Adversarial Training} sebagai mekanisme pertahanan. Hasil eksperimen menunjukkan model standar mengalami penurunan drastis pada \textit{Matthews Correlation Coefficient} (MCC) dari 0,9351 menjadi 0,0184 (penurunan 98\%) saat menghadapi serangan \textit{evasion} ($\epsilon = 0{,}1$). Model yang diperkuat melalui \textit{Adversarial Training} berhasil memulihkan MCC hingga 0,9953 pada data adversarial sambil mempertahankan integritas deteksi pada trafik normal (MCC = 0,9347). Analisis \textit{Robustness Ablation Study} mengkonfirmasi konfigurasi Top-10 sebagai titik optimal (\textit{sweet spot}). Validasi pada trafik jaringan nyata di lingkungan cloud AWS menunjukkan pola ketangguhan tetap konsisten dengan hasil \textit{offline}, membuktikan efektivitas \textit{Adversarial Training} tidak terbatas pada dataset \textit{benchmark}.
+
+  \vspace{6pt}
+  \noindent\small\textbf{Kata kunci}: \textit{adversarial training}, CSE-CIC-IDS2018, \textit{evasion attack}, NIDS, reduksi fitur, XGBoost
+
+  \vspace{12pt}
+
+  % --- Judul & Abstrak Bahasa Inggris ---
+  \begin{center}
+    {\fontsize{12}{14}\selectfont \bfseries\itshape \MakeUppercase{Strengthening NIDS Resilience with XGBoost Gain-based Importance Feature Reduction via Adversarial Training against Saliency Map Evasion Attacks}\par}
+    \vspace{8pt}
+  \end{center}
+
+  \begin{center}\textbf{\textit{Abstract}}\end{center}
+  \noindent\small\itshape
+  The success of Machine Learning in Network Intrusion Detection Systems (NIDS) is often limited to clean laboratory traffic conditions and remains vulnerable to intentional manipulation during the testing phase. Model optimization through feature dimension reduction is required for system efficiency; however, it may expand the attack surface. This study aims to evaluate and enhance the robustness of an XGBoost model whose features have been optimized using the Gain-based Importance method. The study uses the CSE-CIC-IDS2018 dataset comprising 15.7 million network traffic samples spanning seven attack categories. The proposed methodology comprises three main stages: feature reduction from 68 to 10 features using the XGBoost Gain metric; simulation of Saliency Map-based evasion attacks with epsilon variations ($\epsilon \in \{0.01, 0.05, 0.1\}$); and the implementation of Adversarial Training as a defense mechanism. Experimental results demonstrate that the baseline model suffers a drastic Matthews Correlation Coefficient (MCC) drop from 0.9351 to 0.0184 (a 98\% decline) under evasion attacks ($\epsilon = 0.1$). The model hardened through Adversarial Training recovers MCC to 0.9953 on adversarial data while maintaining detection integrity on normal traffic (MCC = 0.9347). The Robustness Ablation Study confirms the Top-10 configuration as the optimal sweet spot. Validation on real network traffic in an AWS cloud environment shows the robustness pattern remains consistent with the offline results, demonstrating that the effectiveness of Adversarial Training is not confined to benchmark datasets.
+
+  \vspace{6pt}
+  \noindent\small\itshape\textbf{Keywords}: adversarial training, CSE-CIC-IDS2018, evasion attack, feature reduction, NIDS, XGBoost
+
+  \vspace{14pt}
+  \end{@twocolumnfalse}
+]
+\selectlanguage{indonesian}
+
+% =====================================================================
+\section{Pendahuluan}
+% =====================================================================
+Pesatnya pertumbuhan lalu lintas jaringan dan kompleksitas serangan siber menjadikan \textit{Network Intrusion Detection System} (NIDS) sebagai komponen pertahanan yang esensial. Perkembangan NIDS berbasis \textit{Machine Learning} sangat bergantung pada ketersediaan dataset \textit{benchmark} publik yang berkualitas. Sejumlah dataset telah menjadi standar de facto dalam mengevaluasi model deteksi, mulai dari CIC-IDS/CSE-CIC-IDS \citep{ref_cicids}, Bot-IoT \citep{ref_botiot}, TON\_IoT \citep{ref_toniot}, hingga CICIoT2023 \citep{ref_ciciot}. Berbagai survei menegaskan bahwa metode \textit{Machine Learning} dan \textit{Deep Learning} telah menjadi arus utama dalam riset NIDS modern \citep{ref_review_gan,ref_tutorial_gan}.
+
+Salah satu tantangan klasik pada dataset NIDS adalah ketidakseimbangan kelas (\textit{class imbalance}) yang ekstrem antara trafik normal dan serangan. Untuk mengatasinya, \textit{Generative Adversarial Networks} (GAN) yang diperkenalkan oleh \citet{ref_gan} banyak dimanfaatkan untuk sintesis dan penyeimbangan data, dan sejak itu berbagai varian arsitektur generatif dikembangkan sebagai fondasi untuk tugas deteksi intrusi.
+
+Pada tataran penerapan NIDS, sejumlah penelitian mengombinasikan model generatif dengan klasifikator \textit{Machine Learning} tradisional seperti \textit{Random Forest}, \textit{Decision Tree}, SVM, dan XGBoost untuk meningkatkan deteksi \citep{ref_mari,ref_kumar,ref_ctgan_ids,ref_mcgan,ref_syngan,ref_cegan}. Kelompok penelitian lain memanfaatkan arsitektur \textit{Deep Learning} seperti CNN, DNN, LSTM, dan GRU sebagai pengklasifikasi hilir pasca-generasi data \citep{ref_tcn,ref_speacgan,ref_tmggan,ref_park,ref_fewshot}. Pendekatan-pendekatan ini terbukti mampu memperbaiki performa deteksi pada kondisi trafik laboratorium yang bersih.
+
+Namun, kemampuan generatif yang sama juga dapat dieksploitasi sebagai senjata serangan. Sejumlah studi menunjukkan bahwa GAN dapat membangkitkan sampel \textit{adversarial} yang mengecoh model NIDS melalui serangan \textit{evasion}, baik pada klasifikator berbasis \textit{Machine Learning} maupun \textit{Deep Learning} \citep{ref_sganids}. Serangan semacam ini bahkan efektif pada rezim data terbatas \citep{ref_evasiongan}, pada skema evasi berbasis \textit{Machine Learning} \citep{ref_demgan}, maupun pada domain \textit{malware} \citep{ref_aagan}. Temuan ini mengungkap celah keamanan mendasar: model yang berkinerja tinggi pada data murni dapat runtuh drastis ketika fitur masukannya dimanipulasi secara halus dan sengaja pada fase inferensi.
+
+Untuk menutup celah tersebut, mekanisme pertahanan seperti \textit{Adversarial Training} telah diusulkan guna memperkuat batas keputusan model. Pendekatan generatif juga dikembangkan ke arah metode ensemble/hibrida \citep{ref_ewgan,ref_hybridwgan} serta arsitektur privasi dan terdistribusi berbasis \textit{federated learning} \citep{ref_nidsfgpa}. Di sisi lain, kebutuhan efisiensi komputasi mendorong penerapan reduksi dimensi fitur agar model dapat di-\textit{deploy} pada perangkat berdaya terbatas. Ironisnya, reduksi fitur yang agresif justru berpotensi memperbesar \textit{attack surface}: dengan memusatkan keputusan pada sedikit fitur, sensitivitas gradien pada fitur-fitur tersebut meningkat sehingga model menjadi lebih mudah dieksploitasi. Ketegangan antara efisiensi dan ketangguhan ini belum banyak dieksplorasi secara sistematis dalam literatur.
+
+Selain itu, tinjauan terhadap literatur NIDS berbasis generatif dan \textit{adversarial} memperlihatkan dua kesenjangan penting. \textit{Pertama}, isu generalisasi lintas dataset (\textit{cross-dataset}): studi terkini membuktikan bahwa model yang unggul pada satu dataset mengalami penurunan performa drastis ketika diuji pada dataset dari jaringan berbeda \citep{ref_crossgen,ref_synthtraffic}, menandakan bahwa performa \textit{benchmark} belum tentu mencerminkan kemampuan generalisasi. \textit{Kedua}, dan yang paling krusial, hampir seluruh penelitian tersebut berhenti pada evaluasi \textit{offline} menggunakan dataset statis; sangat sedikit yang memvalidasi ketangguhan model pada \textit{trafik jaringan nyata} (\textit{real-traffic}) di lingkungan \textit{deployment} yang sesungguhnya. Akibatnya, klaim ketangguhan terhadap \textit{evasion} sebagian besar belum teruji pada kondisi operasional riil, di mana perbedaan perkakas ekstraksi fitur dan karakteristik jaringan dapat memengaruhi performa secara signifikan. Tantangan pelatihan model generatif itu sendiri, seperti \textit{mode collapse} dan ketidakstabilan konvergensi, turut memperumit reproduktibilitas hasil di lingkungan nyata.
+
+Berdasarkan kesenjangan tersebut, penelitian ini mengusulkan pendekatan yang mengintegrasikan reduksi fitur berbasis \textit{XGBoost Gain-based Importance} dengan penguatan \textit{Adversarial Training} berbasis \textit{Saliency Map}, kemudian memvalidasinya tidak hanya secara \textit{offline} pada dataset CSE-CIC-IDS2018, melainkan juga pada \textit{trafik nyata} di lingkungan cloud AWS. Kontribusi utama penelitian ini adalah: (1) mengkuantifikasi celah keamanan (\textit{security gap}) akibat serangan \textit{evasion} pada model \textit{tree-based} yang telah direduksi fiturnya; (2) membuktikan efektivitas \textit{Adversarial Training} dalam memulihkan ketangguhan model tanpa mengorbankan akurasi pada trafik normal; (3) menentukan titik keseimbangan (\textit{sweet spot}) dimensi fitur melalui \textit{Robustness Ablation Study}; dan (4) memvalidasi konsistensi ketangguhan model pada trafik jaringan nyata --- sebuah aspek yang jarang dibahas dalam literatur NIDS berbasis \textit{adversarial}.
+
+% =====================================================================
+\section{Metode Penelitian}
+% =====================================================================
+Metodologi penelitian ini dirancang secara sistematis untuk mengevaluasi dan meningkatkan ketangguhan (\textit{robustness}) NIDS terhadap serangan \textit{evasion}. Secara garis besar, metodologi mencakup enam tahapan utama seperti diilustrasikan pada Gambar~\ref{fig:research_flowchart} dan dijelaskan pada sub-bagian berikut.
+
+Keenam tahapan tersebut dirancang sebagai satu alur kerja yang saling terhubung, bukan langkah-langkah terpisah. Pertama, tahap pra-pemrosesan data menyiapkan subset dataset yang bersih dan representatif dari populasi asli yang berukuran masif. Kedua, tahap optimasi fitur mereduksi dimensi masukan menggunakan metrik \textit{Gain} XGBoost untuk memperoleh model yang efisien tanpa kehilangan daya diskriminasi. Ketiga, tahap pembangkitan sampel adversarial mensimulasikan serangan \textit{evasion} berbasis gradien guna mengukur kerentanan model yang telah direduksi. Keempat, tahap \textit{Adversarial Training} memanfaatkan sampel tersebut untuk merestrukturisasi batas keputusan model agar tahan terhadap perturbasi. Kelima, tahap \textit{Robustness Ablation Study} menentukan titik keseimbangan (\textit{sweet spot}) dimensi fitur yang menyeimbangkan efisiensi dan ketangguhan. Keenam, tahap evaluasi membandingkan model \textit{baseline} dan \textit{robust} melalui matriks pengujian silang $2\times2$, yang kemudian diperluas dengan validasi pada trafik jaringan nyata. Rancangan berlapis ini memungkinkan setiap klaim ketangguhan diuji secara bertahap, mulai dari kondisi dataset terkontrol hingga kondisi \textit{deployment} yang lebih realistis.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.85\linewidth]{alur2.png}
+\caption{Diagram alur metodologi penelitian}
+\label{fig:research_flowchart}
+\end{figure}
+
+Berbeda dengan mayoritas penelitian NIDS berbasis \textit{adversarial} yang berhenti pada evaluasi \textit{offline}, kontribusi metodologis penelitian ini terletak pada penambahan lapisan validasi \textit{real-traffic} sebagai penutup alur kerja. Dengan demikian, temuan yang diperoleh dari dataset \textit{benchmark} dapat dikonfirmasi ---atau dipertanyakan--- pada kondisi jaringan sesungguhnya, sehingga meminimalkan risiko \textit{over-claim} yang lazim terjadi ketika kesimpulan hanya bersandar pada data laboratorium.
+
+\subsection{Dataset dan Pra-pemrosesan Data}
+Penelitian ini menggunakan dataset CSE-CIC-IDS2018 yang disediakan oleh \textit{Canadian Institute for Cybersecurity} (CIC) \citep{ref_cicids}. Dataset dipilih karena memiliki cakupan serangan yang luas dan mencerminkan skenario jaringan modern, terdiri dari 10 berkas CSV dengan total ukuran data kurang lebih 6,7 GB. Dataset mencakup profil trafik normal (\textit{benign}) serta tujuh kategori serangan utama: \textit{Brute-Force} (SSH/FTP), DoS, DDoS, \textit{Web Attacks}, \textit{Infiltration}, dan \textit{Botnet}.
+
+Mengingat volume data yang masif, penelitian ini menerapkan strategi \textit{Stratified Sampling} sebesar 10\% untuk menjaga distribusi label serangan asli tetap representatif dalam subset data. Hasil sampling menghasilkan 1.570.577 sampel dari total 15.705.786 sampel populasi asli. Proses pembersihan data dilakukan melalui beberapa tahapan: (a) penanganan nilai \textit{NaN} dan \textit{Infinity} melalui imputasi nilai finit maksimal; (b) eliminasi fitur identitas aliran (\textit{Flow ID}, IP, \textit{Port}, \textit{Protocol}, \textit{Timestamp}) yang berisiko menimbulkan bias; (c) reduksi fitur \textit{zero-variance}; serta (d) normalisasi fitur numerik menggunakan \texttt{StandardScaler} dari pustaka \textit{scikit-learn} \citep{ref_sklearn} dan pengodean label dengan \texttt{LabelEncoder}. Hasil akhir adalah matriks data bersih dengan 68 fitur numerik yang siap digunakan untuk seleksi fitur berbasis \textit{Gain}.
+
+\subsection{Optimasi Fitur Berbasis XGBoost Gain-based Importance}
+Tahap ini bertujuan mencapai efisiensi komputasi tanpa mengorbankan informasi krusial untuk mendeteksi anomali. Reduksi fitur berbasis \textit{Gain-based Importance} \citep{ref_xgboost} dilakukan melalui tahapan: (1) pelatihan model XGBoost \citep{ref_xgboost} \textit{baseline} dengan seluruh 68 fitur pada rasio latih:uji $80:20$; (2) ekstraksi metrik \textit{Gain} yang merepresentasikan kontribusi rata-rata fitur dalam menurunkan fungsi kerugian di tiap pemisahan pohon; (3) perangkaian fitur (\textit{feature ranking}) menurut skor \textit{Gain}; (4) validasi melalui \textit{Ablation Study} pada beberapa konfigurasi subset fitur (\textit{Full}/68, Top-20, Top-15, Top-10); dan (5) penentuan konfigurasi optimal (\textit{sweet spot}) berdasarkan keseimbangan retensi performa, efisiensi ukuran model, dan kecepatan inferensi.
+
+\subsection{Pembangkitan Sampel Adversarial (\textit{Evasion Attack})}
+Tahap ini mensimulasikan skenario penyerang yang berusaha mengelabui model NIDS melalui serangan \textit{evasion}. Serangan semacam ini telah terbukti efektif menurunkan performa berbagai klasifikator IDS pada literatur terkini \citep{ref_demgan,ref_evasiongan}. Pembangkitan sampel \textit{adversarial} memanfaatkan teknik berbasis gradien matematis untuk mengidentifikasi kerentanan model dan memberikan perturbasi halus pada fitur kritis.
+
+Pendekatan \textit{Saliency Map} bertumpu pada gagasan sensitivitas keluaran model terhadap perubahan masukan yang diperkenalkan oleh \citet{ref_saliency}. Misalkan model NIDS didefinisikan sebagai fungsi keputusan $f(\mathbf{x})$ dengan parameter $\theta$, di mana $\mathbf{x} \in \mathbb{R}^d$ adalah vektor fitur dan $y \in \{0,1\}$ adalah label kebenaran. Tingkat sensitivitas fungsi kerugian $L(\theta,\mathbf{x},y)$ diukur melalui vektor gradien, dan skor \textit{Saliency} untuk fitur ke-$i$ dirumuskan sebagai:
+\begin{equation}
+S(\mathbf{x},i) = \left| \frac{\partial L(\theta,\mathbf{x},y)}{\partial x_i} \right|.
+\end{equation}
+Setelah fitur paling sensitif diidentifikasi, sampel \textit{adversarial} dibangkitkan mengikuti metode \textit{Fast Gradient Sign Method} (FGSM) yang diperkenalkan oleh \citet{ref_fgsm}:
+\begin{equation}
+\mathbf{x}_{adv} = \mathbf{x} + \epsilon \cdot \mathrm{sign}\left( \nabla_{\mathbf{x}} L(\theta,\mathbf{x},y) \right),
+\end{equation}
+dengan besaran gangguan dibatasi norma $\|\boldsymbol{\delta}\|_\infty \le \epsilon$ agar karakteristik trafik tetap fungsional. Batasan norma ini penting secara praktis: perturbasi yang terlalu besar akan merusak validitas paket jaringan (misalnya mengubah ukuran \textit{window} menjadi tidak wajar), sehingga tidak lagi merepresentasikan serangan yang realistis. Parameter $\epsilon$ karena itu berfungsi sebagai pengendali intensitas serangan sekaligus penjaga kelayakan trafik. Pada model tereduksi, beban diskriminasi terkonsentrasi pada dimensi yang lebih sempit sehingga nilai gradien pada fitur tersebut membesar; konsekuensinya, perturbasi kecil sekalipun dapat menggeser keputusan model secara signifikan, menjadikan model efisien tersebut paradoksnya lebih mudah dieksploitasi.
+
+\subsection{Modelling dan Adversarial Training}
+Fase ini merancang arsitektur klasifikasi XGBoost serta mekanisme pertahanan berbasis \textit{Adversarial Training}. Model dibangun dengan fungsi tujuan \texttt{multi:softprob}, kedalaman pohon maksimum $6$, \textit{learning rate} $0{,}1$, dan $100$ estimator. \textit{Adversarial Training} diformulasikan sebagai masalah optimasi \textit{Min-Max} (\textit{saddle-point}) sebagaimana kerangka ketangguhan yang diusulkan oleh \citet{ref_madry}:
+\begin{equation}
+\min_{\theta}\ \mathbb{E}_{(\mathbf{x},y)\sim\mathcal{D}} \left[ \max_{\|\boldsymbol{\delta}\|_\infty \le \epsilon} L(\theta, \mathbf{x}+\boldsymbol{\delta}, y) \right].
+\end{equation}
+Implementasi praktis dilakukan melalui augmentasi: sampel \textit{adversarial} $\mathcal{D}_{adv}$ dibangkitkan dengan \textit{Saliency Map} ($\epsilon \in \{0{,}01; 0{,}1\}$), lalu digabung dengan data murni membentuk $\mathcal{D}_{robust} = \mathcal{D}_{clean} \cup \mathcal{D}_{adv}$ (rasio $80:20$), dan model dilatih ulang. Diagram alur kerja \textit{Adversarial Training} disajikan pada Gambar~\ref{fig:adversarial_training_flow}.
+
+\begin{figure}[htbp]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+    node distance=1.0cm and 1.2cm,
+    block/.style={rectangle, draw=blue!70!black, fill=blue!8, thick, rounded corners, align=center, minimum height=0.8cm, font=\scriptsize},
+    process/.style={rectangle, draw=orange!80!black, fill=orange!10, thick, rounded corners, align=center, minimum height=0.8cm, font=\scriptsize},
+    model/.style={ellipse, draw=green!55!black, fill=green!10, thick, align=center, minimum height=0.8cm, font=\scriptsize},
+    arrow/.style={-Stealth, thick, draw=black!60}
+]
+    \node (clean) [block] {Dataset Latih Clean\\($\mathcal{D}_{clean}$)};
+    \node (saliency) [process, below=of clean] {Saliency Map \& Perturbasi $\epsilon$};
+    \node (adv_data) [block, below=of saliency] {Sampel Adversarial\\($\mathcal{D}_{adv}$)};
+    \node (combine) [process, right=1.2cm of saliency] {Augmentasi Data\\$\mathcal{D}_{robust}$};
+    \node (retrain) [model, right=1.2cm of combine] {Pelatihan Ulang\\XGBoost};
+    \node (robust_model) [block, below=of retrain] {Model Robust};
+    \draw [arrow] (clean) -- (saliency);
+    \draw [arrow] (saliency) -- (adv_data);
+    \draw [arrow] (clean.east) -- ++(0.4,0) |- (combine.north west);
+    \draw [arrow] (adv_data.east) -- ++(0.4,0) |- (combine.south west);
+    \draw [arrow] (combine) -- (retrain);
+    \draw [arrow] (retrain) -- (robust_model);
+\end{tikzpicture}%
+}
+\caption{Diagram alur kerja sistematis \textit{Adversarial Training}}
+\label{fig:adversarial_training_flow}
+\end{figure}
+
+\subsection{Robustness Ablation Study}
+\textit{Robustness Ablation Study} dirancang untuk mengevaluasi \textit{trade-off} antara efisiensi dimensi fitur dan tingkat keamanan model terhadap serangan \textit{evasion}. Pengujian dilakukan pada empat konfigurasi subset fitur berbasis peringkat \textit{Gain}: $C_1$ (\textit{Full}/68), $C_2$ (Top-15), $C_3$ (Top-10), dan $C_4$ (Top-5). Setiap konfigurasi dilatih dengan dua pendekatan (\textit{baseline} dan \textit{robust}), lalu diuji dengan sampel \textit{evasion} $\mathbf{x}_{adv}$ berparameter $\epsilon$. Titik keseimbangan $\hat{C}$ ditentukan dengan memaksimalkan utilitas gabungan antara ketangguhan (MCC) dan penalti jumlah fitur.
+
+\subsection{Evaluasi Model dan Perbandingan Performa}
+Evaluasi dilakukan melalui skenario pengujian silang $2\times 2$ yang membandingkan model standar (\textit{baseline}) dan model diperkuat (\textit{robust}) pada kondisi trafik murni maupun termanipulasi, sebagaimana Tabel~\ref{tab:skenario_2x2}.
+
+\begin{table}[htbp]
+\caption{Matriks skenario evaluasi model NIDS ($2\times 2$)}
+\label{tab:skenario_2x2}
+\centering
+\footnotesize
+\begin{tabularx}{\linewidth}{@{} l l l X @{}}
+\toprule
+\textbf{Skenario} & \textbf{Model} & \textbf{Data Uji} & \textbf{Tujuan Evaluasi} \\ \midrule
+S1 & Baseline & Murni & Performa awal pada kondisi normal \\
+S2 & Baseline & Manipulasi & Mengukur kerentanan \textit{evasion} \\
+S3 & Robust & Murni & Menjaga akurasi pada trafik normal \\
+S4 & Robust & Manipulasi & Membuktikan peningkatan ketahanan \\ \bottomrule
+\end{tabularx}
+\end{table}
+
+Karena dataset CSE-CIC-IDS2018 memiliki \textit{class imbalance} ekstrem, \textit{Matthews Correlation Coefficient} (MCC) \citep{ref_matthews} dipilih sebagai metrik evaluasi utama karena memperhitungkan keempat kuadran \textit{confusion matrix} secara proporsional sehingga lebih andal untuk data tidak seimbang \citep{ref_chicco}. MCC didefinisikan sebagai:
+\begin{equation}
+\mathrm{MCC} = \frac{(TP\times TN) - (FP\times FN)}{\sqrt{(TP+FP)(TP+FN)(TN+FP)(TN+FN)}}.
+\end{equation}
+Sebagai pelengkap, digunakan pula \textit{Precision} dan $F_1$-score. Penurunan performa pada S2 menunjukkan celah keamanan, sedangkan pemulihan MCC dan $F_1$-score pada S4 membuktikan keberhasilan penguatan model melalui \textit{Adversarial Training}.
+
+% =====================================================================
+\section{Hasil dan Pembahasan}
+% =====================================================================
+
+\subsection{Hasil Pra-pemrosesan Data dan Deskripsi Subset}
+Tahap pra-pemrosesan mentransformasikan dataset mentah CSE-CIC-IDS2018 ($\approx 6{,}7$ GB) menjadi subset yang bersih dan seimbang secara proporsional. Distribusi sampel sebelum dan sesudah \textit{stratified sampling} 10\% disajikan pada Tabel~\ref{tab:distribusi_dataset}.
+
+\begin{table}[htbp]
+\caption{Distribusi sampel data CSE-CIC-IDS2018 sebelum dan sesudah pra-pemrosesan}
+\label{tab:distribusi_dataset}
+\centering
+\footnotesize
+\begin{tabularx}{\linewidth}{@{} l r r X @{}}
+\toprule
+\textbf{Kategori} & \textbf{Data Awal} & \textbf{Subset 10\%} & \textbf{Deskripsi} \\ \midrule
+Benign & 13.484.708 & 1.348.470 & Trafik normal \\
+DDoS/DoS & 1.391.082 & 139.108 & \textit{Flooding} \\
+Brute-Force & 380.943 & 38.094 & Login SSH/FTP \\
+Botnet & 286.191 & 28.619 & Komando C2 \\
+Web Attacks & 928 & 93 & SQLi/XSS \\
+Infiltration & 161.934 & 16.193 & Penetrasi internal \\ \midrule
+Total & 15.705.786 & 1.570.577 & 68 fitur akhir \\ \bottomrule
+\end{tabularx}
+\end{table}
+
+Proses \textit{data cleaning} mengeliminasi 2.861 baris ber-\textit{NaN}, membuang enam fitur identitas aliran dan \textit{Timestamp}, serta delapan fitur \textit{zero-variance}. Dari 83 fitur teknis awal, dihasilkan matriks bersih berisi 68 fitur numerik independen dan satu kolom label.
+
+\subsection{Analisis Ranking Fitur XGBoost Gain dan Fitur Sensitif}
+Distribusi kontribusi \textit{Gain} tidak merata melainkan terkonsentrasi pada beberapa atribut. Sepuluh fitur teratas (Top-10) menyumbang lebih dari 85\% akumulasi skor \textit{Gain}, membuktikan mayoritas fitur bersifat redundan. Peringkat Top-10 fitur disajikan pada Tabel~\ref{tab:feature_importance}.
+
+\begin{table}[htbp]
+\caption{Sepuluh fitur teratas berdasarkan XGBoost Gain-based Importance}
+\label{tab:feature_importance}
+\centering
+\footnotesize
+\begin{tabular}{@{} c l @{}}
+\toprule
+\textbf{Peringkat} & \textbf{Nama Fitur} \\ \midrule
+1 & Fwd Seg Size Min \\
+2 & URG Flag Cnt \\
+3 & Tot Bwd Pkts \\
+4 & Fwd Act Data Pkts \\
+5 & Fwd Pkt Len Max \\
+6 & Fwd Pkt Len Mean \\
+7 & Bwd Pkt Len Mean \\
+8 & Init Bwd Win Byts \\
+9 & TotLen Bwd Pkts \\
+10 & Init Fwd Win Byts \\ \bottomrule
+\end{tabular}
+\end{table}
+
+Analisis berbasis gradien mengungkap perbedaan antara \textit{global importance} (\textit{Gain}) dan \textit{local sensitivity} (\textit{Saliency Map}). Fitur \textit{Init Fwd Win Byts} memiliki skor \textit{saliency} tertinggi meski hanya berada di peringkat ke-10 pada metrik \textit{Gain}. Fitur ini merepresentasikan ukuran \textit{TCP window size} awal koneksi \textit{forward} yang dapat dimanipulasi penyerang pada \textit{header} TCP tanpa merusak fungsionalitas paket, menjadikannya target \textit{evasion} yang realistis. Temuan ini mengonfirmasi bahwa fitur terpenting secara global saat pelatihan tidak selalu identik dengan fitur paling rentan secara lokal saat inferensi.
+
+\subsection{Hasil Ablation Study Seleksi Fitur}
+\label{sec:hasil_ablation}
+Model XGBoost dilatih ulang pada empat konfigurasi subset fitur. Perbandingan performa, ukuran model, dan kecepatan inferensi disajikan pada Tabel~\ref{tab:ablation_feature_selection}.
+
+\begin{table}[htbp]
+\caption{Hasil \textit{ablation study} seleksi fitur: performa dan efisiensi}
+\label{tab:ablation_feature_selection}
+\centering
+\footnotesize
+\begin{tabularx}{\linewidth}{@{} l c c c X @{}}
+\toprule
+\textbf{Konfig.} & \textbf{$F_1$} & \textbf{ROC-AUC} & \textbf{Ukuran} & \textbf{Inferensi (10k)} \\ \midrule
+Full (68) & 0,9798 & 0,9911 & 7,17 MB & 0,2400 s \\
+Top-20 & 0,9795 & 0,9900 & 6,82 MB & 0,2266 s \\
+Top-15 & 0,9717 & 0,9883 & 5,91 MB & 0,1930 s \\
+Top-10 & 0,9717 & 0,9865 & 5,65 MB & 0,1826 s \\ \bottomrule
+\end{tabularx}
+\end{table}
+
+Konfigurasi Top-10 dipilih sebagai \textit{sweet spot}: penurunan $F_1$ dari \textit{Full} hanya 0,83\%, sementara ukuran model tereduksi 21,2\% (dari 7,17 MB ke 5,65 MB) dan waktu inferensi turun 23,9\%. Top-10 mencapai $F_1$ identik dengan Top-15 namun lebih ringkas, sehingga fitur ke-11 hingga ke-15 tidak menambah performa. Konfigurasi ini menjadi basis seluruh eksperimen \textit{Adversarial Training} dan \textit{Robustness Ablation}.
+
+\subsection{Evaluasi Komparatif Empat Skenario (S1--S4)}
+Efektivitas \textit{Adversarial Training} dievaluasi melintasi empat skenario silang $2\times 2$ pada subset Top-10 dengan $\epsilon = 0{,}10$. Hasil kuantitatif disajikan pada Tabel~\ref{tab:results_4_scenarios} dan divisualisasikan pada Gambar~\ref{fig:4_scenarios_comparison}.
+
+\begin{table}[htbp]
+\caption{Hasil kuantitatif evaluasi model pada skenario S1--S4}
+\label{tab:results_4_scenarios}
+\centering
+\footnotesize
+\begin{tabularx}{\linewidth}{@{} X l l c c c @{}}
+\toprule
+\textbf{Skenario} & \textbf{Model} & \textbf{Data} & \textbf{MCC} & \textbf{$F_1$} & \textbf{Prec.} \\ \midrule
+S1 & Baseline & Murni & 0,9351 & 0,9729 & 0,9720 \\
+S2 & Baseline & Manip. & 0,0184 & 0,7539 & 0,6905 \\
+S3 & Robust & Murni & 0,9347 & 0,9727 & 0,9718 \\
+S4 & Robust & Manip. & 0,9953 & 0,9985 & 0,9985 \\ \bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{figure}[htbp]
+\centering
+\resizebox{0.92\linewidth}{!}{%
+\begin{tikzpicture}
+\begin{axis}[
+    ybar,
+    enlargelimits=0.15,
+    legend style={at={(0.5,-0.22)}, anchor=north, legend columns=-1, font=\scriptsize},
+    ylabel={Skor Metrik},
+    ylabel style={font=\scriptsize},
+    symbolic x coords={S1, S2, S3, S4},
+    xtick=data,
+    xticklabel style={font=\scriptsize},
+    yticklabel style={font=\scriptsize},
+    nodes near coords, every node near coord/.append style={font=\tiny},
+    ymin=0, ymax=1.15, bar width=10pt,
+    grid=major, grid style={dashed, gray!30}
+]
+\addplot[draw=blue!70!black, fill=blue!55] coordinates {(S1,0.9351) (S2,0.0184) (S3,0.9347) (S4,0.9953)};
+\addplot[draw=orange!80!black, fill=orange!60] coordinates {(S1,0.9729) (S2,0.7539) (S3,0.9727) (S4,0.9985)};
+\legend{MCC, $F_1$-score}
+\end{axis}
+\end{tikzpicture}%
+}
+\caption{Perbandingan metrik MCC dan $F_1$-score pada skenario S1--S4 ($\epsilon = 0{,}10$)}
+\label{fig:4_scenarios_comparison}
+\end{figure}
+
+Temuan penting dari empat skenario: (1) \textit{Celah keamanan S2}: model \textit{baseline} anjlok dari MCC $0{,}9351$ (S1) menjadi $0{,}0184$ (S2), penurunan 98\%; (2) \textit{Integritas trafik normal S3}: model \textit{robust} pada data murni tetap tinggi (MCC $0{,}9347$, hanya turun 0,04\% dari S1), membuktikan penambahan sampel \textit{adversarial} tidak merusak deteksi trafik normal; (3) \textit{Pemulihan ketahanan S4}: model \textit{robust} pada data manipulasi mencapai MCC $0{,}9953$ (naik $+0{,}9769$ dari S2); (4) \textit{Fenomena S4 $>$ S1}: perturbasi dibangkitkan dari gradien model \textit{baseline} sehingga tidak efektif terhadap model \textit{robust}, sedangkan data murni memiliki variasi natural yang sedikit lebih menantang.
+
+\subsection{Efektivitas Adversarial Training terhadap Ketahanan Model}
+Mekanisme \textit{Adversarial Training} berbasis optimasi \textit{Min-Max} memperkuat ketahanan model tanpa mengorbankan performa pada trafik normal. Gambar~\ref{fig:mcc_recovery} mengilustrasikan tren MCC model \textit{baseline} (S1$\rightarrow$S2) yang kolaps dan model \textit{robust} (S3$\rightarrow$S4) yang pulih seiring kenaikan intensitas perturbasi $\epsilon$.
+
+\begin{figure}[htbp]
+\centering
+\resizebox{0.92\linewidth}{!}{%
+\begin{tikzpicture}
+\begin{axis}[
+    xlabel={Epsilon ($\epsilon$)}, ylabel={MCC},
+    xlabel style={font=\scriptsize}, ylabel style={font=\scriptsize},
+    xticklabel style={font=\scriptsize}, yticklabel style={font=\scriptsize},
+    legend style={at={(0.5,-0.28)}, anchor=north, legend columns=-1, font=\scriptsize},
+    xmin=0, xmax=0.1, ymin=-0.1, ymax=1.05,
+    grid=major, grid style={dashed, gray!30}, thick,
+    width=9cm, height=5.5cm
+]
+\addplot[mark=*, blue!70!black, thick] coordinates {(0,0.9351) (0.01,0.62) (0.05,0.18) (0.1,0.0184)};
+\addplot[mark=square*, orange!80!black, thick, dashed] coordinates {(0,0.9347) (0.01,0.965) (0.05,0.985) (0.1,0.9953)};
+\legend{Baseline (S1$\rightarrow$S2), Robust (S3$\rightarrow$S4)}
+\end{axis}
+\end{tikzpicture}%
+}
+\caption{Kurva transisi dan pemulihan MCC terhadap variasi perturbasi $\epsilon$}
+\label{fig:mcc_recovery}
+\end{figure}
+
+Selisih tajam antara model \textit{baseline} yang kolaps (mendekati nol pada $\epsilon = 0{,}1$) dan model \textit{robust} yang mempertahankan MCC di atas $0{,}99$ membuktikan bahwa batas keputusan baru berhasil mengisolasi pergeseran gradien serangan.
+
+\subsection{Robustness Ablation Study: Penentuan Sweet Spot Dimensi Fitur}
+\textit{Robustness Ablation Study} mengevaluasi dampak pemangkasan dimensi fitur terhadap efisiensi dan ketahanan pada serangan \textit{evasion} ($\epsilon = 0{,}10$). Empat konfigurasi ($C_1$ \textit{Full}/68, $C_2$ Top-15, $C_3$ Top-10, $C_4$ Top-5) dibandingkan pada Tabel~\ref{tab:robustness_ablation}.
+
+\begin{table}[htbp]
+\caption{Hasil \textit{robustness ablation}: ketahanan model \textit{robust} (S4) per konfigurasi fitur}
+\label{tab:robustness_ablation}
+\centering
+\footnotesize
+\begin{tabularx}{\linewidth}{@{} l c c X @{}}
+\toprule
+\textbf{Konfig.} & \textbf{Fitur} & \textbf{MCC (S4)} & \textbf{Keterangan} \\ \midrule
+$C_1$ & 68 & 0,9955 & Ketahanan penuh, model besar \\
+$C_2$ & 15 & 0,9954 & Nyaris identik $C_1$ \\
+$C_3$ & 10 & 0,9953 & \textit{Sweet spot} (dipilih) \\
+$C_4$ & 5 & 0,8730 & Ketahanan menurun \\ \bottomrule
+\end{tabularx}
+\end{table}
+
+Konfigurasi $C_3$ (Top-10) mempertahankan ketahanan tinggi (MCC S4 $= 0{,}9953$) yang setara dengan model penuh sambil memangkas ukuran model 21,2\%. Sebaliknya, $C_4$ (Top-5) menurun ke MCC $0{,}873$, mengonfirmasi bahwa lima fitur tidak cukup untuk membentuk \textit{decision boundary} yang stabil. Dengan demikian, Top-10 ditetapkan sebagai titik keseimbangan optimal antara efisiensi dan ketangguhan.
+
+\subsection{Pembahasan dan Implikasi Praktis}
+Secara keseluruhan, hasil menegaskan adanya ketegangan antara efisiensi dan ketangguhan: reduksi fitur meningkatkan efisiensi namun memusatkan sensitivitas gradien pada sedikit fitur sehingga memperbesar \textit{attack surface}. \textit{Adversarial Training} terbukti menetralkan risiko ini dengan merestrukturisasi batas keputusan, sehingga model ringkas (5,65 MB) tetap tangguh terhadap \textit{evasion}. Ukuran model yang kecil ini menjadikannya kandidat untuk \textit{deployment} pada perangkat \textit{edge} maupun arsitektur \textit{serverless}.
+
+\subsection{Validasi Real-Traffic pada Lingkungan Cloud AWS}
+\label{sec:real_traffic}
+Untuk membuktikan bahwa temuan \textit{offline} bukan semata artefak dataset laboratorium, dilakukan validasi pada trafik jaringan nyata di lingkungan Amazon Web Services (AWS). Infrastruktur dibangun dalam sebuah VPC ($10.3.0.0/16$) berisi tiga node EC2: \textit{Attacker} (subnet publik) yang menjalankan Hydra, Slowloris, dan \textit{nping}; \textit{Target} (subnet privat) yang menjalankan SSH dan Nginx; serta \textit{Analyzer} (subnet privat) yang melakukan ekstraksi fitur dan inferensi. Trafik ditangkap dengan \texttt{tcpdump} di \textit{Target}, disimpan ke Amazon S3, lalu diunduh \textit{Analyzer} untuk diekstraksi menjadi fitur aliran menggunakan pustaka NFStream. Topologi disajikan pada Gambar~\ref{fig:aws_infra}.
+
+\begin{figure}[htbp]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+    node distance=1.6cm and 2.4cm,
+    attacker/.style={rectangle, draw=red!70!black, fill=red!8, thick, rounded corners, align=center, minimum height=1.0cm, minimum width=2.8cm, font=\scriptsize},
+    target/.style={rectangle, draw=blue!70!black, fill=blue!8, thick, rounded corners, align=center, minimum height=1.0cm, minimum width=2.8cm, font=\scriptsize},
+    analyzer/.style={rectangle, draw=green!55!black, fill=green!10, thick, rounded corners, align=center, minimum height=1.0cm, minimum width=2.8cm, font=\scriptsize},
+    store/.style={cylinder, shape border rotate=90, aspect=0.35, draw=orange!80!black, fill=orange!12, thick, align=center, minimum height=1.1cm, minimum width=1.9cm, font=\scriptsize},
+    flow/.style={-Stealth, thick, draw=red!70!black},
+    dataflow/.style={-Stealth, thick, draw=orange!80!black, dashed}
+]
+    \node (att) [attacker] {\textbf{Attacker}\\Hydra/Slowloris/nping\\10.3.1.214};
+    \node (tgt) [target, right=of att] {\textbf{Target}\\SSH + Nginx\\10.3.2.38};
+    \node (anl) [analyzer, below=of tgt] {\textbf{Analyzer}\\NFStream + XGBoost\\10.3.2.130};
+    \node (s3) [store, below=of att] {Amazon S3\\(pcap+model)};
+    \draw [flow] (att) -- node[above,font=\tiny]{Serangan} (tgt);
+    \draw [dataflow] (tgt.south) |- node[pos=0.75,above,font=\tiny]{pcap} (s3.east);
+    \draw [dataflow] (s3.south) |- node[pos=0.75,below,font=\tiny]{unduh} (anl.west);
+\end{tikzpicture}%
+}
+\caption{Topologi infrastruktur pengujian \textit{real-traffic} pada AWS}
+\label{fig:aws_infra}
+\end{figure}
+
+Infrastruktur dibangun menggunakan empat \textit{stack} AWS CloudFormation di region \texttt{ap-southeast-1}: node \textit{Attacker} (\texttt{t3.medium}, subnet publik) menjalankan Hydra untuk \textit{SSH brute-force}, Slowloris untuk \textit{DoS}, dan \textit{nping} untuk \textit{SYN flood}; node \textit{Target} (\texttt{t3.medium}, subnet privat) menjalankan layanan SSH (dengan \texttt{MaxAuthTries} dinaikkan) dan Nginx; serta node \textit{Analyzer} (\texttt{t3.large}, subnet privat) yang menjalankan NFStream dan XGBoost. Selama pengembangan ditemukan bahwa \textit{capture} harus dilakukan di node \textit{Target}, bukan di \textit{Analyzer}, karena \textit{Analyzer} tidak berada pada jalur trafik \textit{Attacker}$\rightarrow$\textit{Target}; percobaan awal dengan \textit{capture} di \textit{Analyzer} menghasilkan \textit{pcap} kosong. Selain itu, \textit{capture} wajib dilakukan per-antarmuka (\texttt{-i ens5}) karena mode \texttt{-i any} menghasilkan format \textit{Linux cooked-mode} yang membuat NFStream gagal merekonstruksi aliran.
+
+Berbeda dengan proses \textit{offline} yang memakai fitur CICFlowMeter, NFStream secara bawaan tidak mengekspos dua fitur \textit{TCP window size} (\textit{Init Fwd/Bwd Win Byts}). Untuk itu dikembangkan \textit{custom plugin} NFStream yang membaca atribut \texttt{ip\_packet} (\textit{raw bytes} mulai dari \textit{header} IP), menghitung panjang \textit{header} IP melalui \texttt{ihl = (byte[0] \& 0x0F) $\times$ 4}, lalu mengambil dua \textit{byte} \textit{TCP window} pada \textit{offset} \texttt{ihl+14} dan \texttt{ihl+15} secara \textit{big-endian}. Nilai \textit{window} pertama untuk tiap arah aliran disimpan ke atribut \texttt{udps.init\_fwd\_win\_byts} dan \texttt{udps.init\_bwd\_win\_byts}, sehingga seluruh 10 fitur Top-10 dapat direkonstruksi utuh dari trafik nyata. NFStream dijalankan dengan opsi \texttt{statistical\_analysis=True} agar menghasilkan medan statistik lengkap (86 kolom) yang mencakup delapan fitur lainnya.
+
+Pemetaan lengkap antara 10 fitur yang digunakan model (definisi CICFlowMeter saat pelatihan) dan medan NFStream yang dihasilkan pada percobaan \textit{real-traffic} disajikan pada Tabel~\ref{tab:mapping}. Dari sepuluh fitur, tujuh dapat dipetakan \textit{persis}, satu bersifat \textit{aproksimasi} akibat perbedaan definisi (ukuran paket vs. ukuran segmen), dan dua fitur \textit{TCP window} hanya tersedia melalui \textit{plugin} kustom. Tabel ini penting karena menjadi dasar interpretasi \textit{feature mismatch}: fitur dengan status aproksimasi (\textit{Fwd Seg Size Min}) dan dua fitur \textit{window} yang bergantung pada karakteristik lingkungan justru merupakan tiga fitur dengan penyimpangan distribusi terbesar antara \textit{offline} dan \textit{real-traffic}.
+
+\begin{table*}[htbp]
+\caption{Pemetaan 10 fitur model (CICFlowMeter) ke medan NFStream pada percobaan \textit{real-traffic} beserta makna dan status pemetaannya}
+\label{tab:mapping}
+\centering
+\footnotesize
+\begin{tabularx}{\textwidth}{@{} c l l c X @{}}
+\toprule
+\textbf{\#} & \textbf{Fitur Model (Top-10)} & \textbf{Medan NFStream} & \textbf{Status} & \textbf{Makna Fitur} \\ \midrule
+1 & Fwd Seg Size Min & \texttt{src2dst\_min\_ps} & Aproksimasi & Ukuran segmen/paket terkecil arah maju (klien$\rightarrow$server); membedakan paket kontrol kecil dari paket berpayload \\ \addlinespace
+2 & URG Flag Cnt & \texttt{bidirectional\_urg\_packets} & Persis & Jumlah paket ber-\textit{flag} URG (\textit{urgent}); jarang muncul pada trafik normal, menjadi indikator pola tak lazim \\ \addlinespace
+3 & Tot Bwd Pkts & \texttt{dst2src\_packets} & Persis & Total paket arah balik (server$\rightarrow$klien); mencerminkan tingkat respons layanan \\ \addlinespace
+4 & Fwd Act Data Pkts & \texttt{src2dst\_packets} & Aproksimasi & Jumlah paket maju berpayload data; membedakan koneksi aktif dari sekadar \textit{handshake} \\ \addlinespace
+5 & Fwd Pkt Len Max & \texttt{src2dst\_max\_ps} & Persis & Ukuran paket maju terbesar; menandai keberadaan \textit{payload} besar dari klien \\ \addlinespace
+6 & Fwd Pkt Len Mean & \texttt{src2dst\_mean\_ps} & Persis & Rata-rata ukuran paket maju; mencirikan volume trafik dari klien \\ \addlinespace
+7 & Bwd Pkt Len Mean & \texttt{dst2src\_mean\_ps} & Persis & Rata-rata ukuran paket balik; mencirikan volume respons server \\ \addlinespace
+8 & Init Bwd Win Byts & \texttt{udps.init\_bwd\_win\_byts} & Plugin & Ukuran \textit{TCP window} awal arah balik; mencerminkan kapasitas \textit{buffer} server saat inisiasi koneksi \\ \addlinespace
+9 & TotLen Bwd Pkts & \texttt{dst2src\_bytes} & Persis & Total byte arah balik; volume data yang dikirim server \\ \addlinespace
+10 & Init Fwd Win Byts & \texttt{udps.init\_fwd\_win\_byts} & Plugin & Ukuran \textit{TCP window} awal arah maju; fitur paling sensitif terhadap \textit{evasion} dan menjadi target utama manipulasi \\ \bottomrule
+\end{tabularx}
+\end{table*}
+
+Setiap sesi \textit{capture} berlangsung tujuh menit mengikuti \textit{timeline} pada Tabel~\ref{tab:timeline}, dengan fase \textit{benign} pada awal dan akhir sebagai \textit{warm-up} dan \textit{cool-down}. Pelabelan \textit{ground truth} menggunakan kebijakan \textit{phase-and-attacker-ip}: suatu aliran diberi label serangan hanya jika waktunya jatuh pada fase serangan \textit{dan} melibatkan IP penyerang ($10.3.1.214$); selain itu dilabeli \textit{benign}. Skenario \textit{clean} (RT-S1, RT-S3) memakai serangan standar, sedangkan skenario \textit{evasion} (RT-S2, RT-S4) menambahkan perturbasi pada tingkat jaringan di node \textit{Attacker}: modifikasi \textit{TCP window} melalui \texttt{sysctl} (menyasar \textit{Init Fwd Win Byts}) dan penambahan \textit{jitter} antar-paket melalui \texttt{tc netem} (menyasar fitur berbasis \textit{inter-arrival time}). Karena RT-S1/RT-S3 berbagi satu \textit{capture clean} dan RT-S2/RT-S4 berbagi satu \textit{capture evasion}, empat skenario cukup memerlukan dua sesi \textit{capture}.
+
+\begin{table}[htbp]
+\caption{\textit{Timeline} fase trafik per sesi \textit{capture} (7 menit)}
+\label{tab:timeline}
+\centering
+\footnotesize
+\begin{tabularx}{\linewidth}{@{} c X l @{}}
+\toprule
+\textbf{Menit} & \textbf{Fase / Serangan} & \textbf{Perkakas} \\ \midrule
+0--1 & Benign (\textit{warm-up}) & \texttt{curl} \\
+1--3 & SSH Brute-Force & Hydra (port 22) \\
+3--5 & DoS Slowloris & Slowloris (port 80) \\
+5--6 & SYN Flood & \textit{nping} (port 80) \\
+6--7 & Benign (\textit{cool-down}) & \texttt{curl} \\ \bottomrule
+\end{tabularx}
+\end{table}
+
+Pipeline inferensi di node \textit{Analyzer} berjalan lima tahap: (1) ekstraksi aliran dengan NFStream beserta \textit{plugin} \textit{window}; (2) penyusunan matriks 10 fitur sesuai urutan pada metadata \textit{deployment}; (3) standardisasi menggunakan parameter \texttt{StandardScaler} (\textit{mean} dan \textit{scale}) yang identik dengan fase pelatihan; (4) inferensi model \textit{baseline} atau \textit{robust}; dan (5) pelabelan \textit{ground truth} serta perhitungan metrik biner (\textit{attack} vs. \textit{benign}). Pengujian mereplikasi matriks $2\times 2$ (RT-S1--RT-S4). Perbandingan hasil \textit{offline} dan \textit{real-traffic} disajikan pada Tabel~\ref{tab:real_traffic_results}.
+
+\begin{table}[htbp]
+\caption{Perbandingan performa \textit{offline} vs. \textit{real-traffic} (AWS) pada konfigurasi Top-10}
+\label{tab:real_traffic_results}
+\centering
+\footnotesize
+\begin{tabularx}{\linewidth}{@{} X c c c c @{}}
+\toprule
+\textbf{Skenario} & \textbf{MCC$_{off}$} & \textbf{MCC$_{real}$} & \textbf{$F_1{}_{off}$} & \textbf{$F_1{}_{real}$} \\ \midrule
+RT-S1 (Base+Murni) & 0,9351 & 0,164 & 0,9729 & 0,855 \\
+RT-S2 (Base+Evasi) & 0,0184 & $-0{,}070$ & 0,7539 & 0,633 \\
+RT-S3 (Robust+Murni) & 0,9347 & 0,339 & 0,9727 & 0,581 \\
+RT-S4 (Robust+Evasi) & 0,9953 & 0,389 & 0,9985 & 0,626 \\ \bottomrule
+\end{tabularx}
+\end{table}
+
+Hasil validasi mengungkap dua lapisan temuan. \textit{Pertama}, pola relatif antar-skenario konsisten dengan \textit{offline}: model \textit{baseline} terdegradasi oleh \textit{evasion} (RT-S1$\rightarrow$RT-S2: MCC $0{,}164 \rightarrow -0{,}070$), sedangkan model \textit{robust} justru pulih (RT-S3$\rightarrow$RT-S4: MCC $0{,}339 \rightarrow 0{,}389$) dengan \textit{Precision} sempurna. \textit{Kedua}, penurunan MCC absolut disebabkan \textit{feature mismatch}. Untuk mengkuantifikasi hal ini, distribusi 10 fitur \textit{real-traffic} dibandingkan terhadap parameter \texttt{StandardScaler} pelatihan melalui \textit{z-score} rata-rata, $z = (\bar{x}_{\text{real}} - \mu_{\text{train}}) / \sigma_{\text{train}}$. Tiga fitur menyimpang signifikan ($|z| > 2$) sebagaimana Tabel~\ref{tab:diag}, dan ketiganya persis merupakan fitur yang teridentifikasi berisiko pada Tabel~\ref{tab:mapping} (satu aproksimasi definisi dan dua fitur \textit{window} bergantung lingkungan).
+
+\begin{table}[htbp]
+\caption{Fitur dengan penyimpangan distribusi terbesar (\textit{real} vs. \textit{training})}
+\label{tab:diag}
+\centering
+\footnotesize
+\begin{tabularx}{\linewidth}{@{} X c c c @{}}
+\toprule
+\textbf{Fitur} & \textbf{Mean$_{train}$} & \textbf{Mean$_{real}$} & \textbf{$z$} \\ \midrule
+Fwd Seg Size Min & 17,99 & 65,97 & $+6{,}23$ \\
+Init Fwd Win Byts & 8.773 & 62.591 & $+3{,}32$ \\
+Init Bwd Win Byts & 8.680 & 62.673 & $+2{,}62$ \\ \bottomrule
+\end{tabularx}
+\end{table}
+
+Terdapat dua sumber \textit{mismatch}. \textit{Pertama}, perbedaan definisi antar-\textit{extractor}: \texttt{src2dst\_min\_ps} NFStream mengukur ukuran \textit{paket} minimum (termasuk \textit{header}, $\approx 66$ byte), sedangkan CICFlowMeter mengukur ukuran \textit{segmen} minimum ($\approx 18$ byte) saat pelatihan. \textit{Kedua}, perbedaan karakteristik lingkungan: instans EC2 modern memakai \textit{TCP window} besar ($\approx 62$ KB) karena \textit{window scaling}, sementara dataset CIC-IDS2018 direkam dengan \textit{window} lebih kecil ($\approx 8$ KB), sehingga nilai $\approx 62$ KB dianggap di luar distribusi oleh model. Temuan ini memperkuat argumen inti: keunggulan pada \textit{benchmark} tidak menjamin generalisasi ke trafik nyata, namun konsistensi pola relatif menegaskan efektivitas \textit{Adversarial Training} bersifat kokoh melintasi domain uji.
+
+\subsection{Strategi Mitigasi \textit{Feature Mismatch} dan Rancangan Pengujian Evasion Black-Box}
+\label{sec:mitigasi_blackbox}
+Dua konsekuensi metodologis mengemuka dari hasil validasi \textit{real-traffic}: (i) bagaimana menekan \textit{feature mismatch} antara pipeline \textit{offline} (CICFlowMeter) dan \textit{online} (NFStream); dan (ii) bagaimana menguji ketangguhan model pada skenario \textit{evasion} yang lebih realistis, yakni \textit{black-box}, ketika penyerang tidak memiliki akses ke gradien model. Kedua isu saling terkait karena keduanya menentukan sejauh mana klaim ketangguhan valid pada kondisi \textit{deployment} nyata.
+
+\subsubsection{Mengatasi \textit{Feature Mismatch} (Offline vs. Real-Traffic)}
+Diagnostik pada Bagian~\ref{sec:real_traffic} menunjukkan bahwa penurunan MCC absolut bukan disebabkan kegagalan model, melainkan pergeseran distribusi fitur akibat dua sumber: perbedaan \textit{definisi} antar-\textit{extractor} dan perbedaan \textit{lingkungan} jaringan. Tiga strategi mitigasi yang dapat ditempuh, dari yang paling praktis hingga paling menyeluruh, adalah:
+\begin{enumerate}[leftmargin=1.4cm]
+    \item \textit{Penyelarasan definisi fitur (feature alignment)}. Mendefinisikan ulang \textit{mapping} NFStream agar sepadan dengan CICFlowMeter, misalnya \textit{Fwd Seg Size Min} dihitung dari ukuran \textit{payload} segmen (bukan ukuran paket termasuk \textit{header}). Langkah ini menghilangkan bias definisi yang menjadi penyimpangan terbesar ($z \approx +6{,}2$) tanpa melatih ulang model.
+    \item \textit{Kalibrasi domain (domain calibration)}. Menerapkan \textit{re-scaling} atau \textit{clipping} pada fitur yang terpengaruh lingkungan --- khususnya \textit{Init Fwd/Bwd Win Byts} yang bergeser akibat \textit{TCP window scaling} pada instans cloud modern --- agar rentang nilainya kembali sepadan dengan distribusi pelatihan.
+    \item \textit{Pelatihan ulang dengan fitur konsisten (retraining)}. Melatih ulang model secara \textit{offline} hanya menggunakan fitur yang definisinya konsisten lintas \textit{extractor}, atau menambahkan sampel \textit{real-traffic} berlabel ke dalam himpunan latih sehingga model belajar langsung dari distribusi \textit{deployment}. Strategi ini paling menyeluruh namun berbiaya paling tinggi.
+\end{enumerate}
+Pendekatan berlapis ini konsisten dengan temuan studi generalisasi lintas dataset \citep{ref_crossgen}, yang menekankan bahwa keselarasan representasi fitur adalah prasyarat generalisasi, bukan sekadar akurasi \textit{benchmark}.
+
+\subsubsection{Rancangan Pengujian Evasion Berbasis Black-Box}
+Serangan \textit{Saliency Map}/FGSM yang digunakan pada penelitian ini bersifat \textit{white-box} (penyerang mengetahui gradien model). Pada kondisi nyata, penyerang lazimnya beroperasi dalam mode \textit{black-box} --- hanya dapat mengamati keluaran model (label atau skor), tanpa akses ke arsitektur atau gradien. Pengujian \textit{black-box} dirancang melalui tiga pendekatan komplementer yang diringkas pada Tabel~\ref{tab:blackbox}.
+
+\begin{table}[htbp]
+\caption{Rancangan pengujian evasion \textit{black-box} pada model NIDS}
+\label{tab:blackbox}
+\centering
+\footnotesize
+\begin{tabularx}{\linewidth}{@{} l X @{}}
+\toprule
+\textbf{Pendekatan} & \textbf{Mekanisme dan Asumsi Akses} \\ \midrule
+\textit{Transfer attack} & Sampel \textit{adversarial} dibangkitkan pada model pengganti (\textit{surrogate}) lalu diujikan ke model target; menguji transferabilitas perturbasi tanpa akses gradien target. \\ \addlinespace
+\textit{Decision-based} & \textit{Boundary Attack}/\textit{HopSkipJump}: hanya memerlukan label keluaran; perturbasi disempurnakan iteratif mendekati batas keputusan. \\ \addlinespace
+\textit{Score-based} & \textit{Zeroth-Order Optimization} (ZOO): mengestimasi gradien dari skor probabilitas keluaran melalui \textit{query} berulang. \\ \bottomrule
+\end{tabularx}
+\end{table}
+
+Protokol pengujian yang diusulkan menjaga konsistensi dengan matriks $2\times2$ (S1--S4): perturbasi \textit{black-box} dibatasi norma $\|\boldsymbol{\delta}\|_\infty \le \epsilon$ yang sama, jumlah \textit{query} dibatasi untuk mencerminkan anggaran penyerang realistis, dan metrik utama tetap MCC agar setara dengan evaluasi \textit{white-box}. Hipotesis yang dapat diuji adalah bahwa model \textit{robust} --- yang batas keputusannya telah diperkuat melalui \textit{Adversarial Training} --- akan menunjukkan degradasi lebih landai dibanding \textit{baseline} juga pada serangan \textit{black-box}, sebagaimana pola yang telah teramati pada rezim \textit{white-box} \citep{ref_madry}. Kombinasi mitigasi \textit{feature mismatch} dan pengujian \textit{black-box} ini melengkapi validasi \textit{real-traffic} sehingga klaim ketangguhan mencakup baik dimensi \textit{generalisasi lingkungan} maupun \textit{model ancaman} yang lebih realistis.
+
+% =====================================================================
+\section{Kesimpulan}
+% =====================================================================
+Penelitian ini berhasil mengembangkan dan mengevaluasi pendekatan optimasi NIDS yang menggabungkan reduksi fitur berbasis XGBoost \textit{Gain} dan penguatan \textit{Adversarial Training} berbasis \textit{Saliency Map Gradient}. Model XGBoost \textit{baseline} terbukti sangat rentan terhadap serangan \textit{evasion}: MCC anjlok dari $0{,}9351$ (S1) menjadi $0{,}0184$ (S2) saat dipapar perturbasi $\epsilon = 0{,}10$, penurunan sebesar 98\%. Penerapan \textit{Adversarial Training} berbasis optimasi \textit{Min-Max} memulihkan keandalan deteksi hingga MCC $0{,}9953$ (S4) sekaligus menjaga integritas pada trafik normal (S3, MCC $0{,}9347$, penurunan hanya 0,04\% dari \textit{baseline}).
+
+Melalui \textit{Robustness Ablation Study}, konfigurasi 10 fitur teratas ($C_3$) ditetapkan sebagai titik keseimbangan optimal: memangkas ukuran model menjadi 5,65 MB (reduksi 21,2\%) sambil mempertahankan ketahanan tinggi (MCC S4 $= 0{,}9953$), sedangkan konfigurasi Top-5 menurun ke MCC $0{,}873$. Validasi tambahan pada trafik nyata di lingkungan cloud AWS membuktikan pola ketahanan tetap konsisten dengan hasil \textit{offline}: model \textit{baseline} terdegradasi oleh \textit{evasion} (MCC $0{,}164 \rightarrow -0{,}070$) sementara model \textit{robust} pulih (MCC $0{,}339 \rightarrow 0{,}389$) dengan \textit{Precision} sempurna. Meskipun MCC absolut menurun akibat \textit{feature mismatch} antara \textit{extractor} dan perbedaan lingkungan \textit{TCP window}, konsistensi pola relatif menegaskan efektivitas \textit{Adversarial Training} bersifat kokoh melintasi domain uji.
+
+Penelitian selanjutnya disarankan untuk: (1) mengimplementasikan protokol pengujian \textit{black-box} (\textit{transfer}, \textit{decision-based}, dan \textit{score-based}) yang telah dirancang pada Bagian~\ref{sec:mitigasi_blackbox} secara empiris; (2) menerapkan strategi mitigasi \textit{feature mismatch} berlapis dan mengukur pemulihan MCC pada \textit{real-traffic}; (3) memperluas penerapan strategi penguatan ini pada arsitektur \textit{tree-based} lain (LightGBM, CatBoost) dan model \textit{deep learning} terkompresi; serta (4) mengimplementasikan model ringkas ini pada perangkat \textit{edge} riil untuk mengukur \textit{throughput} dan konsumsi daya secara \textit{real-time}.
+
+% =====================================================================
+%  DAFTAR PUSTAKA (Harvard-Anglia, alfabetis, NAMA kapital)
+%  Menggunakan label author-year eksplisit agar natbib menampilkan
+%  sitasi (Penulis, Tahun) tanpa berkas .bib.
+% =====================================================================
+\renewcommand{\refname}{Daftar Pustaka}
+\begin{thebibliography}{99}
+\setlength{\itemsep}{2pt}
+
+\bibitem[Alabsi et al.(2023)]{ref_ctgan_ids}
+ALABSI, B.A., ANBAR, M. \& RIHAN, S.D.A., 2023. Conditional tabular generative adversarial based intrusion detection system for detecting DDoS and DoS attacks on the internet of things networks. \textit{Sensors}, 23(12), p.5644.
+
+\bibitem[Al-Ajlan \& Ykhlef(2024)]{ref_review_gan}
+AL-AJLAN, M. \& YKHLEF, M., 2024. A review of generative adversarial networks for intrusion detection systems: advances, challenges, and future directions. \textit{Computers, Materials \& Continua}, 81(2), pp.2053--2076.
+
+\bibitem[Aldhaheri \& Alhuzali(2023)]{ref_sganids}
+ALDHAHERI, S. \& ALHUZALI, A., 2023. SGAN-IDS: self-attention-based generative adversarial network against intrusion detection systems. \textit{Sensors}, 23(18), p.7796.
+
+\bibitem[Alsaedi et al.(2020)]{ref_toniot}
+ALSAEDI, A., MOUSTAFA, N., TARI, Z., MAHMOOD, A.N. \& ANWAR, A., 2020. TON\_IoT telemetry dataset: a new generation dataset of IoT and IIoT for data-driven intrusion detection systems. \textit{IEEE Access}, 8, pp.165130--165150.
+
+\bibitem[Alshehri et al.(2025)]{ref_hybridwgan}
+ALSHEHRI, M.S., SAIDANI, O., MALWI, W.A., ASIRI, F., LATIF, S., KHATTAK, A.A. \& AHMAD, J., 2025. A hybrid Wasserstein GAN and autoencoder model for robust intrusion detection in IoT. \textit{Computer Modeling in Engineering \& Sciences}, 143(3), pp.3899--3920.
+
+\bibitem[Aceto et al.(2024)]{ref_synthtraffic}
+ACETO, G., GIAMPAOLO, F., GUIDA, C., IZZO, S., PESCAPE, A., PICCIALLI, F. \& PREZIOSO, E., 2024. Synthetic and privacy-preserving traffic trace generation using generative AI models for training network intrusion detection systems. \textit{Journal of Network and Computer Applications}, 229, p.103926.
+
+\bibitem[Babu \& Rao(2023)]{ref_mcgan}
+BABU, K.S. \& RAO, Y.N., 2023. MCGAN: modified conditional generative adversarial network for class imbalance problems in network intrusion detection system. \textit{Applied Sciences}, 13(4).
+
+\bibitem[Cantone et al.(2024)]{ref_crossgen}
+CANTONE, M., MARROCCO, C. \& BRIA, A., 2024. Machine learning in network intrusion detection: a cross-dataset generalization study. \textit{IEEE Access}, 12, pp.144491--144509.
+
+\bibitem[Chen \& Guestrin(2016)]{ref_xgboost}
+CHEN, T. \& GUESTRIN, C., 2016. XGBoost: a scalable tree boosting system. \textit{Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining}, pp.785--794.
+
+\bibitem[Chicco \& Jurman(2020)]{ref_chicco}
+CHICCO, D. \& JURMAN, G., 2020. The advantages of the Matthews correlation coefficient (MCC) over F1 score and accuracy in binary classification evaluation. \textit{BMC Genomics}, 21(1), p.6.
+
+\bibitem[de Araujo-Filho et al.(2023)]{ref_tcn}
+DE ARAUJO-FILHO, P.F., NAILI, M., KADDOUM, G., FAPI, E.T. \& ZHU, Z., 2023. Unsupervised GAN-based intrusion detection system using temporal convolutional networks and self-attention. \textit{IEEE Transactions on Network and Service Management}, 20(4), pp.4951--4963.
+
+\bibitem[Ding et al.(2024)]{ref_tmggan}
+DING, H., SUN, Y., HUANG, N., SHEN, Z. \& CUI, X., 2024. TMG-GAN: generative adversarial networks-based imbalanced learning for network intrusion detection. \textit{IEEE Transactions on Information Forensics and Security}, 19, pp.1156--1167.
+
+
+\bibitem[Goodfellow et al.(2014)]{ref_gan}
+GOODFELLOW, I., POUGET-ABADIE, J., MIRZA, M., XU, B., WARDE-FARLEY, D., OZAIR, S., COURVILLE, A. \& BENGIO, Y., 2014. Generative adversarial nets. \textit{Advances in Neural Information Processing Systems}, pp.2672--2680.
+
+\bibitem[Goodfellow et al.(2015)]{ref_fgsm}
+GOODFELLOW, I.J., SHLENS, J. \& SZEGEDY, C., 2015. Explaining and harnessing adversarial examples. \textit{International Conference on Learning Representations (ICLR)}.
+
+\bibitem[Huang et al.(2022)]{ref_tutorial_gan}
+HUANG, Y., FIELDS, K.G. \& MA, Y., 2022. A tutorial on generative adversarial networks with application to classification of imbalanced data. \textit{Statistical Analysis and Data Mining}, 15(5), pp.543--552.
+
+\bibitem[Koroniotis et al.(2019)]{ref_botiot}
+KORONIOTIS, N., MOUSTAFA, N., SITNIKOVA, E. \& TURNBULL, B., 2019. Towards the development of realistic botnet dataset for IoT networks. \textit{IEEE Access}, 7, pp.94529--94541.
+
+\bibitem[Kumar \& Sinha(2023)]{ref_kumar}
+KUMAR, V. \& SINHA, D., 2023. Synthetic attack data generation model applying generative adversarial network for intrusion detection. \textit{Computers \& Security}, 125, p.103054.
+
+\bibitem[Madry et al.(2018)]{ref_madry}
+MADRY, A., MAKELOV, A., SCHMIDT, L., TSIPRAS, D. \& VLADU, A., 2018. Towards deep learning models resistant to adversarial attacks. \textit{International Conference on Learning Representations (ICLR)}.
+
+\bibitem[Mari et al.(2023)]{ref_mari}
+MARI, A.-G., ZINCA, D. \& DOBROTA, V., 2023. Development of a machine-learning intrusion detection system and testing of its performance using a generative adversarial network. \textit{Sensors}, 23(3), p.1315.
+
+\bibitem[Matthews(1975)]{ref_matthews}
+MATTHEWS, B.W., 1975. Comparison of the predicted and observed secondary structure of T4 phage lysozyme. \textit{Biochimica et Biophysica Acta (BBA) - Protein Structure}, 405(2), pp.442--451.
+
+\bibitem[Neto et al.(2023)]{ref_ciciot}
+NETO, E.C.P., DADKHAH, S., FERREIRA, R., ZOHOURIAN, A., LU, R. \& GHORBANI, A.A., 2023. CICIoT2023: a real-time dataset and benchmark for large-scale attacks in IoT environment. \textit{Sensors}, 23(13).
+
+\bibitem[Park et al.(2023)]{ref_park}
+PARK, C., LEE, J., KIM, Y., PARK, J.-G., KIM, H. \& HONG, D., 2023. An enhanced AI-based network intrusion detection system using generative adversarial networks. \textit{IEEE Internet of Things Journal}, 10(3), pp.2330--2345.
+
+\bibitem[Pedregosa et al.(2011)]{ref_sklearn}
+PEDREGOSA, F., VAROQUAUX, G., GRAMFORT, A., MICHEL, V., THIRION, B., GRISEL, O., BLONDEL, M., PRETTENHOFER, P., WEISS, R., DUBOURG, V., VANDERPLAS, J., PASSOS, A., COURNAPEAU, D., BRUCHER, M., PERROT, M. \& DUCHESNAY, E., 2011. Scikit-learn: machine learning in Python. \textit{Journal of Machine Learning Research}, 12, pp.2825--2830.
+
+\bibitem[Rahman et al.(2024)]{ref_syngan}
+RAHMAN, S., PAL, S., MITTAL, S., CHAWLA, T. \& KARMAKAR, C., 2024. Syn-GAN: a robust intrusion detection system using GAN-based synthetic data for IoT security. \textit{Internet of Things}, 26, p.101212.
+
+\bibitem[Randhawa et al.(2023)]{ref_evasiongan}
+RANDHAWA, R.H., ASLAM, N., ALAUTHMAN, M. \& RAFIQ, H., 2023. Evasion generative adversarial network for low data regimes. \textit{IEEE Transactions on Artificial Intelligence}, 4(5), pp.1076--1088.
+
+\bibitem[Riaz et al.(2025)]{ref_ewgan}
+RIAZ, R., HAN, G., SHAUKAT, K., KHAN, N.U., ZHU, H. \& WANG, L., 2025. A novel ensemble Wasserstein GAN framework for effective anomaly detection in industrial internet of things environments. \textit{Scientific Reports}, 15(1), p.26786.
+
+\bibitem[Sharafaldin et al.(2018)]{ref_cicids}
+SHARAFALDIN, I., LASHKARI, A.H. \& GHORBANI, A.A., 2018. Toward generating a new intrusion detection dataset and intrusion traffic characterization. \textit{ICISSP}, pp.108--116.
+
+\bibitem[Simonyan et al.(2014)]{ref_saliency}
+SIMONYAN, K., VEDALDI, A. \& ZISSERMAN, A., 2014. Deep inside convolutional networks: visualising image classification models and saliency maps. \textit{Workshop at International Conference on Learning Representations (ICLR)}.
+
+\bibitem[Trung et al.(2024)]{ref_aagan}
+TRUNG, D.M., KHOA, N.H., DUY, P.T., PHAM, V.-H. \& CAM, N.T., 2024. AAGAN: Android malware generation system based on generative adversarial network. \textit{International Journal of Semantic Computing}, 14(1).
+
+\bibitem[Wang et al.(2024)]{ref_nidsfgpa}
+WANG, J., YANG, K. \& LI, M., 2024. NIDS-FGPA: a federated learning network intrusion detection algorithm based on secure aggregation of gradient similarity models. \textit{PLoS ONE}, 19(10), p.e0308639.
+
+\bibitem[Xu et al.(2025a)]{ref_fewshot}
+XU, C., ZHAN, Y., CHEN, G., WANG, Z., LIU, S. \& HU, W., 2025a. Elevated few-shot network intrusion detection via self-attention mechanisms and iterative refinement. \textit{PLoS ONE}, 20(1), p.e0317713.
+
+\bibitem[Xu et al.(2025b)]{ref_demgan}
+XU, D., LV, Y., WANG, M., ZHENG, B., ZHAO, J. \& YU, J., 2025b. DEMGAN: a machine learning-based intrusion detection system evasion scheme. \textit{Computers, Materials \& Continua}, 84(1), pp.1731--1746.
+
+\bibitem[Yang et al.(2023)]{ref_speacgan}
+YANG, H., XU, J., XIAO, Y. \& HU, L., 2023. SPE-ACGAN: a resampling approach for class imbalance problem in network intrusion detection systems. \textit{Electronics}, 12(15), p.3323.
+
+\bibitem[Yang et al.(2025)]{ref_cegan}
+YANG, Y., LIU, X., WANG, D., SUI, Q., YANG, C., LI, H., LI, Y. \& LUAN, T., 2025. A CE-GAN based approach to address data imbalance in network intrusion detection systems. \textit{Scientific Reports}, 15(1), p.7916.
+
+\end{thebibliography}
+
+\end{document}

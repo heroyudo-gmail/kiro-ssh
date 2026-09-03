@@ -243,3 +243,10 @@ __marimo__/
 
 # Image files
 *.png
+
+# PDF files (papers/references, tidak perlu di-upload)
+*.pdf
+
+# Word documents (tidak perlu di-upload)
+*.doc
+*.docx
