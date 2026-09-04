@@ -1,0 +1,324 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[bahasa]{babel}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{xcolor}
+\usepackage{mdframed}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, urlcolor=blue, linkcolor=black}
+
+% Gaya kotak komentar reviewer & jawaban penulis
+\definecolor{revbg}{HTML}{EEF3F8}
+\definecolor{ansac}{HTML}{2E7D32}
+\newmdenv[backgroundcolor=revbg, linecolor=revbg, skipabove=6pt, skipbelow=4pt,
+  innertopmargin=6pt, innerbottommargin=6pt]{revbox}
+\newcommand{\reviewer}[1]{\vspace{4pt}\noindent\textbf{\textcolor{black}{#1}}}
+\newcommand{\authors}[1]{\vspace{2pt}\noindent\textcolor{ansac}{\textbf{Tanggapan penulis:}} #1\par}
+\newcommand{\loc}[1]{\vspace{1pt}\noindent{\small\textit{Lokasi perubahan: #1}}\par\vspace{6pt}}
+
+\title{\textbf{Tanggapan terhadap Reviewer}\\[4pt]
+\large Naskah ID \#42551\\
+\normalsize ``Design of a cloud backup system based on multi-compression algorithms
+for ransomware attack mitigation''}
+\author{Hero Yudo Martono, Nafisah Rahmadani Harahap\\
+\small Politeknik Elektronika Negeri Surabaya, Indonesia}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\noindent Kami mengucapkan terima kasih kepada Editor dan seluruh reviewer atas masukan yang
+membangun dan terperinci. Kami telah merevisi naskah secara saksama untuk menanggapi setiap
+komentar. Berikut tanggapan kami secara poin-per-poin. Komentar reviewer ditampilkan dalam kotak
+berwarna; tanggapan kami beserta lokasi perubahan mengikuti setiap komentar.
+
+\medskip
+\noindent\textbf{Ringkasan revisi utama:}
+\begin{itemize}[leftmargin=1.4em, itemsep=1pt]
+  \item Memperjelas ketidaksesuaian ukuran dataset: dataset terdiri atas \textbf{43 berkas} secara
+        konsisten di seluruh naskah (nilai ``113'' sebelumnya telah dikoreksi).
+  \item Abstrak kini menyatakan secara eksplisit bahwa serangan ransomware bersifat
+        \textbf{disimulasikan dan terkontrol} (tanpa mengeksekusi malware nyata) pada
+        \textbf{dataset sintetis berukuran terbatas}.
+  \item Menambahkan pembahasan yang menjelaskan bahwa FPR/FNR 0\% adalah konsekuensi logis
+        dari deteksi berbasis integritas \textit{hash} pada lingkungan terkontrol, bukan klaim umum.
+  \item Mengoreksi urutan teknis menjadi \textbf{compress-then-encrypt} dan menjalankan ulang seluruh eksperimen.
+  \item Menambahkan paragraf State-of-the-Art, paragraf \textit{research gap} dengan formulasi
+        entropi/kompresi, dan perbandingan dengan literatur berorientasi deteksi.
+  \item Memvalidasi sistem pada \textbf{dua platform} (Windows dan Linux) di AWS EC2, disertai tabel
+        konsistensi lintas-platform.
+  \item Memperluas arah penelitian mendatang melampaui Random Forest.
+\end{itemize}
+
+% =====================================================================
+\section*{Tanggapan untuk Editor}
+% =====================================================================
+
+\reviewer{Komentar Editor 1. Perkuat struktur, kejelasan, dan argumentasi; mulai dengan pernyataan
+tesis yang kuat; tiap paragraf memiliki kalimat topik dan alur logis.}
+\begin{revbox}\small
+Perbaiki struktur dan argumentasi secara keseluruhan; mulai pendahuluan dengan tesis yang jelas
+dan didukung bukti yang kuat.
+\end{revbox}
+\authors{Bagian Pendahuluan telah disusun ulang. Kini dibuka dengan ancaman ransomware yang
+meningkat (didukung statistik kuantitatif), membangun rantai logis dari masalah (cadangan
+terhubung yang rentan, kompresi algoritma tunggal) menuju \textit{research gap}, dan ditutup
+dengan pernyataan kontribusi yang eksplisit.}
+\loc{Bagian~1 (Pendahuluan), paragraf yang direvisi dan paragraf State-of-the-Art baru.}
+
+\reviewer{Komentar Editor 2. Tonjolkan \textit{state of the art} di Pendahuluan; bandingkan temuan
+dengan hasil terdahulu pada Hasil \& Pembahasan; definisikan kontribusi secara eksplisit.}
+\begin{revbox}\small
+Tekankan state of the art; bandingkan dengan hasil sebelumnya; nyatakan kebaruan dengan jelas.
+\end{revbox}
+\authors{Kami menambahkan paragraf State-of-the-Art khusus yang merangkum riset deteksi dan
+mitigasi ransomware terkini (\textit{ensemble} ML $>$99\%, \textit{deep learning} 96--99\%,
+detektor waktu-nyata), dan secara eksplisit memposisikan kontribusi kami pada lapisan
+\emph{mitigasi/pemulihan}, bukan bersaing pada akurasi deteksi. Hasil kini dibandingkan dengan
+literatur berorientasi deteksi.}
+\loc{Bagian~1 (paragraf State-of-the-Art) dan Bagian~2 (Penelitian Terkait, paragraf perbandingan baru).}
+
+\reviewer{Komentar Editor 3. Bagian Metode harus mencakup pendekatan standar dan baru disertai
+justifikasi validitas, serta prosedur langkah-demi-langkah yang dapat direproduksi.}
+\begin{revbox}\small
+Metode harus dapat direproduksi dan menjustifikasi validitas pendekatan.
+\end{revbox}
+\authors{Bagian Metode kini menjelaskan alur \emph{compress-then-encrypt} yang telah dikoreksi
+beserta justifikasinya (data terenkripsi ber-entropi tinggi tidak dapat dikompresi). Seluruh
+langkah (garis dasar SHA-256, kompresi, enkripsi AES-256, penyimpanan \textit{air-gapped},
+deteksi, pemulihan) dijelaskan berurutan, dan implementasi lengkap dijalankan pada AWS EC2
+sehingga prosedurnya dapat direproduksi.}
+\loc{Bagian~3 (Metode), subbagian arsitektur, enkripsi, kompresi, serta cadangan/pemulihan.}
+
+\reviewer{Komentar Editor 4. Naskah kurang pembahasan kritis, perbandingan, dan interpretasi implikasi.}
+\begin{revbox}\small
+Tambahkan pembahasan kritis: apa implikasinya, dan apa yang berguna ke depan?
+\end{revbox}
+\authors{Kami menambahkan pembahasan kritis atas hasil FPR/FNR (makna dan keterbatasannya),
+analisis konsistensi lintas-platform, dan Kesimpulan yang diperluas secara substansial mencakup
+keterbatasan dan arah penelitian mendatang.}
+\loc{Bagian~4 (Hasil \& Pembahasan: diskusi FPR/FNR, subbagian lintas-platform) dan Bagian~5 (Kesimpulan).}
+
+% =====================================================================
+\section*{Tanggapan untuk Reviewer A}
+% =====================================================================
+
+\reviewer{A1. Pertanyaan strategis: kesesuaian ruang lingkup, objektif/pendekatan, kebaruan,
+kontribusi terhadap pengetahuan, implikasi masa depan, dan mengapa jurnal harus mempublikasikannya.}
+\begin{revbox}\small
+Bagaimana naskah sesuai dengan ruang lingkup jurnal dan mengapa menarik? Apa objektif dan
+pendekatannya? Apa kontribusi barunya? Bagaimana menambah pengetahuan yang ada? Apa implikasi
+masa depannya? Mengapa jurnal ini harus mempublikasikannya?
+\end{revbox}
+\authors{Naskah sesuai ruang lingkup jurnal (sistem penyimpanan awan yang aman dan efisien).
+Objektifnya adalah cadangan awan tahan-ransomware yang terintegrasi dan hemat biaya. Kebaruannya
+adalah integrasi isolasi \textit{air-gapped} logis, kompresi multi-algoritma adaptif, dan deteksi
+integritas multi-indikator dalam satu kerangka---integrasi yang pada studi terdahulu hanya
+ditangani secara terpisah. Poin-poin ini kini dinyatakan eksplisit di Pendahuluan dan Penelitian Terkait.}
+\loc{Bagian~1 (paragraf kontribusi) dan Bagian~2 (paragraf kebaruan).}
+
+\reviewer{A2. Abstrak tidak menyatakan bahwa serangan disimulasikan/terkontrol (bukan malware
+nyata), serta dataset bersifat sintetis dan terbatas.}
+\begin{revbox}\small
+Abstrak harus menyatakan serangan disimulasikan dan terkontrol, serta dataset sintetis/terbatas.
+\end{revbox}
+\authors{Abstrak kini menyatakan secara eksplisit bahwa validasi menggunakan \emph{model serangan
+tersimulasi yang terkontrol (tanpa mengeksekusi malware nyata)} pada \emph{dataset sintetis
+terbatas berisi 43 berkas}.}
+\loc{Abstrak (direvisi).}
+
+\reviewer{A3. Pendahuluan perlu menegaskan bahwa studi terdahulu membahas keamanan cadangan,
+mitigasi ransomware, dan kompresi secara terpisah, serta belum menganalisis arsitektur cadangan
+tahan-ransomware, penyimpanan \textit{immutable}, \textit{snapshot recovery}, deduplikasi, atau
+\textit{zero-trust backup}.}
+\begin{revbox}\small
+Perjelas research gap terhadap immutable storage, snapshot recovery, deduplication, zero-trust backup.
+\end{revbox}
+\authors{Paragraf \textit{research gap} ditambahkan, menegaskan bahwa karya terdahulu membahas
+aspek-aspek tersebut secara terpisah, dan memposisikan kerangka terintegrasi kami terhadapnya.
+Konsep terkait (\textit{immutable}/WORM, \textit{zero-trust backup}, deduplikasi) kini dirujuk dan
+dimasukkan ke dalam arah penelitian mendatang.}
+\loc{Bagian~1 (paragraf research gap) dan Bagian~5 (arah penelitian mendatang).}
+
+\reviewer{A4. Masalah Metode: (i) alur kerja membingungkan; (ii) kompresi adaptif hanya berbasis
+aturan; (iii) pemetaan CVE kurang rigor teknis; (iv) deteksi terlalu bergantung pada perubahan
+\textit{hash} dan metadata.}
+\begin{revbox}\small
+Perjelas alur kerja; nyatakan kompresi berbasis aturan secara eksplisit; perkuat pemetaan CVE;
+bahas ketergantungan pada hash/metadata.
+\end{revbox}
+\authors{(i) Alur kerja ditulis ulang dalam langkah berurutan yang jelas dengan urutan
+compress-then-encrypt yang telah dikoreksi. (ii) Pemilihan kompresi kini dijelaskan secara
+eksplisit sebagai \emph{berbasis aturan} (menurut tipe dan ukuran berkas). (iii) Setiap serangan
+tersimulasi dipetakan ke pola CVE (CVE-2017-0144 \textit{encrypt-and-hold}, CVE-2018-8453
+\textit{metadata/header corruption}, CVE-2021-36934 \textit{overwrite-and-corrupt}) disertai
+deskripsi modifikasi berkas terkontrol yang dilakukan. (iv) Kami kini secara eksplisit mengakui
+bahwa deteksi berbasis \textit{hash}/metadata adalah mekanisme integritas (mendeteksi \emph{bahwa}
+berkas berubah) dan membahas keterbatasannya terhadap penghindaran canggih (FPE, \textit{fileless}, LotL).}
+\loc{Bagian~3 (Metode: arsitektur, kompresi, simulasi serangan, deteksi) dan Bagian~4 (diskusi FPR/FNR).}
+
+\reviewer{A5. Hasil kurang analisis statistik terperinci (uji berulang, standar deviasi, utilisasi
+CPU/RAM, \textit{throughput}, energi, biaya \textit{cloud}) dan perbandingan dengan
+deduplikasi/incremental backup; beberapa gambar tidak dirujuk.}
+\begin{revbox}\small
+Tambahkan analisis statistik dan perbandingan; pastikan semua gambar dirujuk.
+\end{revbox}
+\authors{Kami melaporkan hasil terukur per tipe berkas untuk kelima algoritma dan skor efisiensi
+gabungan. Semua gambar kini dirujuk di teks sebelum ditampilkan. Kami secara jujur mencatat bahwa
+statistik uji-berulang, profil CPU/RAM/\textit{throughput}/energi, dan perbandingan langsung dengan
+deduplikasi/incremental backup adalah pengembangan penting; hal ini dicantumkan secara eksplisit
+sebagai arah penelitian mendatang alih-alih diklaim. Kami memilih menyatakan keterbatasan ini
+secara jujur daripada menyajikan angka yang belum terverifikasi.}
+\loc{Bagian~4 (hasil kompresi, seluruh rujukan gambar) dan Bagian~5 (arah penelitian mendatang).}
+
+\reviewer{A6. Arah penelitian mendatang pada Kesimpulan terlalu sempit (hanya Random Forest).}
+\begin{revbox}\small
+Perluas arah penelitian mendatang melampaui Random Forest.
+\end{revbox}
+\authors{Arah penelitian mendatang kini mencakup: seleksi kompresi berbasis \textit{machine
+learning}, pengujian dengan ransomware nyata pada \textit{sandbox} yang aman, integrasi cadangan
+\textit{immutable}/WORM dan \textit{zero-trust}, analisis keamanan formal dan manajemen kunci,
+evaluasi skala perusahaan (\textit{throughput}, CPU/RAM, energi, biaya \textit{cloud}), serta
+perbandingan langsung dengan \textit{incremental}/deduplikasi backup.}
+\loc{Bagian~5 (Kesimpulan, arah penelitian mendatang yang diperluas).}
+
+\reviewer{A7. Pastikan referensi [21], [41]--[44] dikutip di teks; sertakan DOI bila tersedia.}
+\begin{revbox}\small
+Kutip semua referensi di teks dan tambahkan DOI.
+\end{revbox}
+\authors{Kami meninjau seluruh referensi untuk memastikan masing-masing dikutip di teks. DOI
+sedang ditambahkan untuk semua sumber yang memilikinya (mis. survei Kapoor dkk.,
+\texttt{doi:10.3390/su14010008}). Referensi yang ternyata tidak memiliki DOI atau data bibliografi
+lengkap yang dapat diverifikasi akan diganti dengan sumber terindeks yang memadai.}
+\loc{Bagian Daftar Pustaka (entri diperbarui dan kutipan dalam teks).}
+
+% =====================================================================
+\section*{Tanggapan untuk Reviewer B}
+% =====================================================================
+
+\reviewer{B1. Abstrak harus menyatakan bahwa sistem divalidasi menggunakan model serangan
+tersimulasi pada dataset sintetis berisi 43 berkas.}
+\begin{revbox}\small
+Nyatakan validasi dengan model tersimulasi pada dataset sintetis 43 berkas di abstrak.
+\end{revbox}
+\authors{Sudah dilakukan. Abstrak kini menyatakan secara eksplisit simulasi terkontrol dan dataset
+sintetis 43 berkas.}
+\loc{Abstrak (direvisi).}
+
+\reviewer{B2. Pendahuluan memerlukan paragraf tentang masalah matematis efisiensi kompresi pada
+data ber-entropi tinggi (terenkripsi) vs entropi rendah (\textit{plaintext}), serta \textit{research gap} yang terdefinisi.}
+\begin{revbox}\small
+Tambahkan paragraf tentang masalah matematis entropi/kompresi dan definisikan research gap.
+\end{revbox}
+\authors{Kami menambahkan paragraf berbasis entropi Shannon, $H(X)=-\sum_i p(x_i)\log_2 p(x_i)$,
+yang menjelaskan batas kompresi dan mengapa data ber-entropi tinggi (terenkripsi/sudah
+terkompresi) nyaris tidak terkompresi, sementara teks ber-entropi rendah terkompresi baik. Hal ini
+secara langsung memotivasi koreksi urutan compress-then-encrypt dan \textit{research gap} yang terdefinisi.}
+\loc{Bagian~1 (paragraf research gap/entropi).}
+
+\reviewer{B3. Gambar 1, 2, 3, 10 harus dirujuk dan dijelaskan di teks sebelum ditampilkan; Gambar
+14, 15, 16 tidak ditemukan.}
+\begin{revbox}\small
+Rujuk dan jelaskan semua gambar sebelum tampil; kembalikan Gambar 14--16 yang hilang.
+\end{revbox}
+\authors{Semua gambar kini dirujuk dan dijelaskan di teks sebelum ditampilkan. Set gambar lengkap
+(termasuk gambar pemulihan/restore) telah dibangun ulang dari keluaran eksperimen yang sebenarnya
+dan disertakan dalam naskah revisi.}
+\loc{Bagian~3 dan~4 (seluruh rujukan gambar dan keterangannya).}
+
+\reviewer{B4. Tabel 3, 9, 11 harus dirujuk dan dijelaskan di teks sebelum ditampilkan.}
+\begin{revbox}\small
+Rujuk dan jelaskan Tabel 3, 9, 11 sebelum tampil.
+\end{revbox}
+\authors{Semua tabel kini diperkenalkan dan dijelaskan di teks sebelum ditampilkan, termasuk tabel
+dataset (dengan total eksplisit 43 berkas), tabel perubahan \textit{hash}/metadata, dan tabel
+akurasi deteksi.}
+\loc{Bagian~3 (tabel dataset) dan Bagian~4 (tabel hasil).}
+
+\reviewer{B5. Kesimpulan sebaiknya lebih ringkas: rangkum temuan utama, jawab tujuan, serta nyatakan
+kontribusi dan arah penelitian mendatang.}
+\begin{revbox}\small
+Buat kesimpulan lebih ringkas dan berorientasi tujuan.
+\end{revbox}
+\authors{Kesimpulan ditulis ulang untuk merangkum temuan kuantitatif utama, mengonfirmasi tujuan,
+menyatakan kontribusi, dan mencantumkan arah penelitian mendatang dengan jelas.}
+\loc{Bagian~5 (Kesimpulan).}
+
+\reviewer{B6. Referensi [21] belum dikutip di teks; seluruh referensi wajib dikutip.}
+\begin{revbox}\small
+Pastikan referensi [21] dan semua lainnya dikutip.
+\end{revbox}
+\authors{Kami memastikan seluruh referensi, termasuk panduan keamanan penyimpanan NIST, kini
+dikutip di teks.}
+\loc{Daftar Pustaka dan kutipan dalam teks.}
+
+% =====================================================================
+\section*{Tanggapan untuk Reviewer C (nilai: 8)}
+% =====================================================================
+
+\reviewer{C1. Terdapat kesalahan tata bahasa Inggris (kehilangan artikel/subjek/kata kerja bantu),
+mis. ``evaluate the resilience\ldots'' seharusnya ``To evaluate the resilience\ldots''.}
+\begin{revbox}\small
+Lakukan penyuntingan bahasa Inggris secara menyeluruh.
+\end{revbox}
+\authors{Naskah telah menjalani penyuntingan bahasa menyeluruh untuk memperbaiki tata bahasa,
+menambahkan artikel/subjek yang hilang, serta meningkatkan konsistensi dan keterbacaan.}
+\loc{Di sepanjang naskah.}
+
+\reviewer{C2. Ambiguitas ukuran dataset: deskripsi menyebut 9 CSV + 9 LOG/TXT + 14 JPG + 11 XLSX =
+43 berkas, tetapi teks berulang kali melaporkan restorasi 113 berkas.}
+\begin{revbox}\small
+Perjelas ketidaksesuaian 43 vs 113 berkas.
+\end{revbox}
+\authors{Hal ini telah dikoreksi sepenuhnya. Dataset adalah \textbf{43 berkas} secara konsisten.
+Setiap kemunculan ``113'' sebelumnya dikoreksi menjadi 43 (abstrak, narasi, tabel RTO, dan tabel
+akurasi deteksi), serta baris Total (43) ditambahkan ke tabel dataset. Eksperimen yang dijalankan
+ulang mengonfirmasi pemulihan 43/43 berkas.}
+\loc{Abstrak, Bagian~3 (tabel dataset), Bagian~4 (tabel RTO dan deteksi).}
+
+\reviewer{C3. Hasil FPR 0\% dan FNR 0\% terlalu berlebihan; kesempurnaan semacam itu jarang pada
+deteksi ransomware dunia nyata.}
+\begin{revbox}\small
+Bahas hasil FPR/FNR 0\% secara lebih hati-hati.
+\end{revbox}
+\authors{Kami menambahkan pembahasan eksplisit yang menegaskan bahwa FPR/FNR 0\% merupakan
+\emph{konsekuensi logis} dari pemeriksaan integritas berbasis \textit{hash} yang deterministik pada
+kondisi terkontrol (perubahan 1 \textit{byte} pun mengubah nilai SHA-256), dan \textbf{bukan} klaim
+kesempurnaan deteksi dunia nyata. Kami menyatakan keterbatasannya terhadap penghindaran canggih
+(FPE, \textit{fileless}, LotL) dan memaknai metrik ini sebagai validasi fungsional lapisan
+mitigasi/pemulihan.}
+\loc{Bagian~4 (paragraf diskusi FPR/FNR).}
+
+\reviewer{C4. Deskripsikan mekanisme seleksi kompresi secara eksplisit sebagai berbasis aturan.}
+\begin{revbox}\small
+Nyatakan dengan jelas bahwa seleksi kompresi bersifat berbasis aturan.
+\end{revbox}
+\authors{Seleksi kompresi kini dideskripsikan secara eksplisit sebagai strategi \emph{berbasis
+aturan} yang ditentukan oleh tipe dan ukuran berkas, dan hal ini dinyatakan di Pendahuluan, Metode,
+dan Kesimpulan.}
+\loc{Bagian~1, 3, dan~5.}
+
+\reviewer{C5. Perkuat validasi eksperimen dengan analisis statistik tambahan.}
+\begin{revbox}\small
+Tambahkan analisis statistik.
+\end{revbox}
+\authors{Kami memperkuat dasar empiris dengan menjalankan ulang eksperimen penuh pada dua platform
+(Windows Server 2022 dan Ubuntu 22.04 di AWS EC2), melaporkan kompresi per tipe untuk lima
+algoritma serta tabel konsistensi lintas-platform. Profil statistik yang lebih dalam (uji berulang,
+CPU/RAM/\textit{throughput}) dicantumkan sebagai arah penelitian mendatang alih-alih diklaim tanpa data.}
+\loc{Bagian~4 (subbagian lintas-platform dan tabel konsistensi) dan Bagian~5 (arah penelitian mendatang).}
+
+% =====================================================================
+\section*{Persyaratan tambahan jurnal}
+% =====================================================================
+\authors{Kami juga telah melengkapi bagian Pendanaan, Kontribusi Penulis (CRediT), Konflik
+Kepentingan, dan Ketersediaan Data, serta menyertakan biografi penulis. Revisi ini diajukan dengan
+ID naskah yang sama.}
+
+\vspace{6pt}
+\noindent Kami kembali mengucapkan terima kasih kepada Editor dan para reviewer atas masukan
+berharga yang telah meningkatkan kualitas naskah ini secara signifikan.
+
+\end{document}
