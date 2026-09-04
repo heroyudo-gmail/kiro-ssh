@@ -1,0 +1,315 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{xcolor}
+\usepackage{mdframed}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, urlcolor=blue, linkcolor=black}
+
+% Gaya kotak komentar reviewer & jawaban penulis
+\definecolor{revbg}{HTML}{EEF3F8}
+\definecolor{ansac}{HTML}{2E7D32}
+\newmdenv[backgroundcolor=revbg, linecolor=revbg, skipabove=6pt, skipbelow=4pt,
+  innertopmargin=6pt, innerbottommargin=6pt]{revbox}
+\newcommand{\reviewer}[1]{\vspace{4pt}\noindent\textbf{\textcolor{black}{#1}}}
+\newcommand{\authors}[1]{\vspace{2pt}\noindent\textcolor{ansac}{\textbf{Author response:}} #1\par}
+\newcommand{\loc}[1]{\vspace{1pt}\noindent{\small\textit{Location of change: #1}}\par\vspace{6pt}}
+
+\title{\textbf{Response to Reviewers}\\[4pt]
+\large Manuscript ID \#42551\\
+\normalsize ``Design of a cloud backup system based on multi-compression algorithms
+for ransomware attack mitigation''}
+\author{Hero Yudo Martono, Nafisah Rahmadani Harahap\\
+\small Politeknik Elektronika Negeri Surabaya, Indonesia}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\noindent We sincerely thank the Editor and all reviewers for their constructive and
+detailed feedback. We have carefully revised the manuscript to address every comment.
+Below we respond to each comment point by point. Reviewer comments are shown in shaded
+boxes; our responses and the exact location of the corresponding changes follow each comment.
+
+\medskip
+\noindent\textbf{Summary of major revisions:}
+\begin{itemize}[leftmargin=1.4em, itemsep=1pt]
+  \item Clarified the dataset size discrepancy: the dataset consists of \textbf{43 files}
+        consistently throughout the manuscript (the earlier value ``113'' has been corrected).
+  \item The abstract now explicitly states that ransomware attacks were \textbf{simulated and
+        controlled} (no real malware executed) on a \textbf{limited synthetic dataset}.
+  \item Added a careful discussion explaining that the 0\% FPR/FNR is a logical consequence
+        of hash-based integrity checking under controlled conditions, not a general claim.
+  \item Corrected the technical order to \textbf{compress-then-encrypt} and re-ran all experiments.
+  \item Added a State-of-the-Art paragraph, a research-gap paragraph with the entropy/compression
+        formulation, and a comparison with detection-oriented literature.
+  \item Validated the system on \textbf{two platforms} (Windows and Linux) on AWS EC2, with a
+        cross-platform consistency table.
+  \item Expanded future work beyond Random Forest.
+\end{itemize}
+
+% =====================================================================
+\section*{Response to the Editor}
+% =====================================================================
+
+\reviewer{Editor comment 1. Strengthen the structure, clarity, and argumentation; begin with a
+strong thesis statement; each paragraph should have a topic sentence and logical flow.}
+\begin{revbox}\small
+Improve overall structure and argumentation; start the introduction with a clear thesis and
+support it with solid evidence.
+\end{revbox}
+\authors{The Introduction has been restructured. It now opens with the escalating ransomware
+threat (supported by quantitative statistics), builds a logical chain from the problem
+(vulnerable connected backups, single-algorithm compression) to the research gap, and closes
+with an explicit statement of contributions.}
+\loc{Section~1 (Introduction), revised paragraphs and new State-of-the-Art paragraph.}
+
+\reviewer{Editor comment 2. Highlight the state of the art in the Introduction; compare findings
+with prior work in Results \& Discussion; define the contribution explicitly.}
+\begin{revbox}\small
+Emphasize state of the art; compare with previous results; state the novelty clearly.
+\end{revbox}
+\authors{We added a dedicated State-of-the-Art paragraph summarizing recent ransomware detection
+and mitigation research (ensemble ML $>$99\%, deep learning 96--99\%, real-time detectors), and
+we explicitly position our contribution at the \emph{mitigation/recovery} layer rather than
+competing on detection accuracy. Results are now compared with the detection-oriented literature.}
+\loc{Section~1 (State-of-the-Art paragraph) and Section~2 (Related Work, added comparison paragraph).}
+
+\reviewer{Editor comment 3. The Method must include standard and novel approaches with
+justification of validity, and reproducible step-by-step procedures.}
+\begin{revbox}\small
+Method should be reproducible and justify validity of the approach.
+\end{revbox}
+\authors{The Method now describes the corrected \emph{compress-then-encrypt} workflow with
+justification (encrypted high-entropy data cannot be compressed). All steps (SHA-256 baseline,
+compression, AES-256 encryption, air-gapped storage, detection, recovery) are described in order,
+and the full implementation was executed on AWS EC2, making the procedure reproducible.}
+\loc{Section~3 (Method), subsections on architecture, encryption, compression, and backup/recovery.}
+
+\reviewer{Editor comment 4. The paper lacks critical discussion, comparison, and interpretation
+of the implications.}
+\begin{revbox}\small
+Add critical discussion: what are the implications, and what is useful going forward?
+\end{revbox}
+\authors{We added critical discussion of the FPR/FNR results (their meaning and limitations), a
+cross-platform consistency analysis, and a substantially expanded Conclusion covering limitations
+and future directions.}
+\loc{Section~4 (Results \& Discussion: FPR/FNR discussion, cross-platform subsection) and Section~5 (Conclusion).}
+
+% =====================================================================
+\section*{Response to Reviewer A}
+% =====================================================================
+
+\reviewer{A1. Strategic questions: scope fit, objective/approach, novelty, contribution to
+knowledge, future implications, and why the journal should publish it.}
+\begin{revbox}\small
+How does the manuscript fit the journal scope and why is it of interest? What is the objective
+and approach? What is the new contribution? How does it add to existing knowledge? What are the
+future implications? Why should this journal publish it?
+\end{revbox}
+\authors{The manuscript fits the journal scope (secure and efficient cloud storage systems). Its
+objective is an integrated, cost-effective ransomware-resilient cloud backup. The novelty is the
+integration of logical air-gapped isolation, adaptive multi-algorithm compression, and
+multi-indicator integrity detection in a single framework---an integration that prior studies
+addressed only separately. These points are now stated explicitly in the Introduction and
+Related Work.}
+\loc{Section~1 (contribution paragraph) and Section~2 (novelty paragraph).}
+
+\reviewer{A2. Abstract does not state that the ransomware attacks were simulated/controlled
+(not real malware), nor that the dataset is synthetic and limited.}
+\begin{revbox}\small
+Abstract should state the attacks were simulated and controlled, and the dataset synthetic/limited.
+\end{revbox}
+\authors{The abstract now explicitly states that validation used a \emph{controlled simulated
+attack model (no real malware executed)} on a \emph{limited synthetic dataset of 43 files}.}
+\loc{Abstract (revised).}
+
+\reviewer{A3. Introduction should emphasize that prior studies treated backup security,
+ransomware mitigation, and compression separately, and did not analyze ransomware-resistant
+backup architectures, immutable storage, snapshot recovery, deduplication, or zero-trust backup.}
+\begin{revbox}\small
+Clarify the research gap relative to immutable storage, snapshot recovery, deduplication,
+zero-trust backup.
+\end{revbox}
+\authors{A research-gap paragraph was added, explicitly noting that prior work addressed these
+aspects separately, and positioning our integrated framework against them. Related concepts
+(immutable/WORM, zero-trust backup, deduplication) are now referenced and included in future work.}
+\loc{Section~1 (research-gap paragraph) and Section~5 (future work).}
+
+\reviewer{A4. Method issues: (i) the workflow is confusing; (ii) adaptive compression is only
+rule-based; (iii) CVE mapping lacks technical rigor; (iv) detection relies too heavily on hash
+and metadata changes.}
+\begin{revbox}\small
+Clarify workflow; state rule-based compression explicitly; strengthen CVE mapping; discuss the
+reliance on hash/metadata.
+\end{revbox}
+\authors{(i) The workflow was rewritten in clear sequential steps with the corrected
+compress-then-encrypt order. (ii) The compression selection is now explicitly described as
+\emph{rule-based} (by file type and size). (iii) Each simulated attack is mapped to a CVE pattern
+(CVE-2017-0144 encrypt-and-hold, CVE-2018-8453 metadata/header corruption, CVE-2021-36934
+overwrite-and-corrupt) with a description of the controlled file modification performed. (iv) We
+now explicitly acknowledge that hash/metadata-based detection is an integrity mechanism (detects
+\emph{that} a file changed) and discuss its limitations against advanced evasion (FPE, fileless, LotL).}
+\loc{Section~3 (Method: architecture, compression, attack simulation, detection) and Section~4 (FPR/FNR discussion).}
+
+\reviewer{A5. Results lack detailed statistical analysis (repeated trials, standard deviation,
+CPU/RAM utilization, throughput, energy, cloud cost) and comparison with deduplication/incremental
+backup; some figures are not referenced.}
+\begin{revbox}\small
+Add statistical analysis and comparisons; ensure all figures are referenced.
+\end{revbox}
+\authors{We report measured results per file type across all five algorithms and a combined
+efficiency score. All figures are now referenced in the text before they appear. We candidly note
+that repeated-trial statistics, CPU/RAM/throughput/energy profiling, and direct comparison with
+deduplication/incremental backup are important extensions; these are listed explicitly as future
+work rather than claimed. We prefer to state this limitation honestly than to present unverified numbers.}
+\loc{Section~4 (compression results, all figure references) and Section~5 (future work).}
+
+\reviewer{A6. Conclusion future work is too narrow (only Random Forest).}
+\begin{revbox}\small
+Broaden future work beyond Random Forest.
+\end{revbox}
+\authors{Future work now includes: ML-based compression selection, testing with real ransomware
+in a safe sandbox, immutable/WORM and zero-trust backup integration, formal security analysis and
+key management, enterprise-scale evaluation (throughput, CPU/RAM, energy, cloud cost), and direct
+comparison with incremental/deduplication backup.}
+\loc{Section~5 (Conclusion, expanded future work).}
+
+\reviewer{A7. Ensure references [21], [41]--[44] are cited in the text; include DOIs where available.}
+\begin{revbox}\small
+Cite all references in the text and add DOIs.
+\end{revbox}
+\authors{We reviewed all references to ensure each is cited in the text. DOIs are being added for
+all sources that have them (e.g., the Kapoor et al. survey, \texttt{doi:10.3390/su14010008}). Any
+reference that turns out to lack a verifiable DOI or complete bibliographic data will be replaced
+with a properly indexed source.}
+\loc{References section (updated entries and in-text citations).}
+
+% =====================================================================
+\section*{Response to Reviewer B}
+% =====================================================================
+
+\reviewer{B1. The abstract should state that the system was validated using a simulated attack
+model on a synthetic dataset of 43 files.}
+\begin{revbox}\small
+State validation on a simulated model with a synthetic dataset of 43 files in the abstract.
+\end{revbox}
+\authors{Done. The abstract now states the controlled simulation and the 43-file synthetic dataset explicitly.}
+\loc{Abstract (revised).}
+
+\reviewer{B2. The Introduction needs a paragraph on the mathematical problem of compression
+efficiency for high-entropy (encrypted) vs low-entropy (plaintext) data, and a defined research gap.}
+\begin{revbox}\small
+Add a paragraph on the entropy/compression mathematical problem and define the research gap.
+\end{revbox}
+\authors{We added a paragraph based on Shannon entropy, $H(X)=-\sum_i p(x_i)\log_2 p(x_i)$,
+explaining the compression limit and why high-entropy (encrypted/already-compressed) data barely
+compresses, while low-entropy text compresses well. This directly motivated the corrected
+compress-then-encrypt order and the defined research gap.}
+\loc{Section~1 (research-gap/entropy paragraph).}
+
+\reviewer{B3. Figures 1, 2, 3, 10 must be referenced and explained in the text before they appear;
+Figures 14, 15, 16 were not found.}
+\begin{revbox}\small
+Reference and explain all figures before display; restore missing Figures 14--16.
+\end{revbox}
+\authors{All figures are now referenced and explained in the text prior to display. The full set
+of figures (including the recovery/restore figures) has been regenerated from the actual
+experimental outputs and is included in the revised manuscript.}
+\loc{Sections~3 and~4 (all figure references and captions).}
+
+\reviewer{B4. Tables 3, 9, 11 must be referenced and explained in the text before they appear.}
+\begin{revbox}\small
+Reference and explain Tables 3, 9, 11 before display.
+\end{revbox}
+\authors{All tables are now introduced and explained in the text before they appear, including the
+dataset table (with an explicit total of 43 files), the hash/metadata-change tables, and the
+detection-accuracy table.}
+\loc{Section~3 (dataset table) and Section~4 (result tables).}
+
+\reviewer{B5. The Conclusion should be more concise: summarize key findings, answer the objectives,
+and state contribution and future work.}
+\begin{revbox}\small
+Make the conclusion more concise and goal-oriented.
+\end{revbox}
+\authors{The Conclusion was rewritten to summarize the key quantitative findings, confirm the
+objectives, state the contribution, and clearly list future work.}
+\loc{Section~5 (Conclusion).}
+
+\reviewer{B6. Reference [21] is not cited in the text; all references must be cited.}
+\begin{revbox}\small
+Ensure reference [21] and all others are cited.
+\end{revbox}
+\authors{We verified that all references, including the NIST storage-security guideline, are now
+cited in the text.}
+\loc{References and in-text citations.}
+
+% =====================================================================
+\section*{Response to Reviewer C (score: 8)}
+% =====================================================================
+
+\reviewer{C1. English grammar contains errors (missing articles/subjects/auxiliary verbs), e.g.,
+``evaluate the resilience\ldots'' should be ``To evaluate the resilience\ldots''.}
+\begin{revbox}\small
+Perform a thorough English language edit.
+\end{revbox}
+\authors{The manuscript underwent a thorough language edit to correct grammar, add missing
+articles/subjects, and improve consistency and readability throughout.}
+\loc{Throughout the manuscript.}
+
+\reviewer{C2. Dataset size ambiguity: the description gives 9 CSV + 9 LOG/TXT + 14 JPG + 11 XLSX
+= 43 files, but the text repeatedly reports restoring 113 files.}
+\begin{revbox}\small
+Clarify the 43 vs 113 file discrepancy.
+\end{revbox}
+\authors{This has been fully corrected. The dataset is \textbf{43 files} consistently. Every prior
+occurrence of ``113'' was corrected to 43 (abstract, narrative, RTO table, and detection-accuracy
+table), and a Total row (43) was added to the dataset table. The re-run experiments confirm
+recovery of 43/43 files.}
+\loc{Abstract, Section~3 (dataset table), Section~4 (RTO and detection tables).}
+
+\reviewer{C3. The 0\% FPR and 0\% FNR results are overstated; such perfection is rare in
+real-world ransomware detection.}
+\begin{revbox}\small
+Discuss the 0\% FPR/FNR result more cautiously.
+\end{revbox}
+\authors{We added an explicit discussion clarifying that 0\% FPR/FNR is a \emph{logical consequence}
+of deterministic hash-based integrity checking under controlled conditions (any 1-byte change
+alters the SHA-256 hash), and \textbf{not} a claim of real-world detection perfection. We state the
+limitations against advanced evasion (FPE, fileless, LotL) and frame the metric as functional
+validation of the mitigation/recovery layer.}
+\loc{Section~4 (FPR/FNR discussion paragraph).}
+
+\reviewer{C4. Describe the compression selection mechanism explicitly as rule-based.}
+\begin{revbox}\small
+State clearly that compression selection is rule-based.
+\end{revbox}
+\authors{The compression selection is now explicitly described as a \emph{rule-based} strategy
+driven by file type and size, and this is stated in the Introduction, Method, and Conclusion.}
+\loc{Sections~1, 3, and~5.}
+
+\reviewer{C5. Strengthen experimental validation with additional statistical analysis.}
+\begin{revbox}\small
+Add statistical analysis.
+\end{revbox}
+\authors{We strengthened the empirical basis by re-running the full experiment on two platforms
+(Windows Server 2022 and Ubuntu 22.04 on AWS EC2), reporting per-type compression across five
+algorithms and a cross-platform consistency table. Deeper statistical profiling (repeated trials,
+CPU/RAM/throughput) is listed as future work rather than claimed without data.}
+\loc{Section~4 (cross-platform subsection and consistency table) and Section~5 (future work).}
+
+% =====================================================================
+\section*{Additional journal requirements}
+% =====================================================================
+\authors{We have also completed the Funding, Author Contributions (CRediT), Conflict of Interest,
+and Data Availability sections, and included author biographies. The revision is submitted under
+the same manuscript ID.}
+
+\vspace{6pt}
+\noindent We again thank the Editor and reviewers for their valuable feedback, which has
+substantially improved the manuscript.
+
+\end{document}
