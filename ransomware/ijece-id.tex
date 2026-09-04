@@ -239,7 +239,7 @@ Pada lapisan perlindungan dan kompresi, sistem melakukan inspeksi metadata awal 
 \label{fig:architecture}
 \end{figure}
 
-Pada lapisan penyimpanan dan deteksi, berkas terenkripsi dan terkompresi disimpan dalam lingkungan \textit{air-gapped} untuk menjamin isolasi fisik dari jaringan produksi dan meningkatkan ketahanan terhadap serangan ransomware. Selain itu, data cadangan disinkronkan ke penyimpanan awan melalui Google Drive API untuk redundansi. Metadata kritis, termasuk ukuran berkas, waktu proses, dan nilai \textit{hash} SHA-256, dicatat untuk analisis kinerja, verifikasi integritas, dan deteksi anomali. Ketika aktivitas ransomware terdeteksi, sistem secara otomatis memulai proses pemulihan dari penyimpanan \textit{air-gapped}, diikuti dekompresi dan dekripsi AES-256 untuk memulihkan berkas ke keadaan aslinya.
+Pada lapisan penyimpanan dan deteksi, berkas terenkripsi dan terkompresi disimpan dalam lingkungan \textit{air-gapped} untuk menjamin isolasi fisik dari jaringan produksi dan meningkatkan ketahanan terhadap serangan ransomware. Selain itu, data cadangan disinkronkan ke penyimpanan awan (Google Drive API pada implementasi asli, atau Amazon S3 pada replikasi berbasis cloud) untuk redundansi. Metadata kritis, termasuk ukuran berkas, waktu proses, dan nilai \textit{hash} SHA-256, dicatat untuk analisis kinerja, verifikasi integritas, dan deteksi anomali. Ketika aktivitas ransomware terdeteksi, sistem secara otomatis memulai proses pemulihan dari penyimpanan \textit{air-gapped}, diikuti dekompresi dan dekripsi AES-256 untuk memulihkan berkas ke keadaan aslinya.
 
 \subsection{Dataset dan akuisisi data}
 Dataset yang digunakan dalam penelitian ini terdiri dari data yang dibangkitkan secara sintetis yang dirancang menyerupai struktur cadangan perusahaan dan keuangan dunia nyata yang diadaptasi dari lingkungan operasional PT Equnix \cite{33}. Tidak ada data keuangan atau data produksi rahasia yang nyata yang digunakan dalam penelitian ini untuk menjaga kepatuhan privasi dan kerahasiaan data \cite{34}.
@@ -466,26 +466,26 @@ Lingkungan lokal Windows merepresentasikan konfigurasi konsumen berkinerja menen
 Evaluasi pada kondisi normal berfokus pada alur kerja utama sistem, mencakup inisialisasi koneksi penyimpanan awan, kompresi menggunakan beberapa algoritma \textit{lossless}, penyimpanan cadangan aman, dan validasi integritas data.
 
 \subsubsection{Inisialisasi koneksi penyimpanan awan}
-Sebagaimana ditunjukkan pada Gambar~\ref{fig:drive_conn}, sistem berhasil membangun koneksi aman ke Google Drive menggunakan mekanisme OAuth 2.0. Setiap sesi cadangan menghasilkan ID sesi unik, memastikan seluruh operasi dilakukan dalam lingkungan terotentikasi. Hasil ini menunjukkan bahwa sistem menyediakan kontrol akses aman, mencegah interaksi tidak sah dengan penyimpanan awan selama proses cadangan.
+Sebagaimana ditunjukkan pada Gambar~\ref{fig:drive_conn}, sistem berhasil membangun koneksi aman ke penyimpanan awan dengan mekanisme autentikasi berbasis token/peran (OAuth~2.0 pada implementasi Google Drive, atau IAM \textit{role} pada replikasi berbasis Amazon S3). Setiap sesi cadangan menghasilkan ID sesi unik, memastikan seluruh operasi dilakukan dalam lingkungan terotentikasi. Hasil ini menunjukkan bahwa sistem menyediakan kontrol akses aman, mencegah interaksi tidak sah dengan penyimpanan awan selama proses cadangan.
 
 \begin{figure}[H]
 \centering
-\figplaceholder{9cm}{figure4}
+\includegraphics[width=\textwidth]{figures/figure4_cloud_conn.png}
 \vspace{.7em}
 \caption{Hasil koneksi Drive (ID sesi)}
 \label{fig:drive_conn}
 \end{figure}
 
-Keberhasilan otentikasi OAuth 2.0 menunjukkan bahwa mekanisme cadangan dapat membangun komunikasi secara aman dengan penyimpanan awan sekaligus mencegah akses tidak sah. Penggunaan ID sesi unik juga meningkatkan kemampuan penelusuran dan audit, yang penting pada sistem cadangan yang menangani data sensitif.
+Keberhasilan autentikasi ini menunjukkan bahwa mekanisme cadangan dapat membangun komunikasi secara aman dengan penyimpanan awan sekaligus mencegah akses tidak sah. Penggunaan ID sesi unik juga meningkatkan kemampuan penelusuran dan audit, yang penting pada sistem cadangan yang menangani data sensitif.
 
 \subsubsection{Proses unggah berkas dan deduplikasi}
 Sebagaimana ditunjukkan pada Gambar~\ref{fig:upload}, sistem melakukan unggah berkas diikuti validasi awal menggunakan \textit{hashing} SHA-256 dan verifikasi metadata sebelum melanjutkan ke kompresi dan enkripsi. Proses ini memastikan hanya berkas yang valid dan terverifikasi yang diproses, mengurangi redundansi dan meningkatkan efisiensi penyimpanan. Validasi awal juga membantu mendeteksi inkonsistensi sebelum cadangan dilakukan, sehingga memperkuat integritas data secara keseluruhan.
 
 \begin{figure}[H]
 \centering
-\figplaceholder{9cm}{figure5}
+\includegraphics[width=\textwidth]{figures/figure5_upload.png}
 \vspace{.7em}
-\caption{Hasil unggah cadangan Google Drive}
+\caption{Hasil unggah dan validasi awal cadangan}
 \label{fig:upload}
 \end{figure}
 
@@ -496,7 +496,7 @@ Sebagaimana ditunjukkan pada Gambar~\ref{fig:sha_json}, sistem melakukan validas
 
 \begin{figure}[H]
 \centering
-\figplaceholder{9cm}{figure6}
+\includegraphics[width=\textwidth]{figures/figure6_sha256.png}
 \vspace{.7em}
 \caption{Hasil SHA-256 untuk berkas JSON}
 \label{fig:sha_json}
@@ -506,7 +506,7 @@ Selain verifikasi \textit{hash}, sistem memvalidasi metadata seperti ukuran berk
 
 \begin{figure}[H]
 \centering
-\figplaceholder{9cm}{figure7}
+\includegraphics[width=0.8\textwidth]{figures/figure7_metadata.png}
 \vspace{.7em}
 \caption{Hasil metadata dalam format JSON}
 \label{fig:metadata}
@@ -534,7 +534,7 @@ Algoritma tersebut menggabungkan verifikasi berbasis \textit{hash} dengan perban
 
 \begin{figure}[H]
 \centering
-\figplaceholder{9cm}{figure8}
+\includegraphics[width=0.8\textwidth]{figures/figure8_validation.png}
 \vspace{.7em}
 \caption{Hasil validasi hash SHA-256 dan metadata berkas}
 \label{fig:validation}
@@ -547,7 +547,7 @@ Untuk meningkatkan keamanan data, sistem menerapkan \textit{Advanced Encryption 
 
 \begin{figure}[H]
 \centering
-\figplaceholder{9cm}{figure9}
+\includegraphics[width=\textwidth]{figures/figure9_aeslog.png}
 \vspace{.7em}
 \caption{Log implementasi enkripsi berkas menggunakan algoritma AES-256}
 \label{fig:aes_log}
@@ -597,7 +597,7 @@ Tabel~\ref{tab:compression_results} menegaskan keterkaitan antara entropi data d
 
 \begin{figure}[H]
 \centering
-\figplaceholder{9cm}{figure10}
+\includegraphics[width=\textwidth]{figures/figure10_compression.png}
 \vspace{.7em}
 \caption{Hasil analisis keseluruhan algoritma}
 \label{fig:overall_analysis}
@@ -610,7 +610,7 @@ Meskipun mekanisme \textit{air-gapped} logis yang diusulkan secara signifikan me
 
 \begin{figure}[H]
 \centering
-\figplaceholder{9cm}{figure11}
+\includegraphics[width=0.85\textwidth]{figures/figure11_airgap_struct.png}
 \vspace{.7em}
 \caption{Penyimpanan air-gapped daring}
 \label{fig:airgap_storage}
@@ -623,7 +623,7 @@ Proses transfer data ke penyimpanan \textit{air-gapped} dilakukan secara terkont
 
 \begin{figure}[H]
 \centering
-\figplaceholder{9cm}{figure12}
+\includegraphics[width=\textwidth]{figures/figure12_transfer.png}
 \vspace{.7em}
 \caption{Transfer ke penyimpanan air-gapped}
 \label{fig:transfer}
@@ -636,7 +636,7 @@ Pemantauan sistem selama simulasi disajikan melalui \textit{dashboard} interakti
 
 \begin{figure}[H]
 \centering
-\figplaceholder{9cm}{figure13}
+\includegraphics[width=\textwidth]{figures/figure13_dashboard.png}
 \vspace{.7em}
 \caption{Dashboard pemantauan sistem pada kondisi normal (tanpa serangan)}
 \label{fig:dashboard}
@@ -711,7 +711,7 @@ Pada sisi \textit{frontend}, antarmuka menampilkan notifikasi visual yang jelas 
 
 \begin{figure}[H]
 \centering
-\figplaceholder{9cm}{figure14}
+\includegraphics[width=0.8\textwidth]{figures/figure14_restore_json.png}
 \vspace{.7em}
 \caption{Antarmuka pengguna menampilkan status pemulihan dalam mode air-gapped}
 \label{fig:ui_restore}
@@ -724,7 +724,25 @@ Setelah sistem mengaktifkan mode pemulihan \textit{air-gapped}, proses pemulihan
 
 \begin{figure}[H]
 \centering
-\figplaceholder{9cm}{figure15}
+\begin{tikzpicture}[
+    font=\footnotesize,
+    box/.style={draw, rounded corners=2pt, minimum width=2.6cm, minimum height=1cm, align=center},
+    store/.style={draw, cylinder, shape border rotate=90, aspect=0.3, minimum width=1.6cm, minimum height=1.4cm, align=center},
+    ar/.style={-{Stealth[length=2.5mm]}, thick},
+    ard/.style={-{Stealth[length=2.5mm]}, thick, dashed}
+]
+\node[box, fill=blue!8] (sys) {Sistem Utama\\(Backup/Restore)};
+\node[store, right=2.6cm of sys, fill=green!8] (primary) {Repositori\\Primer};
+\node[store, below=1.6cm of primary, fill=orange!12] (airgap) {Repositori\\Air-Gapped\\(Disk D:/G:)};
+\node[box, left=2.6cm of sys, fill=red!8] (att) {Indikasi\\Ransomware};
+% normal
+\draw[ar] (sys) -- node[above]{\scriptsize normal} (primary);
+% saat serangan -> beralih ke air-gapped
+\draw[ard] (att) -- (sys);
+\draw[ar] (sys.south) |- node[below right, font=\scriptsize, pos=0.25]{\scriptsize saat serangan} (airgap.west);
+% isolasi
+\node[align=center, below=0.2cm of airgap, font=\scriptsize\itshape] {di-mount hanya saat backup/restore\\(terisolasi dari jaringan)};
+\end{tikzpicture}
 \vspace{.7em}
 \caption{Arsitektur cadangan air-gapped berbasis media VHDX dengan pemisahan jaringan}
 \label{fig:vhdx}
@@ -737,7 +755,7 @@ Validasi integritas data dilakukan setelah proses pemulihan untuk memastikan ber
 
 \begin{figure}[H]
 \centering
-\figplaceholder{9cm}{figure16}
+\includegraphics[width=\textwidth]{figures/figure16_restore_terminal.png}
 \vspace{.7em}
 \caption{Terminal proses pemulihan air-gapped yang menunjukkan pemulihan dan validasi checksum seluruh berkas}
 \label{fig:restore_terminal}
