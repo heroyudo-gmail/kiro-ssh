@@ -44,6 +44,8 @@
 \usepackage{tabularx}
 \usepackage{booktabs}
 \usepackage{fleqn}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, shapes.geometric, positioning}
 
 % --- Placeholder gambar sementara (hapus/ganti saat gambar asli tersedia) ---
 \newcommand{\figplaceholder}[2]{%
@@ -231,7 +233,7 @@ Pada lapisan perlindungan dan kompresi, sistem melakukan inspeksi metadata awal 
 
 \begin{figure}[H]
 \centering
-\figplaceholder{9cm}{figure1}
+\includegraphics[width=\textwidth]{figures/figure1_architecture.png}
 \vspace{.7em}
 \caption{Arsitektur sistem yang diusulkan mengintegrasikan enkripsi AES-256, kompresi multi-algoritma, dan cadangan air-gapped untuk perlindungan ransomware}
 \label{fig:architecture}
@@ -270,7 +272,30 @@ Untuk menjamin kerahasiaan data, sistem mengimplementasikan \textit{Advanced Enc
 
 \begin{figure}[H]
 \centering
-\figplaceholder{9cm}{figure2}
+\begin{tikzpicture}[
+    node distance=1.4cm and 1.8cm,
+    box/.style={draw, rounded corners=2pt, minimum width=1.8cm, minimum height=0.9cm, align=center, font=\footnotesize},
+    keyb/.style={draw, rounded corners=2pt, minimum width=1.6cm, minimum height=0.7cm, align=center, font=\footnotesize\itshape, fill=blue!5},
+    ar/.style={-{Stealth[length=2.5mm]}, thick},
+    font=\footnotesize
+]
+% baris bawah: alur data
+\node[box] (sender) {Sender};
+\node[box, right=of sender, fill=blue!15] (enc) {Encryption\\Server};
+\node[box, right=2.8cm of enc, fill=blue!15] (dec) {Decryption\\Server};
+\node[box, right=of dec] (recv) {Receiver};
+% baris atas: kunci
+\node[keyb, above=1.2cm of enc] (k1) {Secret Key};
+\node[keyb, above=1.2cm of dec] (k2) {Secret Key};
+% panah data
+\draw[ar] (sender) -- node[above]{\scriptsize Plaintext} (enc);
+\draw[ar, line width=1pt] (enc) -- node[above]{\scriptsize Ciphertext} (dec);
+\draw[ar] (dec) -- node[above]{\scriptsize Plaintext} (recv);
+% panah kunci
+\draw[ar] (k1) -- node[above, font=\scriptsize]{Secure Channel} (k2);
+\draw[ar] (k1) -- (enc);
+\draw[ar] (k2) -- (dec);
+\end{tikzpicture}
 \vspace{.7em}
 \caption{Proses enkripsi dan dekripsi AES-256 menggunakan kunci rahasia simetris}
 \label{fig:aes}
@@ -288,7 +313,42 @@ Proses pemulihan dipicu hanya ketika anomali terdeteksi, seperti ketidakcocokan 
 
 \begin{figure}[H]
 \centering
-\figplaceholder{9cm}{figure3}
+\begin{tikzpicture}[
+    node distance=0.75cm,
+    every node/.style={font=\footnotesize},
+    term/.style={draw, rounded corners=10pt, minimum width=2.4cm, minimum height=0.7cm, align=center},
+    proc/.style={draw, minimum width=3.6cm, minimum height=0.7cm, align=center},
+    dec/.style={draw, diamond, aspect=2, inner sep=1pt, align=center},
+    ar/.style={-{Stealth[length=2mm]}, thick}
+]
+\node[term] (start) {Start};
+\node[proc, below=of start] (upload) {Upload Drive};
+\node[proc, below=of upload] (hash) {Get Hash};
+\node[proc, below=of hash] (enc) {Encryption Data};
+\node[proc, below=of enc, text width=4.6cm] (comp) {Data Compression Analysis\\(LZ4, GZIP, Brotli, Snappy, Deflate)};
+\node[proc, below=of comp] (backup) {Backup (Air-Gapped)};
+\node[dec, below=of backup] (att) {An Attack\\Occurred?};
+\node[proc, below=1.1cm of att] (getbk) {Get Data Backup};
+\node[proc, below=of getbk] (restore) {Restore};
+\node[proc, below=of restore] (decr) {Decryption Data};
+\node[proc, below=of decr] (valid) {Validasi};
+\node[proc, below=of valid] (eval) {Evaluation};
+\node[term, below=of eval] (finish) {Finish};
+\draw[ar] (start) -- (upload);
+\draw[ar] (upload) -- (hash);
+\draw[ar] (hash) -- (enc);
+\draw[ar] (enc) -- (comp);
+\draw[ar] (comp) -- (backup);
+\draw[ar] (backup) -- (att);
+\draw[ar] (att) -- node[right, font=\scriptsize]{Yes} (getbk);
+\draw[ar] (getbk) -- (restore);
+\draw[ar] (restore) -- (decr);
+\draw[ar] (decr) -- (valid);
+\draw[ar] (valid) -- (eval);
+\draw[ar] (eval) -- (finish);
+% cabang No: dari kanan decision melingkar ke Validasi
+\draw[ar] (att.east) -- ++(2.6cm,0) node[above left, font=\scriptsize]{No} |- (valid.east);
+\end{tikzpicture}
 \vspace{.7em}
 \caption{Diagram alir sistem cadangan dan pemulihan}
 \label{fig:backup_flow}

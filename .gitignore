@@ -275,6 +275,8 @@ ransomware/aws/results-windows/aes_key.bin
 
 # Image files
 *.png
+# Pengecualian: gambar figure paper ransomware (dibutuhkan untuk kompilasi Overleaf)
+!ransomware/figures/*.png
 
 # PDF files (papers/references, tidak perlu di-upload)
 *.pdf
