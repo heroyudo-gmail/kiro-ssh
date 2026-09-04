@@ -1,0 +1,100 @@
+{
+  "dataset_files": 43,
+  "dataset_mb": 531.16,
+  "trials": 5,
+  "psutil": true,
+  "results": [
+    {
+      "algo": "gzip",
+      "trials": 5,
+      "mean_time_s": 17.4269,
+      "std_time_s": 0.0622,
+      "throughput_mb_s": 30.48,
+      "cpu_pct": 100.0,
+      "ram_mb": 6.3
+    },
+    {
+      "algo": "zstd",
+      "trials": 5,
+      "mean_time_s": 1.7208,
+      "std_time_s": 0.0156,
+      "throughput_mb_s": 308.68,
+      "cpu_pct": 99.9,
+      "ram_mb": 3.4
+    },
+    {
+      "algo": "brotli",
+      "trials": 5,
+      "mean_time_s": 10.4677,
+      "std_time_s": 0.2371,
+      "throughput_mb_s": 50.74,
+      "cpu_pct": 100.0,
+      "ram_mb": 5.1
+    },
+    {
+      "algo": "lz4",
+      "trials": 5,
+      "mean_time_s": 0.8962,
+      "std_time_s": 0.0111,
+      "throughput_mb_s": 592.66,
+      "cpu_pct": 100.0,
+      "ram_mb": -6.9
+    },
+    {
+      "algo": "snappy",
+      "trials": 5,
+      "mean_time_s": 0.8312,
+      "std_time_s": 0.0027,
+      "throughput_mb_s": 639.04,
+      "cpu_pct": 99.3,
+      "ram_mb": 0.9
+    }
+  ],
+  "detail": {
+    "gzip": {
+      "times_s": [
+        17.5464,
+        17.3972,
+        17.4103,
+        17.3657,
+        17.4149
+      ]
+    },
+    "zstd": {
+      "times_s": [
+        1.7038,
+        1.703,
+        1.7402,
+        1.7208,
+        1.736
+      ]
+    },
+    "brotli": {
+      "times_s": [
+        10.1388,
+        10.292,
+        10.7617,
+        10.7024,
+        10.4437
+      ]
+    },
+    "lz4": {
+      "times_s": [
+        0.918,
+        0.8894,
+        0.8885,
+        0.8954,
+        0.8899
+      ]
+    },
+    "snappy": {
+      "times_s": [
+        0.8323,
+        0.8358,
+        0.8296,
+        0.8303,
+        0.828
+      ]
+    }
+  }
+}

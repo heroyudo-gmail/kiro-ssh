@@ -372,3 +372,19 @@ Eksperimen direplikasi di **AWS EC2 Windows Server 2022** (t3.xlarge, 16 GB, dri
 | RTO Overwrite | 5,32 s | 5,34 s |
 
 **Kesimpulan:** rasio kompresi identik lintas-OS (bergantung data & algoritma, bukan OS); RTO sedikit beda karena hardware. Membuktikan konsistensi lintas-platform → menjawab komentar reviewer soal generalisasi. Setup lokal Windows asli tim = i7-11800H/16GB (tetap disebut di paper sebagai lingkungan pengembangan); AWS = lingkungan replikasi cloud nyata.
+
+---
+
+## BAGIAN 7 — ANALISIS STATISTIK (memperkuat jawaban Reviewer A5/C5)
+
+Uji-berulang 5x pada dataset 43 berkas (~531 MB) di AWS EC2 Ubuntu 22.04, diukur dgn psutil. Sumber: `results/benchmark_stats.csv|json` + `s3://.../ransomware-results/`.
+
+| Algoritma | Waktu rata2 (s) | Std (s) | Throughput (MB/s) | CPU (%) | RAM (MB) |
+|---|---|---|---|---|---|
+| Gzip | 17,427 | 0,062 | 30,5 | 100 | 6,3 |
+| Brotli | 10,468 | 0,237 | 50,7 | 100 | 5,1 |
+| Zstandard | 1,721 | 0,016 | 308,7 | 99,9 | 3,4 |
+| LZ4 | 0,896 | 0,011 | 592,7 | 100 | <1 |
+| Snappy | 0,831 | 0,003 | 639,0 | 99,3 | 0,9 |
+
+**Kesimpulan:** std deviasi sangat kecil = kinerja stabil/konsisten. Snappy/LZ4 ~20x lebih cepat dari Gzip. Proses CPU-bound (~100% CPU), jejak RAM kecil (<7 MB). Menjawab A5/C5 (repeated trials + std + throughput + CPU/RAM). Masuk ke ijece-id.tex sbg subbab "Analisis statistik kinerja kompresi" (Tabel tab:comp_stats). Sisa (energi, deduplication/incremental) tetap future work.

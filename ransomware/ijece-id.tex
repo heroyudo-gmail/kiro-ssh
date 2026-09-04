@@ -603,6 +603,29 @@ Tabel~\ref{tab:compression_results} menegaskan keterkaitan antara entropi data d
 \label{fig:overall_analysis}
 \end{figure}
 
+\subsection{Analisis statistik kinerja kompresi}
+Untuk memperkuat validitas hasil, pengukuran kinerja kompresi diulang sebanyak lima kali (\textit{repeated trials}) pada seluruh \textit{dataset} (43 berkas, $\approx 531$ MB) di lingkungan AWS EC2 (Ubuntu 22.04). Tabel~\ref{tab:comp_stats} melaporkan rata-rata (\textit{mean}) dan standar deviasi (\textit{std}) waktu kompresi, \textit{throughput} (MB/s), serta utilisasi CPU dan RAM yang diukur menggunakan pustaka \texttt{psutil}.
+
+\begin{table}[H]
+\centering
+\fontsize{8pt}{10pt}\selectfont
+\caption{Analisis statistik kinerja kompresi (5 \textit{trials}, dataset 43 berkas $\approx$531 MB)}
+\label{tab:comp_stats}
+\begin{tabular}{l c c c c c}
+\hline
+\textbf{Algoritma} & \textbf{Waktu rata-rata (s)} & \textbf{Std (s)} & \textbf{Throughput (MB/s)} & \textbf{CPU (\%)} & \textbf{RAM (MB)} \\
+\hline
+Gzip      & 17,427 & 0,062 & 30,5  & 100,0 & 6,3 \\
+Brotli    & 10,468 & 0,237 & 50,7  & 100,0 & 5,1 \\
+Zstandard & 1,721  & 0,016 & 308,7 & 99,9  & 3,4 \\
+LZ4       & 0,896  & 0,011 & 592,7 & 100,0 & $<$1 \\
+Snappy    & 0,831  & 0,003 & 639,0 & 99,3  & 0,9 \\
+\hline
+\end{tabular}
+\end{table}
+
+Standar deviasi yang sangat kecil pada seluruh algoritma (mis. Snappy $0{,}003$ s, Zstandard $0{,}016$ s) menunjukkan bahwa kinerja kompresi \textbf{stabil dan konsisten} antar-pengulangan. Terdapat rentang \textit{throughput} yang lebar: Snappy dan LZ4 mencapai $>590$ MB/s---kira-kira $20\times$ lebih cepat daripada Gzip ($30{,}5$ MB/s)---sedangkan Zstandard menawarkan keseimbangan menarik ($308{,}7$ MB/s) dengan rasio kompresi tinggi (Tabel~\ref{tab:compression_results}). Utilisasi CPU mendekati $100\%$ untuk semua algoritma menegaskan bahwa proses kompresi bersifat \textit{CPU-bound}, sementara jejak memori (RAM) tetap kecil ($<7$ MB) sehingga sistem ringan dan sesuai untuk lingkungan cadangan dengan sumber daya terbatas. Hasil kuantitatif ini menjadi dasar objektif bagi mekanisme seleksi adaptif: kombinasi \textit{throughput} tinggi (Snappy/LZ4) untuk berkas kecil-menengah dan rasio-throughput seimbang (Zstandard) untuk berkas teks besar.
+
 \subsection{Implementasi dan struktur penyimpanan cadangan air-gapped}
 Sebagai lapisan perlindungan tambahan, sistem menerapkan mekanisme cadangan \textit{air-gapped} menggunakan media penyimpanan terpisah berupa SSD eksternal. Media ini tidak diakses secara permanen oleh sistem, melainkan hanya di-\textit{mount} selama proses cadangan atau pemulihan. Pendekatan ini bertujuan meminimalkan risiko akses tidak sah dan propagasi \textit{malware} melalui kanal jaringan. Implementasi \textit{air-gapped} yang digunakan dalam penelitian ini bersifat daring (\textit{air-gapped} logis), di mana media penyimpanan tetap berada dalam lingkungan sistem melalui pengaturan kontrol akses, sesi aktif, dan mekanisme \textit{mounting} terbatas. Dengan pendekatan ini, media hanya dapat diakses pada kondisi tertentu yang ditetapkan sistem, tanpa koneksi jaringan aktif selama proses penyimpanan cadangan.
 

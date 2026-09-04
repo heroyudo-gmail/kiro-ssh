@@ -49,6 +49,8 @@ berwarna; tanggapan kami beserta lokasi perubahan mengikuti setiap komentar.
         entropi/kompresi, dan perbandingan dengan literatur berorientasi deteksi.
   \item Memvalidasi sistem pada \textbf{dua platform} (Windows dan Linux) di AWS EC2, disertai tabel
         konsistensi lintas-platform.
+  \item Menambahkan \textbf{analisis statistik} (5 uji-berulang): rata-rata~$\pm$~standar deviasi
+        waktu kompresi, \textit{throughput}, dan utilisasi CPU/RAM.
   \item Memperluas arah penelitian mendatang melampaui Random Forest.
 \end{itemize}
 
@@ -165,13 +167,15 @@ deduplikasi/incremental backup; beberapa gambar tidak dirujuk.}
 \begin{revbox}\small
 Tambahkan analisis statistik dan perbandingan; pastikan semua gambar dirujuk.
 \end{revbox}
-\authors{Kami melaporkan hasil terukur per tipe berkas untuk kelima algoritma dan skor efisiensi
-gabungan. Semua gambar kini dirujuk di teks sebelum ditampilkan. Kami secara jujur mencatat bahwa
-statistik uji-berulang, profil CPU/RAM/\textit{throughput}/energi, dan perbandingan langsung dengan
-deduplikasi/incremental backup adalah pengembangan penting; hal ini dicantumkan secara eksplisit
-sebagai arah penelitian mendatang alih-alih diklaim. Kami memilih menyatakan keterbatasan ini
-secara jujur daripada menyajikan angka yang belum terverifikasi.}
-\loc{Bagian~4 (hasil kompresi, seluruh rujukan gambar) dan Bagian~5 (arah penelitian mendatang).}
+\authors{Kami memperkuat analisis statistik secara substansial. Dalam subbagian baru, kami kini
+melaporkan \textbf{statistik uji-berulang (5 \textit{trials})} untuk setiap algoritma pada seluruh
+dataset: rata-rata dan standar deviasi waktu kompresi, \textit{throughput} (MB/s), serta utilisasi
+CPU/RAM (diukur dengan \texttt{psutil}) di AWS EC2. Standar deviasi yang sangat kecil (mis. Snappy
+$0{,}003$~s, Zstandard $0{,}016$~s) mengonfirmasi kinerja yang stabil, dan rentang \textit{throughput}
+(Snappy/LZ4 $>590$~MB/s vs.\ Gzip $30{,}5$~MB/s) memberikan dasar objektif bagi seleksi adaptif. Semua
+gambar kini dirujuk di teks sebelum ditampilkan. Profil energi dan perbandingan langsung dengan
+deduplikasi/incremental backup tetap dicantumkan sebagai arah penelitian mendatang.}
+\loc{Bagian~4 (subbagian analisis statistik baru, tabel statistik kompresi; seluruh rujukan gambar) dan Bagian~5 (sisa arah penelitian mendatang).}
 
 \reviewer{A6. Arah penelitian mendatang pada Kesimpulan terlalu sempit (hanya Random Forest).}
 \begin{revbox}\small
@@ -304,11 +308,13 @@ dan Kesimpulan.}
 \begin{revbox}\small
 Tambahkan analisis statistik.
 \end{revbox}
-\authors{Kami memperkuat dasar empiris dengan menjalankan ulang eksperimen penuh pada dua platform
-(Windows Server 2022 dan Ubuntu 22.04 di AWS EC2), melaporkan kompresi per tipe untuk lima
-algoritma serta tabel konsistensi lintas-platform. Profil statistik yang lebih dalam (uji berulang,
-CPU/RAM/\textit{throughput}) dicantumkan sebagai arah penelitian mendatang alih-alih diklaim tanpa data.}
-\loc{Bagian~4 (subbagian lintas-platform dan tabel konsistensi) dan Bagian~5 (arah penelitian mendatang).}
+\authors{Kami memperkuat dasar empiris dengan dua cara. Pertama, kami menjalankan ulang eksperimen
+penuh pada dua platform (Windows Server 2022 dan Ubuntu 22.04 di AWS EC2) dan menambahkan tabel
+konsistensi lintas-platform. Kedua, kami menambahkan analisis statistik khusus dengan \textbf{5
+uji-berulang} per algoritma, melaporkan rata-rata~$\pm$~standar deviasi waktu kompresi,
+\textit{throughput}, dan utilisasi CPU/RAM (tabel statistik kompresi). Pengukuran ini mengonfirmasi
+stabilitas dan reproduktibilitas hasil.}
+\loc{Bagian~4 (subbagian lintas-platform, tabel konsistensi, dan subbagian analisis statistik baru).}
 
 % =====================================================================
 \section*{Persyaratan tambahan jurnal}
