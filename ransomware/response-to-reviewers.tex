@@ -305,7 +305,11 @@ two platforms (Windows Server 2022 and Ubuntu 22.04 on AWS EC2) and added a cros
 consistency table. Second, we added a dedicated statistical analysis with \textbf{5 repeated trials}
 per algorithm, reporting mean~$\pm$~standard deviation of compression time, throughput, and CPU/RAM
 utilization (Table on compression statistics). These measurements confirm the stability and
-reproducibility of the results.}
+reproducibility of the results. For clarity and honest reporting, we now state explicitly that the
+local Windows machine is the \emph{initial development environment}, while the AWS EC2 environment
+is the \emph{primary measurement/validation environment} from which all reported quantitative
+results are obtained; the original Windows setup is retained (not removed) to preserve continuity
+with the initially submitted version.}
 \loc{Section~4 (cross-platform subsection, consistency table, and new statistical-analysis subsection).}
 
 % =====================================================================

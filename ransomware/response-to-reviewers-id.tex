@@ -313,7 +313,11 @@ penuh pada dua platform (Windows Server 2022 dan Ubuntu 22.04 di AWS EC2) dan me
 konsistensi lintas-platform. Kedua, kami menambahkan analisis statistik khusus dengan \textbf{5
 uji-berulang} per algoritma, melaporkan rata-rata~$\pm$~standar deviasi waktu kompresi,
 \textit{throughput}, dan utilisasi CPU/RAM (tabel statistik kompresi). Pengukuran ini mengonfirmasi
-stabilitas dan reproduktibilitas hasil.}
+stabilitas dan reproduktibilitas hasil. Demi kejelasan dan pelaporan yang jujur, kami kini
+menyatakan secara eksplisit bahwa komputer Windows lokal adalah \emph{lingkungan pengembangan
+awal}, sedangkan lingkungan AWS EC2 adalah \emph{lingkungan pengukuran/validasi utama} tempat
+seluruh hasil kuantitatif diperoleh; konfigurasi Windows asli tetap dipertahankan (tidak dihapus)
+untuk menjaga kesinambungan dengan versi yang mula-mula diajukan.}
 \loc{Bagian~4 (subbagian lintas-platform, tabel konsistensi, dan subbagian analisis statistik baru).}
 
 % =====================================================================
