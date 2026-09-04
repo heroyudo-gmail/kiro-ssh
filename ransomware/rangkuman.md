@@ -388,3 +388,18 @@ Uji-berulang 5x pada dataset 43 berkas (~531 MB) di AWS EC2 Ubuntu 22.04, diukur
 | Snappy | 0,831 | 0,003 | 639,0 | 99,3 | 0,9 |
 
 **Kesimpulan:** std deviasi sangat kecil = kinerja stabil/konsisten. Snappy/LZ4 ~20x lebih cepat dari Gzip. Proses CPU-bound (~100% CPU), jejak RAM kecil (<7 MB). Menjawab A5/C5 (repeated trials + std + throughput + CPU/RAM). Masuk ke ijece-id.tex sbg subbab "Analisis statistik kinerja kompresi" (Tabel tab:comp_stats). Sisa (energi, deduplication/incremental) tetap future work.
+
+---
+
+## BAGIAN 8 — PERBANDINGAN KUANTITATIF ADAPTIF vs BASELINE (perkuat novelty, jawab Reviewer A5)
+
+Uji di AWS EC2 (dataset 43 berkas, ~531 MB). Sumber: `results/baseline_comparison.csv|json`.
+
+| Strategi | Ukuran akhir (MB) | Penghematan (%) | Waktu (s) | Throughput (MB/s) |
+|---|---|---|---|---|
+| Tanpa kompresi | 531,2 | 0 | - | - |
+| Static-Gzip | 265,1 | 50,09 | 18,84 | 28,2 |
+| Static-Zstandard | 271,1 | 48,96 | 1,94 | 273,8 |
+| **Adaptif (usulan)** | 301,3 | 43,28 | **0,87** | **611,8** |
+
+**Temuan (jujur):** Adaptif BUKAN paling hemat storage (43,3% vs Gzip 50,1%), TAPI ~21x lebih cepat dari Gzip (0,87s vs 18,84s), throughput 611 vs 28 MB/s. Trade-off: adaptif prioritas KECEPATAN (pilih Snappy/LZ4 utk banyak file) demi RTO rendah & overhead minimal, cocok lingkungan sumber daya terbatas. Keunggulan = keseimbangan optimal storage-vs-speed, bukan penghematan absolut. Masuk ke ijece-id.tex subbab "Perbandingan kuantitatif strategi adaptif dengan baseline" (Tabel tab:baseline_comparison).

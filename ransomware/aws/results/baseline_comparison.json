@@ -1,0 +1,38 @@
+{
+  "dataset_files": 43,
+  "dataset_mb": 531.16,
+  "results": [
+    {
+      "strategy": "No-Compression",
+      "size_before_mb": 531.16,
+      "size_after_mb": 531.16,
+      "storage_saving_pct": 0.0,
+      "time_s": 0.0,
+      "throughput_mb_s": 75395458.7
+    },
+    {
+      "strategy": "Static-Gzip",
+      "size_before_mb": 531.16,
+      "size_after_mb": 265.1,
+      "storage_saving_pct": 50.09,
+      "time_s": 18.84,
+      "throughput_mb_s": 28.2
+    },
+    {
+      "strategy": "Static-Zstandard",
+      "size_before_mb": 531.16,
+      "size_after_mb": 271.12,
+      "storage_saving_pct": 48.96,
+      "time_s": 1.94,
+      "throughput_mb_s": 273.8
+    },
+    {
+      "strategy": "Adaptive (proposed)",
+      "size_before_mb": 531.16,
+      "size_after_mb": 301.29,
+      "storage_saving_pct": 43.28,
+      "time_s": 0.868,
+      "throughput_mb_s": 611.8
+    }
+  ]
+}

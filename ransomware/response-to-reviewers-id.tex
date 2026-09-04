@@ -173,9 +173,15 @@ dataset: rata-rata dan standar deviasi waktu kompresi, \textit{throughput} (MB/s
 CPU/RAM (diukur dengan \texttt{psutil}) di AWS EC2. Standar deviasi yang sangat kecil (mis. Snappy
 $0{,}003$~s, Zstandard $0{,}016$~s) mengonfirmasi kinerja yang stabil, dan rentang \textit{throughput}
 (Snappy/LZ4 $>590$~MB/s vs.\ Gzip $30{,}5$~MB/s) memberikan dasar objektif bagi seleksi adaptif. Semua
-gambar kini dirujuk di teks sebelum ditampilkan. Profil energi dan perbandingan langsung dengan
-deduplikasi/incremental backup tetap dicantumkan sebagai arah penelitian mendatang.}
-\loc{Bagian~4 (subbagian analisis statistik baru, tabel statistik kompresi; seluruh rujukan gambar) dan Bagian~5 (sisa arah penelitian mendatang).}
+gambar kini dirujuk di teks sebelum ditampilkan. Selain itu, kami menambahkan \textbf{perbandingan
+kuantitatif strategi adaptif yang diusulkan terhadap baseline} (tanpa kompresi, Gzip statis, dan
+Zstandard statis) pada seluruh dataset. Perbandingan ini mengungkap \textit{trade-off} kecepatan
+vs.\ penyimpanan yang jelas: strategi adaptif sekitar $21\times$ lebih cepat daripada Gzip statis
+($0{,}87$~s vs.\ $18{,}84$~s; $611{,}8$ vs.\ $28{,}2$~MB/s) sambil tetap mencapai penghematan
+$43{,}3\%$, menunjukkan bahwa keunggulan utamanya adalah keseimbangan optimal antara efisiensi
+penyimpanan dan kecepatan proses untuk cadangan ber-RTO rendah. Profil energi dan perbandingan
+langsung dengan deduplikasi/incremental backup tetap dicantumkan sebagai arah penelitian mendatang.}
+\loc{Bagian~4 (subbagian analisis statistik dan subbagian perbandingan baseline baru dengan tabel; seluruh rujukan gambar) dan Bagian~5 (sisa arah penelitian mendatang).}
 
 \reviewer{A6. Arah penelitian mendatang pada Kesimpulan terlalu sempit (hanya Random Forest).}
 \begin{revbox}\small

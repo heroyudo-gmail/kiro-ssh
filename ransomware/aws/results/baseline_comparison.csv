@@ -1,0 +1,5 @@
+strategy,size_before_mb,size_after_mb,storage_saving_pct,time_s,throughput_mb_s
+No-Compression,531.16,531.16,0.0,0.0,75395458.7
+Static-Gzip,531.16,265.1,50.09,18.84,28.2
+Static-Zstandard,531.16,271.12,48.96,1.94,273.8
+Adaptive (proposed),531.16,301.29,43.28,0.868,611.8

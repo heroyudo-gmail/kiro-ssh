@@ -169,9 +169,14 @@ mean and standard deviation of compression time, throughput (MB/s), and CPU/RAM 
 (measured with \texttt{psutil}) on AWS EC2. The very small standard deviations (e.g., Snappy
 $0.003$~s, Zstandard $0.016$~s) confirm stable performance, and the throughput ranges (Snappy/LZ4
 $>590$~MB/s vs.\ Gzip $30.5$~MB/s) provide an objective basis for the adaptive selection. All figures
-are now referenced in the text before they appear. Energy profiling and a direct comparison with
-deduplication/incremental backup remain listed as future work.}
-\loc{Section~4 (new statistical-analysis subsection, Table on compression statistics; all figure references) and Section~5 (remaining future work).}
+are now referenced in the text before they appear. In addition, we added a \textbf{quantitative
+comparison of the proposed adaptive strategy against baselines} (no-compression, static-Gzip,
+static-Zstandard) on the full dataset. This reveals a clear speed-vs-storage trade-off: the adaptive
+strategy is about $21\times$ faster than static Gzip ($0.87$~s vs.\ $18.84$~s; $611.8$ vs.\
+$28.2$~MB/s) while still achieving $43.3\%$ storage saving, showing that its main advantage is the
+optimal balance between storage efficiency and processing speed for low-RTO backup. Energy profiling
+and direct comparison with deduplication/incremental backup remain listed as future work.}
+\loc{Section~4 (statistical-analysis subsection and new baseline-comparison subsection with tables; all figure references) and Section~5 (remaining future work).}
 
 \reviewer{A6. Conclusion future work is too narrow (only Random Forest).}
 \begin{revbox}\small

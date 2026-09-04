@@ -626,6 +626,28 @@ Snappy    & 0,831  & 0,003 & 639,0 & 99,3  & 0,9 \\
 
 Standar deviasi yang sangat kecil pada seluruh algoritma (mis. Snappy $0{,}003$ s, Zstandard $0{,}016$ s) menunjukkan bahwa kinerja kompresi \textbf{stabil dan konsisten} antar-pengulangan. Terdapat rentang \textit{throughput} yang lebar: Snappy dan LZ4 mencapai $>590$ MB/s---kira-kira $20\times$ lebih cepat daripada Gzip ($30{,}5$ MB/s)---sedangkan Zstandard menawarkan keseimbangan menarik ($308{,}7$ MB/s) dengan rasio kompresi tinggi (Tabel~\ref{tab:compression_results}). Utilisasi CPU mendekati $100\%$ untuk semua algoritma menegaskan bahwa proses kompresi bersifat \textit{CPU-bound}, sementara jejak memori (RAM) tetap kecil ($<7$ MB) sehingga sistem ringan dan sesuai untuk lingkungan cadangan dengan sumber daya terbatas. Hasil kuantitatif ini menjadi dasar objektif bagi mekanisme seleksi adaptif: kombinasi \textit{throughput} tinggi (Snappy/LZ4) untuk berkas kecil-menengah dan rasio-throughput seimbang (Zstandard) untuk berkas teks besar.
 
+\subsection{Perbandingan kuantitatif strategi adaptif dengan baseline}
+Untuk mengevaluasi manfaat mekanisme seleksi adaptif yang diusulkan secara objektif, strategi ini dibandingkan terhadap tiga strategi \textit{baseline} pada seluruh \textit{dataset} (43 berkas, $\approx 531$ MB): (i) tanpa kompresi, (ii) kompresi statis tunggal Gzip (praktik umum pada sistem cadangan lama), dan (iii) kompresi statis tunggal Zstandard. Tabel~\ref{tab:baseline_comparison} merangkum hasilnya.
+
+\begin{table}[H]
+\centering
+\fontsize{8pt}{10pt}\selectfont
+\caption{Perbandingan strategi kompresi adaptif dengan baseline (43 berkas, $\approx$531 MB)}
+\label{tab:baseline_comparison}
+\begin{tabular}{l c c c c}
+\hline
+\textbf{Strategi} & \textbf{Ukuran Akhir (MB)} & \textbf{Penghematan (\%)} & \textbf{Waktu (s)} & \textbf{Throughput (MB/s)} \\
+\hline
+Tanpa kompresi        & 531,2 & 0,00  & --    & -- \\
+Static-Gzip           & 265,1 & 50,09 & 18,84 & 28,2 \\
+Static-Zstandard      & 271,1 & 48,96 & 1,94  & 273,8 \\
+\textbf{Adaptif (usulan)} & 301,3 & 43,28 & \textbf{0,87} & \textbf{611,8} \\
+\hline
+\end{tabular}
+\end{table}
+
+Hasil ini mengungkap \textit{trade-off} yang penting. Strategi statis Gzip mencapai penghematan penyimpanan tertinggi ($50{,}1\%$), tetapi dengan biaya waktu proses yang sangat besar ($18{,}84$ s; \textit{throughput} hanya $28{,}2$ MB/s). Sebaliknya, strategi \textbf{adaptif yang diusulkan} sengaja memprioritaskan kecepatan: dengan memilih algoritma cepat (Snappy/LZ4) untuk sebagian besar berkas, strategi ini menyelesaikan seluruh proses hanya dalam $0{,}87$ s---\textbf{sekitar $21\times$ lebih cepat daripada Gzip statis} dan $2{,}2\times$ lebih cepat daripada Zstandard statis---sambil tetap memberikan penghematan penyimpanan yang wajar ($43{,}3\%$). Perbedaan penghematan yang relatif kecil ($6{,}8$ poin persen dibanding Gzip) tertukar dengan peningkatan \textit{throughput} yang dramatis ($611{,}8$ vs $28{,}2$ MB/s). Untuk sistem cadangan yang menuntut \textit{Recovery Time Objective} (RTO) rendah dan \textit{overhead} komputasi minimal---terutama pada lingkungan dengan sumber daya terbatas---prioritas pada kecepatan ini lebih menguntungkan daripada memaksimalkan rasio kompresi secara mutlak. Dengan demikian, keunggulan utama mekanisme adaptif bukan pada penghematan absolut, melainkan pada \textbf{keseimbangan optimal antara efisiensi penyimpanan dan kecepatan proses} yang dapat disesuaikan dengan karakteristik beban kerja.
+
 \subsection{Implementasi dan struktur penyimpanan cadangan air-gapped}
 Sebagai lapisan perlindungan tambahan, sistem menerapkan mekanisme cadangan \textit{air-gapped} menggunakan media penyimpanan terpisah berupa SSD eksternal. Media ini tidak diakses secara permanen oleh sistem, melainkan hanya di-\textit{mount} selama proses cadangan atau pemulihan. Pendekatan ini bertujuan meminimalkan risiko akses tidak sah dan propagasi \textit{malware} melalui kanal jaringan. Implementasi \textit{air-gapped} yang digunakan dalam penelitian ini bersifat daring (\textit{air-gapped} logis), di mana media penyimpanan tetap berada dalam lingkungan sistem melalui pengaturan kontrol akses, sesi aktif, dan mekanisme \textit{mounting} terbatas. Dengan pendekatan ini, media hanya dapat diakses pada kondisi tertentu yang ditetapkan sistem, tanpa koneksi jaringan aktif selama proses penyimpanan cadangan.
 
