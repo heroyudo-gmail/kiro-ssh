@@ -223,6 +223,12 @@ __marimo__/
 *.xlsx
 # Pengecualian: CSV hasil kecil yang dibutuhkan notebook/paper (bukan dataset besar)
 !CICDDoS2018/data/results/scenarios_s1_s4.csv
+# Pengecualian: CSV hasil eksperimen ransomware (kecil, untuk reproduksibilitas paper)
+!ransomware/aws/results/*.csv
+
+# JANGAN PERNAH commit kunci enkripsi
+*.bin
+ransomware/aws/results/aes_key.bin
 
 
 # Model files
@@ -231,6 +237,19 @@ __marimo__/
 !package-lock.json
 *.joblib
 *.pkl
+
+# Pengecualian: hasil eksperimen ransomware JSON (kecil, untuk reproduksibilitas paper)
+# Ditempatkan SETELAH *.json agar tidak ter-override.
+!ransomware/aws/results/attack_encrypt_hold.json
+!ransomware/aws/results/attack_metadata_corruption.json
+!ransomware/aws/results/attack_overwrite_corrupt.json
+!ransomware/aws/results/baseline.json
+!ransomware/aws/results/dataset_manifest.json
+!ransomware/aws/results/eval_encrypt_hold.json
+!ransomware/aws/results/eval_metadata_corruption.json
+!ransomware/aws/results/eval_normal.json
+!ransomware/aws/results/eval_overwrite_corrupt.json
+!ransomware/aws/results/experiment_summary.json
 
 # Setting files (local config, not for git)
 

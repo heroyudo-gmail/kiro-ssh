@@ -1,0 +1,264 @@
+{
+  "attack_type": "overwrite_corrupt",
+  "count": 43,
+  "items": [
+    {
+      "target": "app_01.log",
+      "new_name": "app_01.log",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    },
+    {
+      "target": "app_02.log",
+      "new_name": "app_02.log",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    },
+    {
+      "target": "app_03.log",
+      "new_name": "app_03.log",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    },
+    {
+      "target": "app_04.log",
+      "new_name": "app_04.log",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    },
+    {
+      "target": "audit_01.log",
+      "new_name": "audit_01.log",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    },
+    {
+      "target": "audit_02.log",
+      "new_name": "audit_02.log",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    },
+    {
+      "target": "audit_03.log",
+      "new_name": "audit_03.log",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    },
+    {
+      "target": "img_01.jpg",
+      "new_name": "img_01.jpg",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    },
+    {
+      "target": "img_02.jpg",
+      "new_name": "img_02.jpg",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    },
+    {
+      "target": "img_03.jpg",
+      "new_name": "img_03.jpg",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    },
+    {
+      "target": "img_04.jpg",
+      "new_name": "img_04.jpg",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    },
+    {
+      "target": "img_05.jpg",
+      "new_name": "img_05.jpg",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    },
+    {
+      "target": "img_06.jpg",
+      "new_name": "img_06.jpg",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    },
+    {
+      "target": "img_07.jpg",
+      "new_name": "img_07.jpg",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    },
+    {
+      "target": "img_08.jpg",
+      "new_name": "img_08.jpg",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    },
+    {
+      "target": "img_09.jpg",
+      "new_name": "img_09.jpg",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    },
+    {
+      "target": "img_10.jpg",
+      "new_name": "img_10.jpg",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    },
+    {
+      "target": "img_11.jpg",
+      "new_name": "img_11.jpg",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    },
+    {
+      "target": "img_12.jpg",
+      "new_name": "img_12.jpg",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    },
+    {
+      "target": "img_13.jpg",
+      "new_name": "img_13.jpg",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    },
+    {
+      "target": "img_14.jpg",
+      "new_name": "img_14.jpg",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    },
+    {
+      "target": "lap_01.xlsx",
+      "new_name": "lap_01.xlsx",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    },
+    {
+      "target": "lap_02.xlsx",
+      "new_name": "lap_02.xlsx",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    },
+    {
+      "target": "lap_03.xlsx",
+      "new_name": "lap_03.xlsx",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    },
+    {
+      "target": "lap_04.xlsx",
+      "new_name": "lap_04.xlsx",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    },
+    {
+      "target": "lap_05.xlsx",
+      "new_name": "lap_05.xlsx",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    },
+    {
+      "target": "lap_06.xlsx",
+      "new_name": "lap_06.xlsx",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    },
+    {
+      "target": "lap_07.xlsx",
+      "new_name": "lap_07.xlsx",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    },
+    {
+      "target": "lap_08.xlsx",
+      "new_name": "lap_08.xlsx",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    },
+    {
+      "target": "lap_09.xlsx",
+      "new_name": "lap_09.xlsx",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    },
+    {
+      "target": "lap_10.xlsx",
+      "new_name": "lap_10.xlsx",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    },
+    {
+      "target": "lap_11.xlsx",
+      "new_name": "lap_11.xlsx",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    },
+    {
+      "target": "sys_01.txt",
+      "new_name": "sys_01.txt",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    },
+    {
+      "target": "sys_02.txt",
+      "new_name": "sys_02.txt",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    },
+    {
+      "target": "transaksi_01.csv",
+      "new_name": "transaksi_01.csv",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    },
+    {
+      "target": "transaksi_02.csv",
+      "new_name": "transaksi_02.csv",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    },
+    {
+      "target": "transaksi_03.csv",
+      "new_name": "transaksi_03.csv",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    },
+    {
+      "target": "transaksi_04.csv",
+      "new_name": "transaksi_04.csv",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    },
+    {
+      "target": "transaksi_05.csv",
+      "new_name": "transaksi_05.csv",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    },
+    {
+      "target": "transaksi_06.csv",
+      "new_name": "transaksi_06.csv",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    },
+    {
+      "target": "transaksi_07.csv",
+      "new_name": "transaksi_07.csv",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    },
+    {
+      "target": "transaksi_08.csv",
+      "new_name": "transaksi_08.csv",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    },
+    {
+      "target": "transaksi_09.csv",
+      "new_name": "transaksi_09.csv",
+      "attack": "overwrite_corrupt",
+      "cve": "CVE-2021-36934"
+    }
+  ]
+}

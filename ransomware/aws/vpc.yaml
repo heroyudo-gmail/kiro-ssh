@@ -1,0 +1,95 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Ransomware cloud-backup experiment - Jaringan dasar.
+  VPC 10.4.0.0/16 + subnet PUBLIK + Internet Gateway + route table.
+  TANPA NAT Gateway (hemat biaya). EC2 nanti diletakkan di subnet publik
+  sehingga bisa akses internet langsung via IGW (pip/apt/S3) tanpa NAT.
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: rw-backup
+    Description: Prefix nama resource agar mudah dikenali.
+  VpcCidr:
+    Type: String
+    Default: 10.4.0.0/16
+    Description: CIDR VPC (10.4 dipilih agar tidak bentrok dengan project NIDS 10.3).
+  PublicSubnetCidr:
+    Type: String
+    Default: 10.4.1.0/24
+    Description: CIDR subnet publik.
+
+Resources:
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCidr
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-vpc'
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-igw'
+
+  IgwAttach:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref Vpc
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: !Ref PublicSubnetCidr
+      # AZ pertama di region aktif (mis. ap-southeast-1a)
+      AvailabilityZone: !Select [0, !GetAZs '']
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-public-subnet'
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-public-rt'
+
+  PublicDefaultRoute:
+    Type: AWS::EC2::Route
+    DependsOn: IgwAttach
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnetRouteAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet
+
+Outputs:
+  VpcId:
+    Description: ID VPC
+    Value: !Ref Vpc
+    Export:
+      Name: !Sub '${ProjectName}-VpcId'
+  PublicSubnetId:
+    Description: ID subnet publik
+    Value: !Ref PublicSubnet
+    Export:
+      Name: !Sub '${ProjectName}-PublicSubnetId'
+  VpcCidr:
+    Description: CIDR VPC
+    Value: !Ref VpcCidr
+    Export:
+      Name: !Sub '${ProjectName}-VpcCidr'

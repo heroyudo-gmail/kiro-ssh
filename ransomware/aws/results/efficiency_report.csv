@@ -1,0 +1,6 @@
+algo,E_raw,E_pct,status
+snappy,25.0037,100.0,Excellent
+lz4,23.6837,94.72,Excellent
+zstd,10.1722,40.68,Poor
+brotli,1.637,6.55,Poor
+gzip,1.2961,5.18,Poor
