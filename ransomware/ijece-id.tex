@@ -377,32 +377,30 @@ dengan FP merepresentasikan kasus \textit{False Positive}, di mana berkas normal
 Hasil eksperimen menunjukkan bahwa sistem cadangan awan yang diusulkan memberikan perlindungan data, kompresi, dan kinerja pemulihan yang andal. Seluruh berkas mempertahankan nilai \textit{hash} SHA-256 yang identik, menandakan tidak adanya perubahan data. Zstandard mencapai efisiensi kompresi tertinggi, sementara Snappy dan LZ4 memberikan waktu proses tercepat. Selama simulasi ransomware, mekanisme \textit{air-gapped} memungkinkan pemulihan berhasil 100\% tanpa galat, menunjukkan ketahanan sistem yang kuat.
 
 \subsection{Lingkungan eksperimen}
-Seluruh eksperimen dilakukan secara lokal pada sistem yang menjalankan Windows 11 (64-bit). Konfigurasi perangkat keras dan perangkat lunak yang digunakan dalam penelitian ini diringkas pada Tabel~\ref{tab:experimental_setup}.
+Untuk menguji keandalan sekaligus konsistensi lintas-platform, sistem dievaluasi pada dua lingkungan: (1) lingkungan pengembangan lokal berbasis \textbf{Windows}, dan (2) lingkungan replikasi berbasis \textbf{cloud} pada Amazon Web Services (AWS) EC2 yang mencakup instans Windows Server dan Linux. Replikasi pada lingkungan \textit{cloud} sangat relevan karena sistem yang diusulkan memang ditujukan untuk penerapan cadangan berbasis awan. Konfigurasi kedua lingkungan diringkas pada Tabel~\ref{tab:experimental_setup}.
 
 \begin{table}[H]
 \centering
 \fontsize{8pt}{10pt}\selectfont
-\caption{Pengaturan eksperimen}
+\caption{Pengaturan eksperimen pada dua lingkungan pengujian}
 \label{tab:experimental_setup}
-\begin{tabular}{ll}
+\begin{tabularx}{\textwidth}{@{}l X X@{}}
 \hline
-\textbf{Komponen} & \textbf{Konfigurasi} \\
+\textbf{Komponen} & \textbf{Lingkungan Lokal (Windows)} & \textbf{Lingkungan Cloud (AWS EC2)} \\
 \hline
-Sistem Operasi & Windows 11 (64-bit) \\
-CPU & Intel Core i7-11800H (8-core) \\
-RAM & 16 GB \\
-Bahasa Pemrograman & Python 3.10 \\
-\textit{Backend Framework} & Flask \\
-\textit{UI Dashboard} & HTML, CSS, JavaScript \\
-Pustaka Kompresi & Gzip, Zstandard, Brotli, LZ4, Snappy \\
-Penyimpanan Awan & Google Drive API (Service Account) \\
-Pustaka Kriptografi & PyCryptodome 3.20 \\
-Media Cadangan & Penyimpanan terisolasi berbasis SSD eksternal/VHDX \\
+Sistem Operasi & Windows 11 (64-bit) & Windows Server 2022 \& Ubuntu 22.04 \\
+CPU & Intel Core i7-11800H (8-core) & t3.xlarge (4 vCPU) / t3.large (2 vCPU) \\
+RAM & 16 GB & 16 GB (Windows) / 8 GB (Linux) \\
+Bahasa Pemrograman & Python 3.10 & Python 3.11 (Windows) / 3.10 (Linux) \\
+Pustaka Kompresi & \multicolumn{2}{l}{Gzip, Zstandard, Brotli, LZ4, Snappy} \\
+Pustaka Kriptografi & \multicolumn{2}{l}{PyCryptodome (AES-256), hashlib (SHA-256)} \\
+Media \textit{Air-gapped} & SSD eksternal / VHDX (Disk terpisah) & Volume EBS terpisah (drive D: / \texttt{/mnt/airgap}) \\
+Penyimpanan Awan & Google Drive API & Amazon S3 \\
 \hline
-\end{tabular}
+\end{tabularx}
 \end{table}
 
-Lingkungan tersebut memastikan bahwa hasil eksperimen dapat direproduksi dan mencerminkan skenario penerapan realistis untuk sistem cadangan berbasis awan. Konfigurasi perangkat keras yang dipilih merepresentasikan lingkungan konsumen berkinerja menengah-ke-tinggi yang umum digunakan pada sistem cadangan perusahaan. Sementara itu, penggunaan beberapa pustaka kompresi memungkinkan evaluasi komparatif antara efisiensi rasio kompresi dan eksekusi.
+Lingkungan lokal Windows merepresentasikan konfigurasi konsumen berkinerja menengah-ke-tinggi yang umum digunakan pada sistem cadangan perusahaan, sedangkan lingkungan AWS EC2 merepresentasikan penerapan \textit{cloud} nyata. Pada lingkungan \textit{cloud}, media \textit{air-gapped} diwujudkan sebagai volume EBS terpisah yang hanya di-\textit{mount} saat proses cadangan/pemulihan, meniru isolasi logis media pada lingkungan lokal. Penggunaan dua lingkungan memungkinkan verifikasi bahwa hasil sistem bersifat \textbf{konsisten lintas-platform}, sekaligus menjawab keterbatasan generalisasi yang lazim pada penelitian yang hanya diuji pada satu platform.
 
 \subsection{Hasil simulasi sistem pada kondisi normal (tanpa serangan)}
 Evaluasi pada kondisi normal berfokus pada alur kerja utama sistem, mencakup inisialisasi koneksi penyimpanan awan, kompresi menggunakan beberapa algoritma \textit{lossless}, penyimpanan cadangan aman, dan validasi integritas data.
@@ -706,6 +704,33 @@ Overwrite-and-Corrupt (CVE-2021-36934)  & 43 & 43 & 5,34 \\
 \end{table}
 
 RTO terukur berada pada rentang 4,3--5,3 detik untuk memulihkan seluruh dataset uji. Karena alur kerja pemulihan bersifat deterministik dan waktunya meningkat kira-kira linear terhadap volume data, RTO untuk \textit{dataset} skala perusahaan yang lebih besar dapat diekstrapolasi secara proporsional; validasi pada skala penuh (berkas hingga 1 GB) menjadi bagian dari pengembangan lanjutan.
+
+\subsection{Konsistensi hasil lintas-platform (Windows vs Linux)}
+Eksperimen yang sama dijalankan pada instans AWS EC2 Windows Server 2022 dan Ubuntu 22.04 untuk memverifikasi konsistensi lintas-platform. Tabel~\ref{tab:cross_platform} membandingkan hasil kunci kedua lingkungan. Rasio kompresi praktis identik pada kedua platform---karena bergantung pada karakteristik data dan algoritma, bukan sistem operasi---sementara perbedaan hanya muncul pada waktu pemulihan (RTO) akibat perbedaan perangkat keras. Keandalan deteksi dan pemulihan sama-sama sempurna (deteksi 43/43, pemulihan 43/43, FPR/FNR 0\%) pada kedua platform.
+
+\begin{table}[H]
+\centering
+\fontsize{8pt}{10pt}\selectfont
+\caption{Konsistensi hasil pada dua platform (43 berkas)}
+\label{tab:cross_platform}
+\begin{tabular}{l c c}
+\hline
+\textbf{Metrik} & \textbf{Windows Server 2022} & \textbf{Ubuntu 22.04} \\
+\hline
+Penghematan Log/TXT (Brotli) & 89,6\% & 89,5\% \\
+Penghematan CSV (Brotli)     & 81,1\% & 81,1\% \\
+Penghematan JPG / XLSX       & $\approx$0\% & $\approx$0\% \\
+Deteksi (semua serangan)     & 43/43 & 43/43 \\
+Pemulihan berhasil           & 43/43 & 43/43 \\
+FPR / FNR                    & 0\% / 0\% & 0\% / 0\% \\
+RTO Encrypt-and-Hold (detik) & 5,50 & 4,34 \\
+RTO Metadata Corruption (detik) & 5,20 & 5,21 \\
+RTO Overwrite-and-Corrupt (detik) & 5,32 & 5,34 \\
+\hline
+\end{tabular}
+\end{table}
+
+Kesesuaian hasil ini menegaskan bahwa mekanisme yang diusulkan---kompresi adaptif, verifikasi integritas, dan pemulihan \textit{air-gapped}---bekerja secara andal dan dapat direproduksi baik pada lingkungan lokal Windows maupun infrastruktur \textit{cloud} Linux/Windows, memperkuat validitas eksternal temuan.
 
 \subsection{Evaluasi false positive dan false negative}
 Untuk mengevaluasi keandalan mekanisme deteksi ransomware, pengujian tambahan dilakukan untuk mengukur \textit{False Positive Rate} (FPR) dan \textit{False Negative Rate} (FNR). Evaluasi membandingkan proses enkripsi cadangan AES-256 yang sah dengan serangan ransomware tersimulasi yang secara sengaja memodifikasi konten dan metadata berkas. Ketika modifikasi abnormal terdeteksi, sistem secara otomatis mengaktifkan mode pemulihan \textit{air-gapped} dan mengganti berkas rusak menggunakan salinan cadangan terisolasi. Mekanisme ini memastikan berkas terkompromi tidak dapat terus menyebar dalam sistem.

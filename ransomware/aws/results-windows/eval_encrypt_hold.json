@@ -1,0 +1,17 @@
+{
+  "mode": "attack",
+  "total_files": 43,
+  "detected": 43,
+  "TP": 43,
+  "FN": 0,
+  "FNR_pct": 0.0,
+  "actual_status": "ransomware",
+  "restore_ok": 43,
+  "restore_err": 0,
+  "rto_seconds": 5.501,
+  "restore_mode": {
+    "mode": "airgap",
+    "reason": "ransomware_detected",
+    "scope": "all"
+  }
+}

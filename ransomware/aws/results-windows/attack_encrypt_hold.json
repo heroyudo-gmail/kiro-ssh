@@ -1,0 +1,264 @@
+{
+  "attack_type": "encrypt_hold",
+  "count": 43,
+  "items": [
+    {
+      "target": "app_01.log",
+      "new_name": "app_01.log.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    },
+    {
+      "target": "app_02.log",
+      "new_name": "app_02.log.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    },
+    {
+      "target": "app_03.log",
+      "new_name": "app_03.log.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    },
+    {
+      "target": "app_04.log",
+      "new_name": "app_04.log.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    },
+    {
+      "target": "audit_01.log",
+      "new_name": "audit_01.log.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    },
+    {
+      "target": "audit_02.log",
+      "new_name": "audit_02.log.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    },
+    {
+      "target": "audit_03.log",
+      "new_name": "audit_03.log.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    },
+    {
+      "target": "img_01.jpg",
+      "new_name": "img_01.jpg.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    },
+    {
+      "target": "img_02.jpg",
+      "new_name": "img_02.jpg.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    },
+    {
+      "target": "img_03.jpg",
+      "new_name": "img_03.jpg.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    },
+    {
+      "target": "img_04.jpg",
+      "new_name": "img_04.jpg.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    },
+    {
+      "target": "img_05.jpg",
+      "new_name": "img_05.jpg.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    },
+    {
+      "target": "img_06.jpg",
+      "new_name": "img_06.jpg.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    },
+    {
+      "target": "img_07.jpg",
+      "new_name": "img_07.jpg.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    },
+    {
+      "target": "img_08.jpg",
+      "new_name": "img_08.jpg.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    },
+    {
+      "target": "img_09.jpg",
+      "new_name": "img_09.jpg.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    },
+    {
+      "target": "img_10.jpg",
+      "new_name": "img_10.jpg.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    },
+    {
+      "target": "img_11.jpg",
+      "new_name": "img_11.jpg.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    },
+    {
+      "target": "img_12.jpg",
+      "new_name": "img_12.jpg.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    },
+    {
+      "target": "img_13.jpg",
+      "new_name": "img_13.jpg.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    },
+    {
+      "target": "img_14.jpg",
+      "new_name": "img_14.jpg.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    },
+    {
+      "target": "lap_01.xlsx",
+      "new_name": "lap_01.xlsx.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    },
+    {
+      "target": "lap_02.xlsx",
+      "new_name": "lap_02.xlsx.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    },
+    {
+      "target": "lap_03.xlsx",
+      "new_name": "lap_03.xlsx.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    },
+    {
+      "target": "lap_04.xlsx",
+      "new_name": "lap_04.xlsx.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    },
+    {
+      "target": "lap_05.xlsx",
+      "new_name": "lap_05.xlsx.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    },
+    {
+      "target": "lap_06.xlsx",
+      "new_name": "lap_06.xlsx.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    },
+    {
+      "target": "lap_07.xlsx",
+      "new_name": "lap_07.xlsx.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    },
+    {
+      "target": "lap_08.xlsx",
+      "new_name": "lap_08.xlsx.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    },
+    {
+      "target": "lap_09.xlsx",
+      "new_name": "lap_09.xlsx.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    },
+    {
+      "target": "lap_10.xlsx",
+      "new_name": "lap_10.xlsx.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    },
+    {
+      "target": "lap_11.xlsx",
+      "new_name": "lap_11.xlsx.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    },
+    {
+      "target": "sys_01.txt",
+      "new_name": "sys_01.txt.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    },
+    {
+      "target": "sys_02.txt",
+      "new_name": "sys_02.txt.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    },
+    {
+      "target": "transaksi_01.csv",
+      "new_name": "transaksi_01.csv.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    },
+    {
+      "target": "transaksi_02.csv",
+      "new_name": "transaksi_02.csv.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    },
+    {
+      "target": "transaksi_03.csv",
+      "new_name": "transaksi_03.csv.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    },
+    {
+      "target": "transaksi_04.csv",
+      "new_name": "transaksi_04.csv.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    },
+    {
+      "target": "transaksi_05.csv",
+      "new_name": "transaksi_05.csv.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    },
+    {
+      "target": "transaksi_06.csv",
+      "new_name": "transaksi_06.csv.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    },
+    {
+      "target": "transaksi_07.csv",
+      "new_name": "transaksi_07.csv.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    },
+    {
+      "target": "transaksi_08.csv",
+      "new_name": "transaksi_08.csv.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    },
+    {
+      "target": "transaksi_09.csv",
+      "new_name": "transaksi_09.csv.WNCRY",
+      "attack": "encrypt_hold",
+      "cve": "CVE-2017-0144"
+    }
+  ]
+}

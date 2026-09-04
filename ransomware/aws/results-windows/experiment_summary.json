@@ -1,0 +1,398 @@
+{
+  "scale": "fast",
+  "steps": {
+    "dataset": {
+      "scale": "fast",
+      "count": 43,
+      "files": [
+        {
+          "file": "transaksi_01.csv",
+          "type": "csv",
+          "actual_bytes": 547061,
+          "paper_target_bytes": 512000
+        },
+        {
+          "file": "transaksi_02.csv",
+          "type": "csv",
+          "actual_bytes": 1051936,
+          "paper_target_bytes": 1048576
+        },
+        {
+          "file": "transaksi_03.csv",
+          "type": "csv",
+          "actual_bytes": 3155763,
+          "paper_target_bytes": 5242880
+        },
+        {
+          "file": "transaksi_04.csv",
+          "type": "csv",
+          "actual_bytes": 6311580,
+          "paper_target_bytes": 26214400
+        },
+        {
+          "file": "transaksi_05.csv",
+          "type": "csv",
+          "actual_bytes": 10520001,
+          "paper_target_bytes": 104857600
+        },
+        {
+          "file": "transaksi_06.csv",
+          "type": "csv",
+          "actual_bytes": 15737981,
+          "paper_target_bytes": 262144000
+        },
+        {
+          "file": "transaksi_07.csv",
+          "type": "csv",
+          "actual_bytes": 26256042,
+          "paper_target_bytes": 524288000
+        },
+        {
+          "file": "transaksi_08.csv",
+          "type": "csv",
+          "actual_bytes": 41952442,
+          "paper_target_bytes": 786432000
+        },
+        {
+          "file": "transaksi_09.csv",
+          "type": "csv",
+          "actual_bytes": 52429696,
+          "paper_target_bytes": 1073741824
+        },
+        {
+          "file": "app_01.log",
+          "type": "log",
+          "actual_bytes": 583319,
+          "paper_target_bytes": 512000
+        },
+        {
+          "file": "app_02.log",
+          "type": "log",
+          "actual_bytes": 1087439,
+          "paper_target_bytes": 1048576
+        },
+        {
+          "file": "app_03.log",
+          "type": "log",
+          "actual_bytes": 4213831,
+          "paper_target_bytes": 10485760
+        },
+        {
+          "file": "app_04.log",
+          "type": "log",
+          "actual_bytes": 8438284,
+          "paper_target_bytes": 52428800
+        },
+        {
+          "file": "audit_01.log",
+          "type": "log",
+          "actual_bytes": 12629730,
+          "paper_target_bytes": 104857600
+        },
+        {
+          "file": "audit_02.log",
+          "type": "log",
+          "actual_bytes": 18956507,
+          "paper_target_bytes": 262144000
+        },
+        {
+          "file": "audit_03.log",
+          "type": "log",
+          "actual_bytes": 29387170,
+          "paper_target_bytes": 524288000
+        },
+        {
+          "file": "sys_01.txt",
+          "type": "log",
+          "actual_bytes": 41957311,
+          "paper_target_bytes": 786432000
+        },
+        {
+          "file": "sys_02.txt",
+          "type": "log",
+          "actual_bytes": 52475009,
+          "paper_target_bytes": 1073741824
+        },
+        {
+          "file": "img_01.jpg",
+          "type": "jpg",
+          "actual_bytes": 580063,
+          "paper_target_bytes": 157696
+        },
+        {
+          "file": "img_02.jpg",
+          "type": "jpg",
+          "actual_bytes": 579906,
+          "paper_target_bytes": 164864
+        },
+        {
+          "file": "img_03.jpg",
+          "type": "jpg",
+          "actual_bytes": 580175,
+          "paper_target_bytes": 172032
+        },
+        {
+          "file": "img_04.jpg",
+          "type": "jpg",
+          "actual_bytes": 579909,
+          "paper_target_bytes": 179200
+        },
+        {
+          "file": "img_05.jpg",
+          "type": "jpg",
+          "actual_bytes": 580025,
+          "paper_target_bytes": 187392
+        },
+        {
+          "file": "img_06.jpg",
+          "type": "jpg",
+          "actual_bytes": 580570,
+          "paper_target_bytes": 194560
+        },
+        {
+          "file": "img_07.jpg",
+          "type": "jpg",
+          "actual_bytes": 579776,
+          "paper_target_bytes": 201728
+        },
+        {
+          "file": "img_08.jpg",
+          "type": "jpg",
+          "actual_bytes": 579736,
+          "paper_target_bytes": 209920
+        },
+        {
+          "file": "img_09.jpg",
+          "type": "jpg",
+          "actual_bytes": 580144,
+          "paper_target_bytes": 217088
+        },
+        {
+          "file": "img_10.jpg",
+          "type": "jpg",
+          "actual_bytes": 580083,
+          "paper_target_bytes": 225280
+        },
+        {
+          "file": "img_11.jpg",
+          "type": "jpg",
+          "actual_bytes": 579939,
+          "paper_target_bytes": 232448
+        },
+        {
+          "file": "img_12.jpg",
+          "type": "jpg",
+          "actual_bytes": 579457,
+          "paper_target_bytes": 239616
+        },
+        {
+          "file": "img_13.jpg",
+          "type": "jpg",
+          "actual_bytes": 579807,
+          "paper_target_bytes": 247808
+        },
+        {
+          "file": "img_14.jpg",
+          "type": "jpg",
+          "actual_bytes": 580222,
+          "paper_target_bytes": 254976
+        },
+        {
+          "file": "lap_01.xlsx",
+          "type": "xlsx",
+          "actual_bytes": 515213,
+          "paper_target_bytes": 512000
+        },
+        {
+          "file": "lap_02.xlsx",
+          "type": "xlsx",
+          "actual_bytes": 2103816,
+          "paper_target_bytes": 2097152
+        },
+        {
+          "file": "lap_03.xlsx",
+          "type": "xlsx",
+          "actual_bytes": 4205017,
+          "paper_target_bytes": 10485760
+        },
+        {
+          "file": "lap_04.xlsx",
+          "type": "xlsx",
+          "actual_bytes": 8408485,
+          "paper_target_bytes": 52428800
+        },
+        {
+          "file": "lap_05.xlsx",
+          "type": "xlsx",
+          "actual_bytes": 12611172,
+          "paper_target_bytes": 104857600
+        },
+        {
+          "file": "lap_06.xlsx",
+          "type": "xlsx",
+          "actual_bytes": 16816138,
+          "paper_target_bytes": 157286400
+        },
+        {
+          "file": "lap_07.xlsx",
+          "type": "xlsx",
+          "actual_bytes": 21021080,
+          "paper_target_bytes": 262144000
+        },
+        {
+          "file": "lap_08.xlsx",
+          "type": "xlsx",
+          "actual_bytes": 27324331,
+          "paper_target_bytes": 367001600
+        },
+        {
+          "file": "lap_09.xlsx",
+          "type": "xlsx",
+          "actual_bytes": 33632761,
+          "paper_target_bytes": 471859200
+        },
+        {
+          "file": "lap_10.xlsx",
+          "type": "xlsx",
+          "actual_bytes": 42036324,
+          "paper_target_bytes": 576716800
+        },
+        {
+          "file": "lap_11.xlsx",
+          "type": "xlsx",
+          "actual_bytes": 52548227,
+          "paper_target_bytes": 681574400
+        }
+      ]
+    },
+    "backup_time_s": 35.997,
+    "normal": {
+      "mode": "normal",
+      "total_files": 43,
+      "detected": 0,
+      "FP": 0,
+      "TN": 43,
+      "FPR_pct": 0.0,
+      "actual_status": "safe"
+    },
+    "attacks": {
+      "encrypt_hold": {
+        "mode": "attack",
+        "total_files": 43,
+        "detected": 43,
+        "TP": 43,
+        "FN": 0,
+        "FNR_pct": 0.0,
+        "actual_status": "ransomware",
+        "restore_ok": 43,
+        "restore_err": 0,
+        "rto_seconds": 5.501,
+        "restore_mode": {
+          "mode": "airgap",
+          "reason": "ransomware_detected",
+          "scope": "all"
+        },
+        "cve": "CVE-2017-0144"
+      },
+      "metadata_corruption": {
+        "mode": "attack",
+        "total_files": 43,
+        "detected": 43,
+        "TP": 43,
+        "FN": 0,
+        "FNR_pct": 0.0,
+        "actual_status": "ransomware",
+        "restore_ok": 43,
+        "restore_err": 0,
+        "rto_seconds": 5.203,
+        "restore_mode": {
+          "mode": "airgap",
+          "reason": "ransomware_detected",
+          "scope": "all"
+        },
+        "cve": "CVE-2018-8453"
+      },
+      "overwrite_corrupt": {
+        "mode": "attack",
+        "total_files": 43,
+        "detected": 43,
+        "TP": 43,
+        "FN": 0,
+        "FNR_pct": 0.0,
+        "actual_status": "ransomware",
+        "restore_ok": 43,
+        "restore_err": 0,
+        "rto_seconds": 5.321,
+        "restore_mode": {
+          "mode": "airgap",
+          "reason": "ransomware_detected",
+          "scope": "all"
+        },
+        "cve": "CVE-2021-36934"
+      }
+    }
+  },
+  "paper_ready": {
+    "n_files": 43,
+    "FPR_pct": 0.0,
+    "FNR_pct_per_attack": {
+      "encrypt_hold": 0.0,
+      "metadata_corruption": 0.0,
+      "overwrite_corrupt": 0.0
+    },
+    "FNR_pct_overall": 0.0,
+    "rto_seconds_per_attack": {
+      "encrypt_hold": 5.501,
+      "metadata_corruption": 5.203,
+      "overwrite_corrupt": 5.321
+    },
+    "restore_ok_per_attack": {
+      "encrypt_hold": 43,
+      "metadata_corruption": 43,
+      "overwrite_corrupt": 43
+    },
+    "detection_table": [
+      {
+        "scenario": "Normal AES-256 backup",
+        "total": 43,
+        "detected": 0,
+        "auto_restore": "No",
+        "actual": "Safe",
+        "result": "True Negative"
+      },
+      {
+        "scenario": "encrypt_hold",
+        "cve": "CVE-2017-0144",
+        "total": 43,
+        "detected": 43,
+        "auto_restore": "Yes",
+        "actual": "Ransomware",
+        "result": "True Positive",
+        "restore_ok": 43,
+        "rto_s": 5.501
+      },
+      {
+        "scenario": "metadata_corruption",
+        "cve": "CVE-2018-8453",
+        "total": 43,
+        "detected": 43,
+        "auto_restore": "Yes",
+        "actual": "Ransomware",
+        "result": "True Positive",
+        "restore_ok": 43,
+        "rto_s": 5.203
+      },
+      {
+        "scenario": "overwrite_corrupt",
+        "cve": "CVE-2021-36934",
+        "total": 43,
+        "detected": 43,
+        "auto_restore": "Yes",
+        "actual": "Ransomware",
+        "result": "True Positive",
+        "restore_ok": 43,
+        "rto_s": 5.321
+      }
+    ]
+  }
+}

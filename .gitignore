@@ -225,10 +225,12 @@ __marimo__/
 !CICDDoS2018/data/results/scenarios_s1_s4.csv
 # Pengecualian: CSV hasil eksperimen ransomware (kecil, untuk reproduksibilitas paper)
 !ransomware/aws/results/*.csv
+!ransomware/aws/results-windows/*.csv
 
 # JANGAN PERNAH commit kunci enkripsi
 *.bin
 ransomware/aws/results/aes_key.bin
+ransomware/aws/results-windows/aes_key.bin
 
 
 # Model files
@@ -250,6 +252,17 @@ ransomware/aws/results/aes_key.bin
 !ransomware/aws/results/eval_normal.json
 !ransomware/aws/results/eval_overwrite_corrupt.json
 !ransomware/aws/results/experiment_summary.json
+# Hasil Windows (replikasi lintas-platform)
+!ransomware/aws/results-windows/attack_encrypt_hold.json
+!ransomware/aws/results-windows/attack_metadata_corruption.json
+!ransomware/aws/results-windows/attack_overwrite_corrupt.json
+!ransomware/aws/results-windows/baseline.json
+!ransomware/aws/results-windows/dataset_manifest.json
+!ransomware/aws/results-windows/eval_encrypt_hold.json
+!ransomware/aws/results-windows/eval_metadata_corruption.json
+!ransomware/aws/results-windows/eval_normal.json
+!ransomware/aws/results-windows/eval_overwrite_corrupt.json
+!ransomware/aws/results-windows/experiment_summary.json
 
 # Setting files (local config, not for git)
 

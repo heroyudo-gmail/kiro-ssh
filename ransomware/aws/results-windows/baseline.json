@@ -1,0 +1,389 @@
+{
+  "app_01.log": {
+    "sha256": "9dae59f3d76a21c3feefdfe3961c941a9c6354eaf57102a82e1b0e6fbb839496",
+    "metadata": {
+      "size": 583319,
+      "mtime": 1788510263,
+      "mime": "application/octet-stream",
+      "ext": ".log"
+    }
+  },
+  "app_02.log": {
+    "sha256": "326025337fb9d09f18e37e36a6c8195a0fd69a23047eda9b0682acfe5c9c281e",
+    "metadata": {
+      "size": 1087439,
+      "mtime": 1788510263,
+      "mime": "application/octet-stream",
+      "ext": ".log"
+    }
+  },
+  "app_03.log": {
+    "sha256": "72c1c3e8cadcbf0c6a326ab65bf0f7a1f9403d7390271c9436eb27adeb6002cb",
+    "metadata": {
+      "size": 4213831,
+      "mtime": 1788510264,
+      "mime": "application/octet-stream",
+      "ext": ".log"
+    }
+  },
+  "app_04.log": {
+    "sha256": "b1d5bc588469bb4482959051a068511bc7993f092f8c2572a73f70780e8f9cce",
+    "metadata": {
+      "size": 8438284,
+      "mtime": 1788510265,
+      "mime": "application/octet-stream",
+      "ext": ".log"
+    }
+  },
+  "audit_01.log": {
+    "sha256": "7440ad219509e7af4e8be84c9cd7649b78346434359488328ea9ddac746dee92",
+    "metadata": {
+      "size": 12629730,
+      "mtime": 1788510266,
+      "mime": "application/octet-stream",
+      "ext": ".log"
+    }
+  },
+  "audit_02.log": {
+    "sha256": "16a5f993c72100dd5dbea2dd9b6dac235af590c09e20697d1e2a9350175bebe7",
+    "metadata": {
+      "size": 18956507,
+      "mtime": 1788510269,
+      "mime": "application/octet-stream",
+      "ext": ".log"
+    }
+  },
+  "audit_03.log": {
+    "sha256": "e641de74fcca6e6a79ddc31010752e0077e13d8527ce6cbc5282afd52d3c5665",
+    "metadata": {
+      "size": 29387170,
+      "mtime": 1788510272,
+      "mime": "application/octet-stream",
+      "ext": ".log"
+    }
+  },
+  "img_01.jpg": {
+    "sha256": "96f996db03060924d8f54fe0bb33d53cb954f2e889263ed9a6f5da4f690459cd",
+    "metadata": {
+      "size": 580063,
+      "mtime": 1788510283,
+      "mime": "image/jpeg",
+      "ext": ".jpg"
+    }
+  },
+  "img_02.jpg": {
+    "sha256": "527ae92669640f5268ca803ff996731257c1e7c9b8a76ef0483c410676522034",
+    "metadata": {
+      "size": 579906,
+      "mtime": 1788510283,
+      "mime": "image/jpeg",
+      "ext": ".jpg"
+    }
+  },
+  "img_03.jpg": {
+    "sha256": "6ebe18b8660ee942370f6bb34a777b3d6f868b9c76b55e54bed3f840f142eb02",
+    "metadata": {
+      "size": 580175,
+      "mtime": 1788510283,
+      "mime": "image/jpeg",
+      "ext": ".jpg"
+    }
+  },
+  "img_04.jpg": {
+    "sha256": "12ae7b9ac2316f168fe491d139155b77eec68cf171fe96c32bc056043f175693",
+    "metadata": {
+      "size": 579909,
+      "mtime": 1788510283,
+      "mime": "image/jpeg",
+      "ext": ".jpg"
+    }
+  },
+  "img_05.jpg": {
+    "sha256": "31c6ea60d2b0ab48211a2adcff66c31a5d5179336da993858cf64569997d45b0",
+    "metadata": {
+      "size": 580025,
+      "mtime": 1788510283,
+      "mime": "image/jpeg",
+      "ext": ".jpg"
+    }
+  },
+  "img_06.jpg": {
+    "sha256": "fa07ef900e010a52347199511e31a84f4390d570faa5ef200b07de8a8e0903eb",
+    "metadata": {
+      "size": 580570,
+      "mtime": 1788510283,
+      "mime": "image/jpeg",
+      "ext": ".jpg"
+    }
+  },
+  "img_07.jpg": {
+    "sha256": "c5f66de9610d5bbb7b4f487047c313f2443340eea214c1a7c7d2f83775a233d7",
+    "metadata": {
+      "size": 579776,
+      "mtime": 1788510283,
+      "mime": "image/jpeg",
+      "ext": ".jpg"
+    }
+  },
+  "img_08.jpg": {
+    "sha256": "95a8b3515f03c381bd5aa8ca0f433f77c176105bb02e374c0de1506347095d76",
+    "metadata": {
+      "size": 579736,
+      "mtime": 1788510283,
+      "mime": "image/jpeg",
+      "ext": ".jpg"
+    }
+  },
+  "img_09.jpg": {
+    "sha256": "56009851a4a6d0c456d4908a812e6bb75cf529436d833fe6badb236c8ac021e0",
+    "metadata": {
+      "size": 580144,
+      "mtime": 1788510283,
+      "mime": "image/jpeg",
+      "ext": ".jpg"
+    }
+  },
+  "img_10.jpg": {
+    "sha256": "16b5b2be540e62d0db014fdc8567ec754a8ddbffb1ee57ed2f038ea85d9f14b7",
+    "metadata": {
+      "size": 580083,
+      "mtime": 1788510284,
+      "mime": "image/jpeg",
+      "ext": ".jpg"
+    }
+  },
+  "img_11.jpg": {
+    "sha256": "9652cb7cc9b3c2cedf7fef8fe0210741d9cbfd8a8dc7f1707896efc0104a23bf",
+    "metadata": {
+      "size": 579939,
+      "mtime": 1788510284,
+      "mime": "image/jpeg",
+      "ext": ".jpg"
+    }
+  },
+  "img_12.jpg": {
+    "sha256": "7ed008332913ee8bbb0a55d18d399f3cc2a884fdb5f60c41e721bb7cd4f17daa",
+    "metadata": {
+      "size": 579457,
+      "mtime": 1788510284,
+      "mime": "image/jpeg",
+      "ext": ".jpg"
+    }
+  },
+  "img_13.jpg": {
+    "sha256": "9abd7799315f862f9617db8120f7f721cf87ec7967d9e0c1ffd2cfaa377f7e3f",
+    "metadata": {
+      "size": 579807,
+      "mtime": 1788510284,
+      "mime": "image/jpeg",
+      "ext": ".jpg"
+    }
+  },
+  "img_14.jpg": {
+    "sha256": "755f764c4952c1fc5c06da2c7195ff1306f4ff700f1cfa03ac91a7b592489b53",
+    "metadata": {
+      "size": 580222,
+      "mtime": 1788510284,
+      "mime": "image/jpeg",
+      "ext": ".jpg"
+    }
+  },
+  "lap_01.xlsx": {
+    "sha256": "63ebf7bdf34848e8acd3d16e0a23303e9be842571af2650f78b26f2e76a87b13",
+    "metadata": {
+      "size": 515213,
+      "mtime": 1788510284,
+      "mime": "application/octet-stream",
+      "ext": ".xlsx"
+    }
+  },
+  "lap_02.xlsx": {
+    "sha256": "c811de3e8af349e6297e7e62541b50072ab834ab04d5e1b071d839657d51cafb",
+    "metadata": {
+      "size": 2103816,
+      "mtime": 1788510285,
+      "mime": "application/octet-stream",
+      "ext": ".xlsx"
+    }
+  },
+  "lap_03.xlsx": {
+    "sha256": "e7a4e412c45725842efa98cbbb70b43d2039fcb5c3630067083f36b1db6aa90d",
+    "metadata": {
+      "size": 4205017,
+      "mtime": 1788510286,
+      "mime": "application/octet-stream",
+      "ext": ".xlsx"
+    }
+  },
+  "lap_04.xlsx": {
+    "sha256": "612dfdf744f0b48b6ceaf6b8f74d08dceb9edd0f74506980f56390c99e2cd493",
+    "metadata": {
+      "size": 8408485,
+      "mtime": 1788510289,
+      "mime": "application/octet-stream",
+      "ext": ".xlsx"
+    }
+  },
+  "lap_05.xlsx": {
+    "sha256": "82088532cd3753ce9276e525752a5094691669b3a3bc400b9668c92a596fc50a",
+    "metadata": {
+      "size": 12611172,
+      "mtime": 1788510294,
+      "mime": "application/octet-stream",
+      "ext": ".xlsx"
+    }
+  },
+  "lap_06.xlsx": {
+    "sha256": "cd4ea67718f72ad37fa1ebf387ca77665f34f851c6a940e21677ce6fe9f23bc8",
+    "metadata": {
+      "size": 16816138,
+      "mtime": 1788510300,
+      "mime": "application/octet-stream",
+      "ext": ".xlsx"
+    }
+  },
+  "lap_07.xlsx": {
+    "sha256": "ce3e999c475be1e23c939e92a45d0c7e8611c0bba04eda08a4d00af6cb24ecd8",
+    "metadata": {
+      "size": 21021080,
+      "mtime": 1788510308,
+      "mime": "application/octet-stream",
+      "ext": ".xlsx"
+    }
+  },
+  "lap_08.xlsx": {
+    "sha256": "186ebd800e654d374aae26ea1fdb7d94fe25b42cf1cad5de32edd06903fa32bc",
+    "metadata": {
+      "size": 27324331,
+      "mtime": 1788510318,
+      "mime": "application/octet-stream",
+      "ext": ".xlsx"
+    }
+  },
+  "lap_09.xlsx": {
+    "sha256": "4590b427cfb866b84bf2e3d1c0f315b13ea5aecc56c866ade97863a36c470642",
+    "metadata": {
+      "size": 33632761,
+      "mtime": 1788510330,
+      "mime": "application/octet-stream",
+      "ext": ".xlsx"
+    }
+  },
+  "lap_10.xlsx": {
+    "sha256": "d3a5690cd11a5fe341ecee8ab24429229058e18913199bb3ba3f4996f0a089f6",
+    "metadata": {
+      "size": 42036324,
+      "mtime": 1788510346,
+      "mime": "application/octet-stream",
+      "ext": ".xlsx"
+    }
+  },
+  "lap_11.xlsx": {
+    "sha256": "530e1325c749afa10ec8ff7d736952165b79792d53f278396e77e36da1382b03",
+    "metadata": {
+      "size": 52548227,
+      "mtime": 1788510366,
+      "mime": "application/octet-stream",
+      "ext": ".xlsx"
+    }
+  },
+  "sys_01.txt": {
+    "sha256": "66af047892195978c1333df88a78a38db5b89260598b4dba00779606e414cb69",
+    "metadata": {
+      "size": 41957311,
+      "mtime": 1788510277,
+      "mime": "text/plain",
+      "ext": ".txt"
+    }
+  },
+  "sys_02.txt": {
+    "sha256": "46ebe77df9ea90971d5f7c1f7381756d85717ccd9557e61f927d16d9f8f28508",
+    "metadata": {
+      "size": 52475009,
+      "mtime": 1788510283,
+      "mime": "text/plain",
+      "ext": ".txt"
+    }
+  },
+  "transaksi_01.csv": {
+    "sha256": "f26f632b87e62d6b3b56bccffa5c49fccd993cb3e543539e788b665d52cd4d73",
+    "metadata": {
+      "size": 547061,
+      "mtime": 1788510239,
+      "mime": "text/csv",
+      "ext": ".csv"
+    }
+  },
+  "transaksi_02.csv": {
+    "sha256": "f9c8a14b51ab28d26fe39c3f07df12e686f173219c04be58ad1a0b48539c3fc6",
+    "metadata": {
+      "size": 1051936,
+      "mtime": 1788510239,
+      "mime": "text/csv",
+      "ext": ".csv"
+    }
+  },
+  "transaksi_03.csv": {
+    "sha256": "69eb460bfee53c7cb4c933a86aa1854659e3721611937cb622166e5eee19f921",
+    "metadata": {
+      "size": 3155763,
+      "mtime": 1788510239,
+      "mime": "text/csv",
+      "ext": ".csv"
+    }
+  },
+  "transaksi_04.csv": {
+    "sha256": "5c1eee2ee1085ae73b33dacd69c2c190ee4a55450af9c14ad31bfbdb2272761a",
+    "metadata": {
+      "size": 6311580,
+      "mtime": 1788510240,
+      "mime": "text/csv",
+      "ext": ".csv"
+    }
+  },
+  "transaksi_05.csv": {
+    "sha256": "3a418fdc81260e13656f4dda1cca74c0dcda8a0922e152b3b78b59bcbcebf883",
+    "metadata": {
+      "size": 10520001,
+      "mtime": 1788510242,
+      "mime": "text/csv",
+      "ext": ".csv"
+    }
+  },
+  "transaksi_06.csv": {
+    "sha256": "8bb3047bd62d099a77f07b85e07ebd058357d1677b9b2b744f826a8fdb753431",
+    "metadata": {
+      "size": 15737981,
+      "mtime": 1788510244,
+      "mime": "text/csv",
+      "ext": ".csv"
+    }
+  },
+  "transaksi_07.csv": {
+    "sha256": "befe892c10e9cf9156e811ef435ca9502e18a2d8debce642faeb5d03d8ad69bd",
+    "metadata": {
+      "size": 26256042,
+      "mtime": 1788510248,
+      "mime": "text/csv",
+      "ext": ".csv"
+    }
+  },
+  "transaksi_08.csv": {
+    "sha256": "b547ebbcc3f42f15fa8e34581989789284fb5bbe8a64430d986b4b456bc15688",
+    "metadata": {
+      "size": 41952442,
+      "mtime": 1788510255,
+      "mime": "text/csv",
+      "ext": ".csv"
+    }
+  },
+  "transaksi_09.csv": {
+    "sha256": "5b5e114621974b8ba80398ed627ca7182d3bea2471a1eecd7e9c334069d45ac8",
+    "metadata": {
+      "size": 52429696,
+      "mtime": 1788510263,
+      "mime": "text/csv",
+      "ext": ".csv"
+    }
+  }
+}

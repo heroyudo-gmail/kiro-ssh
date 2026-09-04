@@ -1,0 +1,126 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Ransomware cloud-backup experiment - Instans EC2 WINDOWS (replikasi).
+  Windows Server 2022 di subnet PUBLIK (akses via SSM Run Command, tanpa RDP/keypair).
+  EBS tambahan sebagai air-gapped storage (di Windows menjadi drive letter, mis. D:).
+  Meniru lingkungan uji ASLI paper (Windows). Mengimpor VPC dari stack vpc.yaml.
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: ransomware
+    Description: Harus sama dengan ProjectName pada stack vpc.yaml.
+  InstanceType:
+    Type: String
+    Default: t3.xlarge
+    AllowedValues: [t3.large, t3.xlarge, t3.2xlarge]
+    Description: t3.xlarge = 4 vCPU, 16 GB (cocok dengan spec paper 16 GB RAM).
+  RootVolumeSizeGb:
+    Type: Number
+    Default: 50
+    Description: Root volume Windows (OS Windows butuh lebih besar; 50 GB aman).
+  AirgapVolumeSizeGb:
+    Type: Number
+    Default: 20
+    Description: Ukuran EBS air-gapped storage.
+  LatestWindowsAmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-windows-latest/Windows_Server-2022-English-Full-Base
+    Description: AMI Windows Server 2022 terbaru (via SSM public parameter).
+
+Resources:
+  EC2Role:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ProjectName}-win-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Policies:
+        - PolicyName: S3Access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:ListBucket
+                Resource: '*'
+
+  EC2Profile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles: [!Ref EC2Role]
+
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: SG instans Windows ransomware (egress saja; akses via SSM)
+      VpcId:
+        Fn::ImportValue: !Sub '${ProjectName}-VpcId'
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+          Description: Semua egress (choco/pip/S3/SSM)
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-win-sg'
+
+  BackupInstanceWin:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      ImageId: !Ref LatestWindowsAmiId
+      IamInstanceProfile: !Ref EC2Profile
+      SubnetId:
+        Fn::ImportValue: !Sub '${ProjectName}-PublicSubnetId'
+      SecurityGroupIds:
+        - !Ref InstanceSecurityGroup
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: !Ref RootVolumeSizeGb
+            VolumeType: gp3
+            DeleteOnTermination: true
+        # Volume air-gapped (di Windows akan muncul sebagai disk kedua -> drive D:).
+        - DeviceName: xvdf
+          Ebs:
+            VolumeSize: !Ref AirgapVolumeSizeGb
+            VolumeType: gp3
+            DeleteOnTermination: false
+      UserData:
+        Fn::Base64: !Sub |
+          <powershell>
+          # Install Python 3 via winget/choco tidak selalu tersedia di Server Core;
+          # unduh installer resmi Python lalu pasang senyap.
+          $ErrorActionPreference = "Continue"
+          $py = "C:\\python-installer.exe"
+          Invoke-WebRequest -Uri "https://www.python.org/ftp/python/3.11.9/python-3.11.9-amd64.exe" -OutFile $py
+          Start-Process -FilePath $py -ArgumentList "/quiet InstallAllUsers=1 PrependPath=1 Include_pip=1" -Wait
+          $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine")
+          # Pasang library
+          & "C:\\Program Files\\Python311\\python.exe" -m pip install --no-cache-dir zstandard brotli lz4 python-snappy pycryptodome openpyxl pillow numpy pandas
+          New-Item -ItemType Directory -Force -Path C:\rw | Out-Null
+          "SETUP_DONE" | Out-File C:\rw\SETUP_DONE.txt
+          </powershell>
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-win-instance'
+
+Outputs:
+  InstanceId:
+    Description: ID instans EC2 Windows
+    Value: !Ref BackupInstanceWin
+  PublicIp:
+    Description: Public IP (informasi; akses via SSM)
+    Value: !GetAtt BackupInstanceWin.PublicIp
+  SsmCommand:
+    Description: Perintah membuka sesi via SSM Session Manager
+    Value: !Sub 'aws ssm start-session --target ${BackupInstanceWin}'

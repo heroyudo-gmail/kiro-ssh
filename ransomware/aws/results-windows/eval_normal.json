@@ -1,0 +1,9 @@
+{
+  "mode": "normal",
+  "total_files": 43,
+  "detected": 0,
+  "FP": 0,
+  "TN": 43,
+  "FPR_pct": 0.0,
+  "actual_status": "safe"
+}

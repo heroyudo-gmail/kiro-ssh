@@ -352,3 +352,23 @@ Catatan: skor memberatkan kecepatan (1/T), sehingga Snappy/LZ4 (tercepat) unggul
 
 ### 5.5 Status placeholder Bagian 3
 Seluruh `⚠️[EST]` di Bagian 3 kini DIGANTIKAN oleh angka Bagian 5 ini. Bagian 3 dipertahankan sebagai jejak proses (kerangka awal), tetapi **acuan final adalah Bagian 5**.
+
+---
+
+## BAGIAN 6 — REPLIKASI LINTAS-PLATFORM (Windows vs Linux)
+
+Eksperimen direplikasi di **AWS EC2 Windows Server 2022** (t3.xlarge, 16 GB, drive D: air-gapped) melengkapi hasil **Ubuntu 22.04** (t3.large, 8 GB). Hasil di `ransomware/aws/results-windows/` + `s3://.../ransomware-results-windows/`.
+
+| Metrik | Windows Server 2022 | Ubuntu 22.04 |
+|---|---|---|
+| Log/TXT (Brotli) | 89,6% | 89,5% |
+| CSV (Brotli) | 81,1% | 81,1% |
+| JPG / XLSX | ~0% | ~0% |
+| Deteksi | 43/43 | 43/43 |
+| Pemulihan | 43/43 | 43/43 |
+| FPR / FNR | 0% / 0% | 0% / 0% |
+| RTO Encrypt-Hold | 5,50 s | 4,34 s |
+| RTO Metadata | 5,20 s | 5,21 s |
+| RTO Overwrite | 5,32 s | 5,34 s |
+
+**Kesimpulan:** rasio kompresi identik lintas-OS (bergantung data & algoritma, bukan OS); RTO sedikit beda karena hardware. Membuktikan konsistensi lintas-platform → menjawab komentar reviewer soal generalisasi. Setup lokal Windows asli tim = i7-11800H/16GB (tetap disebut di paper sebagai lingkungan pengembangan); AWS = lingkungan replikasi cloud nyata.
