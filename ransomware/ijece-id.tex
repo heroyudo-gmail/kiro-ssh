@@ -272,7 +272,30 @@ Untuk menjamin kerahasiaan data, sistem mengimplementasikan \textit{Advanced Enc
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.85\textwidth]{figures/figure2.png}
+\begin{tikzpicture}[
+    node distance=1.4cm and 1.8cm,
+    box/.style={draw, rounded corners=2pt, minimum width=1.8cm, minimum height=0.9cm, align=center, font=\footnotesize},
+    keyb/.style={draw, rounded corners=2pt, minimum width=1.6cm, minimum height=0.7cm, align=center, font=\footnotesize\itshape, fill=blue!5},
+    ar/.style={-{Stealth[length=2.5mm]}, thick},
+    font=\footnotesize
+]
+% baris bawah: alur data
+\node[box] (sender) {Sender};
+\node[box, right=of sender, fill=blue!15] (enc) {Encryption\\Server};
+\node[box, right=2.8cm of enc, fill=blue!15] (dec) {Decryption\\Server};
+\node[box, right=of dec] (recv) {Receiver};
+% baris atas: kunci
+\node[keyb, above=1.2cm of enc] (k1) {Secret Key};
+\node[keyb, above=1.2cm of dec] (k2) {Secret Key};
+% panah data
+\draw[ar] (sender) -- node[above]{\scriptsize Plaintext} (enc);
+\draw[ar, line width=1pt] (enc) -- node[above]{\scriptsize Ciphertext} (dec);
+\draw[ar] (dec) -- node[above]{\scriptsize Plaintext} (recv);
+% panah kunci
+\draw[ar] (k1) -- node[above, font=\scriptsize]{Secure Channel} (k2);
+\draw[ar] (k1) -- (enc);
+\draw[ar] (k2) -- (dec);
+\end{tikzpicture}
 \vspace{.7em}
 \caption{Proses enkripsi dan dekripsi AES-256 menggunakan kunci rahasia simetris}
 \label{fig:aes}
