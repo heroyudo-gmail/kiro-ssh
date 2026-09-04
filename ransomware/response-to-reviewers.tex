@@ -174,9 +174,15 @@ comparison of the proposed adaptive strategy against baselines} (no-compression,
 static-Zstandard) on the full dataset. This reveals a clear speed-vs-storage trade-off: the adaptive
 strategy is about $21\times$ faster than static Gzip ($0.87$~s vs.\ $18.84$~s; $611.8$ vs.\
 $28.2$~MB/s) while still achieving $43.3\%$ storage saving, showing that its main advantage is the
-optimal balance between storage efficiency and processing speed for low-RTO backup. Energy profiling
-and direct comparison with deduplication/incremental backup remain listed as future work.}
-\loc{Section~4 (statistical-analysis subsection and new baseline-comparison subsection with tables; all figure references) and Section~5 (remaining future work).}
+optimal balance between storage efficiency and processing speed for low-RTO backup. We further added
+(i) an \textbf{empirical entropy analysis} linking Shannon entropy per file type to the achieved
+compression (e.g., low-entropy CSV/LOG at 4.6--5.2 bit/byte compress by 66--80\%, whereas
+high-entropy JPG/XLSX near 8.0 bit/byte barely compress), and showing the sharp entropy rise upon
+encryption ($\Delta H$ up to $+3.45$); and (ii) a \textbf{scalability test} demonstrating that the
+recovery time (RTO) scales approximately linearly with dataset size ($\approx 0.0073$~s/MB; a 1~GB
+dataset fully recovered in $\approx 7.7$~s with perfect integrity). Energy profiling and direct
+comparison with deduplication/incremental backup remain listed as future work.}
+\loc{Section~4 (statistical-analysis, baseline-comparison, entropy-analysis, and scalability subsections with tables) and Section~5 (remaining future work).}
 
 \reviewer{A6. Conclusion future work is too narrow (only Random Forest).}
 \begin{revbox}\small

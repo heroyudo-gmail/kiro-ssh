@@ -1,0 +1,50 @@
+{
+  "by_type": [
+    {
+      "type": "csv",
+      "entropy_mean_bits": 4.573,
+      "storage_saving_pct": 66.4
+    },
+    {
+      "type": "log",
+      "entropy_mean_bits": 5.232,
+      "storage_saving_pct": 80.0
+    },
+    {
+      "type": "xlsx",
+      "entropy_mean_bits": 7.962,
+      "storage_saving_pct": -0.0
+    },
+    {
+      "type": "jpg",
+      "entropy_mean_bits": 7.94,
+      "storage_saving_pct": 0.0
+    }
+  ],
+  "attack": [
+    {
+      "type": "log",
+      "entropy_before": 5.223,
+      "entropy_after_attack": 8.0,
+      "delta": 2.777
+    },
+    {
+      "type": "jpg",
+      "entropy_before": 7.94,
+      "entropy_after_attack": 8.0,
+      "delta": 0.06
+    },
+    {
+      "type": "xlsx",
+      "entropy_before": 7.963,
+      "entropy_after_attack": 8.0,
+      "delta": 0.036
+    },
+    {
+      "type": "csv",
+      "entropy_before": 4.547,
+      "entropy_after_attack": 8.0,
+      "delta": 3.453
+    }
+  ]
+}

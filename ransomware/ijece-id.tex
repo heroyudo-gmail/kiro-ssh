@@ -648,6 +648,72 @@ Static-Zstandard      & 271,1 & 48,96 & 1,94  & 273,8 \\
 
 Hasil ini mengungkap \textit{trade-off} yang penting. Strategi statis Gzip mencapai penghematan penyimpanan tertinggi ($50{,}1\%$), tetapi dengan biaya waktu proses yang sangat besar ($18{,}84$ s; \textit{throughput} hanya $28{,}2$ MB/s). Sebaliknya, strategi \textbf{adaptif yang diusulkan} sengaja memprioritaskan kecepatan: dengan memilih algoritma cepat (Snappy/LZ4) untuk sebagian besar berkas, strategi ini menyelesaikan seluruh proses hanya dalam $0{,}87$ s---\textbf{sekitar $21\times$ lebih cepat daripada Gzip statis} dan $2{,}2\times$ lebih cepat daripada Zstandard statis---sambil tetap memberikan penghematan penyimpanan yang wajar ($43{,}3\%$). Perbedaan penghematan yang relatif kecil ($6{,}8$ poin persen dibanding Gzip) tertukar dengan peningkatan \textit{throughput} yang dramatis ($611{,}8$ vs $28{,}2$ MB/s). Untuk sistem cadangan yang menuntut \textit{Recovery Time Objective} (RTO) rendah dan \textit{overhead} komputasi minimal---terutama pada lingkungan dengan sumber daya terbatas---prioritas pada kecepatan ini lebih menguntungkan daripada memaksimalkan rasio kompresi secara mutlak. Dengan demikian, keunggulan utama mekanisme adaptif bukan pada penghematan absolut, melainkan pada \textbf{keseimbangan optimal antara efisiensi penyimpanan dan kecepatan proses} yang dapat disesuaikan dengan karakteristik beban kerja.
 
+\subsection{Analisis entropi: keterkaitan teori dengan bukti empiris}
+Untuk memverifikasi landasan teoretis (Bagian~1) secara empiris, entropi Shannon $H(X)$ (dalam bit/\textit{byte}, rentang 0--8) diukur untuk setiap tipe berkas dan dikaitkan dengan penghematan penyimpanan yang dicapai. Tabel~\ref{tab:entropy_type} menyajikan hasilnya.
+
+\begin{table}[H]
+\centering
+\fontsize{8pt}{10pt}\selectfont
+\caption{Entropi Shannon per tipe berkas dan kaitannya dengan penghematan penyimpanan}
+\label{tab:entropy_type}
+\begin{tabular}{l c c}
+\hline
+\textbf{Tipe Berkas} & \textbf{Entropi (bit/byte)} & \textbf{Penghematan (\%)} \\
+\hline
+CSV  & 4,573 & 66,4 \\
+LOG  & 5,232 & 80,0 \\
+XLSX & 7,962 & $\approx$0 \\
+JPG  & 7,940 & $\approx$0 \\
+\hline
+\end{tabular}
+\end{table}
+
+Hasil ini mengonfirmasi prediksi teori informasi secara langsung: berkas teks (CSV, LOG) memiliki entropi rendah ($4{,}6$--$5{,}2$ bit/\textit{byte}) karena redundansi pola yang tinggi, sehingga dapat dikompresi hingga $66$--$80\%$. Sebaliknya, berkas JPG dan XLSX memiliki entropi mendekati batas maksimum ($\approx 7{,}95$ bit/\textit{byte}), menandakan keacakan yang tinggi akibat sudah terkompresi, sehingga rasio kompresinya mendekati nol. Korelasi terbalik yang kuat antara entropi dan penghematan penyimpanan ini memberikan justifikasi kuantitatif bagi mekanisme seleksi adaptif berbasis tipe berkas.
+
+Lebih lanjut, entropi juga berfungsi sebagai indikator serangan. Tabel~\ref{tab:entropy_attack} membandingkan entropi berkas sebelum dan sesudah simulasi serangan \textit{encrypt-and-hold}.
+
+\begin{table}[H]
+\centering
+\fontsize{8pt}{10pt}\selectfont
+\caption{Perubahan entropi Shannon sebelum dan sesudah serangan enkripsi ransomware}
+\label{tab:entropy_attack}
+\begin{tabular}{l c c c}
+\hline
+\textbf{Tipe Berkas} & \textbf{Sebelum} & \textbf{Sesudah} & \textbf{$\Delta H$} \\
+\hline
+CSV  & 4,547 & 8,000 & $+3{,}453$ \\
+LOG  & 5,223 & 8,000 & $+2{,}777$ \\
+JPG  & 7,940 & 8,000 & $+0{,}060$ \\
+XLSX & 7,963 & 8,000 & $+0{,}036$ \\
+\hline
+\end{tabular}
+\end{table}
+
+Berkas teks ber-entropi rendah mengalami lonjakan entropi yang tajam menuju nilai maksimum ($8{,}0$ bit/\textit{byte}) setelah dienkripsi ($\Delta H$ hingga $+3{,}45$ pada CSV), sebuah tanda khas enkripsi tidak sah. Namun, berkas yang sudah ber-entropi tinggi (JPG, XLSX) hanya berubah sedikit, menegaskan keterbatasan mendasar deteksi berbasis entropi: teknik seperti \textit{Format-Preserving Encryption} yang tidak menaikkan entropi dapat mengelabuinya. Temuan ini memperkuat rasionalitas pilihan penelitian ini untuk mengandalkan verifikasi integritas berbasis \textit{hash} dan metadata---yang mendeteksi \textit{setiap} perubahan berkas terlepas dari entropinya---alih-alih semata bergantung pada entropi.
+
+\subsection{Uji skalabilitas waktu pemulihan}
+Untuk mengevaluasi kelayakan sistem pada skala yang lebih besar (menjawab kebutuhan lingkungan perusahaan), siklus \textit{backup} dan pemulihan diukur pada beberapa ukuran total \textit{dataset} dari 50 MB hingga 1 GB. Tabel~\ref{tab:scalability} menyajikan hasilnya.
+
+\begin{table}[H]
+\centering
+\fontsize{8pt}{10pt}\selectfont
+\caption{Skalabilitas waktu backup dan pemulihan (RTO) terhadap ukuran dataset}
+\label{tab:scalability}
+\begin{tabular}{c c c c}
+\hline
+\textbf{Ukuran Dataset (MB)} & \textbf{Waktu Backup (s)} & \textbf{RTO Pemulihan (s)} & \textbf{Pemulihan Berhasil} \\
+\hline
+51,2   & 0,187 & 0,344 & 8/8 \\
+101,1  & 0,339 & 0,699 & 8/8 \\
+250,9  & 0,872 & 1,797 & 8/8 \\
+500,5  & 1,843 & 4,020 & 8/8 \\
+1001,0 & 5,927 & 7,731 & 8/8 \\
+\hline
+\end{tabular}
+\end{table}
+
+Waktu pemulihan (RTO) meningkat secara \textbf{kira-kira linear} terhadap ukuran \textit{dataset}, dengan laju rata-rata $\approx 0{,}0073$ detik/MB (standar deviasi hanya $0{,}0005$ detik/MB), yang mengonfirmasi karakteristik deterministik alur pemulihan (verifikasi SHA-256, dekripsi AES-256, dan dekompresi). Bahkan pada \textit{dataset} berukuran 1 GB, pemulihan penuh selesai dalam $\approx 7{,}7$ detik dengan integritas terjaga sempurna (seluruh berkas pulih dan lolos verifikasi \textit{hash}). Linearitas ini memungkinkan proyeksi RTO yang andal untuk beban kerja berskala perusahaan: sistem tetap berada dalam jendela pemulihan yang dapat diterima seiring pertumbuhan volume data.
+
 \subsection{Implementasi dan struktur penyimpanan cadangan air-gapped}
 Sebagai lapisan perlindungan tambahan, sistem menerapkan mekanisme cadangan \textit{air-gapped} menggunakan media penyimpanan terpisah berupa SSD eksternal. Media ini tidak diakses secara permanen oleh sistem, melainkan hanya di-\textit{mount} selama proses cadangan atau pemulihan. Pendekatan ini bertujuan meminimalkan risiko akses tidak sah dan propagasi \textit{malware} melalui kanal jaringan. Implementasi \textit{air-gapped} yang digunakan dalam penelitian ini bersifat daring (\textit{air-gapped} logis), di mana media penyimpanan tetap berada dalam lingkungan sistem melalui pengaturan kontrol akses, sesi aktif, dan mekanisme \textit{mounting} terbatas. Dengan pendekatan ini, media hanya dapat diakses pada kondisi tertentu yang ditetapkan sistem, tanpa koneksi jaringan aktif selama proses penyimpanan cadangan.
 

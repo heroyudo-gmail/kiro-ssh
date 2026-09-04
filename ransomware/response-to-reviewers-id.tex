@@ -179,9 +179,16 @@ Zstandard statis) pada seluruh dataset. Perbandingan ini mengungkap \textit{trad
 vs.\ penyimpanan yang jelas: strategi adaptif sekitar $21\times$ lebih cepat daripada Gzip statis
 ($0{,}87$~s vs.\ $18{,}84$~s; $611{,}8$ vs.\ $28{,}2$~MB/s) sambil tetap mencapai penghematan
 $43{,}3\%$, menunjukkan bahwa keunggulan utamanya adalah keseimbangan optimal antara efisiensi
-penyimpanan dan kecepatan proses untuk cadangan ber-RTO rendah. Profil energi dan perbandingan
-langsung dengan deduplikasi/incremental backup tetap dicantumkan sebagai arah penelitian mendatang.}
-\loc{Bagian~4 (subbagian analisis statistik dan subbagian perbandingan baseline baru dengan tabel; seluruh rujukan gambar) dan Bagian~5 (sisa arah penelitian mendatang).}
+penyimpanan dan kecepatan proses untuk cadangan ber-RTO rendah. Kami juga menambahkan (i)
+\textbf{analisis entropi empiris} yang mengaitkan entropi Shannon tiap tipe berkas dengan penghematan
+kompresi (mis. CSV/LOG ber-entropi rendah $4{,}6$--$5{,}2$ bit/\textit{byte} terkompresi $66$--$80\%$,
+sedangkan JPG/XLSX ber-entropi tinggi $\approx 8{,}0$ nyaris tak terkompresi), sekaligus menunjukkan
+lonjakan entropi tajam saat enkripsi ($\Delta H$ hingga $+3{,}45$); dan (ii) \textbf{uji skalabilitas}
+yang membuktikan waktu pemulihan (RTO) meningkat kira-kira linear terhadap ukuran dataset
+($\approx 0{,}0073$~s/MB; dataset 1~GB pulih penuh dalam $\approx 7{,}7$~s dengan integritas sempurna).
+Profil energi dan perbandingan langsung dengan deduplikasi/incremental backup tetap dicantumkan
+sebagai arah penelitian mendatang.}
+\loc{Bagian~4 (subbagian analisis statistik, perbandingan baseline, analisis entropi, dan skalabilitas dengan tabel) dan Bagian~5 (sisa arah penelitian mendatang).}
 
 \reviewer{A6. Arah penelitian mendatang pada Kesimpulan terlalu sempit (hanya Random Forest).}
 \begin{revbox}\small

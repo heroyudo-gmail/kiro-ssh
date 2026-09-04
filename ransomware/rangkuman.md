@@ -403,3 +403,40 @@ Uji di AWS EC2 (dataset 43 berkas, ~531 MB). Sumber: `results/baseline_compariso
 | **Adaptif (usulan)** | 301,3 | 43,28 | **0,87** | **611,8** |
 
 **Temuan (jujur):** Adaptif BUKAN paling hemat storage (43,3% vs Gzip 50,1%), TAPI ~21x lebih cepat dari Gzip (0,87s vs 18,84s), throughput 611 vs 28 MB/s. Trade-off: adaptif prioritas KECEPATAN (pilih Snappy/LZ4 utk banyak file) demi RTO rendah & overhead minimal, cocok lingkungan sumber daya terbatas. Keunggulan = keseimbangan optimal storage-vs-speed, bukan penghematan absolut. Masuk ke ijece-id.tex subbab "Perbandingan kuantitatif strategi adaptif dengan baseline" (Tabel tab:baseline_comparison).
+
+---
+
+## BAGIAN 9 — ANALISIS ENTROPI & SKALABILITAS RTO (perkuat teori↔bukti & skala enterprise)
+
+Uji di AWS EC2. Sumber: `results/entropy_analysis.*`, `results/scalability_rto.*`.
+
+### 9.1 Entropi per tipe (bukti teori Shannon)
+| Tipe | Entropi (bit/byte) | Penghematan |
+|---|---|---|
+| CSV | 4,573 | 66,4% |
+| LOG | 5,232 | 80,0% |
+| XLSX | 7,962 | ~0% |
+| JPG | 7,940 | ~0% |
+
+Korelasi terbalik kuat: entropi rendah -> kompresi tinggi. Membuktikan paragraf teori entropi.
+
+### 9.2 Entropi sebelum->sesudah serangan (indikator ransomware)
+| Tipe | Sebelum | Sesudah | ΔH |
+|---|---|---|---|
+| CSV | 4,547 | 8,000 | +3,453 |
+| LOG | 5,223 | 8,000 | +2,777 |
+| JPG | 7,940 | 8,000 | +0,060 |
+| XLSX | 7,963 | 8,000 | +0,036 |
+
+Teks lonjak tajam ke 8,0 saat dienkripsi = indikator. Tapi JPG/XLSX (sudah tinggi) hampir tak berubah -> justifikasi kenapa pakai hash/metadata, bukan entropi semata.
+
+### 9.3 Skalabilitas RTO (buktikan linear)
+| Ukuran (MB) | Backup (s) | RTO (s) | OK |
+|---|---|---|---|
+| 51,2 | 0,187 | 0,344 | 8/8 |
+| 101,1 | 0,339 | 0,699 | 8/8 |
+| 250,9 | 0,872 | 1,797 | 8/8 |
+| 500,5 | 1,843 | 4,020 | 8/8 |
+| 1001,0 | 5,927 | 7,731 | 8/8 |
+
+RTO ~0,0073 s/MB (std 0,0005) = LINEAR. 1GB pulih dalam ~7,7s, integritas sempurna. Menjawab skala enterprise. Masuk ijece-id.tex subbab entropi (tab:entropy_type, tab:entropy_attack) & skalabilitas (tab:scalability).

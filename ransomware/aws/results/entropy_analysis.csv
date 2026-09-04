@@ -1,0 +1,11 @@
+type,entropy_mean_bits,storage_saving_pct
+csv,4.573,66.4
+log,5.232,80.0
+xlsx,7.962,-0.0
+jpg,7.94,0.0
+
+type,entropy_before,entropy_after_attack,delta
+log,5.223,8.0,2.777
+jpg,7.94,8.0,0.06
+xlsx,7.963,8.0,0.036
+csv,4.547,8.0,3.453

@@ -254,6 +254,8 @@ ransomware/aws/results-windows/aes_key.bin
 !ransomware/aws/results/experiment_summary.json
 !ransomware/aws/results/benchmark_stats.json
 !ransomware/aws/results/baseline_comparison.json
+!ransomware/aws/results/entropy_analysis.json
+!ransomware/aws/results/scalability_rto.json
 # Hasil Windows (replikasi lintas-platform)
 !ransomware/aws/results-windows/attack_encrypt_hold.json
 !ransomware/aws/results-windows/attack_metadata_corruption.json
