@@ -22,7 +22,7 @@
 \large Naskah ID \#42551\\
 \normalsize ``Design of a cloud backup system based on multi-compression algorithms
 for ransomware attack mitigation''}
-\author{Hero Yudo Martono, Nafisah Rahmadani Harahap\\
+\author{Hero Yudo Martono, Nafisah Rahmadani Harahap, Iwan Syarif, Ferry Astika Saputra\\
 \small Politeknik Elektronika Negeri Surabaya, Indonesia}
 \date{\today}
 
@@ -51,7 +51,15 @@ berwarna; tanggapan kami beserta lokasi perubahan mengikuti setiap komentar.
         konsistensi lintas-platform.
   \item Menambahkan \textbf{analisis statistik} (5 uji-berulang): rata-rata~$\pm$~standar deviasi
         waktu kompresi, \textit{throughput}, dan utilisasi CPU/RAM.
+  \item Menambahkan \textbf{tabel aturan seleksi kompresi yang eksplisit} (\textit{rule-based
+        decision tree} berdasarkan tipe dan ukuran berkas) agar dapat direproduksi.
+  \item Menambahkan \textbf{analisis keamanan \textit{air-gap} logis} yang membahas jendela
+        kerentanan (\textit{window of vulnerability}) saat volume ter-\textit{mount} beserta
+        mitigasinya (IAM ketat, \textit{mount} baca-saja, \textit{immutable}/WORM, durasi \textit{mount} minimal).
+  \item Menambahkan \textbf{uji skalabilitas RTO} (50~MB--1~GB) yang membuktikan waktu pemulihan
+        meningkat kira-kira linear, dan menyebut \textit{Silesia Compression Corpus} untuk validasi lanjutan.
   \item Memperluas arah penelitian mendatang melampaui Random Forest.
+  \item Melengkapi daftar 46 referensi (seluruhnya tersitasi, dengan DOI bila tersedia) dan menambahkan dua penulis.
 \end{itemize}
 
 % =====================================================================
@@ -205,11 +213,13 @@ perbandingan langsung dengan \textit{incremental}/deduplikasi backup.}
 \begin{revbox}\small
 Kutip semua referensi di teks dan tambahkan DOI.
 \end{revbox}
-\authors{Kami meninjau seluruh referensi untuk memastikan masing-masing dikutip di teks. DOI
-sedang ditambahkan untuk semua sumber yang memilikinya (mis. survei Kapoor dkk.,
-\texttt{doi:10.3390/su14010008}). Referensi yang ternyata tidak memiliki DOI atau data bibliografi
-lengkap yang dapat diverifikasi akan diganti dengan sumber terindeks yang memadai.}
-\loc{Bagian Daftar Pustaka (entri diperbarui dan kutipan dalam teks).}
+\authors{Sudah dilakukan. Daftar pustaka telah difinalisasi menjadi \textbf{46 referensi yang
+seluruhnya dikutip di teks} (tanpa entri yatim). Referensi yang sebelumnya tidak lengkap telah
+diganti dengan sumber terindeks yang memadai dan disertai DOI bila tersedia (mis. survei Kapoor
+dkk.\ \texttt{doi:10.3390/su14010008}; McIntosh dkk.\ \texttt{doi:10.1145/3691340}; Meland dkk.\
+\texttt{doi:10.1016/j.cose.2020.101762}). Kutipan baru turut disisipkan pada paragraf
+State-of-the-Art, pembahasan strategi cadangan, dan bagian FPE.}
+\loc{Bagian Daftar Pustaka (46 entri final) dan kutipan dalam teks (Bagian~1, 2, dan~4).}
 
 % =====================================================================
 \section*{Tanggapan untuk Reviewer B}
@@ -313,9 +323,13 @@ mitigasi/pemulihan.}
 Nyatakan dengan jelas bahwa seleksi kompresi bersifat berbasis aturan.
 \end{revbox}
 \authors{Seleksi kompresi kini dideskripsikan secara eksplisit sebagai strategi \emph{berbasis
-aturan} yang ditentukan oleh tipe dan ukuran berkas, dan hal ini dinyatakan di Pendahuluan, Metode,
-dan Kesimpulan.}
-\loc{Bagian~1, 3, dan~5.}
+aturan} (\textit{rule-based decision tree}) yang ditentukan oleh tipe dan ukuran berkas, dan hal
+ini dinyatakan di Pendahuluan, Metode, dan Kesimpulan. Untuk memastikan dapat direproduksi oleh
+peneliti lain, kami menambahkan \textbf{tabel aturan seleksi yang eksplisit} (mis.\ CSV/LOG/TXT
+$\leq 100$~MB $\rightarrow$ Snappy/LZ4; teks besar $\rightarrow$ Zstandard; JPG $\rightarrow$
+algoritma ringan; XLSX $\rightarrow$ LZ4/Zstandard menurut ukuran), lengkap dengan mekanisme
+prioritas dan \textit{fallback} (Gzip sebagai jaring pengaman).}
+\loc{Bagian~1, 3 (subbagian implementasi kompresi, tabel aturan seleksi), dan~5.}
 
 \reviewer{C5. Perkuat validasi eksperimen dengan analisis statistik tambahan.}
 \begin{revbox}\small
@@ -334,11 +348,51 @@ untuk menjaga kesinambungan dengan versi yang mula-mula diajukan.}
 \loc{Bagian~4 (subbagian lintas-platform, tabel konsistensi, dan subbagian analisis statistik baru).}
 
 % =====================================================================
+\section*{Tanggapan atas masukan tambahan (peninjauan lanjutan)}
+% =====================================================================
+\reviewer{D1. Analisis keamanan \textit{air-gap} logis: bahas ``jendela kerentanan'' saat volume
+ter-\textit{mount} dan mitigasinya (IAM, \textit{mount} baca-saja, WORM).}
+\begin{revbox}\small
+Bahas trade-off keamanan air-gap logis, khususnya risiko malware membajak volume yang ter-mount,
+beserta cara mitigasinya.
+\end{revbox}
+\authors{Kami menambahkan subbagian khusus yang secara jujur mengakui adanya \emph{jendela
+kerentanan}: ketika volume ter-\textit{mount}, secara teknis ia dapat dijangkau proses lain,
+sehingga ransomware \textit{memory-resident} berpotensi menunggu peristiwa \textit{mount}. Kami
+menegaskan bahwa isolasi logis mengurangi permukaan serangan secara substansial namun tidak
+menghilangkannya, lalu memerinci empat mitigasi: (i) pembatasan hak akses melalui IAM, (ii)
+\textit{mount} baca-saja (\textit{read-only}) saat pemulihan, (iii) penyimpanan \textit{immutable}/WORM
+(\textit{object lock}), dan (iv) minimalisasi durasi \textit{mount}---sekaligus membuka arah menuju
+\textit{zero-trust backup}.}
+\loc{Bagian~4 (subbagian analisis keamanan air-gap logis dan jendela kerentanan).}
+
+\reviewer{D2. Skalabilitas dan generalisasi: bahas perilaku pada beban kerja multi-gigabyte serta
+kemungkinan penggunaan korpus kompresi standar (mis.\ Silesia).}
+\begin{revbox}\small
+Tambahkan diskusi skalabilitas ke beban kerja besar dan usulkan korpus standar untuk validasi.
+\end{revbox}
+\authors{Kami menambahkan subbagian uji skalabilitas yang mengukur siklus cadangan--pemulihan pada
+beberapa ukuran dataset (50~MB--1~GB), menunjukkan RTO meningkat kira-kira linear
+($\approx 0{,}0073$~s/MB; dataset 1~GB pulih penuh dalam $\approx 7{,}7$~s dengan integritas
+sempurna). Kami juga menyebutkan penggunaan \textit{Silesia Compression Corpus} sebagai validasi
+lanjutan yang dapat direproduksi oleh peneliti lain.}
+\loc{Bagian~3 (justifikasi dataset) dan Bagian~4 (subbagian uji skalabilitas dengan tabel).}
+
+\reviewer{D3. Terjemahkan label gambar ke bahasa Inggris agar sesuai standar publikasi internasional.}
+\begin{revbox}\small
+Terjemahkan seluruh label gambar ke bahasa Inggris.
+\end{revbox}
+\authors{Untuk versi bahasa Inggris naskah, seluruh gambar (diagram maupun panel keluaran sistem)
+telah dibangun ulang dengan label berbahasa Inggris dari data eksperimen yang sama, sehingga tidak
+ada lagi teks berbahasa Indonesia pada gambar.}
+\loc{Seluruh gambar pada naskah versi bahasa Inggris.}
+
+% =====================================================================
 \section*{Persyaratan tambahan jurnal}
 % =====================================================================
 \authors{Kami juga telah melengkapi bagian Pendanaan, Kontribusi Penulis (CRediT), Konflik
-Kepentingan, dan Ketersediaan Data, serta menyertakan biografi penulis. Revisi ini diajukan dengan
-ID naskah yang sama.}
+Kepentingan, dan Ketersediaan Data, serta menyertakan biografi seluruh penulis. Revisi ini diajukan
+dengan ID naskah yang sama.}
 
 \vspace{6pt}
 \noindent Kami kembali mengucapkan terima kasih kepada Editor dan para reviewer atas masukan

@@ -22,7 +22,7 @@
 \large Manuscript ID \#42551\\
 \normalsize ``Design of a cloud backup system based on multi-compression algorithms
 for ransomware attack mitigation''}
-\author{Hero Yudo Martono, Nafisah Rahmadani Harahap\\
+\author{Hero Yudo Martono, Nafisah Rahmadani Harahap, Iwan Syarif, Ferry Astika Saputra\\
 \small Politeknik Elektronika Negeri Surabaya, Indonesia}
 \date{\today}
 
@@ -50,7 +50,15 @@ boxes; our responses and the exact location of the corresponding changes follow 
         cross-platform consistency table.
   \item Added a \textbf{statistical analysis} (5 repeated trials): mean~$\pm$~standard deviation of
         compression time, throughput, and CPU/RAM utilization.
+  \item Added an \textbf{explicit compression selection-rule table} (a rule-based decision tree by
+        file type and size) for reproducibility.
+  \item Added a \textbf{security analysis of the logical air-gap} discussing the window of
+        vulnerability while the volume is mounted, together with its mitigations (strict IAM,
+        read-only mount, immutable/WORM, minimal mount duration).
+  \item Added an \textbf{RTO scalability test} (50~MB--1~GB) showing that recovery time grows
+        approximately linearly, and mentioned the \textit{Silesia Compression Corpus} for further validation.
   \item Expanded future work beyond Random Forest.
+  \item Finalized the list of 46 references (all cited, with DOIs where available) and added two authors.
 \end{itemize}
 
 % =====================================================================
@@ -198,11 +206,13 @@ comparison with incremental/deduplication backup.}
 \begin{revbox}\small
 Cite all references in the text and add DOIs.
 \end{revbox}
-\authors{We reviewed all references to ensure each is cited in the text. DOIs are being added for
-all sources that have them (e.g., the Kapoor et al. survey, \texttt{doi:10.3390/su14010008}). Any
-reference that turns out to lack a verifiable DOI or complete bibliographic data will be replaced
-with a properly indexed source.}
-\loc{References section (updated entries and in-text citations).}
+\authors{Done. The reference list has been finalized to \textbf{46 references, all cited in the
+text} (no orphan entries). Previously incomplete references were replaced with adequate indexed
+sources and DOIs where available (e.g., Kapoor et al.\ \texttt{doi:10.3390/su14010008}; McIntosh et
+al.\ \texttt{doi:10.1145/3691340}; Meland et al.\ \texttt{doi:10.1016/j.cose.2020.101762}). New
+citations were also inserted in the State-of-the-Art paragraph, the backup-strategy discussion, and
+the FPE section.}
+\loc{References section (46 final entries) and in-text citations (Sections~1, 2, and~4).}
 
 % =====================================================================
 \section*{Response to Reviewer B}
@@ -304,8 +314,12 @@ validation of the mitigation/recovery layer.}
 State clearly that compression selection is rule-based.
 \end{revbox}
 \authors{The compression selection is now explicitly described as a \emph{rule-based} strategy
-driven by file type and size, and this is stated in the Introduction, Method, and Conclusion.}
-\loc{Sections~1, 3, and~5.}
+(a rule-based decision tree) driven by file type and size, and this is stated in the Introduction,
+Method, and Conclusion. To ensure reproducibility by other researchers, we added an \textbf{explicit
+selection-rule table} (e.g., CSV/LOG/TXT $\leq 100$~MB $\rightarrow$ Snappy/LZ4; large text
+$\rightarrow$ Zstandard; JPG $\rightarrow$ lightweight algorithms; XLSX $\rightarrow$ LZ4/Zstandard
+by size), together with the priority order and \textit{fallback} mechanism (Gzip as the safety net).}
+\loc{Sections~1, 3 (compression implementation subsection, selection-rule table), and~5.}
 
 \reviewer{C5. Strengthen experimental validation with additional statistical analysis.}
 \begin{revbox}\small
@@ -324,11 +338,49 @@ with the initially submitted version.}
 \loc{Section~4 (cross-platform subsection, consistency table, and new statistical-analysis subsection).}
 
 % =====================================================================
+\section*{Response to additional feedback (follow-up review)}
+% =====================================================================
+\reviewer{D1. Security analysis of the logical air-gap: discuss the ``window of vulnerability''
+while the volume is mounted and its mitigations (IAM, read-only mount, WORM).}
+\begin{revbox}\small
+Discuss the logical air-gap security trade-off, specifically the risk of malware hijacking the
+mounted volume, and how to mitigate it.
+\end{revbox}
+\authors{We added a dedicated subsection that honestly acknowledges a \emph{window of
+vulnerability}: while the volume is mounted, it can technically be reached by other processes, so
+\textit{memory-resident} ransomware could wait for a mount event. We state that logical isolation
+substantially reduces---but does not eliminate---the attack surface, and then detail four
+mitigations: (i) access restriction via IAM, (ii) read-only mount during recovery, (iii)
+\textit{immutable}/WORM storage (object lock), and (iv) minimizing mount duration---while opening a
+direction toward a \textit{zero-trust backup} architecture.}
+\loc{Section~4 (security analysis of the logical air-gap and window of vulnerability subsection).}
+
+\reviewer{D2. Scalability and generalizability: discuss behavior at multi-gigabyte workloads and the
+possible use of a standard compression corpus (e.g., Silesia).}
+\begin{revbox}\small
+Add a scalability discussion for large workloads and propose a standard corpus for validation.
+\end{revbox}
+\authors{We added a scalability-test subsection measuring the backup--recovery cycle across several
+dataset sizes (50~MB--1~GB), showing that RTO grows approximately linearly ($\approx 0.0073$~s/MB;
+a 1~GB dataset is fully recovered in $\approx 7.7$~s with perfect integrity). We also mention the
+\textit{Silesia Compression Corpus} as a reproducible avenue for further validation.}
+\loc{Section~3 (dataset justification) and Section~4 (scalability-test subsection with table).}
+
+\reviewer{D3. Translate figure labels into English to meet international publication standards.}
+\begin{revbox}\small
+Translate all figure labels into English.
+\end{revbox}
+\authors{For the English version of the manuscript, all figures (both diagrams and system-output
+panels) were rebuilt with English labels from the same experimental data, so no Indonesian text
+remains in any figure.}
+\loc{All figures in the English manuscript version.}
+
+% =====================================================================
 \section*{Additional journal requirements}
 % =====================================================================
 \authors{We have also completed the Funding, Author Contributions (CRediT), Conflict of Interest,
-and Data Availability sections, and included author biographies. The revision is submitted under
-the same manuscript ID.}
+and Data Availability sections, and included biographies for all authors. The revision is submitted
+under the same manuscript ID.}
 
 \vspace{6pt}
 \noindent We again thank the Editor and reviewers for their valuable feedback, which has
