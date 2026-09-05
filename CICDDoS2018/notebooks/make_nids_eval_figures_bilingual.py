@@ -1,0 +1,222 @@
+#!/usr/bin/env python3
+"""
+make_nids_eval_figures_bilingual.py
+===================================
+Regenerate the NIDS evaluation figures (confusion 2x2, radar, grouped bar)
+in TWO languages: Indonesian (id) and English (en), from the REAL trained
+models and data. Intended to be run in the same environment as Notebook 08
+(e.g., SageMaker), where the .pkl results and model artifacts exist.
+
+Output:
+  ../data/id/<name>_id.png   (Indonesian labels)
+  ../data/en/<name>_en.png   (English labels)
+
+Numbers are NOT hardcoded: the script loads the actual models and recomputes
+S1-S4 exactly as Notebook 08 does, so both language versions share identical
+real values -- only the labels differ.
+"""
+import os
+import pickle
+import time
+import warnings
+
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import (
+    accuracy_score, precision_score, recall_score,
+    f1_score, matthews_corrcoef, confusion_matrix,
+)
+from xgboost import XGBClassifier
+
+warnings.filterwarnings("ignore")
+plt.style.use("seaborn-v0_8-whitegrid")
+plt.rcParams.update({"font.size": 10, "figure.dpi": 150})
+
+DATA_DIR = "../data/"
+MODEL_DIR = "../models/"
+RANDOM_SEED = 42
+TEST_SIZE = 0.20
+EPSILON = 0.1
+
+OUT = {"id": os.path.join(DATA_DIR, "id"), "en": os.path.join(DATA_DIR, "en")}
+for d in OUT.values():
+    os.makedirs(d, exist_ok=True)
+
+# ---------------------------------------------------------------------------
+# Bilingual label dictionary
+# ---------------------------------------------------------------------------
+T = {
+    "id": {
+        "predicted": "Prediksi", "actual": "Aktual",
+        "confusion_suptitle": "Confusion Matrix \u2014 Skenario Evaluasi 2\u00d72\n(XGBoost Top-10, \u03b5={eps})",
+        "s1": "S1: Baseline + Bersih", "s2": "S2: Baseline + Adversarial",
+        "s3": "S3: Robust + Bersih", "s4": "S4: Robust + Adversarial",
+        "radar_title": "Radar Multi-Metrik: Skenario 2\u00d72\n(XGBoost Top-10)",
+        "radar_labels": {"S1": "Baseline+Bersih", "S2": "Baseline+Adv",
+                          "S3": "Robust+Bersih", "S4": "Robust+Adv"},
+        "bar_title": "Evaluasi Komprehensif: Skenario 2\u00d72\n(XGBoost Top-10, CSE-CIC-IDS2018, \u03b5={eps})",
+        "bar_xlabel": "Metrik", "bar_ylabel": "Skor",
+        "categories": ["MCC", "F1-Score", "Presisi", "Recall", "Akurasi"],
+        "bar_metrics": ["MCC", "F1-Score", "Presisi", "Recall"],
+    },
+    "en": {
+        "predicted": "Predicted", "actual": "Actual",
+        "confusion_suptitle": "Confusion Matrices \u2014 2\u00d72 Evaluation Scenarios\n(XGBoost Top-10, \u03b5={eps})",
+        "s1": "S1: Baseline + Clean", "s2": "S2: Baseline + Adversarial",
+        "s3": "S3: Robust + Clean", "s4": "S4: Robust + Adversarial",
+        "radar_title": "Multi-Metric Radar: 2\u00d72 Scenarios\n(XGBoost Top-10)",
+        "radar_labels": {"S1": "Baseline+Clean", "S2": "Baseline+Adv",
+                         "S3": "Robust+Clean", "S4": "Robust+Adv"},
+        "bar_title": "Comprehensive Evaluation: 2\u00d72 Scenarios\n(XGBoost Top-10, CSE-CIC-IDS2018, \u03b5={eps})",
+        "bar_xlabel": "Metric", "bar_ylabel": "Score",
+        "categories": ["MCC", "F1-Score", "Precision", "Recall", "Accuracy"],
+        "bar_metrics": ["MCC", "F1-Score", "Precision", "Recall"],
+    },
+}
+
+
+def compute_saliency(model, X, y, h=0.01):
+    n_samples, n_features = X.shape
+    saliency = np.zeros((n_samples, n_features))
+    for i in range(n_features):
+        X_plus = X.copy(); X_plus[:, i] += h
+        X_minus = X.copy(); X_minus[:, i] -= h
+        eps_c = 1e-15
+        p_plus = model.predict_proba(X_plus)
+        p_minus = model.predict_proba(X_minus)
+        loss_plus = -np.log(np.clip(p_plus[np.arange(n_samples), y.astype(int)], eps_c, 1.0))
+        loss_minus = -np.log(np.clip(p_minus[np.arange(n_samples), y.astype(int)], eps_c, 1.0))
+        saliency[:, i] = (loss_plus - loss_minus) / (2 * h)
+    return saliency
+
+
+def full_eval(model, X, y):
+    y_pred = model.predict(X)
+    return {
+        "y_pred": y_pred,
+        "mcc": matthews_corrcoef(y, y_pred),
+        "f1": f1_score(y, y_pred, average="weighted", zero_division=0),
+        "precision": precision_score(y, y_pred, average="weighted", zero_division=0),
+        "recall": recall_score(y, y_pred, average="weighted", zero_division=0),
+        "accuracy": accuracy_score(y, y_pred),
+        "cm": confusion_matrix(y, y_pred),
+    }
+
+
+def load_everything():
+    with open(os.path.join(DATA_DIR, "experiment_results_03.pkl"), "rb") as f:
+        exp = pickle.load(f)
+    top10 = exp["top10_features"]
+    names = exp["feature_names"]
+    label_mapping = exp["label_mapping"]
+    inv = {v: k for k, v in label_mapping.items()}
+
+    with open(os.path.join(DATA_DIR, "cleaned_100.pkl"), "rb") as f:
+        data = pickle.load(f)
+    X_all, y_all = data["X"], data["y"]
+    idx = [names.index(f) for f in top10 if f in names]
+    X_top10 = X_all[:, idx]
+    X_train, X_test, y_train, y_test = train_test_split(
+        X_top10, y_all, test_size=TEST_SIZE, random_state=RANDOM_SEED, stratify=y_all
+    )
+    y_train = y_train if isinstance(y_train, np.ndarray) else y_train.values
+    y_test = y_test if isinstance(y_test, np.ndarray) else y_test.values
+    n_classes = len(np.unique(y_all))
+
+    deploy = os.path.join(MODEL_DIR, "deploy")
+    files = os.listdir(deploy) if os.path.exists(deploy) else []
+    base_file = [f for f in files if "xgboost" in f and "top-10" in f and f.endswith(".json")]
+    base = XGBClassifier()
+    if base_file:
+        base.load_model(os.path.join(deploy, base_file[0]))
+    else:
+        base = XGBClassifier(n_estimators=200, max_depth=8, learning_rate=0.1,
+                             subsample=0.8, colsample_bytree=0.8,
+                             objective="multi:softprob", num_class=n_classes,
+                             eval_metric="mlogloss", random_state=RANDOM_SEED,
+                             n_jobs=-1, tree_method="hist")
+        base.fit(X_train, y_train)
+    robust = XGBClassifier()
+    robust.load_model(os.path.join(MODEL_DIR, "robust_xgboost_top10.json"))
+    return top10, inv, X_test, y_test, base, robust
+
+
+def main():
+    top10, inv, X_test, y_test, base, robust = load_everything()
+    N = min(50000, len(X_test))
+    X_eval, y_eval = X_test[:N], y_test[:N]
+    print(f"Computing saliency on {N:,} samples...")
+    t0 = time.time()
+    sal = compute_saliency(base, X_eval, y_eval)
+    print(f"done {time.time()-t0:.1f}s")
+    X_adv = X_eval + EPSILON * np.sign(sal)
+
+    S = {"S1": full_eval(base, X_eval, y_eval),
+         "S2": full_eval(base, X_adv, y_eval),
+         "S3": full_eval(robust, X_eval, y_eval),
+         "S4": full_eval(robust, X_adv, y_eval)}
+    class_names = [inv.get(int(c), f"C{c}") for c in sorted(np.unique(y_eval))]
+
+    for lang in ("id", "en"):
+        t = T[lang]
+        # --- Confusion 2x2 ---
+        fig, axes = plt.subplots(2, 2, figsize=(16, 14))
+        titles = [f'{t["s1"]}\nMCC={S["S1"]["mcc"]:.4f}',
+                  f'{t["s2"]}\nMCC={S["S2"]["mcc"]:.4f}',
+                  f'{t["s3"]}\nMCC={S["S3"]["mcc"]:.4f}',
+                  f'{t["s4"]}\nMCC={S["S4"]["mcc"]:.4f}']
+        cmaps = ["Blues", "Reds", "Greens", "Oranges"]
+        for ax, title, cmap, key in zip(axes.flat, titles, cmaps, ["S1", "S2", "S3", "S4"]):
+            cm = S[key]["cm"].astype(float)
+            cmn = cm / cm.sum(axis=1)[:, None]
+            sns.heatmap(cmn, annot=True, fmt=".2f", cmap=cmap, ax=ax,
+                        xticklabels=class_names, yticklabels=class_names, cbar_kws={"shrink": 0.8})
+            ax.set_title(title, fontsize=11, fontweight="bold")
+            ax.set_xlabel(t["predicted"]); ax.set_ylabel(t["actual"])
+            ax.tick_params(axis="x", rotation=45); ax.tick_params(axis="y", rotation=0)
+        plt.suptitle(t["confusion_suptitle"].format(eps=EPSILON), fontsize=14, fontweight="bold", y=1.01)
+        plt.tight_layout()
+        plt.savefig(os.path.join(OUT[lang], f"evaluation_confusion_2x2_{lang}.png"), bbox_inches="tight", dpi=150)
+        plt.close(fig)
+
+        # --- Radar ---
+        cats = t["categories"]; n = len(cats)
+        vals = {k: [S[k]["mcc"], S[k]["f1"], S[k]["precision"], S[k]["recall"], S[k]["accuracy"]] for k in S}
+        angles = [i / float(n) * 2 * np.pi for i in range(n)]; angles += angles[:1]
+        fig, ax = plt.subplots(figsize=(8, 8), subplot_kw=dict(polar=True))
+        colors = {"S1": "steelblue", "S2": "crimson", "S3": "forestgreen", "S4": "darkorange"}
+        for k in ["S1", "S2", "S3", "S4"]:
+            v = vals[k] + vals[k][:1]
+            ax.plot(angles, v, "o-", linewidth=2, color=colors[k], label=t["radar_labels"][k])
+            ax.fill(angles, v, alpha=0.05, color=colors[k])
+        ax.set_xticks(angles[:-1]); ax.set_xticklabels(cats, fontsize=11); ax.set_ylim([0, 1.05])
+        ax.set_title(t["radar_title"], fontsize=12, fontweight="bold", pad=20)
+        ax.legend(loc="upper right", bbox_to_anchor=(1.3, 1.1), fontsize=10)
+        plt.tight_layout()
+        plt.savefig(os.path.join(OUT[lang], f"evaluation_radar_2x2_{lang}.png"), bbox_inches="tight", dpi=150)
+        plt.close(fig)
+
+        # --- Grouped bar ---
+        mets = t["bar_metrics"]; x = np.arange(len(mets)); w = 0.2
+        series = {k: [S[k]["mcc"], S[k]["f1"], S[k]["precision"], S[k]["recall"]] for k in S}
+        fig, ax = plt.subplots(figsize=(10, 6))
+        specs = [("S1", -1.5, "steelblue"), ("S2", -0.5, "crimson"),
+                 ("S3", 0.5, "forestgreen"), ("S4", 1.5, "darkorange")]
+        for k, off, col in specs:
+            ax.bar(x + off * w, series[k], w, label=t["radar_labels"][k], color=col, edgecolor="black", linewidth=0.5)
+        ax.set_xlabel(t["bar_xlabel"]); ax.set_ylabel(t["bar_ylabel"])
+        ax.set_title(t["bar_title"].format(eps=EPSILON), fontsize=12, fontweight="bold")
+        ax.set_xticks(x); ax.set_xticklabels(mets, fontsize=11)
+        ax.legend(loc="lower left", fontsize=10); ax.set_ylim([0, 1.15]); ax.grid(True, alpha=0.3, axis="y")
+        plt.tight_layout()
+        plt.savefig(os.path.join(OUT[lang], f"evaluation_grouped_bar_2x2_{lang}.png"), bbox_inches="tight", dpi=150)
+        plt.close(fig)
+        print(f"[{lang}] saved 3 figures to {OUT[lang]}")
+
+    print("Done. Bilingual evaluation figures generated.")
+
+
+if __name__ == "__main__":
+    main()

@@ -281,6 +281,8 @@ ransomware/aws/results-windows/aes_key.bin
 *.png
 # Pengecualian: gambar figure paper ransomware (dibutuhkan untuk kompilasi Overleaf)
 !ransomware/figures/*.png
+# Pengecualian: gambar diagram paper NIDS (TikZ->PNG untuk template Word JETS)
+!CICDDoS2018/nids-figures/*.png
 
 # PDF files (papers/references, tidak perlu di-upload)
 *.pdf
