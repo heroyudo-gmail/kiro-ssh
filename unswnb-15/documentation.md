@@ -92,7 +92,8 @@ Reviewer Q1 sering menolak paper adversarial karena perturbasi matematis diangga
 | T1 | Akuisisi & inspeksi dataset UNSW-NB15 (struktur kolom, label, distribusi) | **SELESAI** (§9.3) |
 | T2 | Semantic Feature Mapping: tabel irisan fitur CIC-IDS2018 ↔ UNSW-NB15 (verifikasi semantik + statistik) | **SELESAI** (§10.4–10.8) |
 | T3 | Pra-pemrosesan seragam + baseline cross-dataset (XGBoost tunggal): latih A→uji B, kuantifikasi generalization gap | **SELESAI** (§11) |
-| T5 | Adversarial Training XGBoost tunggal pada fitur irisan + evaluasi 2×2 (S1–S4) lintas-dataset | Belum |
+| T5 | Adversarial Training XGBoost tunggal pada fitur irisan + evaluasi lintas-dataset (2 arah × clean/adv) | **SELESAI** (§12) |
+| T6 | Cross-network alignment (domain adaptation / MMD / augmentasi campuran) untuk menaikkan MCC cross-network | Belum |
 | T6 | Functional-Preserving Evasion (constraint protokol pada saddle-point) | Belum |
 | T7 | Adaptive White-Box Evaluation pada XGBoost robust | Belum |
 | T8 | Long-Term Real-Traffic Deployment AWS (3–7 hari), ukur FAR | Belum |
@@ -322,3 +323,44 @@ Metrik pendukung (Model A): `same_cic` F1=0,928 ACC=0,976 AUC=0,981; `same_unsw`
 
 ### 11.5 Implikasi untuk Paper Q1
 Hasil ini adalah **motivasi kuantitatif inti** paper: NIDS state-of-practice runtuh lintas-jaringan. Ini membenarkan kontribusi utama (Semantic Feature Mapping + adversarial robust NIDS). Baseline ini menjadi *lower bound* yang harus dilampaui pada tahap T4+.
+
+---
+
+## 12. Adversarial Training Cross-Dataset (T5 — SELESAI)
+
+Notebook `04_adversarial_cross_dataset.ipynb`, dijalankan di SageMaker. Hasil di `adversarial_cross_dataset.json`. **Seluruh angka hasil eksekusi nyata.**
+
+### 12.1 Setup
+- Model **A** (9 fitur), label **biner**. Gradien **finite-difference central** (`h=0.01`), serangan **FGSM** `x_adv = x + eps*sign(dL/dx)`, adaptasi biner dari Paper 1.
+- **Adversarial training:** `D_robust = D_clean ∪ D_adv` (80:20, `eps_train=0.1`), retrain XGBoost.
+- **z-score per dataset**; komputasi saliency dibatasi 40.000 sampel (efisiensi).
+- **Dua arah × 4 kondisi uji:** {CIC, UNSW} × {clean, adversarial eps 0.05/0.1/0.2}, model baseline vs robust.
+
+### 12.2 Hasil Fokus — Generalisasi Lintas-Jaringan (uji *clean* di dataset lain)
+
+| Arah | baseline MCC | robust MCC | Δ |
+|---|---|---|---|
+| latih CIC → uji UNSW (clean) | −0,072 | −0,011 | **+0,061** |
+| latih UNSW → uji CIC (clean) | −0,061 | −0,066 | **−0,005** |
+
+**Temuan utama: adversarial training TIDAK menutup gap generalisasi lintas-jaringan.** Arah CIC→UNSW naik tipis tapi tetap **negatif** (dari "buruk" ke "≈ acak"); arah UNSW→CIC malah turun sedikit. Confusion `robust/UNSW_clean` (arah CIC) = `[[36992, 8],[45332, 0]]` — model robust memprediksi hampir semua flow UNSW sebagai normal (0 attack terdeteksi). Ini mengonfirmasi hipotesis jujur: FGSM adversarial training menahan **perturbasi kecil**, bukan **pergeseran distribusi antar-jaringan**.
+
+### 12.3 Hasil Sekunder — Robustness Evasion *In-Domain* (jaringan sama)
+Berbeda dengan cross-network, adversarial training **berhasil** memperkuat robustness evasion pada jaringan yang sama (konsisten Paper 1):
+
+| Kondisi (in-domain) | baseline MCC | robust MCC | Δ |
+|---|---|---|---|
+| CIC + adv (eps=0.1) | −0,090 | **+0,361** | +0,451 |
+| UNSW + adv (eps=0.1) | −0,134 | **+0,363** | +0,497 |
+| CIC + adv (eps=0.2) | −0,058 | −0,161 | −0,103 |
+
+Perbaikan besar pada eps ≤ `eps_train` (0,1); pada eps=0,2 (melebihi eps latih) robustness turun — batas ekspektasi adversarial training. Integritas terjaga: `robust/CIC_clean` MCC=0,913 ≈ baseline (tak ada degradasi pada trafik bersih in-domain).
+
+### 12.4 Kesimpulan (klaim jujur untuk paper)
+1. **Adversarial training memperkuat robustness evasion in-domain** (MCC naik ~0,45–0,50 pada eps ≤ eps_train) — mereplikasi temuan Paper 1 pada fitur irisan.
+2. **Tetapi TIDAK menyelesaikan cross-network generalization** — MCC cross tetap ≈ 0/negatif.
+3. **Kontribusi konseptual:** hasil ini **memisahkan secara empiris** dua masalah yang sering dicampur — *adversarial robustness* ≠ *cross-network robustness*. Keduanya butuh solusi berbeda. Ini menajamkan arah paper Q1: diperlukan **mekanisme cross-network khusus** (mis. domain adaptation / alignment distribusi antar-jaringan), bukan sekadar adversarial training konvensional.
+
+### 12.5 Arah Berikutnya (T6+)
+- **Cross-network alignment:** eksplisit menyelaraskan distribusi fitur antar-dataset (mis. adversarial *domain adaptation*, CORAL/MMD, atau augmentasi campuran dua dataset) untuk menaikkan MCC cross-network di atas ~0.
+- Lalu lanjut Functional-Preserving Evasion, Adaptive White-Box, Long-Term AWS deployment.
