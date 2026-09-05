@@ -233,7 +233,34 @@ Pada lapisan perlindungan dan kompresi, sistem melakukan inspeksi metadata awal 
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{figures/figure1.png}
+\begin{tikzpicture}[
+    font=\scriptsize,
+    node distance=0.45cm and 0.55cm,
+    stage/.style={draw, rounded corners=3pt, minimum width=1.9cm, minimum height=0.95cm,
+                  align=center, fill=blue!6, thick},
+    ar/.style={-{Stealth[length=2mm]}, thick, blue!55!black}
+]
+% Baris atas (alur maju: pencadangan)
+\node[stage] (user)  {Pengguna\\(akses data)};
+\node[stage, right=of user] (prod)  {Data\\Produksi};
+\node[stage, right=of prod] (det)   {Deteksi\\Ransomware};
+\node[stage, right=of det]  (enc)   {Enkripsi\\AES-256};
+\node[stage, right=of enc]  (comp)  {Kompresi\\(5 algoritma)};
+\node[stage, right=of comp, fill=red!8] (atk) {Serangan\\Ransomware};
+% panah baris atas
+\foreach \a/\b in {user/prod, prod/det, det/enc, enc/comp, comp/atk}
+   \draw[ar] (\a) -- (\b);
+% turun ke baris bawah
+\node[stage, below=1.0cm of atk, fill=orange!10] (bkp) {Ambil Cadangan\\(Air-Gapped)};
+\draw[ar] (atk) -- (bkp);
+% Baris bawah (alur balik: pemulihan) - kanan ke kiri
+\node[stage, left=of bkp]  (rest) {Pemulihan\\(Restore)};
+\node[stage, left=of rest] (dec)  {Dekripsi\\AES-256};
+\node[stage, left=of dec]  (val)  {Validasi\\Data (SHA-256)};
+\node[stage, left=of val, fill=green!8]  (eval) {Evaluasi};
+\foreach \a/\b in {bkp/rest, rest/dec, dec/val, val/eval}
+   \draw[ar] (\a) -- (\b);
+\end{tikzpicture}
 \vspace{.7em}
 \caption{Arsitektur sistem yang diusulkan mengintegrasikan enkripsi AES-256, kompresi multi-algoritma, dan cadangan air-gapped untuk perlindungan ransomware}
 \label{fig:architecture}
