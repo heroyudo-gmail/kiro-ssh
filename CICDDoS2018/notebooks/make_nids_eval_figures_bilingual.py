@@ -19,8 +19,30 @@ import os
 import pickle
 import time
 import warnings
+import subprocess
+import sys
+import importlib
+
+
+def _ensure(pkg, import_name=None):
+    """Ensure a package is importable; pip-install it if missing.
+    SageMaker resets pip packages on instance stop/start, so we self-heal here.
+    """
+    name = import_name or pkg
+    try:
+        importlib.import_module(name)
+    except ImportError:
+        print(f"[setup] Installing missing package: {pkg} ...", flush=True)
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", pkg])
+
+
+for _pkg, _imp in [("numpy", "numpy"), ("matplotlib", "matplotlib"),
+                   ("scikit-learn", "sklearn"), ("xgboost", "xgboost")]:
+    _ensure(_pkg, _imp)
 
 import numpy as np
+import matplotlib
+matplotlib.use("Agg")  # no display needed on SageMaker terminal
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import (
