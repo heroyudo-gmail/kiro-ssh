@@ -7,16 +7,30 @@
 
 ---
 
-## 1. Tujuan T10
+## 1. Tujuan T10 — DUA FASE TERPISAH
 
-Dua tujuan, sejalan dengan naskah paper Q1 (§12) dan masukan reviewer:
+T10 terdiri dari **dua eksperimen berbeda yang tidak boleh dicampur**, karena mengukur
+hal yang berbeda:
 
-1. **Ukur False Alarm Rate (FAR) jangka panjang** — jalankan model pada trafik **normal**
-   kontinu **3–7 hari** untuk membuktikan model tidak membanjiri operator dengan alarm palsu
-   di tengah fluktuasi trafik harian.
-2. **Validasi deteksi real-traffic** untuk model cross-network — mereplikasi pola temuan
-   offline (T3–T9) pada trafik AWS live, khususnya konfirmasi lapangan atas
-   *feature-extractor mismatch* (gap #2) dan efektivitas kalibrasi few-shot.
+### Fase 1 — Uji FAR (JANGKA PANJANG, TANPA serangan)
+- **Pertanyaan:** dari semua trafik **normal**, berapa yang **salah** ditandai model
+  sebagai serangan (*False Alarm Rate*)?
+- **Trafik:** 100% benign (tidak ada serangan sama sekali). Setiap prediksi "attack"
+  otomatis = *false alarm*.
+- **Durasi:** panjang (3–7 hari) — WAJIB panjang karena FAR butuh variasi trafik normal
+  lintas siklus siang/malam dan weekday/weekend agar angkanya stabil & kredibel.
+- **Metrik:** FAR = (flow benign diprediksi attack) / (total flow benign).
+
+### Fase 2 — Uji Deteksi (SINGKAT, DENGAN serangan)
+- **Pertanyaan:** apakah model menangkap serangan pada trafik AWS live (mereplikasi pola
+  offline T3–T9)?
+- **Trafik:** benign + serangan berlabel (ground truth diketahui dari timeline).
+- **Durasi:** singkat (~7 menit per run, pola NIDS-01).
+- **Metrik:** MCC, F1, Precision, Recall (deteksi), + diagnostik *feature-extractor mismatch*.
+
+> **PENTING:** FAR (Fase 1) dan deteksi (Fase 2) diukur **terpisah**. Menyuntikkan serangan
+> ke Fase 1 akan merusak perhitungan FAR (flow "attack" jadi ambigu: benar-deteksi vs
+> false-alarm). Keduanya menjawab pertanyaan berbeda dan dilaporkan sebagai hasil terpisah.
 
 ---
 
@@ -68,27 +82,64 @@ Diambil langsung dari catatan eksekusi NIDS-01:
 
 ---
 
-## 5. Pipeline FAR Jangka Panjang (fokus utama T10)
+## 5a. Pipeline FASE 1 — FAR Jangka Panjang (TANPA serangan)
 
-Berbeda dari NIDS-01 (7 menit), FAR butuh trafik **normal** kontinu berhari-hari:
+Berbeda dari NIDS-01 (7 menit), FAR butuh trafik **normal** kontinu berhari-hari.
+**Tidak ada serangan pada fase ini.**
 
 ```
 1. Deploy VPC + Target(sensor) + Analyzer + NAT (CloudFormation).
 2. Upload model + deploy_meta (scaler 9 fitur) ke Analyzer/S3.
-3. Bangkitkan TRAFIK NORMAL realistis di Target secara kontinu:
+3. Bangkitkan TRAFIK NORMAL realistis di Target secara kontinu (TANPA serangan):
    - layanan web/SSH aktif + generator trafik benign terjadwal (cron):
-     curl loop, apt/yum update berkala, unduhan file, sesi SSH sah, dsb.
-   - variasikan siang/malam agar meniru fluktuasi harian.
+     curl loop, apt/yum update berkala, unduhan file, sesi SSH sah, health-check, dsb.
+   - variasikan siang/malam + weekday/weekend agar meniru fluktuasi harian nyata.
 4. Capture bergulir di Target: tcpdump -i ens5, rotasi per jam (-G 3600 -w far_%Y%m%d_%H.pcap).
 5. Setiap jam: upload pcap ke S3; Analyzer proses (NFStream 9 fitur → inference).
 6. Karena SEMUA trafik = benign, setiap prediksi "attack" adalah FALSE ALARM.
    FAR = (jumlah flow diprediksi attack) / (total flow benign).
-7. Agregasi harian → laporkan FAR per jam/hari + rata-rata 3–7 hari.
+7. Agregasi per jam/hari → laporkan FAR per jam/hari + rata-rata sepanjang periode.
 ```
+
+**Durasi:** idealnya **24 jam × 3–7 hari kontinu**. Opsi hemat: capture **terjadwal**
+(mis. 3–4 jam per segmen pagi/siang/malam × beberapa hari) — WAJIB dilaporkan apa adanya
+(bukan diklaim kontinu). Cakupan tetap harus mencakup variasi siang/malam & weekday/weekend.
 
 **Model yang diuji untuk FAR:** (a) baseline CIC, (b) robust CIC, (c) few-shot adapted
 (CIC + 1% UNSW). Bandingkan FAR ketiganya — hipotesis: model konservatif (robust) FAR lebih
 rendah; model adapted lebih seimbang.
+
+---
+
+## 5b. Pipeline FASE 2 — Uji Deteksi (DENGAN serangan, singkat)
+
+Mereplikasi pola NIDS-01 (~7 menit per run). Ground truth ditentukan dari **timeline**
+(menit ke berapa serangan apa dijalankan).
+
+```
+1. (Reuse infra Fase 1.) Tambah node Attacker di subnet public.
+2. Capture di TARGET (tcpdump -i ens5) selama run berlangsung.
+3. Jalankan skenario serangan berlabel dari Attacker → Target.
+4. Stop capture → pcap → S3 → Analyzer (NFStream 9 fitur → inference).
+5. Cocokkan prediksi vs ground-truth timeline → hitung MCC/F1/Precision/Recall.
+6. Jalankan diagnostik z-of-mean (real vs train scaler) → identifikasi feature mismatch.
+```
+
+**Skenario serangan (pola NIDS-01, ~7 menit):**
+
+| Fase | Menit | Aktivitas | Tool | Ground truth |
+|---|---|---|---|---|
+| Warm-up | 0–1 | trafik normal | curl loop | Benign |
+| Attack-1 | 1–3 | SSH Brute-Force (port 22) | Hydra | Attack |
+| Attack-2 | 3–5 | DoS Slowloris (port 80) | slowloris | Attack |
+| Attack-3 | 5–6 | DDoS SYN Flood (rate 200/s) | nping | Attack |
+| Cool-down | 6–7 | trafik normal | curl loop | Benign |
+
+**Dua varian trafik** (seperti NIDS-01): *clean* (serangan standar) dan *evasion*
+(serangan + perturbasi level-paket: `tc netem` untuk jitter/IAT, padding payload untuk
+ubah ukuran paket). Bandingkan degradasi baseline vs recovery robust — mereplikasi S1–S4.
+
+**Model yang diuji:** baseline CIC, robust CIC, few-shot adapted (CIC + 1% UNSW).
 
 ---
 
@@ -126,23 +177,38 @@ rendah; model adapted lebih seimbang.
 
 ## 8. Checklist Eksekusi (saat siap)
 
+**Persiapan (sekali):**
 - [ ] Siapkan model 9-fitur + `deploy_meta.json` (scaler mean/scale 9 fitur) di S3.
 - [ ] Deploy CloudFormation (reuse template NIDS-01, ganti prefix `unsw-`).
 - [ ] Verifikasi SSM online (butuh NAT aktif untuk private subnet).
-- [ ] Set generator trafik benign kontinu + rotasi tcpdump `-i ens5 -G 3600`.
-- [ ] Pipeline per-jam: pcap → S3 → NFStream(9 fitur) → inference → hitung FAR.
-- [ ] Jalankan diagnostik z-of-mean (real vs train) untuk deteksi feature mismatch.
-- [ ] Agregasi FAR harian; simpan `far_daily.json` (hasil nyata) untuk naskah.
+
+**Fase 1 — FAR (jangka panjang, tanpa serangan):**
+- [ ] Set generator trafik benign kontinu (TANPA serangan) + rotasi tcpdump `-i ens5 -G 3600`.
+- [ ] Pipeline per-jam: pcap → S3 → NFStream(9 fitur) → inference → hitung false alarm.
+- [ ] Agregasi FAR per jam/hari; simpan `far_daily.json` (hasil nyata).
+- [ ] Catat durasi PERSIS (kontinu vs terjadwal) untuk dilaporkan jujur di naskah.
+
+**Fase 2 — Deteksi (singkat, dengan serangan):**
+- [ ] Deploy node Attacker; capture di Target `-i ens5`.
+- [ ] Jalankan skenario serangan berlabel (clean + evasion), ~7 menit/run.
+- [ ] Inference → MCC/F1/Precision/Recall vs ground-truth timeline.
+- [ ] Jalankan diagnostik z-of-mean (real vs train) untuk deteksi feature mismatch (gap #2).
+
+**Penutup:**
 - [ ] Idle kembali (hapus NAT + stop EC2) setelah selesai.
 
 ---
 
 ## 9. Output yang Akan Mengisi Naskah (§12 + tabel efisiensi §3.4)
 
-- `far_daily.json` / tabel FAR per hari (3–7 hari) → isi hasil deployment di §12.
+- **Fase 1:** `far_daily.json` / tabel FAR per jam-hari → isi hasil deployment di §12.
+- **Fase 2:** tabel deteksi MCC/F1 (clean vs evasion, 3 model) → hasil real-traffic di §12;
+  diagnostik feature-mismatch → memperkuat pembahasan gap #2.
 - Ukuran biner model 9-fitur + latency inferensi per flow → isi Tabel efisiensi §3.4
   (slot `[TBD]` saat ini).
-- Diagnostik feature-mismatch real-traffic → memperkuat pembahasan gap #2.
+
+> Semua diisi HANYA dari pengukuran nyata. Durasi Fase 1 dilaporkan apa adanya (kontinu
+> atau terjadwal), tidak melebih-lebihkan.
 
 > Semua diisi HANYA dari pengukuran nyata. Sampai eksekusi dilakukan, slot tetap ditandai
 > sebagai rencana agar naskah tidak memuat angka karangan.
