@@ -672,6 +672,34 @@ aws ec2 start-instances --region ap-southeast-1 \
 \end{itemize}
 
 % ======================================================
+\section{Status Publikasi dan Luaran}
+Selain dokumentasi teknis di atas, hasil penelitian ini disusun menjadi naskah publikasi dengan riwayat pengembangan sebagai berikut.
+
+\subsection{Naskah dan Versi}
+\begin{itemize}[leftmargin=1.4cm]
+    \item \texttt{nids-01.tex} --- naskah master berbahasa Indonesia (abstrak dwibahasa ID/EN). Berfungsi sebagai kompilasi bahan terlengkap; bukan berbasis templat jurnal tertentu.
+    \item \texttt{nids-itb.tex} --- versi bahasa Inggris penuh yang diselaraskan dengan gaya \textit{Journal of Engineering and Technological Sciences} (JETS-ITB): struktur \textit{Introduction / Materials and Methods / Results / Discussion / Conclusion}, sitasi gaya APA \textit{name-year}, dan 54 rujukan tersusun alfabetis. Naskah inilah yang disiapkan untuk submisi (target akhir berupa berkas \texttt{.docx} sesuai templat jurnal).
+    \item \texttt{panduan-nids01.tex} --- dokumen pendamping teknis (berkas ini).
+\end{itemize}
+
+\subsection{Riwayat Peninjauan (Peer Review)}
+Naskah sempat ditinjau dengan rekomendasi \textit{Major Revision}. Tiga catatan mayor telah ditanggapi secara substantif dan jujur terhadap kode/eksperimen nyata:
+\begin{enumerate}[leftmargin=1.4cm]
+    \item \textbf{Kejelasan gradien pada model \textit{non-differentiable}.} Ditegaskan bahwa XGBoost berbasis pohon bersifat \textit{non-differentiable}; gradien untuk \textit{Saliency Map} tidak dihitung analitik, melainkan diaproksimasi secara numerik dengan \textit{central finite difference} ($h=0{,}01$) atas \textit{loss} \textit{cross-entropy} dari probabilitas keluaran (\texttt{predict\_proba}, objektif \texttt{multi:softprob}) --- setara skema serangan \textit{score-based} (\textit{zeroth-order}).
+    \item \textbf{White-box vs. transfer attack.} Diakui secara eksplisit bahwa evaluasi S4 memakai skema \textit{transfer attack} (perturbasi dari model \textit{baseline}), sehingga nilai ketangguhan berpotensi optimis; evaluasi \textit{white-box adaptive} ditetapkan sebagai arah penelitian lanjutan.
+    \item \textbf{Solusi penurunan kinerja \textit{real-traffic}.} Ditambahkan tiga solusi konkret terhadap \textit{feature mismatch}: kalibrasi \textit{extractor} (NFStream$\leftrightarrow$CICFlowMeter), \textit{domain adaptation}/\textit{transfer learning}, dan pelatihan berbasis multi-\textit{extractor}.
+\end{enumerate}
+Catatan minor (pencetakan miring istilah asing, penajaman pembahasan \textit{radar chart}, konsistensi simbol $\epsilon$, dan format rujukan) juga telah diperbaiki, termasuk koreksi konsistensi angka fitur (83 fitur mentah $\rightarrow$ 68 fitur bersih $\rightarrow$ Top-10) dan hiperparameter model (\texttt{max\_depth}=8, \texttt{n\_estimators}=200) agar selaras dengan kode.
+
+\subsection{Luaran Gambar (Dwibahasa)}
+Gambar hasil dibuat dalam dua bahasa agar dapat dipakai lintas versi naskah:
+\begin{itemize}[leftmargin=1.4cm]
+    \item \textbf{Diagram} (TikZ $\rightarrow$ PNG, label Inggris): \textit{flowchart} metodologi, alur \textit{adversarial training}, dan topologi infrastruktur AWS.
+    \item \textbf{Gambar evaluasi} (dari model \& data nyata, versi ID dan EN): \textit{confusion matrix} $2\times 2$, \textit{radar chart} multi-metrik, dan \textit{grouped bar} S1--S4. Angka pada gambar konsisten dengan naskah (S1 MCC $0{,}9351$; S2 $0{,}0184$; S3 $0{,}9347$; S4 $0{,}9953$).
+\end{itemize}
+Seluruh gambar dan skrip pembangkitnya (\texttt{make\_nids\_eval\_figures\_bilingual.py}) tersimpan pada direktori \texttt{nids-figures/}.
+
+% ======================================================
 \section{Kesimpulan Teknis}
 Eksperimen berhasil memvalidasi model NIDS pada trafik jaringan nyata melalui pipeline yang sepenuhnya reproduktif: pembentukan model \textit{baseline} dan \textit{robust} dari dataset CSE-CIC-IDS2018, pembangkitan serangan aktif, penangkapan paket, ekstraksi fitur berbasis NFStream dengan plugin kustom untuk TCP window, dan inferensi model. Hasil menunjukkan bahwa pola ketangguhan model tetap konsisten dengan pengujian offline --- \textit{baseline} rentan terhadap \textit{evasion}, \textit{robust} bertahan --- sekaligus mengungkap tantangan generalisasi akibat perbedaan perkakas ekstraksi fitur dan lingkungan jaringan. Dokumen ini beserta seluruh berkas pendukung memungkinkan verifikasi dan reproduksi eksperimen secara menyeluruh.
 
