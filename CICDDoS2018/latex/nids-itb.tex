@@ -88,7 +88,14 @@ In addition, a review of generative and adversarial NIDS literature reveals two 
 Based on these gaps, this study proposes an approach that integrates XGBoost Gain-based feature reduction with Saliency Map-based Adversarial Training, then validates it not only offline on the CSE-CIC-IDS2018 dataset but also on real traffic in an AWS cloud environment. The main contributions of this study are: (1) quantifying the security gap caused by evasion attacks on a feature-reduced tree-based model; (2) demonstrating the effectiveness of Adversarial Training in restoring model robustness without sacrificing accuracy on normal traffic; (3) determining the feature-dimension sweet spot through a Robustness Ablation Study; and (4) validating the consistency of model robustness on real network traffic---an aspect rarely addressed in adversarial NIDS literature.
 
 \section{Materials and Methods}
-The methodology of this study is systematically designed to evaluate and improve the robustness of an NIDS against evasion attacks. It comprises six main stages: dataset preprocessing, XGBoost Gain-based feature optimization, adversarial sample generation, adversarial training, robustness ablation study, and model evaluation.
+The methodology of this study is systematically designed to evaluate and improve the robustness of an NIDS against evasion attacks. It comprises six main stages: dataset preprocessing, XGBoost Gain-based feature optimization, adversarial sample generation, adversarial training, robustness ablation study, and model evaluation, as illustrated in Figure~\ref{fig:flowchart}.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.9\linewidth]{../nids-figures/fig_flowchart.png}
+\caption{research methodology flowchart}
+\label{fig:flowchart}
+\end{figure}
 
 \subsection{Dataset and Data Preprocessing}
 This study uses the CSE-CIC-IDS2018 dataset provided by the Canadian Institute for Cybersecurity (CIC) \citep{ref_cicids}. This dataset was selected because it offers broad attack coverage reflecting modern network scenarios, consisting of ten CSV files with a total size of approximately 6.7 GB. It covers benign traffic profiles and seven main attack categories: Brute-Force (SSH/FTP), DoS, DDoS, Web Attacks, Infiltration, and Botnet.
@@ -182,7 +189,14 @@ The practical implementation augments the training set: from the clean training 
 \mathcal{D}_{robust} = \mathcal{D}_{clean} \cup \mathcal{D}_{adv}
 \end{equation}
 
-Retraining XGBoost on $\mathcal{D}_{robust}$ adjusts the split thresholds of the decision trees so that regions around the original samples---previously vulnerable to an $\epsilon$-shift---are now covered within the correct decision region, improving robustness without sacrificing accuracy on normal traffic.
+Retraining XGBoost on $\mathcal{D}_{robust}$ adjusts the split thresholds of the decision trees so that regions around the original samples---previously vulnerable to an $\epsilon$-shift---are now covered within the correct decision region, improving robustness without sacrificing accuracy on normal traffic. The complete adversarial training workflow is illustrated in Figure~\ref{fig:advtrain}.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\linewidth]{../nids-figures/fig_advtrain.png}
+\caption{systematic adversarial training workflow}
+\label{fig:advtrain}
+\end{figure}
 
 \subsection{Robustness Ablation Study}
 The Robustness Ablation Study evaluates the trade-off between feature-dimension efficiency and the model's security against evasion attacks. Testing isolates the feature variable into four hierarchical levels based on the XGBoost Gain ranking, as detailed in Table~\ref{tab:ablation_config}.
@@ -314,6 +328,22 @@ S4 (Robustness)    & Robust   & Manipulated & \textbf{0.9953} & \textbf{0.9985} 
 
 Under evasion attack, the baseline MCC collapses from 0.9351 (S1) to 0.0184 (S2), a 98\% decline that constitutes the security gap. After Adversarial Training, the robust model recovers to MCC = 0.9953 on manipulated data (S4), an increase of $+0.9769$ over S2. Meanwhile, the robust model on clean data (S3) retains MCC = 0.9347, only 0.04\% below the baseline S1, indicating that hardening does not degrade normal-traffic detection. Notably, the $F_1$-score in S2 remains at 0.7539 despite the near-zero MCC, because the weighted $F_1$ is still inflated by correct classification of the majority (benign) class, whereas MCC more sensitively captures the collapse on the minority (attack) classes.
 
+The per-class behavior across the four scenarios is visualized in the confusion matrices of Figure~\ref{fig:confusion}. In S2, nearly all attack classes are misclassified as benign (the collapse), whereas S4 restores a clean diagonal, confirming the recovery. A grouped-bar summary of the four metrics is shown in Figure~\ref{fig:groupedbar}.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\linewidth]{../nids-figures/evaluation_confusion_2x2_en.png}
+\caption{confusion matrices for the 2x2 evaluation scenarios (XGBoost Top-10, $\epsilon=0.1$)}
+\label{fig:confusion}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.85\linewidth]{../nids-figures/evaluation_grouped_bar_2x2_en.png}
+\caption{comprehensive metric comparison across scenarios S1--S4}
+\label{fig:groupedbar}
+\end{figure}
+
 \subsection{Robustness Ablation Results: Feature-Dimension Sweet Spot}
 The Robustness Ablation Study evaluated the effect of feature pruning on resilience under evasion ($\epsilon = 0.10$). Table~\ref{tab:robustness_ablation} reports the adversarial-data MCC for the baseline (S2) and robust (S4) models across the four configurations, together with the recovery achieved by Adversarial Training.
 
@@ -335,7 +365,14 @@ $C_4$ (Top-5)  & 5  & $-0.070$ & 0.873 & $+0.943$ \\ \bottomrule
 All baseline models collapse under attack (MCC near zero or negative), whereas every robust model recovers to MCC $> 0.87$. The Top-5 configuration ($C_4$) shows the lowest robustness (MCC S4 = 0.873), indicating that five features are insufficient to form a stable decision boundary. Configurations $C_1$, $C_2$, and $C_3$ differ only marginally in MCC S4 (0.997, 0.992, and 0.995 respectively; $< 0.5\%$), while model size grows from 5.65~MB to 7.17~MB. The Top-10 configuration ($C_3$) is the only one that keeps the baseline adversarial MCC positive (0.018) while achieving MCC S4 = 0.995, confirming it as the optimal sweet spot.
 
 \subsection{Real-Traffic Validation in the AWS Cloud Environment}
-To verify that the offline findings are not merely laboratory artifacts, the baseline and robust models were tested on real network traffic generated in an Amazon Web Services (AWS) cloud environment. The testing infrastructure was built inside a Virtual Private Cloud (VPC, $10.3.0.0/16$) comprising three EC2 nodes: an Attacker node (public subnet) running Hydra, Slowloris, and \texttt{nping}; a Target node (private subnet) running SSH and HTTP (Nginx) services; and an Analyzer node performing feature extraction and inference. Traffic to the Target was captured using \texttt{tcpdump}, stored to Amazon S3, and extracted into flow features using the NFStream library. Because NFStream does not natively expose two of the Top-10 TCP window features (\textit{Init Fwd Win Byts} and \textit{Init Bwd Win Byts}), a custom NFStream plugin was developed to parse the TCP window value from the first packet of each flow direction, so that all 10 features could be extracted intact.
+To verify that the offline findings are not merely laboratory artifacts, the baseline and robust models were tested on real network traffic generated in an Amazon Web Services (AWS) cloud environment. The testing infrastructure was built inside a Virtual Private Cloud (VPC, $10.3.0.0/16$) comprising three EC2 nodes: an Attacker node (public subnet) running Hydra, Slowloris, and \texttt{nping}; a Target node (private subnet) running SSH and HTTP (Nginx) services; and an Analyzer node performing feature extraction and inference. Traffic to the Target was captured using \texttt{tcpdump}, stored to Amazon S3, and extracted into flow features using the NFStream library. Because NFStream does not natively expose two of the Top-10 TCP window features (\textit{Init Fwd Win Byts} and \textit{Init Bwd Win Byts}), a custom NFStream plugin was developed to parse the TCP window value from the first packet of each flow direction, so that all 10 features could be extracted intact. The testing topology is shown in Figure~\ref{fig:aws}.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\linewidth]{../nids-figures/fig_aws.png}
+\caption{real-traffic testing infrastructure on AWS: the attacker node (public subnet) launches attacks against the target node (private subnet); traffic is captured at the target and routed through Amazon S3 to the analyzer node for feature extraction and inference}
+\label{fig:aws}
+\end{figure}
 
 The test replicated the $2\times 2$ matrix (RT-S1 to RT-S4) equivalent to the offline scenarios. Table~\ref{tab:real_traffic} compares real-traffic results with offline results on the Top-10 configuration.
 
@@ -369,7 +406,14 @@ The observation that MCC in S4 (0.9953) exceeds S1 (0.9351) warrants careful int
 \subsection{Feature-Dimension Sweet Spot and Practical Implications}
 The Robustness Ablation Study confirms Top-10 ($C_3$) as the optimal balance: it reduces model size by 21.2\% (7.17~MB to 5.65~MB) while maintaining robustness (MCC S4 = 0.995) practically identical to the full model (0.997) and slightly above Top-15 (0.992). Extreme pruning to five features ($C_4$) degrades robustness to 0.873, indicating that five dimensions cannot form a stable decision boundary. These findings carry practical weight for modern network-security architectures. First, the compact $\approx 5.65$~MB model can be embedded directly into resource-constrained edge devices such as routers and IoT gateways, removing the dependency on centralized cloud processing. Second, in serverless architectures (e.g., AWS Lambda) where cost scales with execution time and memory, using only 10 features keeps inference very fast and memory-light, reducing operational cost at enterprise scale. Third, the robust model's resilience (MCC = 0.9953) mitigates false-alarm fatigue, ensuring the NIDS is not easily paralyzed by deliberately crafted TCP/IP-variable shifts.
 
-The holistic radar comparison across five metrics (MCC, $F_1$-score, Precision, Recall, Accuracy) reinforces this reading: the near-full, symmetric polygons of S1, S3, and S4 indicate balanced high performance, whereas the sharply shrunken S2 polygon---collapsing on the MCC axis yet still wide on Accuracy and Recall---visually confirms the misleading nature of conventional metrics on imbalanced data. The similar polygon shapes of S1, S3, and S4 further emphasize that Adversarial Training restores robustness without distorting the model's detection profile under normal conditions.
+The holistic radar comparison across five metrics (MCC, $F_1$-score, Precision, Recall, Accuracy), shown in Figure~\ref{fig:radar}, reinforces this reading: the near-full, symmetric polygons of S1, S3, and S4 indicate balanced high performance, whereas the sharply shrunken S2 polygon---collapsing on the MCC axis yet still wide on Accuracy and Recall---visually confirms the misleading nature of conventional metrics on imbalanced data. The similar polygon shapes of S1, S3, and S4 further emphasize that Adversarial Training restores robustness without distorting the model's detection profile under normal conditions.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.7\linewidth]{../nids-figures/evaluation_radar_2x2_en.png}
+\caption{multi-metric radar comparison of scenarios S1--S4}
+\label{fig:radar}
+\end{figure}
 
 \subsection{Generalization to Real Traffic and Mitigation Strategies}
 The real-traffic validation delivers a nuanced but important message. While the absolute MCC drops on AWS traffic, the relative pattern is preserved---the baseline degrades under evasion (MCC $0.164 \rightarrow -0.070$) whereas the robust model improves (MCC $0.339 \rightarrow 0.389$) with perfect Precision. This confirms that the core contribution, the effectiveness of Adversarial Training, is robust across test domains, not merely a benchmark artifact. At the same time, it exposes a generalization challenge rarely discussed in the literature: strong benchmark performance does not guarantee real-world generalization, chiefly because of differences in feature-extraction tooling and network environment. The drop is not a fundamental model failure but a manifestation of distribution shift, driven by the extractor-definition mismatch ($z \approx +6.2$ on \textit{Fwd Seg Size Min}) and the environmental difference in TCP window size ($z \approx +3.3$ on \textit{Init Fwd Win Byts}).
