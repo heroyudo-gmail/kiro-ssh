@@ -16,7 +16,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-FIG = os.path.join(HERE, "figures")
+FIG = os.path.join(HERE, "figure-q1")
 os.makedirs(FIG, exist_ok=True)
 
 plt.rcParams.update({"font.size": 11, "figure.dpi": 150, "axes.grid": True,
