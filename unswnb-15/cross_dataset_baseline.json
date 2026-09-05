@@ -1,0 +1,173 @@
+{
+  "deskripsi": "Baseline cross-dataset XGBoost tunggal (biner attack/normal), z-score per dataset.",
+  "config": {
+    "max_depth": 8,
+    "learning_rate": 0.1,
+    "n_estimators": 200,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "objective": "binary:logistic"
+  },
+  "model_A_features": [
+    "duration",
+    "fwd_pkts",
+    "bwd_pkts",
+    "fwd_bytes",
+    "bwd_bytes",
+    "fwd_mean",
+    "bwd_mean",
+    "src_load",
+    "dst_load"
+  ],
+  "model_B_features": [
+    "duration",
+    "fwd_pkts",
+    "bwd_pkts",
+    "fwd_bytes",
+    "bwd_bytes",
+    "fwd_mean",
+    "bwd_mean",
+    "src_load",
+    "dst_load",
+    "fwd_iat",
+    "bwd_iat"
+  ],
+  "results": {
+    "model_A": {
+      "same_cic": {
+        "mcc": 0.9133512121580263,
+        "f1": 0.9276585260694158,
+        "acc": 0.9758819168793726,
+        "roc_auc": 0.9814466607867681,
+        "confusion": [
+          [
+            399929,
+            4607
+          ],
+          [
+            7138,
+            75305
+          ]
+        ]
+      },
+      "same_unsw": {
+        "mcc": 0.7448033460563942,
+        "f1": 0.8904141297237458,
+        "acc": 0.8677427974542098,
+        "roc_auc": 0.9785040553656983,
+        "confusion": [
+          [
+            27205,
+            9795
+          ],
+          [
+            1094,
+            44238
+          ]
+        ]
+      },
+      "cic2unsw": {
+        "mcc": -0.0719077305899197,
+        "f1": 0.022440869583696368,
+        "acc": 0.4412743526210951,
+        "roc_auc": 0.5972892452917932,
+        "confusion": [
+          [
+            35803,
+            1197
+          ],
+          [
+            44804,
+            528
+          ]
+        ]
+      },
+      "unsw2cic": {
+        "mcc": -0.06125040113209987,
+        "f1": 0.008546713345997457,
+        "acc": 0.8054761372323982,
+        "roc_auc": 0.4847597783541206,
+        "confusion": [
+          [
+            1306137,
+            42316
+          ],
+          [
+            273447,
+            1361
+          ]
+        ]
+      },
+      "gap_cic_train": 0.9853,
+      "gap_unsw_train": 0.8061
+    },
+    "model_B": {
+      "same_cic": {
+        "mcc": 0.9137079136929812,
+        "f1": 0.9279716319042577,
+        "acc": 0.9759743233281106,
+        "roc_auc": 0.9819756623787371,
+        "confusion": [
+          [
+            399911,
+            4625
+          ],
+          [
+            7075,
+            75368
+          ]
+        ]
+      },
+      "same_unsw": {
+        "mcc": 0.7428161543112659,
+        "f1": 0.8895833124001488,
+        "acc": 0.8665282028858767,
+        "roc_auc": 0.9785574604539243,
+        "confusion": [
+          [
+            27076,
+            9924
+          ],
+          [
+            1065,
+            44267
+          ]
+        ]
+      },
+      "cic2unsw": {
+        "mcc": 0.0034504221913455747,
+        "f1": 0.0005292171995589857,
+        "acc": 0.4494728659573434,
+        "roc_auc": 0.4734697832925134,
+        "confusion": [
+          [
+            36994,
+            6
+          ],
+          [
+            45320,
+            12
+          ]
+        ]
+      },
+      "unsw2cic": {
+        "mcc": -0.046431695112686175,
+        "f1": 0.11598337288881261,
+        "acc": 0.7239550509745506,
+        "roc_auc": 0.38676478782475476,
+        "confusion": [
+          [
+            1145773,
+            202680
+          ],
+          [
+            245413,
+            29395
+          ]
+        ]
+      },
+      "gap_cic_train": 0.9103,
+      "gap_unsw_train": 0.7892
+    }
+  }
+}
