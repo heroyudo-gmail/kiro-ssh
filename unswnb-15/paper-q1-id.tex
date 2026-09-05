@@ -426,9 +426,35 @@ paket/byte yang sudah terkirim. Untuk fitur biner/kategori, batas langkah
 efektif $\delta = 0$ (tak boleh diubah). Secara operasional, kami memakai
 \emph{projected FGSM}: langkah FGSM Persamaan~\eqref{eq:fgsm} diikuti proyeksi
 $\Pi_{\mathcal{S}_{valid}}(\cdot)$ yang menerapkan Persamaan~\eqref{eq:constraints}
-(\emph{clip} non-negatif, pembulatan paket, penegakan $sbytes\!\ge\!spkts$,
-penyetelan ulang rata-rata, dan proyeksi \emph{add-only}) di ruang asli sebelum
-dipetakan kembali ke ruang ter-\emph{z-score}.
+di ruang asli sebelum dipetakan kembali ke ruang ter-\emph{z-score}.
+
+Operator proyeksi $\Pi_{\mathcal{S}_{valid}}$ didefinisikan secara operasional
+sebagai komposisi terurut berikut. Diberikan sampel kandidat $\mathbf{x}'$ pada
+ruang ter-\emph{z-score} dan \emph{scaler} per-dataset $(\boldsymbol{\mu},
+\boldsymbol{\sigma})$:
+\begin{enumerate}
+  \item \textbf{Denormalisasi:} $\mathbf{u} \leftarrow \mathbf{x}' \odot
+  \boldsymbol{\sigma} + \boldsymbol{\mu}$ (ke ruang fitur asli).
+  \item \textbf{Non-negatif:} $u_j \leftarrow \max(u_j, 0)$ untuk semua $j$
+  [Pers.~\eqref{eq:c-nonneg}].
+  \item \textbf{Pembulatan paket:} $u_j \leftarrow \operatorname{round}(u_j)$
+  untuk $j\in\{spkts, dpkts\}$ [Pers.~\eqref{eq:c-int}].
+  \item \textbf{Monotonic \emph{add-only}:} $u_j \leftarrow \max(u_j, x^{\text{orig}}_j)$
+  untuk $j\in\{spkts, dpkts, sbytes, dbytes, dur\}$, dengan $\mathbf{x}^{\text{orig}}$
+  sampel bersih acuan [Pers.~\eqref{eq:c-mono}].
+  \item \textbf{Konsistensi volume:} $sbytes \leftarrow \max(sbytes, spkts)$;
+  $dbytes \leftarrow \max(dbytes, dpkts)$ [Pers.~\eqref{eq:c-consistency}].
+  \item \textbf{Penyetelan rata-rata:} $smean \leftarrow sbytes/spkts$ bila
+  $spkts>0$ (analog untuk $dmean$), menjaga identitas statistik
+  [Pers.~\eqref{eq:c-mean}].
+  \item \textbf{Renormalisasi:} $\Pi_{\mathcal{S}_{valid}}(\mathbf{x}') \leftarrow
+  (\mathbf{u} - \boldsymbol{\mu}) \oslash \boldsymbol{\sigma}$ (kembali ke ruang
+  ter-\emph{z-score}).
+\end{enumerate}
+Urutan langkah penting: penegakan \emph{add-only} (4) mendahului konsistensi
+volume (5) dan penyetelan rata-rata (6) agar hasil akhir memenuhi seluruh kendala
+secara simultan. Fitur biner/kategori (tidak dipakai pada Model A) memiliki
+$\delta=0$ sehingga dilewati proyeksi.
 
 \begin{figure}[h]
 \centering
@@ -480,6 +506,17 @@ UNSW). Ini konsisten dengan fenomena \emph{obfuscated gradients}: model
 ``menghafal'' pola serangan transfer, bukan menjadi robust sejati. Konsekuensi
 metodologis: evaluasi ketahanan NIDS \emph{wajib} menyertakan
 \emph{adaptive white-box}; laporan yang hanya \emph{transfer} menyesatkan.
+
+\paragraph{Arah mitigasi (kerja mendatang).} Temuan ini tidak berhenti pada
+pengungkapan kelemahan. Beberapa strategi menjanjikan untuk memperkuat ketahanan
+terhadap serangan adaptif dapat dieksplorasi: (i) \emph{adversarial training}
+berbasis \emph{multi-step} PGD dengan \emph{functional-preserving constraint}
+diterapkan sejak fase pelatihan (bukan FGSM satu langkah), sehingga model
+menghadapi perturbasi terkuat-yang-valid alih-alih menghafal satu pola transfer;
+dan (ii) \emph{randomized smoothing} atau penghalusan batas keputusan
+(\emph{decision-boundary smoothing}) yang mengaburkan sinyal gradien pada model
+berbasis pohon, menyulitkan penyerang mengoptimasi arah \emph{evasion}. Kedua
+pendekatan ini merupakan arah lanjutan yang wajar bagi NIDS tabular.
 
 % ============================================================
 \section{Diskusi}
@@ -574,20 +611,36 @@ Kode, konfigurasi, \emph{notebook}, dan berkas hasil ringkas ($*.json$) tersedia
 di repositori. Dataset besar tidak disertakan (lisensi/ukuran) namun dapat
 diperoleh dari sumber resmi masing-masing.
 
+% Format referensi: gaya IEEE — inisial nama depan; judul dalam tanda kutip;
+% nama venue italik; konferensi diawali "in Proc."; halaman & tahun.
 \begin{thebibliography}{9}
-\bibitem{coral} B. Sun, J. Feng, K. Saenko, ``Return of Frustratingly Easy
-Domain Adaptation,'' \emph{AAAI}, 2016.
-\bibitem{obfuscated} A. Athalye, N. Carlini, D. Wagner, ``Obfuscated Gradients
-Give a False Sense of Security,'' \emph{ICML}, 2018.
-\bibitem{adaptive} F. Tram\`er et al., ``On Adaptive Attacks to Adversarial
-Example Defenses,'' \emph{NeurIPS}, 2020.
-\bibitem{unsw} N. Moustafa, J. Slay, ``UNSW-NB15: A Comprehensive Data Set for
-Network Intrusion Detection Systems,'' \emph{MilCIS}, 2015.
-\bibitem{cicids} I. Sharafaldin, A. H. Lashkari, A. A. Ghorbani, ``Toward
-Generating a New Intrusion Detection Dataset and Intrusion Traffic
-Characterization,'' \emph{ICISSP}, 2018.
-\bibitem{xgboost} T. Chen, C. Guestrin, ``XGBoost: A Scalable Tree Boosting
-System,'' \emph{KDD}, 2016.
+\bibitem{coral} B.~Sun, J.~Feng, and K.~Saenko, ``Return of frustratingly easy
+domain adaptation,'' in \emph{Proc. 30th AAAI Conf. Artificial Intelligence
+(AAAI)}, Phoenix, AZ, USA, 2016, pp.~2058--2065.
+
+\bibitem{obfuscated} A.~Athalye, N.~Carlini, and D.~Wagner, ``Obfuscated
+gradients give a false sense of security: Circumventing defenses to adversarial
+examples,'' in \emph{Proc. 35th Int. Conf. Machine Learning (ICML)}, Stockholm,
+Sweden, 2018, pp.~274--283.
+
+\bibitem{adaptive} F.~Tram\`er, N.~Carlini, W.~Brendel, and A.~M\k{a}dry, ``On
+adaptive attacks to adversarial example defenses,'' in \emph{Proc. 34th Conf.
+Neural Information Processing Systems (NeurIPS)}, Vancouver, Canada, 2020,
+pp.~1633--1645.
+
+\bibitem{unsw} N.~Moustafa and J.~Slay, ``UNSW-NB15: A comprehensive data set
+for network intrusion detection systems (UNSW-NB15 network data set),'' in
+\emph{Proc. Military Communications and Information Systems Conf. (MilCIS)},
+Canberra, Australia, 2015, pp.~1--6.
+
+\bibitem{cicids} I.~Sharafaldin, A.~H.~Lashkari, and A.~A.~Ghorbani, ``Toward
+generating a new intrusion detection dataset and intrusion traffic
+characterization,'' in \emph{Proc. 4th Int. Conf. Information Systems Security
+and Privacy (ICISSP)}, Funchal, Portugal, 2018, pp.~108--116.
+
+\bibitem{xgboost} T.~Chen and C.~Guestrin, ``XGBoost: A scalable tree boosting
+system,'' in \emph{Proc. 22nd ACM SIGKDD Int. Conf. Knowledge Discovery and
+Data Mining (KDD)}, San Francisco, CA, USA, 2016, pp.~785--794.
 \end{thebibliography}
 
 \end{document}

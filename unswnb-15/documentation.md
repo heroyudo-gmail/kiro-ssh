@@ -520,3 +520,48 @@ Model A (9 fitur), biner, 2 arah (CIC, UNSW). Per arah dilatih **baseline** dan 
 ### 16.5 Arah Berikutnya (T10+)
 - Long-Term Real-Traffic Deployment AWS (3–7 hari), ukur FAR (butuh biaya & waktu nyata).
 - Penulisan naskah Q1 + gambar/tabel dari hasil nyata T3–T9.
+
+---
+
+## 17. Hasil Peer Review Q1 & Rencana Revisi (Minor Revision)
+
+Naskah `paper-q1-id.tex` (+ 6 gambar `figure-q1/`) telah ditinjau sejawat dengan
+rekomendasi **Minor Revision** — dinilai hampir siap untuk jurnal top-tier Q1
+(mis. *Computers & Security* Elsevier, atau *IEEE TDSC*). Tinjauan lengkap dirangkum
+di `reviewer.md`.
+
+### 17.1 Kekuatan yang Diakui Reviewer
+1. **Integritas ilmiah luar biasa** — pelaporan jujur runtuhnya MCC robust dari 0,99
+   (transfer) ke 0,25–0,43 (adaptive) sebagai bukti *obfuscated gradients*.
+2. **Studi kasus TCP Window Mismatch (§3.2)** — validasi statistik swin/dwin biner vs
+   Init Win Byts kontinu; bukti empiris *extractor mismatch* yang nyata.
+3. **Formulasi evasion realistis (§8.1)** — *functional-preserving constraints* mengoreksi
+   evaluasi adversarial konvensional yang menghasilkan paket mustahil.
+4. **Analisis asimetri performa (§9.1)** — CIC→UNSW lebih sulit dari arah sebaliknya,
+   dianalisis dari kompleksitas domain.
+5. **Visualisasi kualitas publikasi** (Gambar 1–5).
+
+### 17.2 Empat Poin Revisi Minor (A–D) + Status
+
+| Poin | Isi | Butuh eksekusi nyata? | Status |
+|---|---|---|---|
+| **A** | Isi placeholder `[TBD]` Tabel 1 (ukuran model, latensi inferensi, throughput di 1 vCPU) — KRITIS, pemicu desk-reject | Ya (ukur model 9-fitur) | **Menunggu pengukuran** (jangan diisi angka karangan) |
+| **B** | Definisi formal operator proyeksi $\Pi_{\mathcal{S}_{valid}}$ (algoritma clip/round/monotonic sebelum re-scale) | Tidak (penulisan) | **SELESAI** (§8.1 naskah) |
+| **C** | Tambah 1–2 kalimat strategi pertahanan potensial thd serangan adaptif (mis. multi-step PGD functional-constrained sejak training; randomized smoothing / decision-boundary smoothing) | Tidak (penulisan) | **SELESAI** (§9.1 naskah) |
+| **D** | Konsistenkan format referensi (gaya IEEE, singkatan konferensi/jurnal seragam) | Tidak (penulisan) | **SELESAI** (bibliography naskah) |
+
+### 17.3 Catatan Kejujuran (Poin A)
+Poin A adalah satu-satunya penghalang submit dan **wajib angka nyata**:
+- Ukuran biner model XGBoost 9-fitur (KB).
+- Rata-rata latensi inferensi per *flow* (µs) pada 1 vCPU.
+- *Throughput* (flow/detik).
+
+Pengukuran ini dapat dilakukan begitu model 9-fitur tersedia (dari training SageMaker) —
+tidak memerlukan deployment AWS penuh, cukup lingkungan dengan model + 1 vCPU. Sampai
+diukur, slot tetap `[TBD]` agar naskah tidak memuat angka karangan. Angka ini sekaligus
+memperkuat klaim *Edge-friendly / Green AI* (§3.4).
+
+### 17.4 Kesimpulan Reviewer
+Penelitian dinilai menetapkan standar tinggi untuk pengujian NIDS lintas-jaringan yang
+jujur dan realistis. Setelah Poin A diisi data riil dan Poin B diperjelas (sudah), naskah
+berada pada posisi matang untuk bersaing di jurnal Q1.

@@ -110,3 +110,27 @@ Agar rencana T10 tidak terlihat "janji kosong", tambahkan *deployment blueprint 
 3. **B3** — ukur ukuran model + latency (ringan, angka konkret untuk framing Edge/Green AI).
 4. **B5** — diagram arsitektur deployment.
 5. **T10** — eksekusi AWS nyata (biaya & waktu), lalu isi hasil FAR + buat versi English.
+
+
+---
+
+## E. Peer Review Q1 Kedua — Rekomendasi: MINOR REVISION
+
+Tinjauan sejawat kedua atas naskah `paper-q1-id.tex` (setelap tindak lanjut A–B sebelumnya).
+Rekomendasi: **Minor Revision** — dinilai hampir siap untuk *Computers & Security* (Elsevier)
+atau *IEEE TDSC*. Empat poin revisi minor:
+
+| Poin | Isi | Butuh eksekusi nyata? | Status |
+|---|---|---|---|
+| **A** | Isi placeholder `[TBD]` Tabel efisiensi (§3.4): ukuran model, latensi inferensi, throughput @1 vCPU — KRITIS (pemicu desk-reject) | Ya (ukur model 9-fitur) | **Menunggu pengukuran** — jangan diisi karangan |
+| **B** | Definisi formal operator proyeksi $\Pi_{\mathcal{S}_{valid}}$ (algoritma 7 langkah) | Tidak | **SELESAI** (§8.1 naskah, langkah 1–7 + urutan) |
+| **C** | Strategi pertahanan potensial thd serangan adaptif (multi-step PGD functional-constrained; randomized smoothing / decision-boundary smoothing) | Tidak | **SELESAI** (paragraf "Arah mitigasi" §sec:awb) |
+| **D** | Konsistenkan format referensi gaya IEEE | Tidak | **SELESAI** (bibliography: in Proc., venue italik, halaman, kota) |
+
+**Kekuatan yang diakui reviewer:** integritas ilmiah (pelaporan jujur runtuh adaptive),
+studi kasus TCP window mismatch, functional-preserving evasion, analisis asimetri, gambar
+kualitas publikasi.
+
+**Sisa satu-satunya penghalang submit = Poin A** (angka efisiensi nyata). Bisa diukur begitu
+model 9-fitur tersedia (tidak butuh deployment AWS penuh, cukup 1 vCPU + model). Detail di
+`documentation.md` §17.
