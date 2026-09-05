@@ -93,7 +93,8 @@ Reviewer Q1 sering menolak paper adversarial karena perturbasi matematis diangga
 | T2 | Semantic Feature Mapping: tabel irisan fitur CIC-IDS2018 ↔ UNSW-NB15 (verifikasi semantik + statistik) | **SELESAI** (§10.4–10.8) |
 | T3 | Pra-pemrosesan seragam + baseline cross-dataset (XGBoost tunggal): latih A→uji B, kuantifikasi generalization gap | **SELESAI** (§11) |
 | T5 | Adversarial Training XGBoost tunggal pada fitur irisan + evaluasi lintas-dataset (2 arah × clean/adv) | **SELESAI** (§12) |
-| T6 | Cross-network alignment (domain adaptation / MMD / augmentasi campuran) untuk menaikkan MCC cross-network | Belum |
+| T6 | Cross-network alignment (baseline vs joint training vs CORAL) untuk menaikkan MCC cross-network | **SELESAI** (§13) |
+| T7 | Perkuat domain adaptation (MMD / adversarial domain-invariant / mixup lintas-dataset) | Belum |
 | T6 | Functional-Preserving Evasion (constraint protokol pada saddle-point) | Belum |
 | T7 | Adaptive White-Box Evaluation pada XGBoost robust | Belum |
 | T8 | Long-Term Real-Traffic Deployment AWS (3–7 hari), ukur FAR | Belum |
@@ -364,3 +365,46 @@ Perbaikan besar pada eps ≤ `eps_train` (0,1); pada eps=0,2 (melebihi eps latih
 ### 12.5 Arah Berikutnya (T6+)
 - **Cross-network alignment:** eksplisit menyelaraskan distribusi fitur antar-dataset (mis. adversarial *domain adaptation*, CORAL/MMD, atau augmentasi campuran dua dataset) untuk menaikkan MCC cross-network di atas ~0.
 - Lalu lanjut Functional-Preserving Evasion, Adaptive White-Box, Long-Term AWS deployment.
+
+---
+
+## 13. Cross-Network Alignment (T6 — SELESAI)
+
+Notebook `05_cross_network_alignment.ipynb`, dijalankan di SageMaker. Hasil di `cross_network_alignment.json`. **Seluruh angka hasil eksekusi nyata.**
+
+### 13.1 Setup
+Model A (9 fitur), biner, z-score per dataset. Tiga strategi dibandingkan:
+1. **Baseline single-source** (replikasi T3, pembanding).
+2. **Joint training** — latih pada gabungan CIC+UNSW (rasio ~3:1 agar CIC tak mendominasi), uji test masing-masing.
+3. **CORAL** (Sun et al. 2016) — *unsupervised domain adaptation*: selaraskan kovarians source→target (`X_align = X_s · C_s^{-1/2} · C_t^{1/2}`) TANPA label target, lalu latih di source ter-align, uji target.
+
+### 13.2 Hasil Cross-Network (MCC, uji dataset lain)
+
+| Strategi | CIC→UNSW | UNSW→CIC |
+|---|---|---|
+| Baseline single-source | −0,072 | −0,061 |
+| **CORAL alignment** | **−0,185** | **+0,164** |
+
+**Joint training** (satu model, uji test masing-masing):
+
+| Uji | MCC | (in-domain pembanding) |
+|---|---|---|
+| CIC test | **0,912** | (0,913) |
+| UNSW test | **0,732** | (0,745) |
+
+### 13.3 Temuan
+1. **Joint training = temuan terkuat.** Satu model tunggal yang melihat kedua jaringan saat latih mencapai MCC ~0,91 (CIC) dan ~0,73 (UNSW) **serentak** — hampir setara performa in-domain di **keduanya**. Ini bukti empiris kuat bahwa **Semantic Feature Mapping valid**: 9 fitur irisan cukup ekspresif merepresentasikan kedua jaringan. Masalah generalisasi **bukan pada fitur**, melainkan pada model single-source yang tak melihat distribusi target.
+2. **CORAL membantu sebagian & ASIMETRIS.** UNSW→CIC naik dari −0,061 ke **+0,164** (MCC positif pertama di cross-network). Namun CIC→UNSW justru **turun** (−0,072 → −0,185). Dugaan: distribusi CIC jauh lebih kaya/besar (1,6 jt flow); menyelaraskan kovarians CIC ke ruang UNSW yang lebih sempit merusak struktur, sedangkan arah sebaliknya memperkaya. **Penting:** +0,164 masih jauh di bawah in-domain (0,74–0,91) — CORAL membantu, belum menyelesaikan.
+3. **Diagnosis inti:** masalah generalisasi lintas-jaringan adalah **distribution shift**, bukan ketidakcukupan fitur. Alignment orde-2 (CORAL) belum memadai untuk arah dari sumber berdistribusi kaya.
+
+### 13.4 Kesimpulan untuk Paper Q1
+Rangkaian T3→T5→T6 membentuk **narasi kuantitatif yang bersih dan jujur**:
+- T3: model single-source kolaps lintas-jaringan (MCC ~0).
+- T5: adversarial training memperkuat evasion in-domain tetapi TIDAK menutup gap cross-network → *adversarial-robustness ≠ cross-network-robustness*.
+- T6: fitur irisan (SFM) TERBUKTI valid (joint training ~in-domain di kedua jaringan); gap disebabkan *distribution shift*; CORAL membantu sebagian & asimetris.
+
+**Implikasi:** kontribusi metodologis paper diarahkan ke penggabungan *multi-source exposure* + *domain adaptation* yang lebih kuat (mis. adversarial DA / MMD / mixup lintas-dataset), dengan SFM sebagai fondasi yang sudah tervalidasi.
+
+### 13.5 Arah Berikutnya (T7+)
+- Perkuat DA (MMD / adversarial domain-invariant features / mixup lintas-dataset) untuk menaikkan CIC→UNSW ke MCC positif dan mendekatkan cross ke joint.
+- Lalu Functional-Preserving Evasion, Adaptive White-Box, Long-Term AWS deployment.
