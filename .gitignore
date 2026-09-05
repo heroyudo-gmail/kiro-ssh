@@ -247,6 +247,7 @@ ransomware/aws/results-windows/aes_key.bin
 !unswnb-15/adversarial_cross_dataset.json
 !unswnb-15/cross_network_alignment.json
 !unswnb-15/domain_adaptation.json
+!unswnb-15/functional_preserving_evasion.json
 
 # Pengecualian: hasil eksperimen ransomware JSON (kecil, untuk reproduksibilitas paper)
 # Ditempatkan SETELAH *.json agar tidak ter-override.
