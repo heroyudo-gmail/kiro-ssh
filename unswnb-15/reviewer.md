@@ -96,7 +96,7 @@ Agar rencana T10 tidak terlihat "janji kosong", tambahkan *deployment blueprint 
 | B3 | Ukur ukuran model + inference latency; bingkai Edge/Green AI | naskah §3.4 + eksperimen | ya (ukur) | **Sebagian**: framing + tabel placeholder selesai (§3.4); angka nyata menunggu pengukuran |
 | B4 | Visualisasi t-SNE/UMAP distribution shift | `figure-q1/` + naskah §7 | ya (data) | Belum (butuh SageMaker) |
 | B5 | Diagram arsitektur deployment AWS | `figure-q1/` + naskah §12 | tidak | **SELESAI** (fig6, §12) |
-| T10 | Eksekusi deployment AWS 3–7 hari, ukur FAR (nyata) | eksperimen | ya (AWS) | Belum |
+| T10 | Eksekusi deployment AWS 3–7 hari, ukur FAR (nyata) | eksperimen | ya (AWS) | **Rencana matang** (`aws/deployment-plan.md`, adopsi pengalaman NIDS-01); eksekusi menunggu |
 
 > **Catatan kejujuran:** semua angka baru (ukuran model, latency, FAR, koordinat t-SNE) wajib
 > berasal dari eksperimen nyata yang dapat direproduksi — konsisten dengan prinsip kerja kita.
