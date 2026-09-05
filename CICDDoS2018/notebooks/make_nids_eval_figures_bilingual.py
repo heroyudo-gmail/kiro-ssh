@@ -129,6 +129,7 @@ def full_eval(model, X, y):
 
 
 def load_everything():
+    print("[1/5] Loading experiment_results_03.pkl ...", flush=True)
     with open(os.path.join(DATA_DIR, "experiment_results_03.pkl"), "rb") as f:
         exp = pickle.load(f)
     top10 = exp["top10_features"]
@@ -136,9 +137,11 @@ def load_everything():
     label_mapping = exp["label_mapping"]
     inv = {v: k for k, v in label_mapping.items()}
 
+    print("[2/5] Loading cleaned_100.pkl (may take a while) ...", flush=True)
     with open(os.path.join(DATA_DIR, "cleaned_100.pkl"), "rb") as f:
         data = pickle.load(f)
     X_all, y_all = data["X"], data["y"]
+    print(f"      dataset loaded: X={getattr(X_all, 'shape', '?')}", flush=True)
     idx = [names.index(f) for f in top10 if f in names]
     X_top10 = X_all[:, idx]
     X_train, X_test, y_train, y_test = train_test_split(
@@ -153,33 +156,42 @@ def load_everything():
     base_file = [f for f in files if "xgboost" in f and "top-10" in f and f.endswith(".json")]
     base = XGBClassifier()
     if base_file:
+        print(f"[3/5] Loading baseline model: {base_file[0]}", flush=True)
         base.load_model(os.path.join(deploy, base_file[0]))
     else:
+        print("[3/5] Baseline model not found -> retraining (this is slow) ...", flush=True)
         base = XGBClassifier(n_estimators=200, max_depth=8, learning_rate=0.1,
                              subsample=0.8, colsample_bytree=0.8,
                              objective="multi:softprob", num_class=n_classes,
                              eval_metric="mlogloss", random_state=RANDOM_SEED,
                              n_jobs=-1, tree_method="hist")
         base.fit(X_train, y_train)
+    print("[4/5] Loading robust model: robust_xgboost_top10.json", flush=True)
     robust = XGBClassifier()
     robust.load_model(os.path.join(MODEL_DIR, "robust_xgboost_top10.json"))
+    print("[5/5] Models ready.", flush=True)
     return top10, inv, X_test, y_test, base, robust
 
 
 def main():
+    import sys
+    max_n = int(sys.argv[1]) if len(sys.argv) > 1 else 50000
     top10, inv, X_test, y_test, base, robust = load_everything()
-    N = min(50000, len(X_test))
+    N = min(max_n, len(X_test))
     X_eval, y_eval = X_test[:N], y_test[:N]
-    print(f"Computing saliency on {N:,} samples...")
+    print(f"Computing saliency on {N:,} samples (10 features x 2 x predict_proba)...", flush=True)
     t0 = time.time()
     sal = compute_saliency(base, X_eval, y_eval)
-    print(f"done {time.time()-t0:.1f}s")
+    print(f"  saliency done in {time.time()-t0:.1f}s", flush=True)
     X_adv = X_eval + EPSILON * np.sign(sal)
 
+    print("Evaluating scenarios S1-S4 ...", flush=True)
     S = {"S1": full_eval(base, X_eval, y_eval),
          "S2": full_eval(base, X_adv, y_eval),
          "S3": full_eval(robust, X_eval, y_eval),
          "S4": full_eval(robust, X_adv, y_eval)}
+    print(f"  MCC: S1={S['S1']['mcc']:.4f} S2={S['S2']['mcc']:.4f} "
+          f"S3={S['S3']['mcc']:.4f} S4={S['S4']['mcc']:.4f}", flush=True)
     class_names = [inv.get(int(c), f"C{c}") for c in sorted(np.unique(y_eval))]
 
     for lang in ("id", "en"):
@@ -233,9 +245,9 @@ def main():
         plt.tight_layout()
         plt.savefig(os.path.join(OUT[lang], f"evaluation_grouped_bar_2x2_{lang}.png"), bbox_inches="tight", dpi=150)
         plt.close(fig)
-        print(f"[{lang}] saved 3 figures to {OUT[lang]}")
+        print(f"[{lang}] saved 3 figures to {OUT[lang]}", flush=True)
 
-    print("Done. Bilingual evaluation figures generated.")
+    print("Done. Bilingual evaluation figures generated.", flush=True)
 
 
 if __name__ == "__main__":
