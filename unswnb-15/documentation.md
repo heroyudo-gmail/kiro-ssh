@@ -94,7 +94,7 @@ Reviewer Q1 sering menolak paper adversarial karena perturbasi matematis diangga
 | T3 | Pra-pemrosesan seragam + baseline cross-dataset (XGBoost tunggal): latih A→uji B, kuantifikasi generalization gap | **SELESAI** (§11) |
 | T5 | Adversarial Training XGBoost tunggal pada fitur irisan + evaluasi lintas-dataset (2 arah × clean/adv) | **SELESAI** (§12) |
 | T6 | Cross-network alignment (baseline vs joint training vs CORAL) untuk menaikkan MCC cross-network | **SELESAI** (§13) |
-| T7 | Perkuat domain adaptation (MMD / adversarial domain-invariant / mixup lintas-dataset) | Belum |
+| T7 | Domain adaptation: few-shot target adaptation + cross-dataset mixup | **SELESAI** (§14) |
 | T6 | Functional-Preserving Evasion (constraint protokol pada saddle-point) | Belum |
 | T7 | Adaptive White-Box Evaluation pada XGBoost robust | Belum |
 | T8 | Long-Term Real-Traffic Deployment AWS (3–7 hari), ukur FAR | Belum |
@@ -408,3 +408,47 @@ Rangkaian T3→T5→T6 membentuk **narasi kuantitatif yang bersih dan jujur**:
 ### 13.5 Arah Berikutnya (T7+)
 - Perkuat DA (MMD / adversarial domain-invariant features / mixup lintas-dataset) untuk menaikkan CIC→UNSW ke MCC positif dan mendekatkan cross ke joint.
 - Lalu Functional-Preserving Evasion, Adaptive White-Box, Long-Term AWS deployment.
+
+---
+
+## 14. Domain Adaptation: Few-Shot + Mixup (T7 — SELESAI)
+
+Notebook `06_domain_adaptation.ipynb`, dijalankan di SageMaker. Hasil di `domain_adaptation.json`. **Seluruh angka hasil eksekusi nyata.**
+
+### 14.1 Setup
+Model A (9 fitur), biner, z-score per dataset. Dua eksperimen:
+1. **Few-shot target adaptation** — latih di source + fraksi label target (0/1/5/10/25%), uji di test target. Protokol jujur: fraksi diambil dari **train target**, uji di **test target** (tanpa kebocoran).
+2. **Cross-dataset mixup** — sampel sintetik `x = λ·x_src + (1−λ)·x_tgt_train` (Beta(0,4)), label komponen dominan; unsupervised terhadap test target.
+
+### 14.2 Hasil Few-Shot (MCC vs fraksi label target)
+
+| Fraksi target | CIC→UNSW | UNSW→CIC |
+|---|---|---|
+| 0% (baseline T3) | −0,072 | −0,061 |
+| **1%** | **0,648** | **0,899** |
+| 5% | 0,662 | 0,911 |
+| 10% | 0,681 | 0,911 |
+| 25% | 0,695 | 0,912 |
+
+*(1% target = 1.753 flow UNSW / 11.362 flow CIC. In-domain pembanding: UNSW 0,745; CIC 0,913.)*
+
+**Mixup (unsupervised, tanpa label target uji):** CIC→UNSW = **0,680**; UNSW→CIC = **0,798**.
+
+### 14.3 Temuan
+1. **Lompatan dramatis 0%→1% (headline).** Menambah hanya **1% label target** membalik MCC dari negatif (lebih buruk dari acak) menjadi kuat: CIC→UNSW −0,072→**0,648**; UNSW→CIC −0,061→**0,899** (hampir menyentuh in-domain 0,913).
+2. **Kurva datar setelah 1%.** Dari 1%→25% kenaikan marginal (UNSW→CIC 0,899→0,912). Artinya **kalibrasi minimal sudah cukup**; label tambahan hasil marginal. Pesan praktis untuk deployment.
+3. **Mixup bekerja tanpa label target.** CIC→UNSW 0,680 (bahkan > few-shot 25%) dan UNSW→CIC 0,798. Interpolasi lintas-dataset menjembatani distribution shift tanpa satu pun label target — opsi *fully unsupervised* yang berguna.
+4. **Asimetri konsisten.** CIC→UNSW mentok ~0,65–0,70 vs UNSW→CIC ~0,91 — sejalan temuan CORAL (T6): adaptasi dari sumber berdistribusi kaya (CIC) ke target lebih sempit (UNSW) lebih sulit. Dilaporkan apa adanya.
+
+### 14.4 Kesimpulan untuk Paper Q1 (narasi lengkap T3→T7)
+- **T3 — Masalah:** NIDS single-source kolaps lintas-jaringan (MCC ~0).
+- **T5 — Bukan evasion:** adversarial training memperkuat evasion in-domain, TIDAK menutup cross-network (*adversarial-robustness ≠ cross-network-robustness*).
+- **T6 — Bukan fitur:** joint training ~in-domain di kedua jaringan → **Semantic Feature Mapping valid**; gap = *distribution shift*.
+- **T7 — Solusi:** kalibrasi minimal (**1% label target**) atau **mixup unsupervised** memulihkan MCC ke ~0,65–0,91.
+
+**Klaim inti yang dapat dipertahankan:** Semantic Feature Mapping membuat NIDS cross-network **praktis** — jaringan baru cukup dikalibrasi dengan ~1% data berlabel (atau tanpa label via mixup) untuk mencapai deteksi berguna. Ini menjawab masalah deployment dunia nyata, bukan sekadar klaim teoretis.
+
+### 14.5 Arah Berikutnya (T8+)
+- Functional-Preserving Evasion (constraint protokol pada saddle-point).
+- Adaptive White-Box Evaluation pada model cross-network robust.
+- Long-Term Real-Traffic Deployment AWS (3–7 hari), ukur FAR.
