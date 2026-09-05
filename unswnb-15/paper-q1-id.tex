@@ -1,0 +1,458 @@
+\documentclass[11pt,a4paper]{article}
+
+% ============================================================
+% Paper Q1 (versi Bahasa Indonesia) — draft kerja
+% NIDS Robust Lintas-Jaringan via Semantic Feature Mapping
+% CSE-CIC-IDS2018 x UNSW-NB15 + evaluasi adversarial adaptif
+% CATATAN: seluruh angka berasal dari eksperimen NYATA (T3-T9),
+%          disimpan di unswnb-15/*.json. Bukan angka ilustratif.
+% ============================================================
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[bahasa]{babel}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath,amssymb}
+\usepackage{siunitx}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{caption}
+\usepackage{multirow}
+\geometry{margin=2.5cm}
+\graphicspath{{figures/}}
+
+\hypersetup{colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue}
+
+\title{\textbf{Menuju NIDS Robust Lintas-Jaringan: Pemetaan Fitur Semantik,
+Adaptasi Domain Berbiaya-Rendah, dan Evaluasi Adversarial yang Realistis}}
+
+\author{Hero Yudo Martono\thanks{Penulis korasponden.} \\
+\textit{[Afiliasi]} \\
+\texttt{[email]}
+\and Penulis Kedua \\ \textit{[Afiliasi]}
+\and Penulis Ketiga \\ \textit{[Afiliasi]}}
+
+\date{Draft --- \today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Sistem deteksi intrusi jaringan (NIDS) berbasis pembelajaran mesin mencapai
+akurasi tinggi ketika dilatih dan diuji pada jaringan yang sama, namun
+kemampuannya untuk digeneralisasi lintas-jaringan jarang diuji secara jujur.
+Makalah ini menyelidiki tiga masalah yang saling berkaitan pada NIDS praktis:
+(1) ketidakmampuan generalisasi lintas-jaringan, (2) ketidaksepadanan fitur
+antar-alat ekstraksi (\emph{feature-extractor mismatch}), dan (3) kerentanan
+terhadap serangan \emph{evasion} adaptif. Menggunakan pasangan dataset
+CSE-CIC-IDS2018 (68 fitur, CICFlowMeter) dan UNSW-NB15 (42 fitur, Argus/Bro)
+yang diekstraksi dengan alat berbeda dari sumber trafik berbeda, kami menyusun
+\emph{Semantic Feature Mapping} (SFM) yang divalidasi secara statistik untuk
+memperoleh himpunan fitur irisan yang benar-benar sepadan. Kami menemukan bahwa
+model XGBoost tunggal yang unggul di dalam-jaringan (MCC $0{,}91$ pada CIC;
+$0{,}74$ pada UNSW) \emph{runtuh} lintas-jaringan (MCC $\approx 0$). Melalui
+serangkaian eksperimen terkontrol, kami menunjukkan bahwa (i) \emph{adversarial
+training} memperkuat ketahanan terhadap \emph{evasion} di dalam-jaringan tetapi
+\emph{tidak} menutup celah generalisasi lintas-jaringan; (ii) celah tersebut
+berakar pada \emph{distribution shift}, bukan ketidakcukupan fitur, sebab
+pelatihan gabungan mencapai performa mendekati in-domain pada kedua jaringan
+sekaligus; dan (iii) kalibrasi minimal --- hanya \emph{1\%} label jaringan
+target, atau \emph{mixup} lintas-dataset tanpa label target sama sekali ---
+memulihkan MCC lintas-jaringan ke rentang $0{,}65$--$0{,}91$. Terakhir, dengan
+memberlakukan \emph{functional-preserving constraint} pada serangan, kami
+menunjukkan bahwa evaluasi adversarial tak-terbatas melebih-lebihkan ancaman,
+sementara evaluasi \emph{adaptive white-box} mengungkap bahwa \emph{adversarial
+training} memberikan rasa aman yang keliru: pertahanan yang tampak kuat terhadap
+serangan transfer (MCC $0{,}99$) runtuh terhadap penyerang adaptif
+(MCC $0{,}25$--$0{,}43$). Temuan-temuan ini, seluruhnya berbasis eksperimen
+nyata dan dilaporkan apa adanya, memberikan panduan yang jujur untuk merancang
+dan mengevaluasi NIDS yang tangguh di dunia nyata.
+
+\vspace{0.5em}
+\noindent\textbf{Kata kunci:} sistem deteksi intrusi jaringan, generalisasi
+lintas-jaringan, pemetaan fitur semantik, adaptasi domain, serangan adversarial
+adaptif, XGBoost.
+\end{abstract}
+
+% ============================================================
+\section{Pendahuluan}
+\label{sec:intro}
+
+NIDS berbasis pembelajaran mesin telah menjadi komponen penting pertahanan
+siber. Namun sebagian besar evaluasi di literatur bertumpu pada protokol
+\emph{latih-dan-uji pada dataset yang sama}, sehingga melaporkan akurasi yang
+optimistis dan tidak mencerminkan kondisi penyebaran (\emph{deployment}) nyata.
+Dalam praktik, sebuah model yang dilatih pada satu lingkungan jaringan harus
+beroperasi pada lingkungan lain dengan topologi, komposisi trafik, dan alat
+ekstraksi fitur yang berbeda.
+
+Makalah ini merupakan kelanjutan langsung dari penelitian NIDS sebelumnya pada
+CSE-CIC-IDS2018 (reduksi fitur XGBoost + \emph{adversarial training} berbasis
+\emph{saliency map} + validasi \emph{real-traffic} AWS), yang secara jujur
+mengakui tiga keterbatasan. Ketiga keterbatasan itulah yang menjadi
+\textbf{gap inti} makalah ini:
+\begin{enumerate}
+  \item \textbf{Ketidakmampuan generalisasi lintas-jaringan.} Model kolaps saat
+  menghadapi karakteristik trafik dari topologi jaringan berbeda.
+  \item \textbf{Feature-extractor mismatch.} Perbedaan definisi fitur antar-alat
+  ekstraksi (CICFlowMeter vs Argus/Bro) merusak akurasi pada inferensi nyata.
+  \item \textbf{Kerentanan evasion adaptif.} \emph{Adversarial training}
+  konvensional umumnya hanya dievaluasi terhadap serangan statis/transfer
+  (grey-box), bukan penyerang \emph{white-box} yang menyesuaikan diri.
+\end{enumerate}
+
+\paragraph{Kontribusi.} Kontribusi makalah ini adalah:
+\begin{itemize}
+  \item \textbf{Semantic Feature Mapping (SFM)} lintas-dataset yang divalidasi
+  secara statistik, termasuk temuan \emph{feature-extractor mismatch} pada fitur
+  TCP window (Bagian~\ref{sec:sfm}).
+  \item \textbf{Bukti kuantitatif} bahwa NIDS single-source runtuh
+  lintas-jaringan, dan \textbf{pemisahan empiris} antara
+  \emph{adversarial-robustness} dan \emph{cross-network-robustness} sebagai dua
+  masalah berbeda (Bagian~\ref{sec:baseline},~\ref{sec:advtrain}).
+  \item \textbf{Diagnosis} bahwa celah lintas-jaringan berakar pada
+  \emph{distribution shift}, dan \textbf{solusi berbiaya-rendah}: kalibrasi
+  minimal $1\%$ label target atau \emph{mixup} lintas-dataset
+  (Bagian~\ref{sec:align},~\ref{sec:da}).
+  \item \textbf{Metodologi evaluasi adversarial yang realistis}:
+  \emph{functional-preserving evasion} dan \emph{adaptive white-box} yang
+  mengoreksi klaim ketahanan yang berlebihan (Bagian~\ref{sec:fpe},~\ref{sec:awb}).
+\end{itemize}
+
+\paragraph{Prinsip kejujuran data.} Seluruh angka pada makalah ini bersumber
+dari eksperimen nyata yang dapat direproduksi; tidak ada angka ilustratif yang
+disamarkan sebagai hasil. Termasuk pelaporan jujur bahwa pertahanan kami sendiri
+belum sepenuhnya tahan terhadap serangan adaptif.
+
+% ============================================================
+\section{Karya Terkait}
+\label{sec:related}
+
+\paragraph{NIDS berbasis pembelajaran mesin.} Model berbasis pohon (XGBoost,
+LightGBM) dan jaringan saraf banyak dipakai pada dataset seperti NSL-KDD,
+CIC-IDS2017/2018, dan UNSW-NB15. Sebagian besar melaporkan hasil in-domain.
+
+\paragraph{Generalisasi lintas-dataset.} Sejumlah studi mengamati penurunan
+performa lintas-dataset, tetapi jarang mengisolasi penyebabnya (fitur vs
+distribusi) atau menawarkan solusi berbiaya-rendah yang tervalidasi.
+
+\paragraph{Adaptasi domain.} CORAL dan MMD menyelaraskan statistik distribusi
+antar-domain; pada data tabular jaringan penerapannya masih terbatas.
+
+\paragraph{Serangan adversarial pada NIDS.} Banyak karya menerapkan FGSM/PGD
+pada fitur alir (\emph{flow}) tanpa memperhatikan validitas protokol, sehingga
+menghasilkan \emph{flow} yang tak dapat dikirim. Selain itu, evaluasi seringkali
+hanya \emph{transfer}, bukan \emph{adaptive white-box}, sehingga melebih-lebihkan
+ketahanan. Makalah ini menutup kedua celah tersebut.
+
+% ============================================================
+\section{Data dan Semantic Feature Mapping}
+\label{sec:sfm}
+
+\subsection{Dataset}
+Kami memakai pasangan yang sengaja \emph{berbeda sumber}:
+\begin{itemize}
+  \item \textbf{CSE-CIC-IDS2018}: trafik \emph{testbed} CIC (2018), diekstraksi
+  dengan CICFlowMeter, 68 fitur bersih. Label multi-kelas (Benign + 14 jenis
+  serangan); untuk tahap ini digabung menjadi biner (attack/normal).
+  \item \textbf{UNSW-NB15}: trafik dibangkitkan IXIA PerfectStorm (2015),
+  diekstraksi dengan Argus \& Bro/Zeek, 42 fitur, 10 kelas. Berkas partisi:
+  $175{.}341$ record (dipakai sebagai data latih) dan $82{.}332$ record (data
+  uji).\footnote{Penamaan berkas rilis UNSW tertukar dengan isinya; kami memakai
+  berkas berdasarkan jumlah record, bukan nama.}
+\end{itemize}
+Perbedaan alat ekstraksi dan sumber trafik ini bukan kelemahan, melainkan justru
+prasyarat untuk menguji tiga gap inti secara jujur.
+
+\subsection{Penyusunan dan Validasi Pemetaan}
+SFM memetakan fitur berfungsi-sama antar-dataset meski bernama kolom berbeda
+(mis. \texttt{Flow Duration}$\leftrightarrow$\texttt{dur}). Karena alat ekstraksi
+berbeda, setiap pasangan kandidat divalidasi secara statistik (rentang,
+distribusi, satuan) sebelum dipakai, bukan sekadar berdasarkan kemiripan nama.
+
+\paragraph{Temuan kunci: TCP window mismatch.} Pemeriksaan nilai unik
+membuktikan \texttt{swin}/\texttt{dwin} pada UNSW bersifat praktis biner
+($\{0, 255\}$), sedangkan \texttt{Init Fwd/Bwd Win Byts} pada CIC kontinu
+($0$--$65535$). Meski deskripsi resmi menyebut keduanya ``TCP window'', datanya
+tidak sepadan. Kami \emph{membuang} pasangan ini dan melaporkannya sebagai studi
+kasus \emph{feature-extractor mismatch} (gap \#2).
+
+\subsection{Himpunan Fitur Final dan Pra-pemrosesan}
+Kami memakai StandardScaler (z-score) \emph{per dataset terpisah} sehingga
+perbedaan satuan/skala ternormalisasi tanpa mengarang konversi. Fitur final
+(\textbf{Model A}, 9 fitur irisan kuat): \texttt{dur, spkts, dpkts, sbytes,
+dbytes, smean, dmean, sload, dload}. \textbf{Model B} menambahkan
+\texttt{sinpkt, dinpkt} (Fwd/Bwd IAT). Model A dipilih sebagai basis karena
+setara Model B namun lebih ringkas.
+
+% ============================================================
+\section{Baseline Lintas-Dataset: Celah Generalisasi}
+\label{sec:baseline}
+
+Kami melatih XGBoost (\texttt{max\_depth}=8, \texttt{lr}=0{,}1,
+\texttt{n\_estimators}=200, \texttt{subsample}/\texttt{colsample}=0{,}8) dan
+mengevaluasi empat skenario. Metrik utama MCC (tahan \emph{class imbalance}).
+
+Verifikasi label dilakukan: pada CIC \texttt{Benign}$=0$; konversi biner
+menghasilkan tepat $1{.}348{.}453$ normal dan $274{.}808$ attack, sehingga MCC
+negatif lintas-jaringan adalah fenomena nyata, bukan artefak label.
+
+\begin{table}[h]
+\centering
+\caption{Baseline lintas-dataset (MCC, Model A). Performa in-domain tinggi namun
+lintas-jaringan runtuh.}
+\label{tab:baseline}
+\begin{tabular}{lcc}
+\toprule
+Skenario & Model A & Model B \\
+\midrule
+Same-CIC (latih \& uji CIC)   & $0{,}913$ & $0{,}914$ \\
+Same-UNSW (latih \& uji UNSW) & $0{,}745$ & $0{,}743$ \\
+CIC$\rightarrow$UNSW          & $-0{,}072$ & $0{,}004$ \\
+UNSW$\rightarrow$CIC          & $-0{,}061$ & $-0{,}046$ \\
+\midrule
+\emph{Generalization gap}     & $0{,}81$--$0{,}99$ & $0{,}79$--$0{,}91$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.72\linewidth]{fig1_generalization_gap.png}
+\caption{Deteksi in-domain vs lintas-dataset. Model yang unggul di dalam-jaringan
+jatuh ke MCC $\approx 0$ lintas-jaringan.}
+\label{fig:gap}
+\end{figure}
+
+Tabel~\ref{tab:baseline} dan Gambar~\ref{fig:gap} menunjukkan bahwa MCC $\approx 0$
+(setara tebakan acak) hingga negatif lintas-jaringan. Ini bukti empiris gap \#1.
+
+% ============================================================
+\section{Adversarial Training Tidak Menutup Celah Lintas-Jaringan}
+\label{sec:advtrain}
+
+Kami menerapkan \emph{adversarial training} bergaya makalah sebelumnya: gradien
+diaproksimasi dengan \emph{finite-difference} (XGBoost non-\emph{differentiable}),
+serangan FGSM $\mathbf{x}_{adv}=\mathbf{x}+\epsilon\,\mathrm{sign}(\nabla_\mathbf{x}L)$,
+lalu augmentasi $D_{robust}=D_{clean}\cup D_{adv}$ (80:20).
+
+Hasilnya \emph{asimetris terhadap tujuan}: robustness \emph{evasion} in-domain
+membaik tajam (MCC $-0{,}09 \rightarrow +0{,}36$ pada $\epsilon=0{,}1$),
+\emph{tetapi} MCC lintas-jaringan tetap $\approx 0$ (CIC$\rightarrow$UNSW
+$-0{,}072 \rightarrow -0{,}011$; UNSW$\rightarrow$CIC $-0{,}061 \rightarrow
+-0{,}066$). Ini memisahkan secara empiris \emph{adversarial-robustness} dari
+\emph{cross-network-robustness}: keduanya masalah berbeda dan memerlukan solusi
+berbeda.
+
+% ============================================================
+\section{Diagnosis: Celah Berakar pada \emph{Distribution Shift}}
+\label{sec:align}
+
+Kami membandingkan tiga strategi (Tabel~\ref{tab:align},
+Gambar~\ref{fig:align}): \emph{baseline} single-source, \emph{CORAL}
+(\emph{unsupervised domain adaptation}, penyelarasan kovarians source$\rightarrow$
+target), dan \emph{joint training} (gabungan CIC+UNSW, uji test masing-masing).
+
+\begin{table}[h]
+\centering
+\caption{Strategi penyelarasan lintas-jaringan (MCC pada target).}
+\label{tab:align}
+\begin{tabular}{lcc}
+\toprule
+Strategi & CIC$\rightarrow$UNSW & UNSW$\rightarrow$CIC \\
+\midrule
+Baseline single-source & $-0{,}072$ & $-0{,}061$ \\
+CORAL (unsup. DA)      & $-0{,}185$ & $+0{,}164$ \\
+Joint training (uji test) & \multicolumn{2}{c}{UNSW $0{,}732$ \quad CIC $0{,}912$} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.72\linewidth]{fig3_alignment.png}
+\caption{Strategi penyelarasan. Joint training mencapai $\approx$ in-domain pada
+kedua jaringan; CORAL membantu asimetris.}
+\label{fig:align}
+\end{figure}
+
+Temuan terpenting: \emph{joint training} mencapai MCC $0{,}912$ (CIC) dan
+$0{,}732$ (UNSW) \emph{serentak}, hampir setara in-domain. Ini membuktikan
+\textbf{SFM valid} --- 9 fitur irisan cukup ekspresif merepresentasikan kedua
+jaringan. Maka celah generalisasi \emph{bukan} pada fitur, melainkan pada
+\emph{distribution shift}: model single-source tak melihat distribusi target.
+CORAL membantu sebagian dan asimetris (UNSW$\rightarrow$CIC naik ke $+0{,}164$;
+CIC$\rightarrow$UNSW malah turun), menandakan penyelarasan orde-2 belum memadai
+untuk arah dari sumber berdistribusi kaya.
+
+% ============================================================
+\section{Solusi Berbiaya-Rendah: Kalibrasi Minimal dan \emph{Mixup}}
+\label{sec:da}
+
+Karena celah bersifat \emph{distribution shift}, kami menguji \emph{few-shot
+target adaptation}: melatih pada source ditambah fraksi kecil label target
+($0/1/5/10/25\%$; fraksi diambil dari \emph{train} target, uji di \emph{test}
+target tanpa kebocoran). Sebagai pembanding tanpa label target, kami memakai
+\emph{cross-dataset mixup} (interpolasi Beta antar-\emph{flow} kedua dataset).
+
+\begin{table}[h]
+\centering
+\caption{Few-shot target adaptation (MCC lintas-jaringan).}
+\label{tab:fewshot}
+\begin{tabular}{lcc}
+\toprule
+Fraksi label target & CIC$\rightarrow$UNSW & UNSW$\rightarrow$CIC \\
+\midrule
+$0\%$ (baseline)  & $-0{,}072$ & $-0{,}061$ \\
+$1\%$             & $0{,}648$  & $0{,}899$  \\
+$5\%$             & $0{,}662$  & $0{,}911$  \\
+$10\%$            & $0{,}681$  & $0{,}911$  \\
+$25\%$            & $0{,}695$  & $0{,}912$  \\
+\midrule
+Mixup (tanpa label target) & $0{,}680$ & $0{,}798$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.72\linewidth]{fig2_fewshot_curve.png}
+\caption{Kurva few-shot. Hanya $1\%$ label target memulihkan MCC dari negatif ke
+$0{,}65$--$0{,}90$; kurva mendatar setelahnya.}
+\label{fig:fewshot}
+\end{figure}
+
+Tabel~\ref{tab:fewshot} dan Gambar~\ref{fig:fewshot} menunjukkan lompatan
+dramatis: hanya $1\%$ label target ($1{.}753$ \emph{flow} UNSW atau $11{.}362$
+\emph{flow} CIC) membalik MCC dari negatif menjadi $0{,}648$ (CIC$\rightarrow$UNSW)
+dan $0{,}899$ (UNSW$\rightarrow$CIC, mendekati in-domain $0{,}913$). Setelah
+$1\%$ kurva mendatar, sehingga \emph{kalibrasi minimal sudah cukup}. \emph{Mixup}
+tanpa label target pun mencapai $0{,}680$ dan $0{,}798$. Pesan praktis: berkat
+SFM, NIDS lintas-jaringan dapat dibuat berfungsi dengan sedikit --- atau tanpa
+--- label dari jaringan baru.
+
+% ============================================================
+\section{Evaluasi Adversarial yang Realistis}
+
+\subsection{Functional-Preserving Evasion}
+\label{sec:fpe}
+
+FGSM tak-terbatas dapat menghasilkan \emph{flow} mustahil (paket pecahan,
+\emph{bytes} $<$ paket, durasi negatif). Kami memberlakukan
+\emph{functional-preserving constraint} di ruang asli: non-negatif; jumlah paket
+bulat; \emph{bytes} $\ge$ paket; rata-rata konsisten $=\text{bytes}/\text{paket}$;
+serta \emph{monotonic add-only} (penyerang hanya boleh menambah trafik).
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.82\linewidth]{fig4_functional_evasion.png}
+\caption{Evasion \emph{functional-preserving} vs tak-terbatas ($\epsilon=0{,}1$).
+Serangan tak-terbatas melebih-lebihkan ancaman.}
+\label{fig:fpe}
+\end{figure}
+
+Pada keempat model (Gambar~\ref{fig:fpe}), MCC \emph{functional} jauh di atas
+\emph{unconstrained} (mis. UNSW baseline $-0{,}134 \rightarrow +0{,}313$),
+membuktikan evaluasi tak-terbatas melebih-lebihkan ancaman. Namun MCC
+\emph{functional} tetap turun tajam dari kondisi bersih (CIC $0{,}912 \rightarrow
+0{,}127$), sehingga ancaman \emph{flow} valid tetap nyata.
+
+\subsection{Adaptive White-Box}
+\label{sec:awb}
+
+Skenario terburuk: penyerang mengetahui model pertahanan dan membangkitkan
+\emph{evasion} langsung dari gradien model \emph{robust} itu sendiri (bukan
+transfer dari baseline). Seluruh serangan tetap \emph{functional-preserving}.
+
+\begin{table}[h]
+\centering
+\caption{Adaptive white-box (MCC model \emph{robust}, $\epsilon=0{,}1$).}
+\label{tab:awb}
+\begin{tabular}{lccc}
+\toprule
+Arah & Bersih & Serangan transfer & Serangan adaptif \\
+\midrule
+CIC  & $0{,}911$ & $0{,}993$ & $0{,}425$ \\
+UNSW & $0{,}733$ & $0{,}985$ & $0{,}248$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.72\linewidth]{fig5_adaptive_whitebox.png}
+\caption{Evaluasi \emph{adaptive white-box}. Pertahanan kuat terhadap transfer
+($0{,}99$) namun runtuh terhadap penyerang adaptif ($0{,}25$--$0{,}43$).}
+\label{fig:awb}
+\end{figure}
+
+Tabel~\ref{tab:awb} dan Gambar~\ref{fig:awb} mengungkap \emph{false robustness}:
+model \emph{robust} tampak sangat kuat terhadap serangan transfer (MCC $0{,}99$)
+tetapi runtuh terhadap penyerang adaptif (MCC $0{,}425$ pada CIC; $0{,}248$ pada
+UNSW). Ini konsisten dengan fenomena \emph{obfuscated gradients}: model
+``menghafal'' pola serangan transfer, bukan menjadi robust sejati. Konsekuensi
+metodologis: evaluasi ketahanan NIDS \emph{wajib} menyertakan
+\emph{adaptive white-box}; laporan yang hanya \emph{transfer} menyesatkan.
+
+% ============================================================
+\section{Diskusi}
+\label{sec:discussion}
+
+Rangkaian temuan membentuk narasi yang koheren dan jujur:
+(1) NIDS single-source runtuh lintas-jaringan;
+(2) penyebabnya bukan \emph{evasion} dan bukan fitur, melainkan
+\emph{distribution shift};
+(3) kalibrasi minimal atau \emph{mixup} memulihkan performa secara efisien
+berkat SFM yang tervalidasi;
+(4) evaluasi adversarial harus realistis (functional-preserving) dan
+menyeluruh (adaptive white-box), jika tidak akan melebih-lebihkan ketahanan.
+
+\paragraph{Keterbatasan.} Kami melaporkan secara jujur bahwa pertahanan
+\emph{adversarial training} kami belum tahan terhadap serangan adaptif; asimetri
+arah CIC$\rightarrow$UNSW ($\sim 0{,}65$--$0{,}70$) vs UNSW$\rightarrow$CIC
+($\sim 0{,}91$) juga belum sepenuhnya teratasi. Evaluasi masih terbatas pada
+tugas biner dan model tunggal XGBoost.
+
+% ============================================================
+\section{Kesimpulan dan Kerja Mendatang}
+\label{sec:conclusion}
+
+Kami menyajikan studi lintas-jaringan yang jujur pada pasangan CSE-CIC-IDS2018
+dan UNSW-NB15. \emph{Semantic Feature Mapping} yang tervalidasi memungkinkan
+pelatihan lintas-dataset; kami menunjukkan bahwa celah generalisasi berakar pada
+\emph{distribution shift} dan dapat ditutup dengan kalibrasi berbiaya-rendah
+($1\%$ label target) atau \emph{mixup} tanpa label. Kami juga mengoreksi praktik
+evaluasi adversarial melalui \emph{functional-preserving} dan
+\emph{adaptive white-box}.
+
+\paragraph{Kerja mendatang.} (i) Klasifikasi multi-kelas dan model
+\emph{ensemble} robust; (ii) adaptasi domain yang lebih kuat untuk mengatasi
+asimetri arah; (iii) pertahanan yang benar-benar tahan \emph{adaptive white-box};
+(iv) \emph{deployment} jangka panjang di AWS ($3$--$7$ hari) untuk mengukur
+\emph{False Alarm Rate} pada trafik nyata --- direncanakan sebagai validasi
+lanjutan berbiaya-eksperimen.
+
+% ============================================================
+\section*{Ketersediaan Reproduksi}
+Kode, konfigurasi, \emph{notebook}, dan berkas hasil ringkas ($*.json$) tersedia
+di repositori. Dataset besar tidak disertakan (lisensi/ukuran) namun dapat
+diperoleh dari sumber resmi masing-masing.
+
+\begin{thebibliography}{9}
+\bibitem{coral} B. Sun, J. Feng, K. Saenko, ``Return of Frustratingly Easy
+Domain Adaptation,'' \emph{AAAI}, 2016.
+\bibitem{obfuscated} A. Athalye, N. Carlini, D. Wagner, ``Obfuscated Gradients
+Give a False Sense of Security,'' \emph{ICML}, 2018.
+\bibitem{adaptive} F. Tram\`er et al., ``On Adaptive Attacks to Adversarial
+Example Defenses,'' \emph{NeurIPS}, 2020.
+\bibitem{unsw} N. Moustafa, J. Slay, ``UNSW-NB15: A Comprehensive Data Set for
+Network Intrusion Detection Systems,'' \emph{MilCIS}, 2015.
+\bibitem{cicids} I. Sharafaldin, A. H. Lashkari, A. A. Ghorbani, ``Toward
+Generating a New Intrusion Detection Dataset and Intrusion Traffic
+Characterization,'' \emph{ICISSP}, 2018.
+\bibitem{xgboost} T. Chen, C. Guestrin, ``XGBoost: A Scalable Tree Boosting
+System,'' \emph{KDD}, 2016.
+\end{thebibliography}
+
+\end{document}
