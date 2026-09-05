@@ -1,0 +1,241 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  T10 UNSW-NB15 — Infra 3-EC2 ala NIDS-01 (SATU stack gabungan).
+  VPC + public subnet (Attacker) + private subnet (Target, Analyzer) + IGW + NAT
+  + Security Group + IAM (SSM + S3) + 3 EC2. Target & Analyzer di PRIVATE (aman,
+  realistis). Capture DILAKUKAN DI TARGET (pelajaran NIDS-01: Analyzer tak di jalur trafik).
+  Model: XGBoost Model A 9-fitur (tanpa TCP window plugin).
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: unsw-far
+  AmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
+  AttackerType:
+    Type: String
+    Default: t3.medium
+  TargetType:
+    Type: String
+    Default: t3.medium
+  AnalyzerType:
+    Type: String
+    Default: t3.medium
+    Description: t3.medium cukup untuk NFStream 9-fitur (lebih ringan dari NIDS-01 t3.large).
+
+Resources:
+  # ---------------- Network ----------------
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.5.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags: [{ Key: Name, Value: !Sub "${ProjectName}-vpc" }]
+
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.5.1.0/24
+      AvailabilityZone: !Select [0, !GetAZs '']
+      MapPublicIpOnLaunch: true
+      Tags: [{ Key: Name, Value: !Sub "${ProjectName}-public" }]
+
+  PrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.5.2.0/24
+      AvailabilityZone: !Select [0, !GetAZs '']
+      MapPublicIpOnLaunch: false
+      Tags: [{ Key: Name, Value: !Sub "${ProjectName}-private" }]
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags: [{ Key: Name, Value: !Sub "${ProjectName}-igw" }]
+
+  IGWAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  # NAT: agar private subnet (Target/Analyzer) bisa update paket + SSM
+  NatEIP:
+    Type: AWS::EC2::EIP
+    Properties: { Domain: vpc }
+
+  NatGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatEIP.AllocationId
+      SubnetId: !Ref PublicSubnet
+      Tags: [{ Key: Name, Value: !Sub "${ProjectName}-nat" }]
+
+  PublicRT:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags: [{ Key: Name, Value: !Sub "${ProjectName}-public-rt" }]
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: IGWAttachment
+    Properties:
+      RouteTableId: !Ref PublicRT
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicRTAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: { SubnetId: !Ref PublicSubnet, RouteTableId: !Ref PublicRT }
+
+  PrivateRT:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags: [{ Key: Name, Value: !Sub "${ProjectName}-private-rt" }]
+
+  PrivateRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRT
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway
+
+  PrivateRTAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: { SubnetId: !Ref PrivateSubnet, RouteTableId: !Ref PrivateRT }
+
+  # Security group: semua internal VPC + egress bebas. Tak ada ingress publik
+  # (akses instance via SSM Session Manager, bukan SSH publik).
+  InstanceSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Sub "${ProjectName} internal + egress (akses via SSM)"
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: -1
+          CidrIp: 10.5.0.0/16
+          Description: Semua trafik internal VPC (attacker->target, dll)
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+          Description: Egress bebas (update paket via NAT/IGW + S3)
+      Tags: [{ Key: Name, Value: !Sub "${ProjectName}-sg" }]
+
+  # ---------------- IAM (SSM + S3) ----------------
+  EC2Role:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: { Service: ec2.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Policies:
+        - PolicyName: S3Access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: [s3:GetObject, s3:PutObject, s3:ListBucket]
+                Resource: "*"
+      Tags: [{ Key: Name, Value: !Sub "${ProjectName}-role" }]
+
+  EC2Profile:
+    Type: AWS::IAM::InstanceProfile
+    Properties: { Roles: [!Ref EC2Role] }
+
+  # ---------------- EC2: Attacker (public) ----------------
+  Attacker:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref AttackerType
+      ImageId: !Ref AmiId
+      SubnetId: !Ref PublicSubnet
+      SecurityGroupIds: [!Ref InstanceSG]
+      IamInstanceProfile: !Ref EC2Profile
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs: { VolumeSize: 20, VolumeType: gp3, DeleteOnTermination: true }
+      Tags: [{ Key: Name, Value: !Sub "${ProjectName}-attacker" }]
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -x
+          dnf update -y
+          dnf install -y gcc make git nmap python3 python3-pip iproute-tc
+          # Slowloris + password list utk uji deteksi (Fase 2). Hydra dibangun manual bila perlu.
+          pip3 install slowloris
+          printf "admin\nroot\npassword\n123456\nP@ssw0rd123\ntest\nqwerty\n" > /opt/passwords.txt
+          echo "ATTACKER READY" > /tmp/setup_done
+
+  # ---------------- EC2: Target (private, TEMPAT CAPTURE) ----------------
+  Target:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref TargetType
+      ImageId: !Ref AmiId
+      SubnetId: !Ref PrivateSubnet
+      SecurityGroupIds: [!Ref InstanceSG]
+      IamInstanceProfile: !Ref EC2Profile
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs: { VolumeSize: 30, VolumeType: gp3, DeleteOnTermination: true }
+      Tags: [{ Key: Name, Value: !Sub "${ProjectName}-target" }]
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -x
+          dnf update -y
+          dnf install -y nginx tcpdump iproute-tc python3 python3-pip
+          systemctl enable --now nginx sshd
+          # SSH: izinkan password auth + MaxAuthTries tinggi (utk uji brute-force Fase 2)
+          sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
+          sed -i 's/^#\?MaxAuthTries.*/MaxAuthTries 100/' /etc/ssh/sshd_config
+          systemctl restart sshd
+          useradd testuser 2>/dev/null; echo "testuser:P@ssw0rd123" | chpasswd
+          mkdir -p /opt/unsw/captures
+          echo "TARGET READY (capture di sini, iface biasanya ens5)" > /tmp/setup_done
+
+  # ---------------- EC2: Analyzer (private, NFStream + inferensi) ----------------
+  Analyzer:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref AnalyzerType
+      ImageId: !Ref AmiId
+      SubnetId: !Ref PrivateSubnet
+      SecurityGroupIds: [!Ref InstanceSG]
+      IamInstanceProfile: !Ref EC2Profile
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs: { VolumeSize: 30, VolumeType: gp3, DeleteOnTermination: true }
+      Tags: [{ Key: Name, Value: !Sub "${ProjectName}-analyzer" }]
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -x
+          dnf update -y
+          dnf install -y tcpdump libpcap-devel python3 python3-pip python3-devel gcc gcc-c++
+          python3 -m pip install --upgrade pip
+          python3 -m pip install nfstream xgboost scikit-learn numpy pandas
+          mkdir -p /opt/unsw/{models,captures,flows,results,scripts}
+          echo "ANALYZER READY" > /tmp/setup_done
+
+Outputs:
+  AttackerId:   { Value: !Ref Attacker }
+  TargetId:     { Value: !Ref Target }
+  AnalyzerId:   { Value: !Ref Analyzer }
+  TargetPrivateIp:   { Value: !GetAtt Target.PrivateIp }
+  AnalyzerPrivateIp: { Value: !GetAtt Analyzer.PrivateIp }
+  AttackerPrivateIp: { Value: !GetAtt Attacker.PrivateIp }
+  SSMHint:
+    Description: Buka sesi tanpa SSH
+    Value: !Sub "aws ssm start-session --target <InstanceId> --region ${AWS::Region}"

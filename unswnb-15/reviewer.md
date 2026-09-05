@@ -134,3 +134,26 @@ kualitas publikasi.
 **Sisa satu-satunya penghalang submit = Poin A** (angka efisiensi nyata). Bisa diukur begitu
 model 9-fitur tersedia (tidak butuh deployment AWS penuh, cukup 1 vCPU + model). Detail di
 `documentation.md` §17.
+
+### E.1 Skema AWS T10 — 3-EC2 (persis NIDS-01) — SUDAH DIDESAIN
+Keputusan: memakai skema **3-EC2 mereplikasi NIDS-01** (Attacker public; Target & Analyzer
+private + NAT) demi **comparability** dengan paper NIDS-01. Sudah disiapkan lengkap, eksekusi
+menunggu kesiapan:
+
+| Artefak | Isi | Status |
+|---|---|---|
+| `aws/unsw-vpc-3ec2.yaml` | CloudFormation 1-stack: VPC + public/private subnet + IGW + NAT + SG + IAM SSM/S3 + 3 EC2 | **SELESAI (desain)** |
+| `aws/capture_target.sh` | Capture di Target (`-i ens5`), mode far / detect | **SELESAI** |
+| `aws/attack_scenario.sh` | Skenario serangan Fase 2 (SSH brute / Slowloris / SYN flood), clean & evasion | **SELESAI** |
+| `aws/unsw_extract_infer.py` | Analyzer: NFStream 9-fitur SFM → z-score → XGBoost; mode `far` (FAR) & `detect` (MCC/F1) | **SELESAI** |
+| `aws/runbook.md` | Langkah eksekusi + resume cepat + hapus infra + slot hasil nyata | **SELESAI** |
+| `aws/cost-estimate.md` | Biaya: Fase 2 ≈$1; FAR 3 hari ≈$13–15 (terjadwal ≈$4–6); 7 hari ≈$30–33 | **SELESAI** |
+
+Penyederhanaan vs NIDS-01: Model A 9-fitur tanpa TCP window → tak perlu custom window plugin.
+
+Dua jalur mengisi Poin A/T10:
+- **Cepat (Poin A saja):** `notebooks/09_model_efficiency.ipynb` di SageMaker (tanpa AWS).
+- **Lengkap (Poin A + FAR + deteksi real-traffic):** deploy `unsw-vpc-3ec2.yaml`, ikuti
+  `runbook.md` — mengisi FAR (§12 naskah), deteksi, dan latensi @1 vCPU (Tabel §3.4).
+- **Setelah selesai:** hasil → S3, lalu `delete-stack` (biaya nol); pengetahuan tersimpan di
+  `runbook.md` untuk pengulangan cepat.

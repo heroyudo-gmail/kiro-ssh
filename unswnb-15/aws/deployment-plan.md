@@ -34,6 +34,31 @@ hal yang berbeda:
 
 ---
 
+## 1b. Skema Terpilih: 3-EC2 (persis NIDS-01)
+
+Kami memakai skema **3-EC2 mereplikasi NIDS-01** demi **comparability langsung** dengan
+paper NIDS-01. Target & Analyzer di **private subnet** (aman & realistis), Attacker di public,
+dengan **NAT Gateway** untuk update paket + SSM.
+
+- **IaC:** `unsw-vpc-3ec2.yaml` (satu stack: VPC + public/private subnet + IGW + NAT + SG +
+  IAM SSM/S3 + 3 EC2). CIDR `10.5.0.0/16` (hindari bentrok NIDS-01 `10.3`).
+- **Peran EC2:** Attacker (serangan Fase 2) · Target (layanan + **CAPTURE di sini**) ·
+  Analyzer (NFStream 9-fitur → XGBoost → metrik).
+- **Skrip:** `capture_target.sh`, `attack_scenario.sh`, `unsw_extract_infer.py` (mode
+  `far`/`detect`).
+- **Panduan eksekusi + resume + hapus infra:** `runbook.md`.
+- **Biaya:** `cost-estimate.md` (Fase 2 ≈ $1; FAR 3 hari ≈ $13–15 / terjadwal ≈ $4–6).
+
+> **Penyederhanaan vs NIDS-01:** Model A 9-fitur **tidak** memakai TCP window (swin/dwin
+> dibuang di T2), jadi **tidak perlu** custom window plugin NFStream — pipeline lebih ringkas.
+
+> **Catatan capture (pelajaran NIDS-01):** capture WAJIB di **Target** (`-i ens5`, bukan
+> `-i any`); Analyzer tak di jalur trafik. Pcap → S3 → Analyzer download → proses.
+
+Bagian §2–§9 di bawah tetap berlaku sebagai referensi detail.
+
+---
+
 ## 2. Pelajaran dari NIDS-01 yang WAJIB Dipakai (jangan ulangi kesalahan)
 
 Diambil langsung dari catatan eksekusi NIDS-01:
