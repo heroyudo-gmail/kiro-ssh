@@ -245,7 +245,40 @@ Tabel di atas **masih hipotesis leksikal**. Karena *extractor* berbeda (CICFlowM
 
 Validasi (T2-lanjutan) membandingkan rentang & distribusi tiap pasangan sebelum difinalkan.
 
-### 10.6 Langkah Berikutnya (T3)
-1. **Validasi statistik** pasangan fitur (rentang/distribusi/satuan) → finalkan Model A & B.
-2. **Pra-pemrosesan seragam** kedua dataset pada fitur irisan final (samakan satuan, scaling konsisten).
-3. **Baseline cross-dataset (XGBoost tunggal)** — latih pada satu dataset, uji pada dataset lain, ukur *generalization gap* (metrik utama MCC, konsisten Paper 1).
+### 10.6 Hasil Validasi Statistik (T2 — SELESAI)
+Notebook `02_mapping_validation.ipynb` membandingkan rentang/distribusi tiap pasangan (CIC di-*un-scale* lebih dulu). Verdict + interpretasi domain:
+
+| Pasangan | Verdict otomatis | Interpretasi domain (final) |
+|---|---|---|
+| Tot Fwd Pkts ↔ `spkts` | aligned | **Aman** |
+| Fwd Pkt Len Mean ↔ `smean` | aligned | **Aman** |
+| Bwd Pkt Len Mean ↔ `dmean` | aligned | **Aman** |
+| Flow Duration ↔ `dur` | likely-different | **Beda satuan** (CIC μs vs UNSW detik), bukan beda fitur → selamatkan via z-score |
+| Tot Bwd Pkts ↔ `dpkts` | scale-mismatch | Beda skala agregasi → z-score |
+| TotLen Fwd Pkts ↔ `sbytes` | scale-mismatch | Beda skala → z-score |
+| TotLen Bwd Pkts ↔ `dbytes` | scale-mismatch | Beda skala → z-score |
+| Flow Byts/s ↔ `sload` | scale-mismatch | Beda satuan (byte/s vs bit/s) → z-score |
+| Bwd Pkts/s ↔ `dload` | scale-mismatch | Beda satuan → z-score |
+| Fwd IAT Mean ↔ `sinpkt` | likely-different | Beda satuan (μs vs ms) → z-score (Model B) |
+| Bwd IAT Mean ↔ `dinpkt` | likely-different | Beda satuan → z-score (Model B) |
+| **Init Fwd Win Byts ↔ `swin`** | scale-mismatch | **BUANG — mismatch definisi** (lihat 10.7) |
+| **Init Bwd Win Byts ↔ `dwin`** | scale-mismatch | **BUANG — mismatch definisi** (lihat 10.7) |
+
+### 10.7 Temuan Kunci: TCP Window Mismatch (Bukti Feature-Extractor Mismatch)
+Pemeriksaan nilai unik membuktikan `swin`/`dwin` di UNSW **bukan** ukuran window bytes:
+- CIC `Init Fwd/Bwd Win Byts`: kontinu **0–65535** (byte window sesungguhnya); di Paper 1 ini fitur **paling sensitif** terhadap evasion.
+- UNSW `swin`/`dwin`: praktis **biner** — `swin` = {0: 95.395 record, 255: 79.935, sisanya 11 record}; `dwin` serupa (0/255). Hanya 7–13 nilai unik.
+
+Meski deskripsi resmi UNSW menyebut "TCP window advertisement value", **data aktualnya kategorikal 0/255** — kemungkinan penanda ada/tidaknya window scaling, bukan besaran window. Memetakannya ke Init Win Byts CIC berarti mengarang kesetaraan. **Keputusan: buang dari fitur training**, dan **laporkan sebagai studi kasus feature-extractor mismatch** (gap #2) di naskah — justru memperkuat argumen paper.
+
+### 10.8 Himpunan Fitur Final (Keputusan: Opsi 3 — z-score per dataset)
+Preprocessing: **StandardScaler (z-score) diterapkan per dataset secara terpisah**, sehingga perbedaan satuan/skala hilang tanpa mengarang; fitur dengan mismatch definisi (swin/dwin) dibuang.
+
+- **Model A (9 fitur irisan kuat):** `dur, spkts, dpkts, sbytes, dbytes, smean, dmean, sload, dload` ↔ (Flow Duration, Tot Fwd/Bwd Pkts, TotLen Fwd/Bwd Pkts, Fwd/Bwd Pkt Len Mean, Flow Byts/s, Bwd Pkts/s).
+- **Model B (11 fitur):** Model A **+** `sinpkt, dinpkt` ↔ (Fwd/Bwd IAT Mean).
+- **Dibuang:** `swin`, `dwin` (dilaporkan sebagai temuan mismatch).
+
+### 10.9 Langkah Berikutnya (T3)
+1. **Pra-pemrosesan seragam:** subset kedua dataset ke fitur irisan final, z-score per dataset, samakan skema label (biner attack/normal untuk tahap awal; multi-kelas menyusul).
+2. **Baseline cross-dataset (XGBoost tunggal):** latih pada dataset A, uji pada dataset B (dan sebaliknya), ukur *generalization gap*. Metrik utama **MCC** (konsisten Paper 1).
+3. Bandingkan **Model A vs Model B** untuk menilai pengaruh menambah fitur berpadanan-longgar (IAT) terhadap generalisasi.
