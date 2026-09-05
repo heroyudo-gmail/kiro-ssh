@@ -95,11 +95,11 @@ Reviewer Q1 sering menolak paper adversarial karena perturbasi matematis diangga
 | T5 | Adversarial Training XGBoost tunggal pada fitur irisan + evaluasi lintas-dataset (2 arah × clean/adv) | **SELESAI** (§12) |
 | T6 | Cross-network alignment (baseline vs joint training vs CORAL) untuk menaikkan MCC cross-network | **SELESAI** (§13) |
 | T7 | Domain adaptation: few-shot target adaptation + cross-dataset mixup | **SELESAI** (§14) |
-| T6 | Functional-Preserving Evasion (constraint protokol pada saddle-point) | Belum |
-| T7 | Adaptive White-Box Evaluation pada XGBoost robust | Belum |
-| T8 | Long-Term Real-Traffic Deployment AWS (3–7 hari), ukur FAR | Belum |
-| T9 | Penulisan naskah Q1 + gambar/tabel dari hasil nyata | Belum |
-| T10 (opsional/lanjutan) | Robust Adversarial Ensemble (XGB+LGBM+CatBoost, defense bervariasi, soft-voting/meta) | Belum |
+| T8 | Functional-Preserving Evasion (constraint protokol) — unconstrained vs functional | **SELESAI** (§15) |
+| T9 | Adaptive White-Box Evaluation pada model cross-network robust | Belum |
+| T10 | Long-Term Real-Traffic Deployment AWS (3–7 hari), ukur FAR | Belum |
+| T11 | Penulisan naskah Q1 + gambar/tabel dari hasil nyata | Belum |
+| T12 (opsional/lanjutan) | Robust Adversarial Ensemble (XGB+LGBM+CatBoost, defense bervariasi, soft-voting/meta) | Belum |
 
 ---
 
@@ -451,4 +451,38 @@ Model A (9 fitur), biner, z-score per dataset. Dua eksperimen:
 ### 14.5 Arah Berikutnya (T8+)
 - Functional-Preserving Evasion (constraint protokol pada saddle-point).
 - Adaptive White-Box Evaluation pada model cross-network robust.
+- Long-Term Real-Traffic Deployment AWS (3–7 hari), ukur FAR.
+
+---
+
+## 15. Functional-Preserving Evasion (T8 — SELESAI)
+
+Notebook `07_functional_preserving_evasion.ipynb`, dijalankan di SageMaker. Hasil di `functional_preserving_evasion.json`. **Seluruh angka hasil eksekusi nyata.**
+
+### 15.1 Setup
+Model A (9 fitur), biner. FGSM (finite-diff saliency) dibandingkan dalam dua mode:
+- **Unconstrained** — perturbasi bebas di ruang z-score (ala T5); dapat menghasilkan flow **mustahil** (paket pecahan, bytes < pkts, durasi negatif).
+- **Functional-preserving** — constraint diterapkan di **ruang asli** (un-scale → clip/round → re-scale): non-negatif; `fwd_pkts`/`bwd_pkts` integer; `bytes ≥ pkts`; `mean = bytes/pkts` (konsisten); serta **monotonic add-only** pada pkts/bytes/duration (penyerang hanya boleh MENAMBAH trafik, tak boleh mengurangi yang sudah terkirim).
+
+Diserang: 4 model — baseline single-source (CIC, UNSW) dan few-shot adapted (+1% target).
+
+### 15.2 Hasil (eps=0,1) — MCC di bawah serangan
+
+| Model | clean | unconstrained | functional |
+|---|---|---|---|
+| CIC baseline | 0,912 | −0,090 | **0,127** |
+| CIC adapted (+1% UNSW) | 0,911 | −0,163 | −0,029 |
+| UNSW baseline | 0,748 | −0,134 | **0,313** |
+| UNSW adapted (+1% CIC) | 0,744 | −0,217 | **0,385** |
+
+### 15.3 Temuan
+1. **Evasion tak-terbatas MELEBIH-LEBIHKAN ancaman.** Di keempat model, functional MCC jauh > unconstrained MCC (mis. UNSW baseline: −0,134 → +0,313; selisih +0,45). Ketika penyerang dibatasi ke flow yang benar-benar valid/dapat dikirim, daya serang turun substansial. **Koreksi metodologis penting:** banyak "keberhasilan evasion" bertumpu pada flow mustahil. Ini justru poin kekuatan paper adversarial level Q1.
+2. **Namun ancaman functional tetap nyata.** Functional MCC tetap turun tajam dari clean (CIC 0,912→0,127; UNSW 0,748→0,313). Bahkan dengan flow sah, penyerang masih merusak deteksi signifikan — pertahanan tetap dibutuhkan.
+3. **Robustness evasion ⊥ cross-network adaptation.** Few-shot adaptation tidak memperbaiki robustness evasion secara konsisten (CIC adapted functional −0,029 < CIC baseline 0,127; UNSW adapted 0,385 > baseline 0,313). Menguatkan pemisahan konseptual dari T5: adaptasi distribusi ≠ ketahanan adversarial.
+
+### 15.4 Kesimpulan untuk Paper Q1
+T8 melengkapi trio gap dengan **dimensi realisme serangan**: evaluasi adversarial harus memakai constraint fungsional agar ancaman tidak dilebih-lebihkan. Kombinasi tiga temuan — generalisasi (T3/6/7), pemisahan adversarial vs cross-network (T5/8), realisme evasion (T8) — membentuk kontribusi yang koheren dan jujur.
+
+### 15.5 Arah Berikutnya (T9+)
+- Adaptive White-Box Evaluation (penyerang membangkitkan evasion langsung dari gradien model, skenario terburuk).
 - Long-Term Real-Traffic Deployment AWS (3–7 hari), ukur FAR.
