@@ -96,7 +96,7 @@ Reviewer Q1 sering menolak paper adversarial karena perturbasi matematis diangga
 | T6 | Cross-network alignment (baseline vs joint training vs CORAL) untuk menaikkan MCC cross-network | **SELESAI** (§13) |
 | T7 | Domain adaptation: few-shot target adaptation + cross-dataset mixup | **SELESAI** (§14) |
 | T8 | Functional-Preserving Evasion (constraint protokol) — unconstrained vs functional | **SELESAI** (§15) |
-| T9 | Adaptive White-Box Evaluation pada model cross-network robust | Belum |
+| T9 | Adaptive White-Box Evaluation (transfer vs adaptive, functional-preserving) | **SELESAI** (§16) |
 | T10 | Long-Term Real-Traffic Deployment AWS (3–7 hari), ukur FAR | Belum |
 | T11 | Penulisan naskah Q1 + gambar/tabel dari hasil nyata | Belum |
 | T12 (opsional/lanjutan) | Robust Adversarial Ensemble (XGB+LGBM+CatBoost, defense bervariasi, soft-voting/meta) | Belum |
@@ -486,3 +486,37 @@ T8 melengkapi trio gap dengan **dimensi realisme serangan**: evaluasi adversaria
 ### 15.5 Arah Berikutnya (T9+)
 - Adaptive White-Box Evaluation (penyerang membangkitkan evasion langsung dari gradien model, skenario terburuk).
 - Long-Term Real-Traffic Deployment AWS (3–7 hari), ukur FAR.
+
+---
+
+## 16. Adaptive White-Box Evaluation (T9 — SELESAI)
+
+Notebook `08_adaptive_whitebox.ipynb`, dijalankan di SageMaker. Hasil di `adaptive_whitebox.json`. **Seluruh angka hasil eksekusi nyata.** Menutup gap #3 Paper 1 (evaluasi hanya transfer/grey-box).
+
+### 16.1 Setup
+Model A (9 fitur), biner, 2 arah (CIC, UNSW). Per arah dilatih **baseline** dan **robust** (adversarial training, D_clean ∪ D_adv 80:20, eps_train=0,1, adv functional). Dua jenis serangan, keduanya **functional-preserving** (T8):
+- **Transfer/static** — saliency dari model **baseline**, diterapkan ke model robust.
+- **Adaptive white-box** — saliency dari **model robust itu sendiri** (penyerang tahu pertahanan).
+
+### 16.2 Hasil (eps=0,1) — MCC model robust
+
+| Arah | robust_clean | robust_transfer | robust_adaptive | Δ (transfer→adaptive) |
+|---|---|---|---|---|
+| CIC | 0,911 | **0,993** | **0,425** | −0,568 |
+| UNSW | 0,733 | **0,985** | **0,248** | −0,737 |
+
+*(eps=0,2 lebih parah: robust_adaptive CIC −0,010; UNSW 0,024.)*
+
+### 16.3 Temuan
+1. **Pertahanan runtuh di bawah serangan adaptif.** Model robust tampak sangat kuat thd serangan transfer (MCC 0,99) tetapi **jatuh ke 0,25–0,43** ketika penyerang menghitung gradien dari model robust sendiri. Turun 0,57–0,74 poin.
+2. **False robustness / obfuscated gradients.** Transfer terlihat ~0,99 karena model robust dilatih tepat pada perturbasi yang dibangkitkan dari baseline — ia "hafal" pola serangan transfer (overfit ke satu jenis serangan), bukan robust sejati. Konsisten dengan konsensus komunitas adversarial ML (Athalye et al. 2018; Tramèr et al. 2020) — direplikasi pada NIDS tabular lintas-jaringan.
+3. **Semakin besar anggaran perturbasi, semakin runtuh** (eps=0,2 → MCC ≈ 0/negatif).
+
+### 16.4 Kesimpulan untuk Paper Q1
+1. **Adversarial training memberi *false sense of security*** — kuat thd transfer, rapuh thd adaptive. Evaluasi adversarial **wajib** menyertakan adaptive white-box; laporan yang hanya transfer menyesatkan.
+2. **Kejujuran sebagai kekuatan:** kami melaporkan bahwa pertahanan kami sendiri belum tahan adaptive. Ini menutup gap #3 Paper 1 dengan bukti, bukan klaim kosong — dan justru lebih dihargai reviewer Q1 daripada over-claim robustness.
+3. Bersama T5/T8, memperkuat pesan: **robustness NIDS harus diuji pada skenario terburuk (adaptive + functional-preserving)**, bukan serangan statis.
+
+### 16.5 Arah Berikutnya (T10+)
+- Long-Term Real-Traffic Deployment AWS (3–7 hari), ukur FAR (butuh biaya & waktu nyata).
+- Penulisan naskah Q1 + gambar/tabel dari hasil nyata T3–T9.
