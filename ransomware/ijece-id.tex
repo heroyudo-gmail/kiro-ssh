@@ -39,7 +39,8 @@
 \usepackage{enumitem}
 \usepackage[numbers,sort&compress]{natbib}
 \usepackage{ragged2e}
-\usepackage{hyperref,graphicx}
+\usepackage[hidelinks]{hyperref}
+\usepackage{graphicx}
 \usepackage{multirow}
 \usepackage{tabularx}
 \usepackage{booktabs}
@@ -362,40 +363,45 @@ Proses pemulihan dipicu hanya ketika anomali terdeteksi, seperti ketidakcocokan 
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[
-    node distance=0.75cm,
+    node distance=0.55cm,
     every node/.style={font=\footnotesize},
-    term/.style={draw, rounded corners=10pt, minimum width=2.4cm, minimum height=0.7cm, align=center},
-    proc/.style={draw, minimum width=3.6cm, minimum height=0.7cm, align=center},
-    dec/.style={draw, diamond, aspect=2, inner sep=1pt, align=center},
+    term/.style={draw, rounded corners=10pt, minimum width=2.6cm, minimum height=0.65cm, align=center},
+    proc/.style={draw, minimum width=3.4cm, minimum height=0.65cm, align=center},
+    dec/.style={draw, diamond, aspect=2.2, inner sep=1pt, align=center},
     ar/.style={-{Stealth[length=2mm]}, thick}
 ]
-\node[term] (start) {Start};
-\node[proc, below=of start] (upload) {Upload Drive};
-\node[proc, below=of upload] (hash) {Get Hash};
-\node[proc, below=of hash] (enc) {Encryption Data};
-\node[proc, below=of enc, text width=4.6cm] (comp) {Data Compression Analysis\\(LZ4, GZIP, Brotli, Snappy, Deflate)};
-\node[proc, below=of comp] (backup) {Backup (Air-Gapped)};
-\node[dec, below=of backup] (att) {An Attack\\Occurred?};
-\node[proc, below=1.1cm of att] (getbk) {Get Data Backup};
-\node[proc, below=of getbk] (restore) {Restore};
-\node[proc, below=of restore] (decr) {Decryption Data};
+% ----- Kolom kiri: alur pencadangan -----
+\node[term] (start) {Mulai};
+\node[proc, below=of start] (upload) {Unggah Data};
+\node[proc, below=of upload] (hash) {Hitung Hash};
+\node[proc, below=of hash] (enc) {Enkripsi Data};
+\node[proc, below=of enc, text width=4.2cm] (comp) {Analisis Kompresi Data\\(LZ4, GZIP, Brotli, Snappy, Deflate)};
+\node[proc, below=of comp] (backup) {Cadangan (Air-Gapped)};
+\node[dec, below=0.7cm of backup] (att) {Terjadi\\Serangan?};
+% ----- Kolom kanan: alur pemulihan -----
+\node[proc, right=2.4cm of enc] (getbk) {Ambil Data Cadangan};
+\node[proc, below=of getbk] (restore) {Pulihkan};
+\node[proc, below=of restore] (decr) {Dekripsi Data};
 \node[proc, below=of decr] (valid) {Validasi};
-\node[proc, below=of valid] (eval) {Evaluation};
-\node[term, below=of eval] (finish) {Finish};
+\node[proc, below=of valid] (eval) {Evaluasi};
+\node[term, below=of eval] (finish) {Selesai};
+% panah kolom kiri
 \draw[ar] (start) -- (upload);
 \draw[ar] (upload) -- (hash);
 \draw[ar] (hash) -- (enc);
 \draw[ar] (enc) -- (comp);
 \draw[ar] (comp) -- (backup);
 \draw[ar] (backup) -- (att);
-\draw[ar] (att) -- node[right, font=\scriptsize]{Yes} (getbk);
+% cabang Ya -> masuk kolom pemulihan di atas (Ambil Data Cadangan)
+\draw[ar] (att.east) -- node[below, font=\scriptsize, pos=0.3]{Ya} ++(1.0cm,0) |- (getbk.west);
+% panah kolom kanan
 \draw[ar] (getbk) -- (restore);
 \draw[ar] (restore) -- (decr);
 \draw[ar] (decr) -- (valid);
 \draw[ar] (valid) -- (eval);
 \draw[ar] (eval) -- (finish);
-% cabang No: dari kanan decision melingkar ke Validasi
-\draw[ar] (att.east) -- ++(2.6cm,0) node[above left, font=\scriptsize]{No} |- (valid.east);
+% cabang Tidak -> lewati pemulihan, langsung ke Selesai (masuk dari sisi kiri)
+\draw[ar] (att.south) |- node[below, font=\scriptsize, pos=0.05]{Tidak} (finish.west);
 \end{tikzpicture}
 \vspace{.7em}
 \caption{Diagram alir sistem cadangan dan pemulihan}
@@ -1111,15 +1117,32 @@ Dataset yang digunakan dalam penelitian ini dibangkitkan secara sintetis berdasa
 
 \section*{BIOGRAFI PENULIS}
 \label{sec:biographies}
-\noindent\textbf{Hero Yudo Martono} memperoleh gelar sarjana Ilmu Komputer (Teknik Elektro) dari ITS, Indonesia. Ia kemudian menempuh gelar magister Teknik Informatika dari ITB, Indonesia. Minat penelitiannya meliputi keamanan siber, kecerdasan buatan, dan komputasi awan. Ia dapat dihubungi di hero@pens.ac.id.
+
+\noindent
+\begin{tabularx}{\textwidth}{@{}m{2.5cm}@{\hspace{0.4cm}}X@{}}
+\includegraphics[width=2.5cm,height=3.2cm,keepaspectratio]{figures/hero.jpg} &
+\textbf{Hero Yudo Martono} memperoleh gelar sarjana Ilmu Komputer (Teknik Elektro) dari ITS, Indonesia. Ia kemudian menempuh gelar magister Teknik Informatika dari ITB, Indonesia. Minat penelitiannya meliputi keamanan siber, kecerdasan buatan, dan komputasi awan. Ia dapat dihubungi di email: hero@pens.ac.id. \\
+\end{tabularx}
 
 \vspace{.7em}
-\noindent\textbf{Nafisah Rahmadani Harahap} saat ini sedang menempuh gelar Sarjana Terapan (D4) Teknik Informatika di Politeknik Elektronika Negeri Surabaya (PENS), Indonesia. Ia juga bekerja sebagai ERP Project Manager, berfokus pada implementasi \textit{enterprise resource planning}, optimasi proses bisnis, koordinasi proyek, dan inisiatif transformasi digital. Minat penelitiannya meliputi keamanan siber, sistem informasi, kecerdasan buatan, komputasi awan, dan solusi perangkat lunak perusahaan. Ia dapat dihubungi di nafisah@it.student.pens.ac.id.
+\noindent
+\begin{tabularx}{\textwidth}{@{}m{2.5cm}@{\hspace{0.4cm}}X@{}}
+\includegraphics[width=2.5cm,height=3.2cm,keepaspectratio]{figures/nafisah.png} &
+\textbf{Nafisah Rahmadani Harahap} saat ini sedang menempuh gelar Sarjana Terapan (D4) Teknik Informatika di Politeknik Elektronika Negeri Surabaya (PENS), Indonesia. Ia juga bekerja sebagai ERP Project Manager, berfokus pada implementasi \textit{enterprise resource planning}, optimasi proses bisnis, koordinasi proyek, dan inisiatif transformasi digital. Minat penelitiannya meliputi keamanan siber, sistem informasi, kecerdasan buatan, komputasi awan, dan solusi perangkat lunak perusahaan. Ia dapat dihubungi di email: nafisah@it.student.pens.ac.id. \\
+\end{tabularx}
 
 \vspace{.7em}
-\noindent\textbf{Iwan Syarif} adalah profesor (Ph.D.) dan dosen pada Departemen Teknik Informatika, Politeknik Elektronika Negeri Surabaya (PENS), Indonesia. Fokus penelitiannya adalah keamanan siber (\textit{cyber security}). Ia dapat dihubungi di iwanarif@pens.ac.id.
+\noindent
+\begin{tabularx}{\textwidth}{@{}m{2.5cm}@{\hspace{0.4cm}}X@{}}
+\figplaceholder{2.5cm}{iwan.jpg} &
+\textbf{Iwan Syarif} adalah profesor (Ph.D.) dan dosen pada Departemen Teknik Informatika, Politeknik Elektronika Negeri Surabaya (PENS), Indonesia. Fokus penelitiannya adalah keamanan siber (\textit{cyber security}). Ia dapat dihubungi di email: iwanarif@pens.ac.id. \\
+\end{tabularx}
 
 \vspace{.7em}
-\noindent\textbf{Ferry Astika Saputra} memperoleh gelar doktor (Ph.D.) dari Universitas Indonesia dan merupakan dosen pada Departemen Teknik Informatika, Politeknik Elektronika Negeri Surabaya (PENS), Indonesia. Fokus penelitiannya adalah keamanan siber (\textit{cyber security}). Ia dapat dihubungi di ferryas@pens.ac.id.
+\noindent
+\begin{tabularx}{\textwidth}{@{}m{2.5cm}@{\hspace{0.4cm}}X@{}}
+\figplaceholder{2.5cm}{ferry.jpg} &
+\textbf{Ferry Astika Saputra} memperoleh gelar doktor (Ph.D.) dari Universitas Indonesia dan merupakan dosen pada Departemen Teknik Informatika, Politeknik Elektronika Negeri Surabaya (PENS), Indonesia. Fokus penelitiannya adalah keamanan siber (\textit{cyber security}). Ia dapat dihubungi di email: ferryas@pens.ac.id. \\
+\end{tabularx}
 
 \end{document}

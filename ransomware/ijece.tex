@@ -33,7 +33,8 @@
 \usepackage{enumitem}
 \usepackage[numbers,sort&compress]{natbib}
 \usepackage{ragged2e}
-\usepackage{hyperref,graphicx}
+\usepackage[hidelinks]{hyperref}
+\usepackage{graphicx}
 \usepackage{multirow}
 \usepackage{tabularx}
 \usepackage{booktabs}
@@ -357,40 +358,45 @@ The recovery process is triggered only when anomalies are detected, such as \tex
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[
-    node distance=0.75cm,
+    node distance=0.55cm,
     every node/.style={font=\footnotesize},
-    term/.style={draw, rounded corners=10pt, minimum width=2.4cm, minimum height=0.7cm, align=center},
-    proc/.style={draw, minimum width=3.6cm, minimum height=0.7cm, align=center},
-    dec/.style={draw, diamond, aspect=2, inner sep=1pt, align=center},
+    term/.style={draw, rounded corners=10pt, minimum width=2.6cm, minimum height=0.65cm, align=center},
+    proc/.style={draw, minimum width=3.4cm, minimum height=0.65cm, align=center},
+    dec/.style={draw, diamond, aspect=2.2, inner sep=1pt, align=center},
     ar/.style={-{Stealth[length=2mm]}, thick}
 ]
+% ----- Left column: backup flow -----
 \node[term] (start) {Start};
 \node[proc, below=of start] (upload) {Upload Drive};
 \node[proc, below=of upload] (hash) {Get Hash};
 \node[proc, below=of hash] (enc) {Encryption Data};
-\node[proc, below=of enc, text width=4.6cm] (comp) {Data Compression Analysis\\(LZ4, GZIP, Brotli, Snappy, Deflate)};
+\node[proc, below=of enc, text width=4.2cm] (comp) {Data Compression Analysis\\(LZ4, GZIP, Brotli, Snappy, Deflate)};
 \node[proc, below=of comp] (backup) {Backup (Air-Gapped)};
-\node[dec, below=of backup] (att) {An Attack\\Occurred?};
-\node[proc, below=1.1cm of att] (getbk) {Get Data Backup};
+\node[dec, below=0.7cm of backup] (att) {An Attack\\Occurred?};
+% ----- Right column: recovery flow (top-aligned with start) -----
+\node[proc, right=2.4cm of enc] (getbk) {Get Data Backup};
 \node[proc, below=of getbk] (restore) {Restore};
 \node[proc, below=of restore] (decr) {Decryption Data};
 \node[proc, below=of decr] (valid) {Validate};
 \node[proc, below=of valid] (eval) {Evaluation};
 \node[term, below=of eval] (finish) {Finish};
+% left column arrows
 \draw[ar] (start) -- (upload);
 \draw[ar] (upload) -- (hash);
 \draw[ar] (hash) -- (enc);
 \draw[ar] (enc) -- (comp);
 \draw[ar] (comp) -- (backup);
 \draw[ar] (backup) -- (att);
-\draw[ar] (att) -- node[right, font=\scriptsize]{Yes} (getbk);
+% decision Yes -> enter recovery column at the top (Get Data Backup)
+\draw[ar] (att.east) -- node[below, font=\scriptsize, pos=0.3]{Yes} ++(1.0cm,0) |- (getbk.west);
+% right column arrows
 \draw[ar] (getbk) -- (restore);
 \draw[ar] (restore) -- (decr);
 \draw[ar] (decr) -- (valid);
 \draw[ar] (valid) -- (eval);
 \draw[ar] (eval) -- (finish);
-% No branch: from the right of the decision looping back to Validate
-\draw[ar] (att.east) -- ++(2.6cm,0) node[above left, font=\scriptsize]{No} |- (valid.east);
+% decision No -> skip recovery, go straight to Finish (enter from the left edge)
+\draw[ar] (att.south) |- node[below, font=\scriptsize, pos=0.05]{No} (finish.west);
 \end{tikzpicture}
 \vspace{.7em}
 \caption{Backup and recovery system flowchart}
@@ -1106,15 +1112,32 @@ Datasets used in this study were synthetically generated based on operational da
 
 \section*{BIOGRAPHIES OF AUTHORS}
 \label{sec:biographies}
-\noindent\textbf{Hero Yudo Martono} received his bachelor's degree in Computer Science (Electrical Engineering) from ITS, Indonesia. He then pursued a master's degree in Informatics Engineering from ITB, Indonesia. His research interests include cybersecurity, artificial intelligence, and cloud computing. He can be contacted at hero@pens.ac.id.
+
+\noindent
+\begin{tabularx}{\textwidth}{@{}m{2.5cm}@{\hspace{0.4cm}}X@{}}
+\includegraphics[width=2.5cm,height=3.2cm,keepaspectratio]{figures/hero.jpg} &
+\textbf{Hero Yudo Martono} received his bachelor's degree in Computer Science (Electrical Engineering) from ITS, Indonesia. He then pursued a master's degree in Informatics Engineering from ITB, Indonesia. His research interests include cybersecurity, artificial intelligence, and cloud computing. He can be contacted at email: hero@pens.ac.id. \\
+\end{tabularx}
 
 \vspace{.7em}
-\noindent\textbf{Nafisah Rahmadani Harahap} is currently pursuing the Bachelor of Applied Engineering (D4) degree in Informatics Engineering at Politeknik Elektronika Negeri Surabaya (PENS), Indonesia. She is also working as an ERP Project Manager, focusing on enterprise resource planning implementation, business process optimization, project coordination, and digital transformation initiatives. Her research interests include cybersecurity, information systems, artificial intelligence, cloud computing, and enterprise software solutions. She can be contacted at nafisah@it.student.pens.ac.id.
+\noindent
+\begin{tabularx}{\textwidth}{@{}m{2.5cm}@{\hspace{0.4cm}}X@{}}
+\includegraphics[width=2.5cm,height=3.2cm,keepaspectratio]{figures/nafisah.png} &
+\textbf{Nafisah Rahmadani Harahap} is currently pursuing the Bachelor of Applied Engineering (D4) degree in Informatics Engineering at Politeknik Elektronika Negeri Surabaya (PENS), Indonesia. She is also working as an ERP Project Manager, focusing on enterprise resource planning implementation, business process optimization, project coordination, and digital transformation initiatives. Her research interests include cybersecurity, information systems, artificial intelligence, cloud computing, and enterprise software solutions. She can be contacted at email: nafisah@it.student.pens.ac.id. \\
+\end{tabularx}
 
 \vspace{.7em}
-\noindent\textbf{Iwan Syarif} is a professor (Ph.D.) and lecturer at the Department of Informatics Engineering, Politeknik Elektronika Negeri Surabaya (PENS), Indonesia. His research focuses on cybersecurity. He can be contacted at iwanarif@pens.ac.id.
+\noindent
+\begin{tabularx}{\textwidth}{@{}m{2.5cm}@{\hspace{0.4cm}}X@{}}
+\figplaceholder{2.5cm}{iwan.jpg} &
+\textbf{Iwan Syarif} is a professor (Ph.D.) and lecturer at the Department of Informatics Engineering, Politeknik Elektronika Negeri Surabaya (PENS), Indonesia. His research focuses on cybersecurity. He can be contacted at email: iwanarif@pens.ac.id. \\
+\end{tabularx}
 
 \vspace{.7em}
-\noindent\textbf{Ferry Astika Saputra} received his doctoral (Ph.D.) degree from Universitas Indonesia and is a lecturer at the Department of Informatics Engineering, Politeknik Elektronika Negeri Surabaya (PENS), Indonesia. His research focuses on cybersecurity. He can be contacted at ferryas@pens.ac.id.
+\noindent
+\begin{tabularx}{\textwidth}{@{}m{2.5cm}@{\hspace{0.4cm}}X@{}}
+\figplaceholder{2.5cm}{ferry.jpg} &
+\textbf{Ferry Astika Saputra} received his doctoral (Ph.D.) degree from Universitas Indonesia and is a lecturer at the Department of Informatics Engineering, Politeknik Elektronika Negeri Surabaya (PENS), Indonesia. His research focuses on cybersecurity. He can be contacted at email: ferryas@pens.ac.id. \\
+\end{tabularx}
 
 \end{document}
