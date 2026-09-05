@@ -89,10 +89,9 @@ Reviewer Q1 sering menolak paper adversarial karena perturbasi matematis diangga
 
 | Tahap | Kegiatan | Status |
 |---|---|---|
-| T1 | Akuisisi & inspeksi dataset UNSW-NB15 (struktur kolom, label, distribusi) | Belum |
-| T2 | Semantic Feature Mapping: tabel irisan fitur CIC-IDS2018 ↔ UNSW-NB15 (verifikasi semantik + statistik) | Belum |
-| T3 | Pra-pemrosesan seragam kedua dataset pada fitur irisan | Belum |
-| T4 | Baseline cross-dataset (XGBoost tunggal): latih A→uji B, kuantifikasi generalization gap | Belum |
+| T1 | Akuisisi & inspeksi dataset UNSW-NB15 (struktur kolom, label, distribusi) | **SELESAI** (§9.3) |
+| T2 | Semantic Feature Mapping: tabel irisan fitur CIC-IDS2018 ↔ UNSW-NB15 (verifikasi semantik + statistik) | **SELESAI** (§10.4–10.8) |
+| T3 | Pra-pemrosesan seragam + baseline cross-dataset (XGBoost tunggal): latih A→uji B, kuantifikasi generalization gap | **SELESAI** (§11) |
 | T5 | Adversarial Training XGBoost tunggal pada fitur irisan + evaluasi 2×2 (S1–S4) lintas-dataset | Belum |
 | T6 | Functional-Preserving Evasion (constraint protokol pada saddle-point) | Belum |
 | T7 | Adaptive White-Box Evaluation pada XGBoost robust | Belum |
@@ -282,3 +281,44 @@ Preprocessing: **StandardScaler (z-score) diterapkan per dataset secara terpisah
 1. **Pra-pemrosesan seragam:** subset kedua dataset ke fitur irisan final, z-score per dataset, samakan skema label (biner attack/normal untuk tahap awal; multi-kelas menyusul).
 2. **Baseline cross-dataset (XGBoost tunggal):** latih pada dataset A, uji pada dataset B (dan sebaliknya), ukur *generalization gap*. Metrik utama **MCC** (konsisten Paper 1).
 3. Bandingkan **Model A vs Model B** untuk menilai pengaruh menambah fitur berpadanan-longgar (IAT) terhadap generalisasi.
+
+---
+
+## 11. Baseline Cross-Dataset (T3 — SELESAI)
+
+Notebook `03_cross_dataset_baseline.ipynb`, dijalankan di SageMaker atas dataset asli. Hasil disimpan di `cross_dataset_baseline.json`. **Seluruh angka di bawah adalah hasil eksekusi nyata.**
+
+### 11.1 Setup
+- **Label biner:** attack (1) vs normal (0). Untuk tahap awal, seluruh 14 kelas serangan CIC digabung jadi "attack".
+- **XGBoost** `binary:logistic`, `max_depth=8, lr=0.1, n_estimators=200, subsample/colsample=0.8, tree_method='hist'` (mengikuti Paper 1).
+- **z-score per dataset** (StandardScaler di-*fit* pada data latih masing-masing).
+- **Empat skenario:** `same_cic` (split internal CIC 70/30), `same_unsw` (train 175k → test 82k), `cic2unsw` (latih CIC → uji UNSW), `unsw2cic` (latih UNSW → uji seluruh CIC).
+
+### 11.2 Verifikasi Kejujuran Label (WAJIB, sudah dilakukan)
+Sebelum mempercayai angka, label CIC diverifikasi terhadap `label_mapping` di `cleaned_100.pkl`:
+- `label_mapping`: `Benign→0`, sisanya (`Bot`, `Brute Force`, `DDOS/DDoS`, `DoS`, `FTP/SSH-BruteForce`, `Infilteration`, `SQL Injection`) → indeks **1–14**.
+- Distribusi `y`: kelas 0 (Benign) = 1.348.453; jumlah kelas 1–14 = 274.808.
+- Konversi biner (`0→normal`, `1..14→attack`) menghasilkan tepat `{normal: 1.348.453, attack: 274.808}` — **cocok sempurna**.
+- **Kesimpulan:** MCC negatif pada skenario cross adalah **fenomena generalisasi nyata**, BUKAN artefak label terbalik.
+
+### 11.3 Hasil (MCC)
+
+| Skenario | Model A (9 fitur) | Model B (11 fitur) |
+|---|---|---|
+| `same_cic` (latih & uji CIC) | **0,9134** | 0,9137 |
+| `same_unsw` (latih & uji UNSW) | **0,7448** | 0,7428 |
+| `cic2unsw` (latih CIC → uji UNSW) | **−0,0719** | 0,0035 |
+| `unsw2cic` (latih UNSW → uji CIC) | **−0,0613** | −0,0464 |
+| **gap (latih CIC)** = MCC(same_cic) − MCC(cic2unsw) | **0,985** | 0,910 |
+| **gap (latih UNSW)** = MCC(same_unsw) − MCC(unsw2cic) | **0,806** | 0,789 |
+
+Metrik pendukung (Model A): `same_cic` F1=0,928 ACC=0,976 AUC=0,981; `same_unsw` F1=0,890 ACC=0,868 AUC=0,979. Detail lengkap (F1/ACC/AUC/confusion tiap skenario) di `cross_dataset_baseline.json`.
+
+### 11.4 Temuan
+1. **Kolaps generalisasi lintas-jaringan (bukti empiris gap #1).** Model dengan performa dalam-dataset tinggi (MCC 0,91 di CIC; 0,74 di UNSW) **jatuh ke MCC ≈ 0 hingga negatif** saat diuji-silang. MCC ≈ 0 = setara tebakan acak; MCC negatif = sistematis salah arah. *Generalization gap* mencapai **0,81–0,99** — bukti tajam bahwa model NIDS terlatih-satu-jaringan tidak transfer ke jaringan lain.
+2. **Bukti dari confusion matrix.** Pada `cic2unsw` (Model A), model salah melabeli 44.804 flow attack UNSW sebagai normal — model belajar batas keputusan spesifik-CIC yang tak berlaku pada distribusi UNSW.
+3. **Model A ≈ Model B, IAT tidak menolong.** Menambah `sinpkt`/`dinpkt` (Fwd/Bwd IAT) tidak memperbaiki generalisasi (cross-dataset tetap kolaps). Konsisten dengan verdict validasi bahwa IAT punya mismatch satuan (μs vs detik). Model A (9 fitur, lebih ringkas) dipilih sebagai basis lanjutan; Model B dilaporkan sebagai pembanding.
+4. **z-score per dataset tidak cukup.** Normalisasi skala saja tidak menutup gap distribusi antar-jaringan — memotivasi kebutuhan mekanisme *cross-network robust* (mapping robust + adversarial training) di tahap berikutnya, bukan sekadar penyelarasan skala.
+
+### 11.5 Implikasi untuk Paper Q1
+Hasil ini adalah **motivasi kuantitatif inti** paper: NIDS state-of-practice runtuh lintas-jaringan. Ini membenarkan kontribusi utama (Semantic Feature Mapping + adversarial robust NIDS). Baseline ini menjadi *lower bound* yang harus dilampaui pada tahap T4+.
