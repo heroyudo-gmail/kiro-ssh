@@ -22,7 +22,6 @@ import warnings
 
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import (
     accuracy_score, precision_score, recall_score,
@@ -31,8 +30,13 @@ from sklearn.metrics import (
 from xgboost import XGBClassifier
 
 warnings.filterwarnings("ignore")
-plt.style.use("seaborn-v0_8-whitegrid")
-plt.rcParams.update({"font.size": 10, "figure.dpi": 150})
+for _style in ("seaborn-v0_8-whitegrid", "seaborn-whitegrid", "ggplot", "default"):
+    try:
+        plt.style.use(_style)
+        break
+    except (OSError, ValueError):
+        continue
+plt.rcParams.update({"font.size": 10, "figure.dpi": 150, "axes.grid": True})
 
 DATA_DIR = "../data/"
 MODEL_DIR = "../models/"
@@ -75,6 +79,25 @@ T = {
         "bar_metrics": ["MCC", "F1-Score", "Precision", "Recall"],
     },
 }
+
+
+def draw_heatmap(ax, matrix, xlabels, ylabels, cmap, title, xlab, ylab):
+    """Normalized confusion-matrix heatmap using pure matplotlib (no seaborn)."""
+    im = ax.imshow(matrix, cmap=cmap, vmin=0.0, vmax=1.0, aspect="auto")
+    ax.figure.colorbar(im, ax=ax, shrink=0.8)
+    ax.set_xticks(np.arange(len(xlabels)))
+    ax.set_yticks(np.arange(len(ylabels)))
+    ax.set_xticklabels(xlabels, rotation=45, ha="right", fontsize=8)
+    ax.set_yticklabels(ylabels, fontsize=8)
+    thresh = 0.5
+    for i in range(matrix.shape[0]):
+        for j in range(matrix.shape[1]):
+            val = matrix[i, j]
+            ax.text(j, i, f"{val:.2f}", ha="center", va="center",
+                    color="white" if val > thresh else "black", fontsize=7)
+    ax.set_title(title, fontsize=11, fontweight="bold")
+    ax.set_xlabel(xlab)
+    ax.set_ylabel(ylab)
 
 
 def compute_saliency(model, X, y, h=0.01):
@@ -171,11 +194,8 @@ def main():
         for ax, title, cmap, key in zip(axes.flat, titles, cmaps, ["S1", "S2", "S3", "S4"]):
             cm = S[key]["cm"].astype(float)
             cmn = cm / cm.sum(axis=1)[:, None]
-            sns.heatmap(cmn, annot=True, fmt=".2f", cmap=cmap, ax=ax,
-                        xticklabels=class_names, yticklabels=class_names, cbar_kws={"shrink": 0.8})
-            ax.set_title(title, fontsize=11, fontweight="bold")
-            ax.set_xlabel(t["predicted"]); ax.set_ylabel(t["actual"])
-            ax.tick_params(axis="x", rotation=45); ax.tick_params(axis="y", rotation=0)
+            draw_heatmap(ax, cmn, class_names, class_names, cmap, title,
+                         t["predicted"], t["actual"])
         plt.suptitle(t["confusion_suptitle"].format(eps=EPSILON), fontsize=14, fontweight="bold", y=1.01)
         plt.tight_layout()
         plt.savefig(os.path.join(OUT[lang], f"evaluation_confusion_2x2_{lang}.png"), bbox_inches="tight", dpi=150)
