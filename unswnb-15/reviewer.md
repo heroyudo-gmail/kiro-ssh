@@ -90,12 +90,12 @@ Agar rencana T10 tidak terlihat "janji kosong", tambahkan *deployment blueprint 
 
 | # | Tindakan | Lokasi | Butuh SageMaker? | Status |
 |---|---|---|---|---|
-| B1a | Persamaan finite-difference gradien | naskah §5 | tidak | Belum |
-| B1b | Formulasi constrained optimization $\mathcal{S}_{valid}$ | naskah §9.1 | tidak | Belum |
-| B2 | Sub-bab analisis asimetri performa (kompleksitas dataset) | naskah §10 | tidak | Belum |
-| B3 | Ukur ukuran model + inference latency; bingkai Edge/Green AI | naskah §3.3 + eksperimen | ya (ukur) | Belum |
-| B4 | Visualisasi t-SNE/UMAP distribution shift | `figure-q1/` + naskah §7 | ya (data) | Belum |
-| B5 | Diagram arsitektur deployment AWS | `figure-q1/` + naskah §12 | tidak | Belum |
+| B1a | Persamaan finite-difference gradien | naskah §5 | tidak | **SELESAI** (Pers. 1) |
+| B1b | Formulasi constrained optimization $\mathcal{S}_{valid}$ | naskah §9.1 | tidak | **SELESAI** (Pers. 3–4) |
+| B2 | Sub-bab analisis asimetri performa (kompleksitas dataset) | naskah §10 | tidak | **SELESAI** (§10.1) |
+| B3 | Ukur ukuran model + inference latency; bingkai Edge/Green AI | naskah §3.4 + eksperimen | ya (ukur) | **Sebagian**: framing + tabel placeholder selesai (§3.4); angka nyata menunggu pengukuran |
+| B4 | Visualisasi t-SNE/UMAP distribution shift | `figure-q1/` + naskah §7 | ya (data) | Belum (butuh SageMaker) |
+| B5 | Diagram arsitektur deployment AWS | `figure-q1/` + naskah §12 | tidak | **SELESAI** (fig6, §12) |
 | T10 | Eksekusi deployment AWS 3–7 hari, ukur FAR (nyata) | eksperimen | ya (AWS) | Belum |
 
 > **Catatan kejujuran:** semua angka baru (ukuran model, latency, FAR, koordinat t-SNE) wajib

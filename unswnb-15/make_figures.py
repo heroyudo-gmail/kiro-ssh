@@ -171,6 +171,50 @@ def fig_adaptive_whitebox():
     print("  fig5_adaptive_whitebox.png")
 
 
+# ---------------------------------------------------------------------------
+# Fig 6 — Deployment blueprint AWS (diagram arsitektur, bukan hasil eksperimen)
+# ---------------------------------------------------------------------------
+def fig_deployment_blueprint():
+    from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
+
+    fig, ax = plt.subplots(figsize=(10, 3.6))
+    ax.set_xlim(0, 10); ax.set_ylim(0, 3.4); ax.axis("off")
+    ax.grid(False)
+
+    boxes = [
+        (0.2, "Live traffic\n(VPC mirror /\nENI capture)", "#dde"),
+        (2.15, "Capture sensor\nEC2 + NFStream\n(flow features)", "#cde"),
+        (4.1, "Semantic Feature\nMapping (SFM)\n+ z-score", "#cec"),
+        (6.05, "Robust XGBoost\n(9 features,\nedge-friendly)", "#fdb"),
+        (8.0, "Detection +\nalerting\n(FAR logging)", "#fbb"),
+    ]
+    w, h, y = 1.75, 1.5, 1.0
+    centers = []
+    for x, label, color in boxes:
+        box = FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0.03,rounding_size=0.08",
+                             linewidth=1.1, edgecolor="black", facecolor=color)
+        ax.add_patch(box)
+        ax.text(x + w / 2, y + h / 2, label, ha="center", va="center", fontsize=9)
+        centers.append((x + w, x, y + h / 2))
+
+    for i in range(len(centers) - 1):
+        x_end = centers[i][0]
+        x_start_next = centers[i + 1][1]
+        yy = centers[i][2]
+        arr = FancyArrowPatch((x_end, yy), (x_start_next, yy),
+                              arrowstyle="-|>", mutation_scale=14, linewidth=1.2, color="black")
+        ax.add_patch(arr)
+
+    ax.text(5.0, 3.15, "Long-term Cloud Deployment (AWS) \u2014 continuous 3\u20137 days, measure False Alarm Rate",
+            ha="center", va="center", fontsize=10, fontweight="bold")
+    ax.text(5.0, 0.35,
+            "Planned validation blueprint (future work): quantifies FAR under real daily traffic fluctuation.",
+            ha="center", va="center", fontsize=8, style="italic", color="#444")
+    fig.savefig(os.path.join(FIG, "fig6_deployment_blueprint.png"))
+    plt.close(fig)
+    print("  fig6_deployment_blueprint.png")
+
+
 if __name__ == "__main__":
     print("Membangkitkan gambar paper Q1 dari hasil nyata:")
     fig_generalization_gap()
@@ -178,4 +222,5 @@ if __name__ == "__main__":
     fig_alignment()
     fig_functional_evasion()
     fig_adaptive_whitebox()
+    fig_deployment_blueprint()
     print(f"Selesai. Semua PNG di: {FIG}")

@@ -186,6 +186,40 @@ dbytes, smean, dmean, sload, dload}. \textbf{Model B} menambahkan
 \texttt{sinpkt, dinpkt} (Fwd/Bwd IAT). Model A dipilih sebagai basis karena
 setara Model B namun lebih ringkas.
 
+\subsection{Pilihan Model Tunggal XGBoost: Perspektif \emph{Edge} dan \emph{Green AI}}
+\label{sec:edge}
+Kami sengaja mempertahankan \textbf{model tunggal XGBoost} alih-alih
+\emph{ensemble} berat atau \emph{deep learning} kompleks. Selain menjaga
+\emph{comparability} dengan penelitian sebelumnya dan mengisolasi variabel
+kontribusi (SFM dan adaptasi lintas-jaringan, bukan kapasitas model), pilihan ini
+selaras dengan kebutuhan \textbf{penyebaran di \emph{edge}} dan prinsip
+\textbf{\emph{Green AI}}. Pada perangkat \emph{edge} nyata --- \emph{smart router},
+\emph{IoT gateway}, atau sensor \emph{inline} --- model \emph{ensemble} multi-algoritma
+atau jaringan dalam berukuran besar tidak realistis karena konsumsi memori, CPU,
+dan energi yang tinggi, serta latensi inferensi yang dapat melampaui laju
+kedatangan \emph{flow}. Sebaliknya, XGBoost tunggal dengan $9$ fitur menghasilkan
+model biner ringan dan inferensi bertingkat-pohon yang cepat, menjadikannya
+kandidat \emph{Edge-friendly Robust NIDS}.
+
+\begin{table}[h]
+\centering
+\caption{Profil efisiensi model (diisi dari pengukuran nyata). Placeholder
+menandai angka yang akan dilaporkan setelah instrumentasi.}
+\label{tab:efficiency}
+\begin{tabular}{lc}
+\toprule
+Metrik & Nilai \\
+\midrule
+Ukuran model biner (Model A, 9 fitur) & \texttt{[TBD]} KB \\
+Rata-rata latensi inferensi per \emph{flow} & \texttt{[TBD]} $\mu$s \\
+\emph{Throughput} (flow/detik, 1 vCPU) & \texttt{[TBD]} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent Angka pada Tabel~\ref{tab:efficiency} akan diisi dari pengukuran nyata
+(bukan estimasi) sebagai bukti kesiapan \emph{edge}.
+
 % ============================================================
 \section{Baseline Lintas-Dataset: Celah Generalisasi}
 \label{sec:baseline}
@@ -232,10 +266,34 @@ Tabel~\ref{tab:baseline} dan Gambar~\ref{fig:gap} menunjukkan bahwa MCC $\approx
 \section{Adversarial Training Tidak Menutup Celah Lintas-Jaringan}
 \label{sec:advtrain}
 
-Kami menerapkan \emph{adversarial training} bergaya makalah sebelumnya: gradien
-diaproksimasi dengan \emph{finite-difference} (XGBoost non-\emph{differentiable}),
-serangan FGSM $\mathbf{x}_{adv}=\mathbf{x}+\epsilon\,\mathrm{sign}(\nabla_\mathbf{x}L)$,
-lalu augmentasi $D_{robust}=D_{clean}\cup D_{adv}$ (80:20).
+Kami menerapkan \emph{adversarial training} bergaya makalah sebelumnya. Karena
+XGBoost berbasis pohon dan \emph{non-differentiable}, gradien loss terhadap fitur
+tidak tersedia secara analitik. Kami mengestimasinya dengan skema
+\emph{central finite-difference}: untuk setiap fitur ke-$i$,
+\begin{equation}
+\label{eq:fd}
+\widehat{\left[\nabla_{\mathbf{x}} L(\theta,\mathbf{x},y)\right]}_i
+\;=\;
+\frac{L\!\left(\theta,\mathbf{x}+h\,\mathbf{e}_i,\,y\right)
+      - L\!\left(\theta,\mathbf{x}-h\,\mathbf{e}_i,\,y\right)}{2h},
+\qquad i=1,\dots,d,
+\end{equation}
+dengan $\mathbf{e}_i$ vektor basis satuan pada dimensi ke-$i$, $h$ langkah kecil
+($h=0{,}01$ pada ruang ter-\emph{z-score}), $d$ jumlah fitur, dan $L$ \emph{binary
+cross-entropy}
+$L(\theta,\mathbf{x},y) = -\bigl[y\log p_\theta(\mathbf{x}) + (1-y)\log(1-p_\theta(\mathbf{x}))\bigr]$,
+$p_\theta(\mathbf{x})$ probabilitas kelas \emph{attack}. Estimasi
+Persamaan~\eqref{eq:fd} memerlukan $2d$ evaluasi model per sampel.
+
+Sampel adversarial dibangkitkan dengan \emph{Fast Gradient Sign Method} (FGSM),
+\begin{equation}
+\label{eq:fgsm}
+\mathbf{x}_{adv} \;=\; \mathbf{x} + \epsilon\,\mathrm{sign}\!\left(\widehat{\nabla_{\mathbf{x}} L(\theta,\mathbf{x},y)}\right),
+\end{equation}
+lalu model diperkuat melalui augmentasi $D_{robust}=D_{clean}\cup D_{adv}$ dengan
+rasio $80{:}20$ dan dilatih ulang. Formulasi ini setara dengan pendekatan
+\emph{min-max} (\emph{saddle-point}) $\min_\theta \mathbb{E}\bigl[\max_{\|\boldsymbol{\delta}\|_\infty \le \epsilon} L(\theta,\mathbf{x}+\boldsymbol{\delta},y)\bigr]$,
+dengan $\max$ dalam diaproksimasi oleh FGSM satu langkah.
 
 Hasilnya \emph{asimetris terhadap tujuan}: robustness \emph{evasion} in-domain
 membaik tajam (MCC $-0{,}09 \rightarrow +0{,}36$ pada $\epsilon=0{,}1$),
@@ -338,11 +396,39 @@ SFM, NIDS lintas-jaringan dapat dibuat berfungsi dengan sedikit --- atau tanpa
 \subsection{Functional-Preserving Evasion}
 \label{sec:fpe}
 
-FGSM tak-terbatas dapat menghasilkan \emph{flow} mustahil (paket pecahan,
-\emph{bytes} $<$ paket, durasi negatif). Kami memberlakukan
-\emph{functional-preserving constraint} di ruang asli: non-negatif; jumlah paket
-bulat; \emph{bytes} $\ge$ paket; rata-rata konsisten $=\text{bytes}/\text{paket}$;
-serta \emph{monotonic add-only} (penyerang hanya boleh menambah trafik).
+FGSM tak-terbatas (Persamaan~\eqref{eq:fgsm}) dapat menghasilkan \emph{flow}
+mustahil (paket pecahan, \emph{bytes} $<$ paket, durasi negatif) yang tak dapat
+dikirim di jaringan nyata. Kami merumuskan serangan sebagai \emph{constrained
+optimization}: penyerang mencari perturbasi yang memaksimalkan loss namun tetap
+berada di dalam \emph{ruang perturbasi layak} $\mathcal{S}_{valid}(\mathbf{x})$,
+\begin{equation}
+\label{eq:fpe-opt}
+\mathbf{x}_{adv} \;=\; \arg\max_{\mathbf{x}' \in \mathcal{S}_{valid}(\mathbf{x})}\;
+L\!\left(\theta,\mathbf{x}',y\right),
+\qquad
+\|\mathbf{x}' - \mathbf{x}\|_\infty \le \epsilon .
+\end{equation}
+Misalkan fitur dinyatakan pada ruang asli (bukan ter-\emph{z-score}). Ruang
+$\mathcal{S}_{valid}$ didefinisikan oleh himpunan kendala protokol/fisik berikut:
+\begin{subequations}
+\label{eq:constraints}
+\begin{align}
+x'_j &\ge 0, && \forall j \ \text{(non-negatif: durasi, volume, laju)}, \label{eq:c-nonneg}\\
+x'_j &\in \mathbb{Z}^{+}, && j \in \{spkts,\, dpkts\} \ \text{(jumlah paket bulat)}, \label{eq:c-int}\\
+sbytes' &\ge spkts', \quad dbytes' \ge dpkts', && \text{(tiap paket} \ge 1 \ \text{byte)}, \label{eq:c-consistency}\\
+smean' &= \tfrac{sbytes'}{spkts'}, \quad dmean' = \tfrac{dbytes'}{dpkts'}, && \text{(konsistensi rata-rata)}, \label{eq:c-mean}\\
+x'_j &\ge x_j, && j \in \{spkts, dpkts, sbytes, dbytes, dur\} \ \text{(monotonic \emph{add-only})}. \label{eq:c-mono}
+\end{align}
+\end{subequations}
+Kendala~\eqref{eq:c-mono} mencerminkan keterbatasan penyerang nyata: ia hanya
+dapat \emph{menambah} trafik (padding, paket sisipan), tidak dapat mengurangi
+paket/byte yang sudah terkirim. Untuk fitur biner/kategori, batas langkah
+efektif $\delta = 0$ (tak boleh diubah). Secara operasional, kami memakai
+\emph{projected FGSM}: langkah FGSM Persamaan~\eqref{eq:fgsm} diikuti proyeksi
+$\Pi_{\mathcal{S}_{valid}}(\cdot)$ yang menerapkan Persamaan~\eqref{eq:constraints}
+(\emph{clip} non-negatif, pembulatan paket, penegakan $sbytes\!\ge\!spkts$,
+penyetelan ulang rata-rata, dan proyeksi \emph{add-only}) di ruang asli sebelum
+dipetakan kembali ke ruang ter-\emph{z-score}.
 
 \begin{figure}[h]
 \centering
@@ -408,11 +494,44 @@ berkat SFM yang tervalidasi;
 (4) evaluasi adversarial harus realistis (functional-preserving) dan
 menyeluruh (adaptive white-box), jika tidak akan melebih-lebihkan ketahanan.
 
+\subsection{Analisis Asimetri Performa Adaptasi}
+\label{sec:asymmetry}
+Sebuah pola konsisten muncul di seluruh eksperimen adaptasi: arah
+CIC$\rightarrow$UNSW selalu memulihkan MCC lebih rendah
+($\sim 0{,}65$--$0{,}70$ pada few-shot; $-0{,}185$ pada CORAL) dibandingkan arah
+UNSW$\rightarrow$CIC ($\sim 0{,}90$ pada few-shot; $+0{,}164$ pada CORAL). Kami
+menganalisis asimetri ini dari sudut \textbf{kompleksitas domain}.
+
+CSE-CIC-IDS2018 dibangkitkan pada infrastruktur \emph{testbed} yang relatif
+terstruktur, sedangkan UNSW-NB15 dibangkitkan dengan generator IXIA
+PerfectStorm yang menyuntikkan variasi serangan lebih beragam
+(sembilan kelas: \emph{Fuzzers, Analysis, Backdoors, DoS, Exploits, Generic,
+Reconnaissance, Shellcode, Worms}) dengan tingkat \emph{noise} lebih tinggi.
+Akibatnya, distribusi UNSW-NB15 pada ruang fitur irisan lebih ``lebar'' dan
+heterogen. Memindahkan model dari domain \emph{sederhana} (CIC) ke domain
+\emph{kompleks} (UNSW) secara inheren lebih sulit: model sumber tidak pernah
+melihat mode-mode distribusi kaya milik target. Sebaliknya, memindahkan dari
+domain kompleks (UNSW) ke domain lebih terstruktur (CIC) lebih mudah karena
+target merupakan himpunan bagian perilaku yang sebagian sudah tercakup.
+
+Interpretasi ini konsisten dengan dua bukti internal: (i) CORAL --- yang
+menyelaraskan kovarians orde-2 --- justru \emph{memperburuk} arah
+CIC$\rightarrow$UNSW ($-0{,}072 \rightarrow -0{,}185$) karena memaksa struktur
+sumber yang sempit menutupi ruang target yang lebih luas; dan (ii) pelatihan
+gabungan (\emph{joint}) tetap menyisakan selisih (UNSW $0{,}732$ vs CIC $0{,}912$),
+menandakan sebagian kompleksitas UNSW sulit direpresentasikan oleh $9$ fitur
+irisan meskipun kedua domain terlihat saat pelatihan. Asimetri ini karena itu
+merupakan properti struktural pasangan dataset, bukan artefak metode.
+
 \paragraph{Keterbatasan.} Kami melaporkan secara jujur bahwa pertahanan
 \emph{adversarial training} kami belum tahan terhadap serangan adaptif; asimetri
 arah CIC$\rightarrow$UNSW ($\sim 0{,}65$--$0{,}70$) vs UNSW$\rightarrow$CIC
-($\sim 0{,}91$) juga belum sepenuhnya teratasi. Evaluasi masih terbatas pada
-tugas biner dan model tunggal XGBoost.
+($\sim 0{,}91$) juga belum sepenuhnya teratasi (dianalisis pada
+\S\ref{sec:asymmetry}). Evaluasi masih terbatas pada tugas biner. Penggunaan
+model tunggal XGBoost adalah \emph{pilihan desain} yang disengaja demi efisiensi
+\emph{edge} (\S\ref{sec:edge}), bukan sekadar keterbatasan; eksplorasi
+\emph{ensemble} robust ditinggalkan sebagai arah lanjutan yang harus tetap
+mempertimbangkan anggaran komputasi penyebaran.
 
 % ============================================================
 \section{Kesimpulan dan Kerja Mendatang}
@@ -427,11 +546,27 @@ evaluasi adversarial melalui \emph{functional-preserving} dan
 \emph{adaptive white-box}.
 
 \paragraph{Kerja mendatang.} (i) Klasifikasi multi-kelas dan model
-\emph{ensemble} robust; (ii) adaptasi domain yang lebih kuat untuk mengatasi
-asimetri arah; (iii) pertahanan yang benar-benar tahan \emph{adaptive white-box};
+\emph{ensemble} robust dengan tetap mempertimbangkan anggaran komputasi
+\emph{edge}; (ii) adaptasi domain yang lebih kuat untuk mengatasi asimetri arah;
+(iii) pertahanan yang benar-benar tahan \emph{adaptive white-box};
 (iv) \emph{deployment} jangka panjang di AWS ($3$--$7$ hari) untuk mengukur
-\emph{False Alarm Rate} pada trafik nyata --- direncanakan sebagai validasi
-lanjutan berbiaya-eksperimen.
+\emph{False Alarm Rate} pada trafik nyata.
+
+Gambar~\ref{fig:deploy} menyajikan \emph{blueprint} arsitektur penyebaran yang
+kami rencanakan: trafik langsung (\emph{VPC mirror}/ENI) ditangkap oleh sensor
+EC2 yang menjalankan NFStream untuk mengekstraksi fitur \emph{flow}, diselaraskan
+melalui SFM dan \emph{z-score}, lalu diinferensikan oleh model XGBoost \emph{robust}
+ringan untuk deteksi \emph{real-time} sekaligus pencatatan FAR. \emph{Blueprint}
+ini menunjukkan kesiapan teknis untuk validasi lanjutan tersebut.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.98\linewidth]{fig6_deployment_blueprint.png}
+\caption{\emph{Blueprint} penyebaran jangka panjang di AWS (rencana kerja
+mendatang): pipeline sensor$\rightarrow$SFM$\rightarrow$XGBoost robust untuk
+mengukur \emph{False Alarm Rate} pada trafik nyata $3$--$7$ hari.}
+\label{fig:deploy}
+\end{figure}
 
 % ============================================================
 \section*{Ketersediaan Reproduksi}
