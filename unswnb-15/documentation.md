@@ -203,9 +203,49 @@ Untuk menilai pengaruh kualitas pemetaan terhadap generalisasi:
 
 Perbandingan A vs B mengukur apakah menambah fitur berpadanan longgar membantu atau justru merusak generalisasi lintas-dataset.
 
-### 10.4 Langkah Berikutnya (T2 lanjutan & T3)
-1. **Inventaris fitur presisi** — jalankan `notebooks/01_feature_inventory.ipynb` di SageMaker untuk mengambil daftar **68 fitur CIC-IDS2018** nyata (dari `cleaned_100.pkl`) + 42 fitur UNSW; simpan `feature_inventory.json`.
-2. **Susun tabel Semantic Feature Mapping penuh** (68 ↔ 42) berbasis inventaris nyata.
-3. **Validasi statistik** tiap pasangan kandidat → finalkan label kuat/sedang/lemah.
-4. **Pra-pemrosesan seragam** kedua dataset pada himpunan fitur irisan final.
-5. **Baseline cross-dataset (XGBoost tunggal)** — latih pada satu dataset, uji pada dataset lain, ukur *generalization gap*.
+### 10.4 Tabel Semantic Feature Mapping Penuh (68 CIC ↔ 42 UNSW)
+Berbasis inventaris fitur nyata (`feature_inventory.json`). Konvensi: **Fwd = source (s)**, **Bwd = destination (d)**.
+
+**A. Irisan KUAT** (definisi & satuan sangat berdekatan — kandidat utama Model A):
+
+| # | CIC-IDS2018 | UNSW-NB15 | Konsep |
+|---|---|---|---|
+| 1 | Flow Duration | `dur` | Durasi aliran |
+| 2 | Tot Fwd Pkts | `spkts` | Total paket arah maju/source |
+| 3 | Tot Bwd Pkts | `dpkts` | Total paket arah balik/destination |
+| 4 | TotLen Fwd Pkts | `sbytes` | Total byte arah maju/source |
+| 5 | TotLen Bwd Pkts | `dbytes` | Total byte arah balik/destination |
+| 6 | Fwd Pkt Len Mean | `smean` | Rata-rata ukuran paket maju |
+| 7 | Bwd Pkt Len Mean | `dmean` | Rata-rata ukuran paket balik |
+| 8 | Init Fwd Win Byts | `swin` | TCP window awal arah maju |
+| 9 | Init Bwd Win Byts | `dwin` | TCP window awal arah balik |
+| 10 | Flow Byts/s (src) | `sload` | Laju bit/byte source |
+| 11 | Bwd Pkts/s / (Bwd Byts/s) | `dload` | Laju bit/byte destination |
+
+**B. Irisan SEDANG** (fungsi mirip, definisi/satuan perlu diverifikasi — tambahan Model B):
+
+| # | CIC-IDS2018 | UNSW-NB15 | Catatan |
+|---|---|---|---|
+| 12 | Fwd IAT Mean | `sinpkt` | Inter-arrival time maju (mSec vs detik? cek satuan) |
+| 13 | Bwd IAT Mean | `dinpkt` | Inter-arrival time balik |
+| 14 | (jitter tak eksplisit di CIC) | `sjit`/`djit` | Jitter — CIC tak punya kolom jitter langsung; lemah |
+| 15 | TCP handshake (tak eksplisit) | `tcprtt`/`synack`/`ackdat` | CIC tak ekspos RTT setup; lemah |
+
+**C. TIDAK ADA padanan** (unik per dataset):
+- CIC unik: flag counts detail (FIN/SYN/RST/PSH/ACK/URG/CWE/ECE), Active/Idle stats, Subflow, Pkt Len Var/Std, Header Len, Down/Up Ratio, Fwd Seg Size Min/Avg, dll.
+- UNSW unik: fitur koneksi statistik (`ct_srv_src`, `ct_state_ttl`, `ct_dst_ltm`, dll — hitung koneksi dalam 100 koneksi terakhir), `sttl`/`dttl` (TTL), `sloss`/`dloss`, `proto`/`service`/`state` (kategorikal), `trans_depth`, `is_ftp_login`, dll.
+
+> **Ringkasan:** ~11 fitur irisan **kuat** (Model A), +~2 fitur **sedang** IAT (Model B → ~13). Fitur kategorikal (proto/service/state) dan fitur khas masing-masing dataset **dikeluarkan** dari basis lintas-dataset karena tak ada padanan universal.
+
+### 10.5 STATUS: Hipotesis — Wajib Validasi Statistik
+Tabel di atas **masih hipotesis leksikal**. Karena *extractor* berbeda (CICFlowMeter vs Argus/Bro), pasangan yang "namanya cocok" belum tentu sepadan secara kuantitatif. Contoh risiko konkret:
+- **Satuan IAT**: CIC `Fwd IAT` biasanya mikrodetik; UNSW `sinpkt` milidetik → perlu konversi.
+- **TCP window**: CIC `Init Fwd Win Byts` (byte, 0–65535) vs UNSW `swin` (nilai window advertisement) → cek rentang.
+- **Laju**: CIC `Flow Byts/s` vs UNSW `sload` (bits/sec) → byte vs bit, perlu penyesuaian.
+
+Validasi (T2-lanjutan) membandingkan rentang & distribusi tiap pasangan sebelum difinalkan.
+
+### 10.6 Langkah Berikutnya (T3)
+1. **Validasi statistik** pasangan fitur (rentang/distribusi/satuan) → finalkan Model A & B.
+2. **Pra-pemrosesan seragam** kedua dataset pada fitur irisan final (samakan satuan, scaling konsisten).
+3. **Baseline cross-dataset (XGBoost tunggal)** — latih pada satu dataset, uji pada dataset lain, ukur *generalization gap* (metrik utama MCC, konsisten Paper 1).

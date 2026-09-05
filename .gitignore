@@ -240,6 +240,10 @@ ransomware/aws/results-windows/aes_key.bin
 *.joblib
 *.pkl
 
+# Pengecualian: metadata fitur/mapping kecil UNSW-NB15 (untuk reproduksibilitas paper Q1)
+!unswnb-15/feature_inventory.json
+!unswnb-15/mapping_validation.json
+
 # Pengecualian: hasil eksperimen ransomware JSON (kecil, untuk reproduksibilitas paper)
 # Ditempatkan SETELAH *.json agar tidak ter-override.
 !ransomware/aws/results/attack_encrypt_hold.json
