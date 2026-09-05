@@ -150,5 +150,62 @@ aws s3 cp "UNSW_NB15_training-set.csv" s3://<BUCKET>/unswnb15/ --region ap-south
 
 > **Konvensi S3 (diisi setelah dikonfirmasi):** bucket `<BUCKET>`, prefix `unswnb15/`, region `ap-southeast-1`. Nama bucket final akan dicatat di sini agar reproducible.
 
-### 9.3 Langkah Berikutnya (T1)
-Setelah dataset berada di S3, disiapkan skrip `s3_download_inspect.py` untuk: unduh dari S3 ke SageMaker, lalu inspeksi struktur (kolom, tipe), label (`label`/`attack_cat`), distribusi kelas, dan statistik ringkas — sebagai dasar Semantic Feature Mapping (T2).
+### 9.3 Hasil Inspeksi Nyata (T1 — SELESAI)
+Inspeksi dilakukan langsung pada berkas partisi (versi yang dipakai), disimpan di `unswnb-15/data/` (di luar Git; diblokir `.gitignore`). Berikut temuan **nyata** (bukan asumsi):
+
+- **Struktur:** 45 kolom = `id` + **42 fitur** + `attack_cat` (multi-kelas) + `label` (biner 0/1). Header training-set dan testing-set identik.
+- **Penamaan berkas tertukar (PENTING):** berkas `UNSW_NB15_training-set.csv` justru berisi **82.332** record, sedangkan `UNSW_NB15_testing-set.csv` berisi **175.341** record. Angka resmi UNSW adalah training 175.341 & testing 82.332 — jadi **isi kedua berkas tertukar dengan namanya** (isu yang diketahui pada beberapa rilis). Konsekuensi: gunakan berkas 175.341 sebagai data latih dan 82.332 sebagai data uji, **berdasarkan jumlah record, bukan nama berkas**.
+- **10 kelas** (`attack_cat`): Normal, Generic, Exploits, Fuzzers, DoS, Reconnaissance, Analysis, Backdoor, Shellcode, Worms. Terdapat *class imbalance* (mis. Worms hanya 44/130 record vs Generic puluhan ribu) — sejalan dengan alasan pemilihan metrik MCC.
+- **42 fitur:** `dur, proto, service, state, spkts, dpkts, sbytes, dbytes, rate, sttl, dttl, sload, dload, sloss, dloss, sinpkt, dinpkt, sjit, djit, swin, stcpb, dtcpb, dwin, tcprtt, synack, ackdat, smean, dmean, trans_depth, response_body_len, ct_srv_src, ct_state_ttl, ct_dst_ltm, ct_src_dport_ltm, ct_dst_sport_ltm, ct_dst_src_ltm, is_ftp_login, ct_ftp_cmd, ct_flw_http_mthd, ct_src_ltm, ct_srv_dst, is_sm_ips_ports`.
+- Catatan: nama kolom versi partisi sedikit berbeda dari `NUSW-NB15_features.csv` (mis. `spkts`/`dpkts` vs `Spkts`/`Dpkts`; `sinpkt`/`dinpkt` vs `Sintpkt`/`Dintpkt`; `smean`/`dmean` vs `smeansz`/`dmeansz`). Versi partisi juga sudah membuang IP/port/timestamp dan menambah `rate` + `id`.
+
+---
+
+## 10. Semantic Feature Mapping (T2 — Rancangan Awal)
+
+Konvensi arah: pada CIC-IDS2018 istilah **Fwd/Bwd** (forward/backward) setara dengan **source/destination (s/d)** pada UNSW-NB15. Tabel berikut memetakan **Top-10 fitur CIC-IDS2018** (basis paper NIDS pertama) ke fitur UNSW-NB15 yang berfungsi semantik sama.
+
+| # | CIC-IDS2018 (Top-10) | UNSW-NB15 | Kekuatan Padanan | Catatan |
+|---|---|---|---|---|
+| 1 | Init Fwd Win Byts | `swin` | Kuat | TCP window awal arah maju/source |
+| 2 | Init Bwd Win Byts | `dwin` | Kuat | TCP window awal arah balik/destination |
+| 3 | Tot Bwd Pkts | `dpkts` | Kuat | Jumlah paket arah balik/destination |
+| 4 | TotLen Bwd Pkts | `dbytes` | Kuat | Total byte arah balik/destination |
+| 5 | Bwd Pkt Len Mean | `dmean` | Kuat | Rata-rata ukuran paket balik/destination |
+| 6 | Fwd Pkt Len Mean | `smean` | Kuat | Rata-rata ukuran paket maju/source |
+| 7 | Fwd Pkt Len Max | *(tak langsung)* | Lemah | UNSW partisi tak punya max-per-paket; kandidat turunan dari `sbytes`/`spkts` |
+| 8 | Fwd Act Data Pkts | `spkts` (aproks.) | Sedang | UNSW tak pisah paket berpayload; `spkts` sbagai proxy |
+| 9 | URG Flag Cnt | *(tak ada)* | Tidak ada | UNSW partisi tak mengekspos hitung flag URG |
+| 10 | Fwd Seg Size Min | *(tak ada)* | Tidak ada | Tak ada padanan langsung di UNSW partisi |
+
+**Fitur irisan kuat (kandidat basis pelatihan lintas-dataset):** `swin`, `dwin`, `dpkts`, `dbytes`, `dmean`, `smean` (6 fitur) + kandidat sedang `spkts`. Fitur bersama tambahan yang berfungsi umum lintas-dataset (durasi & volume): `dur` (Flow Duration), `sbytes`/`dbytes` (TotLen Fwd/Bwd), `spkts`/`dpkts` (Tot Fwd/Bwd Pkts).
+
+> **Status:** rancangan awal berbasis inspeksi kolom & deskripsi fitur. Validasi lanjutan (T2): konfirmasi kesetaraan **secara statistik** (rentang, distribusi, satuan) sebelum dipakai melatih model lintas-dataset, agar pemetaan benar-benar fungsional dan bukan sekadar kemiripan nama.
+
+### 10.1 Catatan Kritis: Kedua Dataset Berbeda Sumber (Dasar Metodologi)
+Hasil diskusi menegaskan tiga perbedaan fundamental antara kedua dataset. Ketiganya **bukan kelemahan**, melainkan justru **menjadi tiga gap inti** yang diangkat paper Q1:
+
+| Aspek | CSE-CIC-IDS2018 | UNSW-NB15 | Implikasi |
+|---|---|---|---|
+| **Alat ekstraksi fitur** | CICFlowMeter (Java) | Argus + Bro/Zeek + 12 algoritma custom | *Feature-extractor mismatch* (gap #2): fitur bernama mirip belum tentu dihitung dengan cara sama |
+| **Sumber PCAP / pembangkit trafik** | Testbed CIC (mesin nyata, skenario CIC), 2018 | IXIA PerfectStorm (generator hardware), Cyber Range Lab UNSW, 2015 | Generalisasi lintas-jaringan (gap #1): topologi, tahun, dan karakteristik trafik berbeda |
+| **Kategori serangan** | Brute-Force, DoS, DDoS, Web, Infiltration, Botnet | Fuzzers, Analysis, Backdoors, DoS, Exploits, Generic, Reconnaissance, Shellcode, Worms | Perlu pemetaan label, bukan hanya fitur |
+
+**Konsekuensi metodologis (wajib, demi kejujuran ilmiah):** karena *extractor* dan sumber trafik berbeda, pemetaan fitur **TIDAK boleh** hanya berdasarkan kemiripan nama/deskripsi. Setiap pasangan fitur kandidat **wajib divalidasi secara statistik** (rentang, satuan, distribusi) sebelum dipakai melatih model lintas-dataset.
+
+### 10.2 Status Kejujuran Tabel Mapping
+Tabel pada Bagian 10 (dan mapping penuh nanti) berstatus **hipotesis awal berbasis nama + deskripsi fitur** (level leksikal/semantik). Label "kuat/sedang/lemah" **belum** merupakan kesimpulan final; validasi statistik (T2) akan menentukannya. Sangat mungkin ditemukan fitur yang "namanya mirip tetapi distribusinya berbeda jauh" (mis. akibat definisi/satuan berbeda) — temuan semacam ini justru **berharga untuk dilaporkan** sebagai bukti *feature-extractor mismatch*.
+
+### 10.3 Rencana Dua Model (Ablation Kualitas Mapping)
+Untuk menilai pengaruh kualitas pemetaan terhadap generalisasi:
+- **Model A** — hanya fitur irisan **kuat** (~11--13 fitur berpadanan solid: durasi, total paket/byte dua arah, laju byte, rata-rata ukuran paket, TCP window awal).
+- **Model B** — Model A **ditambah fitur "sedang"** (mis. inter-arrival time `sinpkt`/`dinpkt` ↔ Fwd/Bwd IAT, jitter) yang padanannya lebih longgar.
+
+Perbandingan A vs B mengukur apakah menambah fitur berpadanan longgar membantu atau justru merusak generalisasi lintas-dataset.
+
+### 10.4 Langkah Berikutnya (T2 lanjutan & T3)
+1. **Inventaris fitur presisi** — jalankan `notebooks/01_feature_inventory.ipynb` di SageMaker untuk mengambil daftar **68 fitur CIC-IDS2018** nyata (dari `cleaned_100.pkl`) + 42 fitur UNSW; simpan `feature_inventory.json`.
+2. **Susun tabel Semantic Feature Mapping penuh** (68 ↔ 42) berbasis inventaris nyata.
+3. **Validasi statistik** tiap pasangan kandidat → finalkan label kuat/sedang/lemah.
+4. **Pra-pemrosesan seragam** kedua dataset pada himpunan fitur irisan final.
+5. **Baseline cross-dataset (XGBoost tunggal)** — latih pada satu dataset, uji pada dataset lain, ukur *generalization gap*.
