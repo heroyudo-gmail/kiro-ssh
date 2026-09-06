@@ -62,10 +62,15 @@ Attacker bisa di-stop selama Fase 1 (tak dipakai). Anggap 2× t3.medium + NAT.
 
 | Skenario | Estimasi |
 |---|---|
+| **Fase 1 FAR 24 jam kontinu (PERCOBAAN AWAL — direkomendasikan)** | **≈ $4–5** |
 | Fase 2 (deteksi) saja | **≈ $1** |
-| Fase 1 FAR 3 hari kontinu | **≈ $13–15** |
-| Fase 1 FAR 7 hari kontinu | **≈ $30–33** |
+| Fase 1 FAR 3 hari kontinu (eskalasi) | **≈ $13–15** |
+| Fase 1 FAR 7 hari kontinu (eskalasi) | **≈ $30–33** |
 | Fase 1 FAR terjadwal 3 hari (hemat) | **≈ $4–6** |
+
+> **Strategi:** mulai dengan **24 jam** (2× t3.medium + NAT × 24 jam ≈ $2,5 + $1,4 + EBS/S3
+> ≈ **$4–5**). Cukup untuk validasi awal FAR (satu siklus harian). Perpanjang ke multi-hari
+> HANYA jika reviewer meminta — infra identik, tinggal jalankan lebih lama.
 
 > **Perbandingan:** skema single-instance tanpa NAT (yang sempat dibahas) jauh lebih murah
 > (~$2–6), TETAPI kita sepakat memakai skema NIDS-01 (3-EC2 + private + NAT) demi

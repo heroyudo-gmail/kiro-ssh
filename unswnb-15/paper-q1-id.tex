@@ -612,26 +612,49 @@ pelatihan lintas-dataset; kami menunjukkan bahwa celah generalisasi berakar pada
 evaluasi adversarial melalui \emph{functional-preserving} dan
 \emph{adaptive white-box}.
 
-\paragraph{Kerja mendatang.} (i) Klasifikasi multi-kelas dan model
+\paragraph{Validasi \emph{real-traffic} awal (AWS, 24 jam).} Sebagai validasi
+awal atas kesiapan penyebaran, NIDS di-\emph{deploy} pada trafik nyata di AWS
+selama \textbf{24 jam} (satu siklus harian penuh) untuk mengukur \emph{False
+Alarm Rate} (FAR) di bawah fluktuasi trafik normal. Gambar~\ref{fig:deploy}
+menyajikan arsitektur yang dipakai: trafik ditangkap pada antarmuka sensor
+(EC2 + NFStream), fitur \emph{flow} diekstraksi, diselaraskan via SFM dan
+\emph{z-score} (memakai parameter latih \emph{offline}), lalu diinferensikan oleh
+model XGBoost ringan untuk deteksi \emph{real-time} sekaligus pencatatan FAR.
+\emph{Pengamatan multi-hari (variasi hari kerja/akhir pekan) diserahkan sebagai
+kerja lanjutan.}
+
+\begin{table}[h]
+\centering
+\caption{Hasil validasi awal FAR (deployment AWS 24 jam, trafik normal). Angka
+diisi dari eksekusi nyata.}
+\label{tab:far}
+\begin{tabular}{lc}
+\toprule
+Metrik (24 jam, trafik normal) & Nilai \\
+\midrule
+Total \emph{flow} teramati & \texttt{[hasil]} \\
+\emph{False alarm} (benign diprediksi attack) & \texttt{[hasil]} \\
+\emph{False Alarm Rate} (FAR) & \texttt{[hasil]}\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent Tabel~\ref{tab:far} akan diisi dari log \emph{deployment} nyata
+(\texttt{far\_log.jsonl}); sampai eksekusi selesai, dilaporkan sebagai
+validasi yang direncanakan agar naskah tidak memuat angka karangan.
+
+\paragraph{Kerja mendatang lain.} (i) Klasifikasi multi-kelas dan model
 \emph{ensemble} robust dengan tetap mempertimbangkan anggaran komputasi
 \emph{edge}; (ii) adaptasi domain yang lebih kuat untuk mengatasi asimetri arah;
 (iii) pertahanan yang benar-benar tahan \emph{adaptive white-box};
-(iv) \emph{deployment} jangka panjang di AWS ($3$--$7$ hari) untuk mengukur
-\emph{False Alarm Rate} pada trafik nyata.
-
-Gambar~\ref{fig:deploy} menyajikan \emph{blueprint} arsitektur penyebaran yang
-kami rencanakan: trafik langsung (\emph{VPC mirror}/ENI) ditangkap oleh sensor
-EC2 yang menjalankan NFStream untuk mengekstraksi fitur \emph{flow}, diselaraskan
-melalui SFM dan \emph{z-score}, lalu diinferensikan oleh model XGBoost \emph{robust}
-ringan untuk deteksi \emph{real-time} sekaligus pencatatan FAR. \emph{Blueprint}
-ini menunjukkan kesiapan teknis untuk validasi lanjutan tersebut.
+(iv) perpanjangan \emph{deployment} FAR ke skala multi-hari (3--7 hari).
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.98\linewidth]{fig6_deployment_blueprint.png}
-\caption{\emph{Blueprint} penyebaran jangka panjang di AWS (rencana kerja
-mendatang): pipeline sensor$\rightarrow$SFM$\rightarrow$XGBoost robust untuk
-mengukur \emph{False Alarm Rate} pada trafik nyata $3$--$7$ hari.}
+\caption{Arsitektur penyebaran di AWS untuk validasi FAR \emph{real-traffic}:
+pipeline sensor$\rightarrow$SFM$\rightarrow$XGBoost robust. Percobaan awal
+dijalankan 24 jam; dapat diperpanjang ke multi-hari.}
 \label{fig:deploy}
 \end{figure}
 

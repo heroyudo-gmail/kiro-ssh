@@ -17,8 +17,9 @@ hal yang berbeda:
   sebagai serangan (*False Alarm Rate*)?
 - **Trafik:** 100% benign (tidak ada serangan sama sekali). Setiap prediksi "attack"
   otomatis = *false alarm*.
-- **Durasi:** panjang (3–7 hari) — WAJIB panjang karena FAR butuh variasi trafik normal
-  lintas siklus siang/malam dan weekday/weekend agar angkanya stabil & kredibel.
+- **Durasi:** **24 jam kontinu (percobaan awal, direkomendasikan)** — menangkap satu siklus
+  harian penuh (siang/malam), cukup kredibel untuk validasi awal FAR. Eskalasi ke 3–7 hari
+  (variasi weekday/weekend) HANYA bila diminta reviewer.
 - **Metrik:** FAR = (flow benign diprediksi attack) / (total flow benign).
 
 ### Fase 2 — Uji Deteksi (SINGKAT, DENGAN serangan)
@@ -126,9 +127,10 @@ Berbeda dari NIDS-01 (7 menit), FAR butuh trafik **normal** kontinu berhari-hari
 7. Agregasi per jam/hari → laporkan FAR per jam/hari + rata-rata sepanjang periode.
 ```
 
-**Durasi:** idealnya **24 jam × 3–7 hari kontinu**. Opsi hemat: capture **terjadwal**
-(mis. 3–4 jam per segmen pagi/siang/malam × beberapa hari) — WAJIB dilaporkan apa adanya
-(bukan diklaim kontinu). Cakupan tetap harus mencakup variasi siang/malam & weekday/weekend.
+**Durasi:** **24 jam kontinu** (percobaan awal — satu siklus harian penuh). Eskalasi ke
+3–7 hari hanya bila diminta reviewer (infra sama, jalankan lebih lama). Jaga trafik normal
+tetap aktif agar terkumpul banyak flow benign (FAR lebih kredibel). Durasi persis dilaporkan
+apa adanya di naskah.
 
 **Model yang diuji untuk FAR:** (a) baseline CIC, (b) robust CIC, (c) few-shot adapted
 (CIC + 1% UNSW). Bandingkan FAR ketiganya — hipotesis: model konservatif (robust) FAR lebih

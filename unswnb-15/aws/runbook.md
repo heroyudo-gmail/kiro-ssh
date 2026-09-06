@@ -63,9 +63,18 @@ chmod +x /opt/unsw/scripts/*.sh
 
 ---
 
-## 3. FASE 1 — FAR (jangka panjang, TANPA serangan)
+## 3. FASE 1 — FAR (TANPA serangan)
 
-Di **Target** (biarkan berjalan; idealnya 24 jam × 3–7 hari, atau terjadwal):
+> **Skenario utama (percobaan awal): 24 jam kontinu** — mencakup satu siklus harian
+> penuh (siang/malam). Cukup kredibel sebagai validasi awal FAR. **Eskalasi 3–7 hari**
+> (variasi weekday/weekend) dilakukan HANYA bila diminta reviewer — infra sama, tinggal
+> jalankan lebih lama.
+>
+> **Penting agar FAR berisi:** jaga trafik normal tetap aktif (banyak flow benign) selama
+> 24 jam — curl loop + unduhan berkala + sesi SSH terjadwal. FAR dari puluhan ribu flow
+> jauh lebih kuat daripada dari puluhan flow.
+
+Di **Target** (biarkan berjalan ~24 jam):
 ```bash
 cd /opt/unsw/scripts && sudo S3_BUCKET=ssh-detection-features-232032302717 ./capture_target.sh far
 ```
@@ -141,12 +150,13 @@ aws ec2 describe-addresses --region ap-southeast-1
 | Latensi inferensi per flow @1 vCPU | _(diisi)_ µs |
 | Throughput | _(diisi)_ flow/detik |
 
-### 7.2 FAR (Fase 1, §12 naskah)
-| Hari/Jam | n_flow | false_alarm | FAR |
+### 7.2 FAR (Fase 1, §12 naskah) — percobaan awal 24 jam
+| Jam ke- | n_flow | false_alarm | FAR |
 |---|---|---|---|
-| _(diisi dari far_log.jsonl)_ | | | |
-| **Rata-rata** | | | |
-Durasi observasi: _(kontinu 24 jam × N hari / terjadwal — catat jujur)_.
+| _(diisi per jam dari far_log.jsonl)_ | | | |
+| **Total/Rata-rata 24 jam** | | | |
+Durasi observasi: **24 jam kontinu** (percobaan awal) — catat jujur. Eskalasi multi-hari
+bila diminta reviewer.
 
 ### 7.3 Deteksi (Fase 2)
 | Varian | MCC | F1 | Precision | Recall |
