@@ -19,11 +19,18 @@
 
 ## 1. Prasyarat (sekali)
 
-- Model offline 9-fitur: `modelA_9feat.json` + `deploy_meta_9feat.json`
-  (`{"scaler_mean":[9],"scaler_scale":[9]}`) — dari `notebooks/09_model_efficiency.ipynb`
-  (model) + scaler dari training Model A. Unggah ke `s3://<BUCKET>/unsw-far/models/`.
-- Skrip: `unsw_extract_infer.py`, `capture_target.sh`, `attack_scenario.sh` →
-  `s3://<BUCKET>/unsw-far/scripts/`.
+**Bucket S3:** `ssh-detection-features-232032302717` (sama dengan NIDS-01).
+
+- **Model + meta (dari SageMaker):** jalankan `notebooks/09_model_efficiency.ipynb` sampai
+  sel terakhir. Sel itu otomatis:
+  - menyimpan `modelA_9feat.json` (model XGBoost 9-fitur) dan
+  - `deploy_meta_9feat.json` (`{"features":[9], "scaler_mean":[9], "scaler_scale":[9]}`), lalu
+  - **mengunggah keduanya** ke `s3://ssh-detection-features-232032302717/unsw-far/models/`.
+  (Jika upload gagal karena izin, upload manual dengan `aws s3 cp` — perintah tercetak di notebook.)
+- **Skrip → S3:** `unsw_extract_infer.py`, `capture_target.sh`, `attack_scenario.sh` →
+  `s3://ssh-detection-features-232032302717/unsw-far/scripts/`.
+
+> EC2 tidak perlu SageMaker: cukup `aws s3 cp` dari bucket di atas (langkah §2).
 
 ---
 
@@ -48,7 +55,7 @@ aws ssm describe-instance-information --region ap-southeast-1 \
 
 Unduh skrip+model di Target & Analyzer (via SSM shell):
 ```bash
-export S3_BUCKET=<BUCKET>
+export S3_BUCKET=ssh-detection-features-232032302717
 aws s3 cp s3://$S3_BUCKET/unsw-far/scripts/ /opt/unsw/scripts/ --recursive
 aws s3 cp s3://$S3_BUCKET/unsw-far/models/  /opt/unsw/models/  --recursive   # hanya Analyzer
 chmod +x /opt/unsw/scripts/*.sh
@@ -60,7 +67,7 @@ chmod +x /opt/unsw/scripts/*.sh
 
 Di **Target** (biarkan berjalan; idealnya 24 jam × 3–7 hari, atau terjadwal):
 ```bash
-cd /opt/unsw/scripts && sudo S3_BUCKET=<BUCKET> ./capture_target.sh far
+cd /opt/unsw/scripts && sudo S3_BUCKET=ssh-detection-features-232032302717 ./capture_target.sh far
 ```
 Bangkitkan trafik NORMAL (cron/loop di Target atau dari Attacker): `curl` berkala,
 `dnf update`, unduhan, sesi SSH sah. TIDAK ADA serangan pada fase ini.
@@ -68,9 +75,9 @@ Bangkitkan trafik NORMAL (cron/loop di Target atau dari Attacker): `curl` berkal
 Per jam / berkala, di **Analyzer** (proses pcap yang sudah dirotasi):
 ```bash
 # pcap dari Target -> S3 -> Analyzer download -> proses
-aws s3 cp /opt/unsw/captures/ s3://<BUCKET>/unsw-far/captures/ --recursive   # di Target
-aws s3 cp s3://<BUCKET>/unsw-far/captures/ /opt/unsw/captures/ --recursive   # di Analyzer
-export S3_BUCKET=<BUCKET>
+aws s3 cp /opt/unsw/captures/ s3://ssh-detection-features-232032302717/unsw-far/captures/ --recursive   # di Target
+aws s3 cp s3://ssh-detection-features-232032302717/unsw-far/captures/ /opt/unsw/captures/ --recursive   # di Analyzer
+export S3_BUCKET=ssh-detection-features-232032302717
 python3 /opt/unsw/scripts/unsw_extract_infer.py far /opt/unsw/captures/far_YYYYMMDD_HH.pcap
 ```
 Hasil FAR ditambahkan ke `/opt/unsw/results/far_log.jsonl` (+ auto-upload S3).
@@ -115,7 +122,7 @@ aws ec2 start-instances --region ap-southeast-1 --instance-ids <Attacker> <Targe
 
 ```bash
 # 1) Pastikan semua hasil sudah di S3
-aws s3 ls s3://<BUCKET>/unsw-far/results/
+aws s3 ls s3://ssh-detection-features-232032302717/unsw-far/results/
 # 2) Hapus stack (EC2 + EBS + VPC + IGW + NAT + EIP semua terhapus)
 aws cloudformation delete-stack --stack-name unsw-far --region ap-southeast-1
 aws cloudformation wait stack-delete-complete --stack-name unsw-far --region ap-southeast-1
