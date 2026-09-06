@@ -79,22 +79,46 @@ adaptif, XGBoost.
 \section{Pendahuluan}
 \label{sec:intro}
 
-NIDS berbasis pembelajaran mesin telah menjadi komponen penting pertahanan
-siber, dan dievaluasi luas pada dataset \emph{benchmark} publik seperti KDD~Cup~99,
-NSL-KDD, UNSW-NB15~\cite{unsw}, dan CIC-IDS2017/CSE-CIC-IDS2018~\cite{cicids}.
-Namun sebagian besar evaluasi bertumpu pada protokol \emph{latih-dan-uji pada
-dataset yang sama}, sehingga melaporkan akurasi yang optimistis dan tidak
-mencerminkan kondisi penyebaran (\emph{deployment}) nyata. Dalam praktik, model
-yang dilatih pada satu lingkungan jaringan harus beroperasi pada lingkungan lain
-dengan topologi, komposisi trafik, dan alat ekstraksi fitur yang berbeda. Studi
-generalisasi lintas-dataset yang mulai bermunculan~\cite{cantone,aceto}
-menegaskan bahwa performa NIDS turun tajam ketika diuji lintas-dataset, namun
-jarang mengisolasi \emph{penyebab} penurunan (fitur vs distribusi) atau menawarkan
-solusi berbiaya-rendah yang tervalidasi.
+Serangan siber menimbulkan kerugian ekonomi global yang ditaksir mencapai
+sekitar satu triliun dolar AS pada tahun 2020 --- meningkat lebih dari 50\% sejak
+2018~\cite{cremer} --- sehingga sistem deteksi intrusi jaringan (NIDS) berbasis
+pembelajaran mesin menjadi lini pertahanan yang semakin penting~\cite{torres,sarker,khraisat,buczak,bhuyan}.
+Selama dua
+dekade, komunitas riset mengevaluasi NIDS pada dataset \emph{benchmark} publik
+yang berturut-turut diperbarui untuk mengejar realisme: dari KDD~Cup~99~\cite{kdd}
+dan NSL-KDD, hingga UNSW-NB15~\cite{unsw,unsweval} serta
+CIC-IDS2017/CSE-CIC-IDS2018~\cite{cicids}, dan varian yang lebih baru untuk
+lingkungan IoT dan DDoS~\cite{botiot,toniot,ciciot,cicddos,ring}. Pada
+dataset-dataset ini, akurasi yang
+dilaporkan kian mendekati sempurna --- seringkali menembus 99\% pada berbagai
+metrik~\cite{layeghy}. Namun performa akademik yang nyaris paripurna itu belum
+pernah benar-benar terwujud sebagai NIDS praktis yang sepadan di jaringan
+produksi nyata.
+
+Kesenjangan antara janji \emph{benchmark} dan kenyataan penyebaran ini berakar
+pada satu asumsi yang jarang teruji: bahwa data latih dan data operasional
+berasal dari distribusi yang sama. Bukti terbaru menunjukkan sebaliknya. Layeghy
+\emph{et al.}~\cite{layeghy} membandingkan distribusi statistik trafik jinak dari
+tiga dataset sintetik (UNSW-NB15, CIC-IDS2017, ToN-IoT) terhadap dua jaringan
+produksi nyata, dan menemukan bahwa jarak Wasserstein~\cite{wasserstein}
+antar-kelompok
+sintetik-versus-nyata jauh lebih besar daripada jarak intra-kelompok ---
+misalnya, rata-rata \emph{packet time} trafik jinak UNSW-NB15 hanya
+$\sim$\SI{0.02}{\second} sementara jaringan ISP nyata mencapai
+$\sim$\SI{2.28}{\second}. Dari sisi kinerja klasifikasi, Cantone
+\emph{et al.}~\cite{cantone} mengukur secara sistematis penurunan lintas-dataset:
+\emph{Matthews Correlation Coefficient} (MCC) rata-rata anjlok dari $0{,}946$
+(\emph{within-dataset}) menjadi hanya $0{,}294$ (\emph{cross-dataset}) --- praktis
+setara tebakan acak. Studi-studi ini~\cite{cantone,layeghy,dhooge,verkerken}
+menegaskan adanya masalah, namun umumnya berhenti pada \emph{pengamatan}
+penurunan: mereka jarang mengisolasi \emph{penyebab} (ketidakcukupan fitur versus
+pergeseran distribusi) maupun menawarkan solusi berbiaya-rendah yang tervalidasi
+secara terkontrol.
 
 Makalah ini merupakan kelanjutan langsung dari penelitian NIDS sebelumnya pada
 CSE-CIC-IDS2018 (reduksi fitur XGBoost~\cite{xgboost} + \emph{adversarial
-training} berbasis \emph{saliency map} + validasi \emph{real-traffic} AWS), yang
+training} berbasis \emph{saliency map}~\cite{saliency} + validasi
+\emph{real-traffic} AWS), yang
 secara jujur mengakui tiga keterbatasan. Ketiga keterbatasan itulah yang menjadi
 \textbf{gap inti} makalah ini:
 \begin{enumerate}
@@ -135,40 +159,90 @@ belum sepenuhnya tahan terhadap serangan adaptif.
 \label{sec:related}
 
 \paragraph{NIDS berbasis pembelajaran mesin.} Model berbasis pohon (mis.
-XGBoost~\cite{xgboost}) dan jaringan saraf dalam banyak dipakai pada dataset
+XGBoost~\cite{xgboost,husain,zhou}) dan jaringan saraf
+dalam~\cite{shone,liulang,mahdavifar,wu,duan} banyak dipakai pada dataset
 \emph{benchmark}~\cite{unsw,cicids}. Mayoritas melaporkan hasil \emph{in-domain}
 (latih-uji pada dataset sama) dengan akurasi tinggi, tetapi kondisi ini tidak
-menjamin ketangguhan pada trafik jaringan yang berbeda dari data latih.
+menjamin ketangguhan pada trafik jaringan yang berbeda dari data latih. Kami
+sengaja memilih XGBoost sebagai pengklasifikasi karena efisiensinya yang tinggi,
+kemampuan menangani data tabular tak-seimbang, dan jejak sumber daya yang ringan
+--- sifat-sifat yang relevan untuk penyebaran \emph{edge}.
 
-\paragraph{Generalisasi lintas-dataset.} Cantone \emph{et al.}~\cite{cantone}
-melakukan studi generalisasi lintas-dataset sistematis (CIC-IDS2017,
-CSE-CIC-IDS2018, dan variannya) dan menemukan penurunan performa yang konsisten
-antar-dataset; Aceto \emph{et al.}~\cite{aceto} menyoroti peran sumber trafik dan
-generator sintetik pada lintas-dataset. Studi-studi ini menegaskan adanya masalah,
-namun umumnya berhenti pada pengamatan penurunan --- belum memisahkan kontribusi
+\paragraph{Generalisasi lintas-dataset.} Sejumlah studi mengukur seberapa buruk
+NIDS bergeneralisasi antar-jaringan. D'Hooge \emph{et al.}~\cite{dhooge}
+mengevaluasi banyak pengklasifikasi terawasi lintas CIC-IDS2017 dan
+CSE-CIC-IDS2018 serta menyimpulkan model gagal bekerja pada jaringan yang tak
+terlihat saat latih. Verkerken \emph{et al.}~\cite{verkerken} melaporkan
+penurunan AUROC rata-rata $30{,}45\%$ pada eksperimen lintas-dataset dengan model
+tak-terawasi. Cantone \emph{et al.}~\cite{cantone} memperluas analisis ini ke
+empat dataset dan mendokumentasikan jatuhnya MCC dari $0{,}946$ (\emph{within})
+ke $0{,}294$ (\emph{cross}), sekaligus menunjukkan bahwa hanya beberapa fitur
+sering cukup untuk memisahkan kelas \emph{dalam} satu dataset --- gejala
+\emph{over-correlation} spesifik-dataset yang justru merusak generalisasi. Untuk
+menstandarkan perbandingan, Sarhan \emph{et al.}~\cite{sarhan,sarhannf} mengusulkan
+himpunan fitur NetFlow terpadu. Studi-studi ini menegaskan adanya masalah, namun
+umumnya berhenti pada pengamatan penurunan --- belum memisahkan kontribusi
 \emph{ketidakcukupan fitur} versus \emph{pergeseran distribusi}, dan belum
-menawarkan pemulihan berbiaya-rendah. Makalah kami mengisisi celah ini dengan
+menawarkan pemulihan berbiaya-rendah. Makalah kami mengisi celah ini dengan
 diagnosis terkontrol dan solusi kalibrasi minimal.
 
-\paragraph{Adaptasi domain.} CORAL~\cite{coral} menyelaraskan statistik orde-2
-(kovarians) antar-domain, sedangkan pendekatan berbasis MMD menyelaraskan momen
-distribusi; pada data \emph{tabular} jaringan penerapan dan evaluasinya masih
-terbatas. Pendekatan \emph{few-shot} juga mulai dieksplorasi untuk NIDS
-data-terbatas~\cite{fewshot}. Kami mengevaluasi CORAL, pelatihan gabungan
-(\emph{joint}), \emph{few-shot}, dan \emph{mixup} lintas-dataset secara langsung
-pada pasangan CIC-IDS2018 dan UNSW-NB15.
+\paragraph{Integritas dan realisme dataset.} Sebagian penurunan lintas-dataset
+sesungguhnya bersumber dari cacat konstruksi dataset itu sendiri. Engelen
+\emph{et al.}~\cite{engelen} merekonstruksi CIC-IDS2017 dan menemukan lebih dari
+$20\%$ alir perlu diperbaiki/dilabel-ulang; Rosay \emph{et al.}~\cite{rosay}
+mengidentifikasi duplikasi fitur, salah-hitung, dan kesalahan deteksi protokol
+pada CICFlowMeter (senada dengan Lanvin \emph{et al.}~\cite{lanvin}); sedangkan
+Liu \emph{et al.}~\cite{liu} melaporkan tingkat
+kesalahan pelabelan $6{,}67\%$ dan $7{,}53\%$ masing-masing pada CIC-IDS2017 dan
+CSE-CIC-IDS2018. Catillo \emph{et al.}~\cite{catillo} bahkan mempertanyakan
+apakah kemajuan NIDS pada dataset publik mencerminkan kemajuan nyata atau sekadar
+euforia akademik. Pada arah komplementer, Layeghy \emph{et al.}~\cite{layeghy}
+menunjukkan bahwa distribusi statistik trafik jinak dataset sintetik berbeda
+signifikan (jarak Wasserstein besar) dari jaringan produksi nyata, sehingga
+mempertanyakan sejauh mana kinerja model yang dilatih pada data sintetik dapat
+ditransfer. Temuan-temuan ini memperkuat motivasi kami untuk (i) menyusun
+pemetaan fitur yang sepadan secara semantik antar-alat ekstraksi, dan (ii)
+memvalidasi model pada trafik nyata (Bagian~\ref{sec:conclusion}).
 
-\paragraph{Serangan adversarial pada NIDS.} Banyak karya menerapkan serangan
-\emph{evasion} berbasis gradien atau GAN pada fitur alir~\cite{randhawa,mbow}
-tanpa memperhatikan validitas protokol, sehingga menghasilkan \emph{flow} yang
-tak dapat dikirim di jaringan nyata. Selain itu, evaluasi ketangguhan seringkali
+\paragraph{Adaptasi domain dan pembelajaran kolaboratif.} CORAL~\cite{coral}
+menyelaraskan statistik orde-2 (kovarians) antar-domain, sedangkan pendekatan
+berbasis MMD menyelaraskan momen distribusi; pada data \emph{tabular} jaringan
+penerapan dan evaluasinya masih terbatas. Pendekatan \emph{few-shot} juga mulai
+dieksplorasi untuk NIDS data-terbatas~\cite{fewshot}. Sebagai alternatif,
+\emph{federated learning} berupaya meningkatkan generalisasi dengan melatih model
+global lintas beberapa organisasi tanpa berbagi data
+mentah~\cite{nidsfgpa,popoola,bertoli,agrawal}, meski
+umumnya model tetap terpapar data dari seluruh sumber saat evaluasi, yang dapat
+membiaskan pengukuran generalisasi sejati~\cite{cantone}. Kami mengevaluasi CORAL,
+pelatihan gabungan (\emph{joint}), \emph{few-shot}, dan \emph{mixup}
+lintas-dataset secara langsung pada pasangan CIC-IDS2018 dan UNSW-NB15.
+
+\paragraph{Serangan adversarial dan GAN pada NIDS.} Generative Adversarial
+Networks~\cite{gan} bersifat \emph{dual-use} pada keamanan siber~\cite{alauthman}:
+di sisi bertahan, varian seperti WGAN~\cite{wgan}, CGAN~\cite{cgan},
+DCGAN~\cite{dcgan}, SAGAN~\cite{sagan}, ACGAN~\cite{acgan}, dan
+CTGAN~\cite{ctgan} dipakai untuk augmentasi dan penyeimbangan kelas
+minoritas~\cite{kumar,zhaogan,tmggan,cegan,ctganids,park,ewgan}, serta sebagai
+pendeteksi anomali~\cite{tcn} maupun sintesis trafik yang menjaga
+privasi~\cite{aceto}; bahkan model difusi mulai dieksplorasi~\cite{diffids}. Di sisi menyerang, GAN menghasilkan trafik
+\emph{evasive}: attackGAN melaporkan tingkat keberhasilan serangan hingga
+$81{,}37\%$ (versus $40{,}87\%$
+untuk GAN dasar)~\cite{attackgan}; SGAN-IDS menurunkan tingkat deteksi lima NIDS
+mutakhir rata-rata $15{,}93\%$~\cite{sganids}; dan IDS-GAN melaporkan tingkat
+\emph{evasion} di atas $95\%$~\cite{idsgan}. Ancaman serupa meluas ke domain
+\emph{malware} dan Android~\cite{aagan,gleam,dunmore}. Karya-karya
+ini~\cite{randhawa,mbow,demgan}
+umumnya menerapkan serangan berbasis gradien atau GAN pada fitur alir \emph{tanpa}
+memperhatikan validitas protokol, sehingga menghasilkan \emph{flow} yang tak
+dapat dikirim di jaringan nyata. Survei terbaru~\cite{alauthman,alajlan} merangkum
+lanskap \emph{dual-use} ini beserta celah evaluasinya. Lebih jauh, evaluasi ketangguhan seringkali
 hanya \emph{transfer}/grey-box, bukan \emph{adaptive white-box}, sehingga
 berisiko melebih-lebihkan ketahanan --- fenomena \emph{obfuscated
-gradients}~\cite{obfuscated} dan pentingnya \emph{adaptive
-attacks}~\cite{adaptive} telah dibahas pada domain adversarial ML umum. Makalah
-ini menutup kedua celah tersebut pada domain NIDS tabular lintas-jaringan:
-serangan dibatasi \emph{functional-preserving} dan dievaluasi secara
-\emph{adaptive white-box}.
+gradients}~\cite{obfuscated} dan pentingnya \emph{adaptive attacks}~\cite{adaptive}
+telah dibahas panjang pada domain adversarial ML umum~\cite{szegedy,fgsm,madry}.
+Makalah ini menutup kedua celah tersebut pada domain NIDS tabular
+lintas-jaringan: serangan dibatasi \emph{functional-preserving} dan dievaluasi
+secara \emph{adaptive white-box}.
 
 % ============================================================
 \section{Data dan Semantic Feature Mapping}
@@ -256,7 +330,10 @@ yang dapat menyesatkan akibat optimasi vektorisasi.
 
 Kami melatih XGBoost (\texttt{max\_depth}=8, \texttt{lr}=0{,}1,
 \texttt{n\_estimators}=200, \texttt{subsample}/\texttt{colsample}=0{,}8) dan
-mengevaluasi empat skenario. Metrik utama MCC (tahan \emph{class imbalance}).
+mengevaluasi empat skenario menggunakan \emph{scikit-learn}~\cite{sklearn} dengan
+pembagian latih/uji berstrata~\cite{kohavi}. Metrik utama adalah \emph{Matthews
+Correlation Coefficient} (MCC)~\cite{matthews,chicco}, yang lebih informatif dan
+tahan terhadap \emph{class imbalance} dibanding akurasi.
 
 Verifikasi label dilakukan: pada CIC \texttt{Benign}$=0$; konversi biner
 menghasilkan tepat $1{.}348{.}453$ normal dan $274{.}808$ attack, sehingga MCC
@@ -666,10 +743,210 @@ diperoleh dari sumber resmi masing-masing.
 
 % Format referensi: gaya IEEE — inisial nama depan; judul dalam tanda kutip;
 % nama venue italik; konferensi diawali "in Proc."; halaman & tahun.
-\begin{thebibliography}{9}
+\begin{thebibliography}{99}
+
+% ---------- Latar & dampak ekonomi ----------
+\bibitem{cremer} F.~Cremer, B.~Sheehan, M.~Fortmann, A.~N.~Kia, M.~Mullins,
+F.~Murphy, and S.~Materne, ``Cyber risk and cybersecurity: A systematic review
+of data availability,'' \emph{Geneva Papers Risk Insurance --- Issues Pract.},
+vol.~47, no.~3, pp.~698--736, 2022.
+
+\bibitem{torres} J.~M.~Torres, C.~I.~Comesa\~na, and P.~J.~Garc\'ia-Nieto,
+``Machine learning techniques applied to cybersecurity,'' \emph{Int. J. Mach.
+Learn. Cybern.}, vol.~10, no.~10, pp.~2823--2836, 2019.
+
+\bibitem{sarker} I.~H.~Sarker, A.~S.~M.~Kayes, S.~Badsha, H.~Alqahtani,
+P.~Watters, and A.~Ng, ``Cybersecurity data science: An overview from machine
+learning perspective,'' \emph{J. Big Data}, vol.~7, no.~1, pp.~1--29, 2020.
+
+\bibitem{khraisat} A.~Khraisat, I.~Gondal, P.~Vamplew, and J.~Kamruzzaman,
+``Survey of intrusion detection systems: Techniques, datasets and challenges,''
+\emph{Cybersecurity}, vol.~2, no.~1, pp.~1--22, 2019.
+
+\bibitem{buczak} A.~L.~Buczak and E.~Guven, ``A survey of data mining and
+machine learning methods for cyber security intrusion detection,'' \emph{IEEE
+Commun. Surveys Tuts.}, vol.~18, no.~2, pp.~1153--1176, 2016.
+
+\bibitem{bhuyan} M.~H.~Bhuyan, D.~K.~Bhattacharyya, and J.~K.~Kalita, ``Network
+anomaly detection: Methods, systems and tools,'' \emph{IEEE Commun. Surveys
+Tuts.}, vol.~16, no.~1, pp.~303--336, 2014.
+
+% ---------- Dataset benchmark ----------
+\bibitem{kdd} M.~Tavallaee, E.~Bagheri, W.~Lu, and A.~A.~Ghorbani, ``A detailed
+analysis of the KDD Cup 99 data set,'' in \emph{Proc. IEEE Symp. Computational
+Intelligence for Security and Defense Applications (CISDA)}, 2009, pp.~1--6.
+
+\bibitem{unsw} N.~Moustafa and J.~Slay, ``UNSW-NB15: A comprehensive data set
+for network intrusion detection systems (UNSW-NB15 network data set),'' in
+\emph{Proc. Military Communications and Information Systems Conf. (MilCIS)},
+Canberra, Australia, 2015, pp.~1--6.
+
+\bibitem{unsweval} N.~Moustafa and J.~Slay, ``The evaluation of network anomaly
+detection systems: Statistical analysis of the UNSW-NB15 data set and the
+comparison with the KDD99 data set,'' \emph{Inf. Secur. J.}, vol.~25, no.~1--3,
+pp.~18--31, 2016.
+
+\bibitem{cicids} I.~Sharafaldin, A.~H.~Lashkari, and A.~A.~Ghorbani, ``Toward
+generating a new intrusion detection dataset and intrusion traffic
+characterization,'' in \emph{Proc. 4th Int. Conf. Information Systems Security
+and Privacy (ICISSP)}, Funchal, Portugal, 2018, pp.~108--116.
+
+\bibitem{cicddos} I.~Sharafaldin, A.~H.~Lashkari, S.~Hakak, and A.~A.~Ghorbani,
+``Developing realistic distributed denial of service (DDoS) attack dataset and
+taxonomy,'' in \emph{Proc. Int. Carnahan Conf. Security Technology (ICCST)},
+2019, pp.~1--8.
+
+\bibitem{botiot} N.~Koroniotis, N.~Moustafa, E.~Sitnikova, and B.~Turnbull,
+``Towards the development of realistic botnet dataset for IoT networks,''
+\emph{IEEE Access}, vol.~7, pp.~94529--94541, 2019.
+
+\bibitem{toniot} A.~Alsaedi, N.~Moustafa, Z.~Tari, A.~N.~Mahmood, and A.~Anwar,
+``TON\_IoT telemetry dataset: A new generation dataset of IoT and IIoT for
+data-driven intrusion detection systems,'' \emph{IEEE Access}, vol.~8,
+pp.~165130--165150, 2020.
+
+\bibitem{ciciot} E.~C.~P.~Neto, S.~Dadkhah, R.~Ferreira, A.~Zohourian, R.~Lu,
+and A.~A.~Ghorbani, ``CICIoT2023: A real-time dataset and benchmark for
+large-scale attacks in IoT environment,'' \emph{Sensors}, vol.~23, no.~13,
+art.~5941, 2023.
+
+\bibitem{ring} M.~Ring, S.~Wunderlich, D.~Scheuring, D.~Landes, and A.~Hotho,
+``A survey of network-based intrusion detection data sets,'' \emph{Comput.
+Secur.}, vol.~86, pp.~147--167, 2019.
+
+% ---------- Integritas & realisme dataset ----------
+\bibitem{engelen} G.~Engelen, V.~Rimmer, and W.~Joosen, ``Troubleshooting an
+intrusion detection dataset: The CICIDS2017 case study,'' in \emph{Proc. IEEE
+Security and Privacy Workshops (SPW)}, 2021, pp.~7--12.
+
+\bibitem{rosay} A.~Rosay, E.~Cheval, F.~Carlier, and P.~Leroux, ``Network
+intrusion detection: A comprehensive analysis of CIC-IDS2017,'' in \emph{Proc.
+8th Int. Conf. Information Systems Security and Privacy (ICISSP)}, 2022,
+pp.~25--36.
+
+\bibitem{lanvin} M.~Lanvin, P.-F.~Gimenez, Y.~Han, F.~Majorczyk, L.~M\'e, and
+\'E.~Totel, ``Errors in the CICIDS2017 dataset and the significant differences
+in detection performances it makes,'' in \emph{Proc. Int. Conf. Risks and
+Security of Internet and Systems (CRiSIS)}. Cham, Switzerland: Springer, 2022,
+pp.~18--33.
+
+\bibitem{liu} L.~Liu, G.~Engelen, T.~Lynar, D.~Essam, and W.~Joosen, ``Error
+prevalence in NIDS datasets: A case study on CIC-IDS-2017 and CSE-CIC-IDS-2018,''
+in \emph{Proc. IEEE Conf. Communications and Network Security (CNS)}, 2022,
+pp.~254--262.
+
+\bibitem{catillo} M.~Catillo, A.~Pecchia, and U.~Villano, ``Machine learning on
+public intrusion datasets: Academic hype or concrete advances in NIDS?'' in
+\emph{Proc. 53rd Annu. IEEE/IFIP Int. Conf. Dependable Systems and Networks
+(DSN-S)}, 2023, pp.~132--136.
+
+\bibitem{layeghy} S.~Layeghy, M.~Gallagher, and M.~Portmann, ``Benchmarking the
+benchmark --- Comparing synthetic and real-world network IDS datasets,''
+\emph{J. Inf. Secur. Appl.}, vol.~80, art.~103689, 2024.
+
+\bibitem{sarhan} M.~Sarhan, S.~Layeghy, and M.~Portmann, ``Towards a standard
+feature set for network intrusion detection system datasets,'' \emph{Mobile
+Netw. Appl.}, vol.~27, no.~1, pp.~357--370, 2022.
+
+\bibitem{sarhannf} M.~Sarhan, S.~Layeghy, N.~Moustafa, and M.~Portmann,
+``NetFlow datasets for machine learning-based network intrusion detection
+systems,'' in \emph{Big Data Technologies and Applications}. Cham, Switzerland:
+Springer, 2021, pp.~117--135.
+
+% ---------- Generalisasi lintas-dataset & federated ----------
+\bibitem{cantone} M.~Cantone, C.~Marrocco, and A.~Bria, ``Machine learning in
+network intrusion detection: A cross-dataset generalization study,'' \emph{IEEE
+Access}, vol.~12, pp.~144491--144509, 2024.
+
+\bibitem{dhooge} L.~D'Hooge, T.~Wauters, B.~Volckaert, and F.~De~Turck,
+``Inter-dataset generalization strength of supervised machine learning methods
+for intrusion detection,'' \emph{J. Inf. Secur. Appl.}, vol.~54, art.~102564,
+2020.
+
+\bibitem{verkerken} M.~Verkerken, L.~D'Hooge, T.~Wauters, B.~Volckaert, and
+F.~De~Turck, ``Towards model generalization for intrusion detection:
+Unsupervised machine learning techniques,'' \emph{J. Netw. Syst. Manage.},
+vol.~30, no.~1, pp.~1--25, 2022.
+
+\bibitem{popoola} S.~I.~Popoola, G.~Gui, B.~Adebisi, M.~Hammoudeh, and
+H.~Gacanin, ``Federated deep learning for collaborative intrusion detection in
+heterogeneous networks,'' in \emph{Proc. IEEE 94th Vehicular Technology Conf.
+(VTC-Fall)}, 2021, pp.~1--6.
+
+\bibitem{bertoli} G.~de~Carvalho~Bertoli, L.~A.~Pereira~Jr., O.~Saotome, and
+A.~L.~dos~Santos, ``Generalizing intrusion detection for heterogeneous networks:
+A stacked-unsupervised federated learning approach,'' \emph{Comput. Secur.},
+vol.~127, art.~103106, 2023.
+
+\bibitem{agrawal} S.~Agrawal, S.~Sarkar, O.~Aouedi, G.~Yenduri, K.~Piamrat,
+M.~Alazab, S.~Bhattacharya, P.~K.~R.~Maddikunta, and T.~R.~Gadekallu,
+``Federated learning for intrusion detection system: Concepts, challenges and
+future directions,'' \emph{Comput. Commun.}, vol.~195, pp.~346--361, 2022.
+
+\bibitem{nidsfgpa} J.~Wang, K.~Yang, and M.~Li, ``NIDS-FGPA: A federated learning
+network intrusion detection algorithm based on secure aggregation of gradient
+similarity models,'' \emph{PLoS ONE}, vol.~19, no.~10, art.~e0308639, 2024.
+
+% ---------- Model klasik / DL untuk NIDS ----------
+\bibitem{xgboost} T.~Chen and C.~Guestrin, ``XGBoost: A scalable tree boosting
+system,'' in \emph{Proc. 22nd ACM SIGKDD Int. Conf. Knowledge Discovery and
+Data Mining (KDD)}, San Francisco, CA, USA, 2016, pp.~785--794.
+
+\bibitem{husain} A.~Husain, A.~Salem, C.~Jim, and G.~Dimitoglou, ``Development
+of an efficient network intrusion detection model using extreme gradient
+boosting (XGBoost) on the UNSW-NB15 dataset,'' in \emph{Proc. IEEE Int. Symp.
+Signal Processing and Information Technology (ISSPIT)}, 2019, pp.~1--7.
+
+\bibitem{zhou} Y.~Zhou, G.~Cheng, S.~Jiang, and M.~Dai, ``Building an efficient
+intrusion detection system based on feature selection and ensemble classifier,''
+\emph{Comput. Netw.}, vol.~174, art.~107247, 2020.
+
+\bibitem{shone} N.~Shone, T.~N.~Ngoc, V.~D.~Phai, and Q.~Shi, ``A deep learning
+approach to network intrusion detection,'' \emph{IEEE Trans. Emerg. Topics
+Comput. Intell.}, vol.~2, no.~1, pp.~41--50, 2018.
+
+\bibitem{liulang} H.~Liu and B.~Lang, ``Machine learning and deep learning
+methods for intrusion detection systems: A survey,'' \emph{Appl. Sci.}, vol.~9,
+no.~20, art.~4396, 2019.
+
+\bibitem{mahdavifar} S.~Mahdavifar and A.~A.~Ghorbani, ``Application of deep
+learning to cybersecurity: A survey,'' \emph{Neurocomputing}, vol.~347,
+pp.~149--176, 2019.
+
+\bibitem{wu} Z.~Wu, H.~Zhang, P.~Wang, and Z.~Sun, ``RTIDS: A robust
+transformer-based approach for intrusion detection system,'' \emph{IEEE Access},
+vol.~10, pp.~64375--64387, 2022.
+
+\bibitem{duan} G.~Duan, H.~Lv, H.~Wang, and G.~Feng, ``Application of a dynamic
+line graph neural network for intrusion detection with semisupervised
+learning,'' \emph{IEEE Trans. Inf. Forensics Security}, vol.~18, pp.~699--714,
+2023.
+
+% ---------- Adaptasi domain & few-shot ----------
 \bibitem{coral} B.~Sun, J.~Feng, and K.~Saenko, ``Return of frustratingly easy
 domain adaptation,'' in \emph{Proc. 30th AAAI Conf. Artificial Intelligence
 (AAAI)}, Phoenix, AZ, USA, 2016, pp.~2058--2065.
+
+\bibitem{fewshot} C.~Xu, Y.~Zhan, G.~Chen, Z.~Wang, S.~Liu, and W.~Hu,
+``Elevated few-shot network intrusion detection via self-attention mechanisms
+and iterative refinement,'' \emph{PLoS ONE}, vol.~20, no.~1, art.~e0317713, 2025.
+
+% ---------- Fondasi adversarial ML ----------
+\bibitem{szegedy} C.~Szegedy, W.~Zaremba, I.~Sutskever, J.~Bruna, D.~Erhan,
+I.~Goodfellow, and R.~Fergus, ``Intriguing properties of neural networks,'' in
+\emph{Proc. Int. Conf. Learning Representations (ICLR)}, 2014.
+
+\bibitem{fgsm} I.~J.~Goodfellow, J.~Shlens, and C.~Szegedy, ``Explaining and
+harnessing adversarial examples,'' in \emph{Proc. Int. Conf. Learning
+Representations (ICLR)}, 2015.
+
+\bibitem{madry} A.~M\k{a}dry, A.~Makelov, L.~Schmidt, D.~Tsipras, and A.~Vladu,
+``Towards deep learning models resistant to adversarial attacks,'' in \emph{Proc.
+Int. Conf. Learning Representations (ICLR)}, 2018.
+
+\bibitem{saliency} K.~Simonyan, A.~Vedaldi, and A.~Zisserman, ``Deep inside
+convolutional networks: Visualising image classification models and saliency
+maps,'' in \emph{Workshop at Int. Conf. Learning Representations (ICLR)}, 2014.
 
 \bibitem{obfuscated} A.~Athalye, N.~Carlini, and D.~Wagner, ``Obfuscated
 gradients give a false sense of security: Circumventing defenses to adversarial
@@ -681,40 +958,152 @@ adaptive attacks to adversarial example defenses,'' in \emph{Proc. 34th Conf.
 Neural Information Processing Systems (NeurIPS)}, Vancouver, Canada, 2020,
 pp.~1633--1645.
 
-\bibitem{unsw} N.~Moustafa and J.~Slay, ``UNSW-NB15: A comprehensive data set
-for network intrusion detection systems (UNSW-NB15 network data set),'' in
-\emph{Proc. Military Communications and Information Systems Conf. (MilCIS)},
-Canberra, Australia, 2015, pp.~1--6.
+% ---------- GAN: fondasi & varian ----------
+\bibitem{gan} I.~Goodfellow, J.~Pouget-Abadie, M.~Mirza, B.~Xu, D.~Warde-Farley,
+S.~Ozair, A.~Courville, and Y.~Bengio, ``Generative adversarial nets,'' in
+\emph{Advances in Neural Information Processing Systems (NeurIPS)}, 2014,
+pp.~2672--2680.
 
-\bibitem{cicids} I.~Sharafaldin, A.~H.~Lashkari, and A.~A.~Ghorbani, ``Toward
-generating a new intrusion detection dataset and intrusion traffic
-characterization,'' in \emph{Proc. 4th Int. Conf. Information Systems Security
-and Privacy (ICISSP)}, Funchal, Portugal, 2018, pp.~108--116.
+\bibitem{cgan} M.~Mirza and S.~Osindero, ``Conditional generative adversarial
+nets,'' \emph{arXiv:1411.1784}, 2014.
 
-\bibitem{xgboost} T.~Chen and C.~Guestrin, ``XGBoost: A scalable tree boosting
-system,'' in \emph{Proc. 22nd ACM SIGKDD Int. Conf. Knowledge Discovery and
-Data Mining (KDD)}, San Francisco, CA, USA, 2016, pp.~785--794.
+\bibitem{wgan} M.~Arjovsky, S.~Chintala, and L.~Bottou, ``Wasserstein GAN,''
+\emph{arXiv:1701.07875}, 2017.
 
-\bibitem{cantone} M.~Cantone, C.~Marrocco, and A.~Bria, ``Machine learning in
-network intrusion detection: A cross-dataset generalization study,'' \emph{IEEE
-Access}, vol.~12, pp.~144491--144509, 2024.
+\bibitem{dcgan} A.~Radford, L.~Metz, and S.~Chintala, ``Unsupervised
+representation learning with deep convolutional generative adversarial
+networks,'' \emph{arXiv:1511.06434}, 2015.
+
+\bibitem{sagan} H.~Zhang, I.~Goodfellow, D.~Metaxas, and A.~Odena,
+``Self-attention generative adversarial networks,'' in \emph{Proc. 36th Int.
+Conf. Machine Learning (ICML)}, PMLR, vol.~97, 2019, pp.~7354--7363.
+
+\bibitem{acgan} A.~Odena, C.~Olah, and J.~Shlens, ``Conditional image synthesis
+with auxiliary classifier GANs,'' in \emph{Proc. 34th Int. Conf. Machine
+Learning (ICML)}, PMLR, vol.~70, 2017, pp.~2642--2651.
+
+\bibitem{ctgan} L.~Xu, M.~Skoularidou, A.~Cuesta-Infante, and K.~Veeramachaneni,
+``Modeling tabular data using conditional GAN,'' in \emph{Advances in Neural
+Information Processing Systems (NeurIPS)}, vol.~32, 2019.
+
+% ---------- GAN untuk IDS: survei, augmentasi, evasion ----------
+\bibitem{alauthman} M.~Alauthman, N.~Aslam, A.~Al-Qerem, A.~Aldweesh, and
+P.~Sureephong, ``Generative adversarial networks for intrusion detection
+systems: A comprehensive survey of applications, challenges, and research
+directions,'' \emph{Arabian J. Sci. Eng.}, vol.~51, pp.~179--203, 2026.
+
+\bibitem{alajlan} M.~Al-Ajlan and M.~Ykhlef, ``A review of generative
+adversarial networks for intrusion detection systems: Advances, challenges, and
+future directions,'' \emph{Comput. Mater. Continua}, vol.~81, no.~2,
+pp.~2053--2076, 2024.
+
+\bibitem{dunmore} A.~Dunmore, J.~Jang-Jaccard, F.~Sabrina, and J.~Kwak,
+``Generative adversarial networks for malware detection: A survey,''
+\emph{arXiv:2302.08558}, 2023.
 
 \bibitem{aceto} G.~Aceto, F.~Giampaolo, C.~Guida, S.~Izzo, A.~Pescap\`e,
 F.~Piccialli, and E.~Prezioso, ``Synthetic and privacy-preserving traffic trace
 generation using generative AI models for training network intrusion detection
 systems,'' \emph{J. Netw. Comput. Appl.}, vol.~229, art.~103926, 2024.
 
-\bibitem{fewshot} C.~Xu, Y.~Zhan, G.~Chen, Z.~Wang, S.~Liu, and W.~Hu,
-``Elevated few-shot network intrusion detection via self-attention mechanisms
-and iterative refinement,'' \emph{PLoS ONE}, vol.~20, no.~1, art.~e0317713, 2025.
+\bibitem{kumar} V.~Kumar and D.~Sinha, ``Synthetic attack data generation model
+applying generative adversarial network for intrusion detection,'' \emph{Comput.
+Secur.}, vol.~125, art.~103054, 2023.
+
+\bibitem{zhaogan} X.~Zhao, K.~W.~Fok, and V.~L.~L.~Thing, ``Enhancing network
+intrusion detection performance using generative adversarial networks,''
+\emph{Comput. Secur.}, vol.~145, art.~104005, 2024.
+
+\bibitem{tmggan} H.~Ding, Y.~Sun, N.~Huang, Z.~Shen, and X.~Cui, ``TMG-GAN:
+Generative adversarial networks-based imbalanced learning for network intrusion
+detection,'' \emph{IEEE Trans. Inf. Forensics Security}, vol.~19, pp.~1156--1167,
+2024.
+
+\bibitem{cegan} Y.~Yang, X.~Liu, D.~Wang, Q.~Sui, C.~Yang, H.~Li, Y.~Li, and
+T.~Luan, ``A CE-GAN based approach to address data imbalance in network
+intrusion detection systems,'' \emph{Sci. Rep.}, vol.~15, no.~1, art.~7916,
+2025.
+
+\bibitem{ctganids} B.~A.~Alabsi, M.~Anbar, and S.~D.~A.~Rihan, ``Conditional
+tabular generative adversarial based intrusion detection system for detecting
+DDoS and DoS attacks on the internet of things networks,'' \emph{Sensors},
+vol.~23, no.~12, art.~5644, 2023.
+
+\bibitem{tcn} P.~F.~de~Araujo-Filho, M.~Naili, G.~Kaddoum, E.~T.~Fapi, and
+Z.~Zhu, ``Unsupervised GAN-based intrusion detection system using temporal
+convolutional networks and self-attention,'' \emph{IEEE Trans. Netw. Serv.
+Manage.}, vol.~20, no.~4, pp.~4951--4963, 2023.
+
+\bibitem{park} C.~Park, J.~Lee, Y.~Kim, J.-G.~Park, H.~Kim, and D.~Hong, ``An
+enhanced AI-based network intrusion detection system using generative
+adversarial networks,'' \emph{IEEE Internet Things J.}, vol.~10, no.~3,
+pp.~2330--2345, 2023.
+
+\bibitem{attackgan} S.~Zhao, J.~Li, J.~Wang, Z.~Zhang, L.~Zhu, and Y.~Zhang,
+``attackGAN: Adversarial attack against black-box IDS using generative
+adversarial networks,'' \emph{Procedia Comput. Sci.}, vol.~187, pp.~128--133,
+2021.
+
+\bibitem{sganids} S.~Aldhaheri and A.~Alhuzali, ``SGAN-IDS: Self-attention-based
+generative adversarial network against intrusion detection systems,''
+\emph{Sensors}, vol.~23, no.~18, art.~7796, 2023.
+
+\bibitem{idsgan} D.~Wang, X.~Wang, and J.~Fei, ``IDS-GAN: Adversarial attack
+against intrusion detection based on generative adversarial networks,'' in
+\emph{Proc. 5th Int. Conf. Computer Vision, Image and Deep Learning (CVIDL)},
+2024, pp.~1130--1134.
 
 \bibitem{randhawa} R.~H.~Randhawa, N.~Aslam, M.~Alauthman, and H.~Rafiq,
 ``Evasion generative adversarial network for low data regimes,'' \emph{IEEE
 Trans. Artif. Intell.}, vol.~4, no.~5, pp.~1076--1088, 2023.
 
+\bibitem{demgan} D.~Xu, Y.~Lv, M.~Wang, B.~Zheng, J.~Zhao, and J.~Yu, ``DEMGAN:
+A machine learning-based intrusion detection system evasion scheme,''
+\emph{Comput. Mater. Continua}, vol.~84, no.~1, pp.~1731--1746, 2025.
+
 \bibitem{mbow} M.~Mbow, R.~Roman, T.~Takahashi, and K.~Sakurai, ``Evading IoT
 intrusion detection systems with GAN,'' in \emph{Proc. 19th Asia Joint Conf.
 Information Security (AsiaJCIS)}, 2024, pp.~48--55.
+
+\bibitem{aagan} D.~M.~Trung, N.~H.~Khoa, P.~T.~Duy, V.-H.~Pham, and N.~T.~Cam,
+``AAGAN: Android malware generation system based on generative adversarial
+network,'' \emph{Int. J. Semant. Comput.}, vol.~14, no.~1, 2024.
+
+\bibitem{gleam} D.~Devadiga, G.~Jin, B.~Potdar, H.~Koo, A.~Han, A.~Shringi,
+A.~Singh, K.~Chaudhari, and S.~Kumar, ``GLEAM: GAN and LLM for evasive
+adversarial malware,'' in \emph{Proc. 14th Int. Conf. Information and
+Communication Technology Convergence (ICTC)}, 2023, pp.~53--58.
+
+\bibitem{ewgan} R.~Riaz, G.~Han, K.~Shaukat, N.~U.~Khan, H.~Zhu, and L.~Wang,
+``A novel ensemble Wasserstein GAN framework for effective anomaly detection in
+industrial internet of things environments,'' \emph{Sci. Rep.}, vol.~15, no.~1,
+art.~26786, 2025.
+
+\bibitem{diffids} Y.~Yang, X.~Tang, Z.~Liu, J.~Cheng, H.~Fang, and C.~Zhang,
+``Diff-IDS: A network intrusion detection model based on diffusion model for
+imbalanced data samples,'' \emph{Comput. Mater. Continua}, vol.~82, no.~3,
+pp.~4389--4408, 2025.
+
+% ---------- Metrik & perkakas ----------
+\bibitem{matthews} B.~W.~Matthews, ``Comparison of the predicted and observed
+secondary structure of T4 phage lysozyme,'' \emph{Biochim. Biophys. Acta ---
+Protein Structure}, vol.~405, no.~2, pp.~442--451, 1975.
+
+\bibitem{chicco} D.~Chicco and G.~Jurman, ``The advantages of the Matthews
+correlation coefficient (MCC) over F1 score and accuracy in binary
+classification evaluation,'' \emph{BMC Genomics}, vol.~21, no.~1, art.~6, 2020.
+
+\bibitem{wasserstein} A.~Ramdas, N.~G.~Trillos, and M.~Cuturi, ``On Wasserstein
+two-sample testing and related families of nonparametric tests,''
+\emph{Entropy}, vol.~19, no.~2, art.~47, 2017.
+
+\bibitem{sklearn} F.~Pedregosa \emph{et al.}, ``Scikit-learn: Machine learning
+in Python,'' \emph{J. Mach. Learn. Res.}, vol.~12, pp.~2825--2830, 2011.
+
+\bibitem{kohavi} R.~Kohavi, ``A study of cross-validation and bootstrap for
+accuracy estimation and model selection,'' in \emph{Proc. 14th Int. Joint Conf.
+Artificial Intelligence (IJCAI)}, 1995, pp.~1137--1143.
+
 \end{thebibliography}
 
 \end{document}
