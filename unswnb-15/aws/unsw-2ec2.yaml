@@ -1,0 +1,95 @@
+﻿AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  T10 UNSW-NB15 - Stack 2-EC2 (dipisah dari stack VPC). Dua instance di PRIVATE
+  subnet, internet via NAT, akses via SSM:
+    1) Attacker           - jalankan serangan Fase 2 (SSH brute/slowloris/SYN).
+    2) TargetAnalyzer      - GABUNGAN: layanan (nginx/sshd) + CAPTURE (tcpdump -i <iface
+       spesifik, bukan -i any) + NFStream 9-fitur + inferensi XGBoost Model A.
+  Karena capture & inferensi di SATU mesin, tidak perlu upload/download pcap antar-node.
+  Referensi jaringan diambil via ImportValue dari stack VPC (unsw-vpc.yaml).
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: unsw-far
+    Description: Harus sama dengan ProjectName stack VPC (untuk cocokkan nama Export).
+  AmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
+  AttackerType:
+    Type: String
+    Default: t3.medium
+  TargetAnalyzerType:
+    Type: String
+    Default: t3.medium
+    Description: >
+      t3.medium cukup untuk NFStream 9-fitur + XGBoost. Naikkan ke t3.large bila
+      pcap 24 jam besar & ekstraksi berat.
+
+Resources:
+  # ---------------- EC2: Attacker (private) ----------------
+  Attacker:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref AttackerType
+      ImageId: !Ref AmiId
+      SubnetId: { Fn::ImportValue: !Sub "${ProjectName}-PrivateSubnetId" }
+      SecurityGroupIds:
+        - { Fn::ImportValue: !Sub "${ProjectName}-InstanceSGId" }
+      IamInstanceProfile: { Fn::ImportValue: !Sub "${ProjectName}-EC2ProfileName" }
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs: { VolumeSize: 20, VolumeType: gp3, DeleteOnTermination: true }
+      Tags: [{ Key: Name, Value: !Sub "${ProjectName}-attacker" }]
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -x
+          dnf update -y
+          dnf install -y gcc make git nmap python3 python3-pip iproute-tc
+          pip3 install slowloris
+          printf "admin\nroot\npassword\n123456\nP@ssw0rd123\ntest\nqwerty\n" > /opt/passwords.txt
+          mkdir -p /opt/unsw/scripts
+          echo "ATTACKER READY" > /tmp/setup_done
+
+  # ---------------- EC2: Target + Analyzer (GABUNGAN, private) ----------------
+  TargetAnalyzer:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref TargetAnalyzerType
+      ImageId: !Ref AmiId
+      SubnetId: { Fn::ImportValue: !Sub "${ProjectName}-PrivateSubnetId" }
+      SecurityGroupIds:
+        - { Fn::ImportValue: !Sub "${ProjectName}-InstanceSGId" }
+      IamInstanceProfile: { Fn::ImportValue: !Sub "${ProjectName}-EC2ProfileName" }
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs: { VolumeSize: 50, VolumeType: gp3, DeleteOnTermination: true }
+      Tags: [{ Key: Name, Value: !Sub "${ProjectName}-target-analyzer" }]
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -x
+          dnf update -y
+          # layanan target + capture + toolchain analyzer di satu mesin
+          dnf install -y nginx tcpdump libpcap-devel iproute-tc \
+            python3 python3-pip python3-devel gcc gcc-c++
+          systemctl enable --now nginx sshd
+          # SSH: password auth + MaxAuthTries tinggi (uji brute-force Fase 2)
+          sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
+          sed -i 's/^#\?MaxAuthTries.*/MaxAuthTries 100/' /etc/ssh/sshd_config
+          systemctl restart sshd
+          useradd testuser 2>/dev/null; echo "testuser:P@ssw0rd123" | chpasswd
+          python3 -m pip install --upgrade pip
+          python3 -m pip install nfstream xgboost scikit-learn numpy pandas
+          mkdir -p /opt/unsw/{models,captures,flows,results,scripts}
+          echo "TARGET+ANALYZER READY (capture di mesin ini, iface biasanya ens5; -i any DILARANG)" > /tmp/setup_done
+
+Outputs:
+  AttackerId:              { Value: !Ref Attacker }
+  TargetAnalyzerId:        { Value: !Ref TargetAnalyzer }
+  AttackerPrivateIp:       { Value: !GetAtt Attacker.PrivateIp }
+  TargetAnalyzerPrivateIp: { Value: !GetAtt TargetAnalyzer.PrivateIp }
+  SSMHint:
+    Description: Buka sesi tanpa SSH
+    Value: !Sub "aws ssm start-session --target <InstanceId> --region ${AWS::Region}"

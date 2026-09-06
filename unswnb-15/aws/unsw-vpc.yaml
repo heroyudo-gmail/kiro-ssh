@@ -1,0 +1,157 @@
+﻿AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  T10 UNSW-NB15 - Stack VPC (jaringan saja). VPC + public subnet (NAT) +
+  private subnet + IGW + NAT + Security Group + IAM (SSM + S3).
+  Nilai penting di-export agar stack EC2 (unsw-2ec2.yaml) bisa mereferensikan
+  via ImportValue. Kedua EC2 (Attacker, Target+Analyzer) nanti di PRIVATE subnet,
+  akses via SSM, internet via NAT.
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: unsw-far
+
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.5.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags: [{ Key: Name, Value: !Sub "${ProjectName}-vpc" }]
+
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.5.1.0/24
+      AvailabilityZone: !Select [0, !GetAZs '']
+      MapPublicIpOnLaunch: true
+      Tags: [{ Key: Name, Value: !Sub "${ProjectName}-public" }]
+
+  PrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.5.2.0/24
+      AvailabilityZone: !Select [0, !GetAZs '']
+      MapPublicIpOnLaunch: false
+      Tags: [{ Key: Name, Value: !Sub "${ProjectName}-private" }]
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags: [{ Key: Name, Value: !Sub "${ProjectName}-igw" }]
+
+  IGWAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  NatEIP:
+    Type: AWS::EC2::EIP
+    Properties: { Domain: vpc }
+
+  NatGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatEIP.AllocationId
+      SubnetId: !Ref PublicSubnet
+      Tags: [{ Key: Name, Value: !Sub "${ProjectName}-nat" }]
+
+  PublicRT:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags: [{ Key: Name, Value: !Sub "${ProjectName}-public-rt" }]
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: IGWAttachment
+    Properties:
+      RouteTableId: !Ref PublicRT
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicRTAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: { SubnetId: !Ref PublicSubnet, RouteTableId: !Ref PublicRT }
+
+  PrivateRT:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags: [{ Key: Name, Value: !Sub "${ProjectName}-private-rt" }]
+
+  PrivateRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRT
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway
+
+  PrivateRTAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: { SubnetId: !Ref PrivateSubnet, RouteTableId: !Ref PrivateRT }
+
+  # SG: semua trafik internal VPC (attacker->target) + egress bebas. Tanpa ingress publik.
+  InstanceSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Sub "${ProjectName} internal + egress (akses via SSM)"
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: -1
+          CidrIp: 10.5.0.0/16
+          Description: Semua trafik internal VPC (attacker->target, dll)
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+          Description: Egress bebas (update paket via NAT + S3)
+      Tags: [{ Key: Name, Value: !Sub "${ProjectName}-sg" }]
+
+  EC2Role:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: { Service: ec2.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Policies:
+        - PolicyName: S3Access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: [s3:GetObject, s3:PutObject, s3:ListBucket]
+                Resource: "*"
+      Tags: [{ Key: Name, Value: !Sub "${ProjectName}-role" }]
+
+  EC2Profile:
+    Type: AWS::IAM::InstanceProfile
+    Properties: { Roles: [!Ref EC2Role] }
+
+Outputs:
+  VpcId:
+    Value: !Ref VPC
+    Export: { Name: !Sub "${ProjectName}-VpcId" }
+  PublicSubnetId:
+    Value: !Ref PublicSubnet
+    Export: { Name: !Sub "${ProjectName}-PublicSubnetId" }
+  PrivateSubnetId:
+    Value: !Ref PrivateSubnet
+    Export: { Name: !Sub "${ProjectName}-PrivateSubnetId" }
+  InstanceSGId:
+    Value: !Ref InstanceSG
+    Export: { Name: !Sub "${ProjectName}-InstanceSGId" }
+  EC2ProfileArn:
+    Value: !GetAtt EC2Profile.Arn
+    Export: { Name: !Sub "${ProjectName}-EC2ProfileArn" }
+  EC2ProfileName:
+    Value: !Ref EC2Profile
+    Export: { Name: !Sub "${ProjectName}-EC2ProfileName" }

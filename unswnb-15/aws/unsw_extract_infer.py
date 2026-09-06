@@ -38,9 +38,13 @@ def extract9(pcap):
     if len(df) == 0:
         return None, None
     dur_ms = df.get("bidirectional_duration_ms", pd.Series(np.zeros(len(df))))
-    dur_s = (dur_ms / 1000.0).replace(0, np.nan)
+    # FIX satuan: training Model A memakai duration dalam DETIK (UNSW dur = CIC Flow Duration).
+    # dur_feat_s -> nilai fitur duration (detik), flow durasi-0 tetap 0 (bukan NaN).
+    # dur_s      -> pembagi untuk src_load/dst_load, 0 diganti NaN agar tak div-by-zero.
+    dur_feat_s = (dur_ms / 1000.0)
+    dur_s = dur_feat_s.replace(0, np.nan)
     out = pd.DataFrame({
-        "duration": dur_ms.fillna(0),
+        "duration": dur_feat_s.fillna(0),
         "fwd_pkts": df.get("src2dst_packets", 0).fillna(0),
         "bwd_pkts": df.get("dst2src_packets", 0).fillna(0),
         "fwd_bytes": df.get("src2dst_bytes", 0).fillna(0),

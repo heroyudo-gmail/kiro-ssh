@@ -1,0 +1,141 @@
+{
+  "deskripsi": "Wasserstein Distance (W1) per-fitur & rata-rata pada 9 fitur SFM, dihitung di ruang z-score target. Membuktikan kuantitatif bahwa kalibrasi domain (few-shot 1% / mixup) memperkecil jarak ke distribusi target.",
+  "metrik": "scipy.stats.wasserstein_distance (Earth Mover distance, W1) per fitur, lalu rata-rata 9 fitur.",
+  "ruang": "z-score dengan StandardScaler fit pada target-train (acuan target).",
+  "acuan": "target-test (tetap); dibandingkan thd himpunan latih pd 3 kondisi + batas-bawah target-train.",
+  "features": [
+    "duration",
+    "fwd_pkts",
+    "bwd_pkts",
+    "fwd_bytes",
+    "bwd_bytes",
+    "fwd_mean",
+    "bwd_mean",
+    "src_load",
+    "dst_load"
+  ],
+  "fewshot_frac": 0.01,
+  "seed": 42,
+  "results": {
+    "cic2unsw": {
+      "before": {
+        "mean": 208757.22048934182,
+        "per_feature": {
+          "duration": 1878813.2664699347,
+          "fwd_pkts": 0.21697302849565409,
+          "bwd_pkts": 0.11681099356391449,
+          "fwd_bytes": 0.04007339859734125,
+          "bwd_bytes": 0.07358864142519464,
+          "fwd_mean": 0.43590003581907877,
+          "bwd_mean": 0.2391334443589584,
+          "src_load": 0.34134080801325417,
+          "dst_load": 0.2541137911175542
+        }
+      },
+      "fewshot_1pct": {
+        "mean": 208435.65619535247,
+        "per_feature": {
+          "duration": 1875919.1906060304,
+          "fwd_pkts": 0.21660550364993772,
+          "bwd_pkts": 0.11660530363100606,
+          "fwd_bytes": 0.03998590071393999,
+          "bwd_bytes": 0.07344909310433197,
+          "fwd_mean": 0.4352816912547539,
+          "bwd_mean": 0.23873746579511915,
+          "src_load": 0.3407764229882355,
+          "dst_load": 0.2537107607142728
+        },
+        "reduction_pct": 0.15403744753622847
+      },
+      "mixup": {
+        "mean": 200119.7845732224,
+        "per_feature": {
+          "duration": 1801076.4172781007,
+          "fwd_pkts": 0.20555452177014322,
+          "bwd_pkts": 0.1110599879571974,
+          "fwd_bytes": 0.03837622798679714,
+          "bwd_bytes": 0.06939761336465691,
+          "fwd_mean": 0.41872289963352355,
+          "bwd_mean": 0.2320996855019754,
+          "src_load": 0.32545811841638866,
+          "dst_load": 0.24321184618661632
+        },
+        "reduction_pct": 4.137550737585346
+      },
+      "target_train_lb": {
+        "mean": 0.03145507598051703,
+        "per_feature": {
+          "duration": 0.06329340182081938,
+          "fwd_pkts": 0.017758776717825227,
+          "bwd_pkts": 0.02331451424679861,
+          "fwd_bytes": 0.006723339196888967,
+          "bwd_bytes": 0.01859165385727774,
+          "fwd_mean": 0.030751585839112368,
+          "bwd_mean": 0.048800484729589165,
+          "src_load": 0.04779730311917784,
+          "dst_load": 0.026064624297163937
+        }
+      }
+    },
+    "unsw2cic": {
+      "before": {
+        "mean": 3.3392640263311244,
+        "per_feature": {
+          "duration": 0.4298020435879498,
+          "fwd_pkts": 0.019057782981501164,
+          "bwd_pkts": 0.09337272906932871,
+          "fwd_bytes": 0.1576993512044331,
+          "bwd_bytes": 0.05582927892414209,
+          "fwd_mean": 1.4385021665035642,
+          "bwd_mean": 0.4213660939752109,
+          "src_load": 20.329199108660998,
+          "dst_load": 7.10854768207299
+        }
+      },
+      "fewshot_1pct": {
+        "mean": 3.1362120009668066,
+        "per_feature": {
+          "duration": 0.4049190367287603,
+          "fwd_pkts": 0.01832299737744518,
+          "bwd_pkts": 0.0881969285680626,
+          "fwd_bytes": 0.14765779418802585,
+          "bwd_bytes": 0.05290916223352933,
+          "fwd_mean": 1.351151768593651,
+          "bwd_mean": 0.3958571391136003,
+          "src_load": 19.09165828010978,
+          "dst_load": 6.675234901788405
+        },
+        "reduction_pct": 6.080741856983757
+      },
+      "mixup": {
+        "mean": 2.725394149643848,
+        "per_feature": {
+          "duration": 0.3577214806137353,
+          "fwd_pkts": 0.016258234993820373,
+          "bwd_pkts": 0.07649403055527411,
+          "fwd_bytes": 0.12603058305978382,
+          "bwd_bytes": 0.04637658937488241,
+          "fwd_mean": 1.1737821388261211,
+          "bwd_mean": 0.31601950590873557,
+          "src_load": 16.608660780768208,
+          "dst_load": 5.807204002694073
+        },
+        "reduction_pct": 18.383388430705793
+      },
+      "target_train_lb": {
+        "mean": 0.005167628982152299,
+        "per_feature": {
+          "duration": 0.03582440630874377,
+          "fwd_pkts": 0.0015294247087181973,
+          "bwd_pkts": 0.0012747737332480054,
+          "fwd_bytes": 0.0016072852394926824,
+          "bwd_bytes": 0.0012170049575713727,
+          "fwd_mean": 0.0009271986082022596,
+          "bwd_mean": 0.0008794501906090707,
+          "src_load": 0.0010808332116529385,
+          "dst_load": 0.002168283881132398
+        }
+      }
+    }
+  }
+}

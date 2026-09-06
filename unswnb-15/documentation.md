@@ -573,3 +573,76 @@ untuk banyak titik pemantauan.
 Penelitian dinilai menetapkan standar tinggi untuk pengujian NIDS lintas-jaringan yang
 jujur dan realistis. Setelah Poin A diisi data riil dan Poin B diperjelas (sudah), naskah
 berada pada posisi matang untuk bersaing di jurnal Q1.
+
+
+---
+## 18. Revisi Tambahan Reviewer (Putaran 2): Wasserstein & Preservasi Fungsional
+
+Setelah Minor Revision (poin A–D, §17), reviewer memberi dua saran lanjutan. Keduanya
+sudah dikerjakan pada naskah `paper-q1-id.tex`. Prinsip kejujuran data tetap dipegang:
+angka Wasserstein di bawah **seluruhnya dari eksekusi nyata** notebook, bukan dikarang.
+
+### 18.1 Reviewer 1 — Verifikasi Kuantitatif Distribution Shift (Jarak Wasserstein)
+**Saran:** ukur jarak Wasserstein (Earth Mover Distance, W1) pada 9 fitur SFM sebelum vs
+sesudah kalibrasi domain; buktikan secara matematis jaraknya mengecil ke distribusi
+target (standar Layeghy dkk. 2024).
+
+**Eksekusi nyata:** `notebooks/10_wasserstein_shift.ipynb` (Run All di SageMaker), output
+`wasserstein_shift.json`. W1 dihitung per fitur di ruang z-score yang di-fit pada
+train-target, `scipy.stats.wasserstein_distance`, seed 42; disertakan batas-bawah
+intra-target (train vs test target sama).
+
+**Hasil (rata-rata 9 fitur, W1 ke test-target):**
+
+| Kondisi | CIC→UNSW | UNSW→CIC |
+|---|---|---|
+| Baseline (tanpa kalibrasi) | 208.757 | 3,339 |
+| Few-shot 1% | 208.436 (−0,2%) | 3,136 (−6,1%) |
+| Mixup | 200.120 (−4,1%) | 2,725 (−18,4%) |
+| Batas-bawah intra-target | 0,031 | 0,005 |
+
+**Temuan & keputusan penyajian (jujur):**
+- Kalibrasi **secara konsisten memperkecil** W1 di kedua arah & kedua metode → bukti
+  kuantitatif yang diminta. **Mixup paling efektif** menutup jarak distribusi.
+- Menarik: few-shot 1% menang di MCC, tapi **mixup** lebih besar memperkecil jarak
+  distribusi (mixup menggeser statistik fitur global; few-shot lebih menolong batas
+  keputusan). Dibahas di naskah.
+- **Distorsi `duration` diungkap terbuka, tidak disembunyikan:** arah CIC→UNSW didominasi
+  fitur `duration` (W1 ≈ 1,88×10^6 di ruang z-score karena ekor durasi UNSW dalam detik),
+  membuat rata-rata membengkak & menyamarkan reduksi 8 fitur lain. Bila `duration`
+  dikeluarkan, reduksi mixup arah ini = **4,3%** (selaras reduksi per-fitur). Naskah tetap
+  melaporkan rata-rata penuh apa adanya + catatan transparansi ini.
+- Jarak inter-domain tetap jauh di atas batas-bawah intra-target → selaras Layeghy: celah
+  mengecil tapi tak hilang; inilah alasan sedikit label target masih bermanfaat.
+
+**Ditulis di naskah:** subbagian baru **§Verifikasi Kuantitatif Pergeseran Distribusi
+(Jarak Wasserstein)** (`\label{sec:wass}`), 2 tabel (`tab:wass` rata-rata, `tab:wassfeat`
+reduksi per-fitur mixup), memakai sitasi eksisting `\cite{layeghy}` & `\cite{wasserstein}`.
+**Status: SELESAI.**
+
+### 18.2 Reviewer 2 — Justifikasi Teoretis Functional-Preserving Constraints
+**Saran:** kaitkan formulasi Functional-Preserving Constraints (non-negatif, monotonic
+add-only) ke kerangka teoretis "format-preservation" & "executability-preservation" agar
+tak dianggap heuristik buatan sendiri (reviewer menyebut "Arifin dkk. 2026").
+
+**Keputusan (kejujuran sitasi):** TIDAK menambah sitasi "Arifin dkk. 2026" yang tidak kami
+miliki detailnya. Sebagai gantinya, pengaitan memakai **referensi yang sudah ada di
+bibliografi** — survei dual-use GAN untuk NIDS `\cite{alauthman,alajlan}` — yang memang
+membahas tantangan menjaga validitas/realizability trafik adversarial. Ini menghindari
+sitasi karangan sekaligus tetap menjawab substansi reviewer.
+
+**Ditulis di naskah:** paragraf **"Landasan teoretis: preservasi fungsional"** di akhir
+§8.1 (Functional-Preserving Evasion), memetakan:
+- non-negatif + integralitas paket (Pers. c-nonneg, c-int) → **format-preservation**;
+- konsistensi volume–paket + monotonic add-only (Pers. c-consistency, c-mono) →
+  **executability-preservation** (penyerang hanya bisa menambah trafik, tak mengurangi).
+
+**Status: SELESAI.**
+
+### 18.3 Catatan Teknis Lain yang Ditemukan (untuk T10 AWS)
+Saat meninjau aset AWS, ditemukan **bug satuan** di `aws/unsw_extract_infer.py` fungsi
+`extract9()`: fitur `duration` diisi dari `dur_ms` (milidetik) tanpa `/1000`, padahal Model A
+dilatih dengan `duration` dalam **detik** (mapping training: UNSW `dur` detik = CIC
+`Flow Duration`) → salah faktor 1000×. `dst_load` (paket/detik) & `src_load` (byte/detik)
+**sudah benar** (sesuai mapping `dload`→`Bwd Pkts/s`, `sload`→`Flow Byts/s`). Perbaikan bug
+`duration` dijadikan prasyarat sebelum ramp T10 (lihat spec `.kiro/specs/t10-ramp-execution/`).
