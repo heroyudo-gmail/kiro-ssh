@@ -545,21 +545,29 @@ di `reviewer.md`.
 
 | Poin | Isi | Butuh eksekusi nyata? | Status |
 |---|---|---|---|
-| **A** | Isi placeholder `[TBD]` Tabel 1 (ukuran model, latensi inferensi, throughput di 1 vCPU) — KRITIS, pemicu desk-reject | Ya (ukur model 9-fitur) | **Menunggu pengukuran** (jangan diisi angka karangan) |
+| **A** | Isi placeholder `[TBD]` Tabel 1 (ukuran model, latensi inferensi, throughput di 1 vCPU) — KRITIS, pemicu desk-reject | Ya (ukur model 9-fitur) | **SELESAI** — diukur nyata via `notebooks/09_model_efficiency.ipynb`: model $2{,}9$ MB, latensi $\approx 439\,\mu$s/flow, throughput $\approx 2\,276$ flow/detik @1 vCPU (§3.4 naskah) |
 | **B** | Definisi formal operator proyeksi $\Pi_{\mathcal{S}_{valid}}$ (algoritma clip/round/monotonic sebelum re-scale) | Tidak (penulisan) | **SELESAI** (§8.1 naskah) |
 | **C** | Tambah 1–2 kalimat strategi pertahanan potensial thd serangan adaptif (mis. multi-step PGD functional-constrained sejak training; randomized smoothing / decision-boundary smoothing) | Tidak (penulisan) | **SELESAI** (§9.1 naskah) |
 | **D** | Konsistenkan format referensi (gaya IEEE, singkatan konferensi/jurnal seragam) | Tidak (penulisan) | **SELESAI** (bibliography naskah) |
 
-### 17.3 Catatan Kejujuran (Poin A)
-Poin A adalah satu-satunya penghalang submit dan **wajib angka nyata**:
-- Ukuran biner model XGBoost 9-fitur (KB).
-- Rata-rata latensi inferensi per *flow* (µs) pada 1 vCPU.
-- *Throughput* (flow/detik).
+### 17.3 Poin A — SELESAI (angka nyata terukur)
+Diukur via `notebooks/09_model_efficiency.ipynb` di SageMaker (tanpa deployment AWS), hasil
+di `model_efficiency.json`. Lingkungan: Amazon Linux 2023, x86_64 8 vCPU, XGBoost 3.2.0;
+inferensi **dipaksa single-thread** (`nthread=1`) untuk meniru edge 1 vCPU.
 
-Pengukuran ini dapat dilakukan begitu model 9-fitur tersedia (dari training SageMaker) —
-tidak memerlukan deployment AWS penuh, cukup lingkungan dengan model + 1 vCPU. Sampai
-diukur, slot tetap `[TBD]` agar naskah tidak memuat angka karangan. Angka ini sekaligus
-memperkuat klaim *Edge-friendly / Green AI* (§3.4).
+| Metrik | Nilai (nyata) |
+|---|---|
+| Ukuran model biner (Model A, 9 fitur, 200 pohon) | **2,9 MB** (3.032.864 byte) |
+| Latensi inferensi per flow (batch=1, single-thread) | **≈ 439 µs** (median 434, std 23, n≈2000) |
+| Throughput inkremental (1 vCPU) | **≈ 2.276 flow/detik** |
+
+**Catatan kejujuran (penting):** pengukuran awal juga menghasilkan angka *throughput batch*
+$\sim$77 juta flow/detik — ini **artefak** (vektorisasi + `dt` mendekati nol), **tidak
+dilaporkan** di naskah karena menyesatkan. Notebook 09 diperbaiki (batch diukur dengan
+REPEAT=20 + peringatan bila `dt` terlalu kecil); naskah memakai **throughput inkremental**
+(1/latensi) yang representatif untuk deteksi inline per-flow. Ukuran 2,9 MB dilaporkan apa
+adanya (bukan "puluhan KB") — tetap ringkas untuk edge; laju >2.000 flow/detik/inti memadai
+untuk banyak titik pemantauan.
 
 ### 17.4 Kesimpulan Reviewer
 Penelitian dinilai menetapkan standar tinggi untuk pengujian NIDS lintas-jaringan yang

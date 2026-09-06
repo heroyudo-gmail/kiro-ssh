@@ -1,0 +1,26 @@
+{
+  "deskripsi": "Profil efisiensi Model A (9 fitur, biner) untuk klaim Edge/Green AI. Angka nyata.",
+  "model": "XGBoost Model A (9 fitur, binary:logistic, depth=8, n_estimators=200)",
+  "size_bytes": 3032864,
+  "size_kb": 2961.8,
+  "latency_per_flow_us": {
+    "mean": 439.3,
+    "median": 434.2,
+    "std": 22.9,
+    "n_samples": 1980,
+    "batch": 1,
+    "single_thread": true
+  },
+  "throughput_flows_per_sec": {
+    "batch_single_thread": 77768916,
+    "incremental": 2276
+  },
+  "environment": {
+    "platform": "Linux-6.12.100-125.179.amzn2023.x86_64-x86_64-with-glibc2.34",
+    "processor": "x86_64",
+    "cpu_count_logical": 8,
+    "python": "3.10.20",
+    "xgboost": "3.2.0",
+    "note": "Latensi & throughput diukur SINGLE-THREAD (nthread=1) untuk meniru edge 1 vCPU."
+  }
+}

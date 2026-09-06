@@ -131,9 +131,13 @@ atau *IEEE TDSC*. Empat poin revisi minor:
 studi kasus TCP window mismatch, functional-preserving evasion, analisis asimetri, gambar
 kualitas publikasi.
 
-**Sisa satu-satunya penghalang submit = Poin A** (angka efisiensi nyata). Bisa diukur begitu
-model 9-fitur tersedia (tidak butuh deployment AWS penuh, cukup 1 vCPU + model). Detail di
-`documentation.md` §17.
+**Poin A — SELESAI.** Diukur nyata (`notebooks/09_model_efficiency.ipynb`, `model_efficiency.json`):
+model **2,9 MB**, latensi **≈439 µs/flow**, throughput **≈2.276 flow/detik** @1 vCPU (single-thread).
+Throughput *batch* artefak (~77 jt/detik) dibuang; notebook diperbaiki. Angka dimasukkan ke
+Tabel efisiensi §3.4. Detail di `documentation.md` §17.3.
+
+**Status keempat poin revisi: A ✓ B ✓ C ✓ D ✓ — naskah siap submit Q1** (T10 deployment
+FAR tetap future work, sudah jujur ditulis + infra `aws/` siap eksekusi).
 
 ### E.1 Skema AWS T10 — 3-EC2 (persis NIDS-01) — SUDAH DIDESAIN
 Keputusan: memakai skema **3-EC2 mereplikasi NIDS-01** (Attacker public; Target & Analyzer

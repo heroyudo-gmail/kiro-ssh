@@ -203,22 +203,28 @@ kandidat \emph{Edge-friendly Robust NIDS}.
 
 \begin{table}[h]
 \centering
-\caption{Profil efisiensi model (diisi dari pengukuran nyata). Placeholder
-menandai angka yang akan dilaporkan setelah instrumentasi.}
+\caption{Profil efisiensi Model A (9 fitur), diukur nyata pada satu inti CPU
+(\emph{single-thread}, meniru \emph{edge} 1 vCPU).}
 \label{tab:efficiency}
 \begin{tabular}{lc}
 \toprule
 Metrik & Nilai \\
 \midrule
-Ukuran model biner (Model A, 9 fitur) & \texttt{[TBD]} KB \\
-Rata-rata latensi inferensi per \emph{flow} & \texttt{[TBD]} $\mu$s \\
-\emph{Throughput} (flow/detik, 1 vCPU) & \texttt{[TBD]} \\
+Ukuran model biner (Model A, 9 fitur, 200 pohon) & $2{,}9$ MB \\
+Rata-rata latensi inferensi per \emph{flow} (batch$=1$) & $\approx 439\ \mu$s \\
+\emph{Throughput} inferensi (1 vCPU, inkremental) & $\approx 2\,276$ \emph{flow}/detik \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\noindent Angka pada Tabel~\ref{tab:efficiency} akan diisi dari pengukuran nyata
-(bukan estimasi) sebagai bukti kesiapan \emph{edge}.
+\noindent Angka pada Tabel~\ref{tab:efficiency} berasal dari pengukuran nyata
+(XGBoost \emph{single-thread}, batch$=1$; median $434\ \mu$s, std $23\ \mu$s atas
+$\sim$2000 \emph{flow}). Model $2{,}9$ MB (200 pohon, kedalaman 8) cukup ringkas
+untuk dimuat pada perangkat \emph{edge}, dan laju $>2\,000$ \emph{flow}/detik per
+satu inti memadai untuk banyak titik pemantauan jaringan --- mendukung klaim
+\emph{Edge-friendly}. Kami melaporkan angka apa adanya: latensi berorde ratusan
+mikrodetik (bukan puluhan), dan menghindari pelaporan \emph{throughput} \emph{batch}
+yang dapat menyesatkan akibat optimasi vektorisasi.
 
 % ============================================================
 \section{Baseline Lintas-Dataset: Celah Generalisasi}
