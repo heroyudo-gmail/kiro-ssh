@@ -80,17 +80,22 @@ adaptif, XGBoost.
 \label{sec:intro}
 
 NIDS berbasis pembelajaran mesin telah menjadi komponen penting pertahanan
-siber. Namun sebagian besar evaluasi di literatur bertumpu pada protokol
-\emph{latih-dan-uji pada dataset yang sama}, sehingga melaporkan akurasi yang
-optimistis dan tidak mencerminkan kondisi penyebaran (\emph{deployment}) nyata.
-Dalam praktik, sebuah model yang dilatih pada satu lingkungan jaringan harus
-beroperasi pada lingkungan lain dengan topologi, komposisi trafik, dan alat
-ekstraksi fitur yang berbeda.
+siber, dan dievaluasi luas pada dataset \emph{benchmark} publik seperti KDD~Cup~99,
+NSL-KDD, UNSW-NB15~\cite{unsw}, dan CIC-IDS2017/CSE-CIC-IDS2018~\cite{cicids}.
+Namun sebagian besar evaluasi bertumpu pada protokol \emph{latih-dan-uji pada
+dataset yang sama}, sehingga melaporkan akurasi yang optimistis dan tidak
+mencerminkan kondisi penyebaran (\emph{deployment}) nyata. Dalam praktik, model
+yang dilatih pada satu lingkungan jaringan harus beroperasi pada lingkungan lain
+dengan topologi, komposisi trafik, dan alat ekstraksi fitur yang berbeda. Studi
+generalisasi lintas-dataset yang mulai bermunculan~\cite{cantone,aceto}
+menegaskan bahwa performa NIDS turun tajam ketika diuji lintas-dataset, namun
+jarang mengisolasi \emph{penyebab} penurunan (fitur vs distribusi) atau menawarkan
+solusi berbiaya-rendah yang tervalidasi.
 
 Makalah ini merupakan kelanjutan langsung dari penelitian NIDS sebelumnya pada
-CSE-CIC-IDS2018 (reduksi fitur XGBoost + \emph{adversarial training} berbasis
-\emph{saliency map} + validasi \emph{real-traffic} AWS), yang secara jujur
-mengakui tiga keterbatasan. Ketiga keterbatasan itulah yang menjadi
+CSE-CIC-IDS2018 (reduksi fitur XGBoost~\cite{xgboost} + \emph{adversarial
+training} berbasis \emph{saliency map} + validasi \emph{real-traffic} AWS), yang
+secara jujur mengakui tiga keterbatasan. Ketiga keterbatasan itulah yang menjadi
 \textbf{gap inti} makalah ini:
 \begin{enumerate}
   \item \textbf{Ketidakmampuan generalisasi lintas-jaringan.} Model kolaps saat
@@ -129,22 +134,41 @@ belum sepenuhnya tahan terhadap serangan adaptif.
 \section{Karya Terkait}
 \label{sec:related}
 
-\paragraph{NIDS berbasis pembelajaran mesin.} Model berbasis pohon (XGBoost,
-LightGBM) dan jaringan saraf banyak dipakai pada dataset seperti NSL-KDD,
-CIC-IDS2017/2018, dan UNSW-NB15. Sebagian besar melaporkan hasil in-domain.
+\paragraph{NIDS berbasis pembelajaran mesin.} Model berbasis pohon (mis.
+XGBoost~\cite{xgboost}) dan jaringan saraf dalam banyak dipakai pada dataset
+\emph{benchmark}~\cite{unsw,cicids}. Mayoritas melaporkan hasil \emph{in-domain}
+(latih-uji pada dataset sama) dengan akurasi tinggi, tetapi kondisi ini tidak
+menjamin ketangguhan pada trafik jaringan yang berbeda dari data latih.
 
-\paragraph{Generalisasi lintas-dataset.} Sejumlah studi mengamati penurunan
-performa lintas-dataset, tetapi jarang mengisolasi penyebabnya (fitur vs
-distribusi) atau menawarkan solusi berbiaya-rendah yang tervalidasi.
+\paragraph{Generalisasi lintas-dataset.} Cantone \emph{et al.}~\cite{cantone}
+melakukan studi generalisasi lintas-dataset sistematis (CIC-IDS2017,
+CSE-CIC-IDS2018, dan variannya) dan menemukan penurunan performa yang konsisten
+antar-dataset; Aceto \emph{et al.}~\cite{aceto} menyoroti peran sumber trafik dan
+generator sintetik pada lintas-dataset. Studi-studi ini menegaskan adanya masalah,
+namun umumnya berhenti pada pengamatan penurunan --- belum memisahkan kontribusi
+\emph{ketidakcukupan fitur} versus \emph{pergeseran distribusi}, dan belum
+menawarkan pemulihan berbiaya-rendah. Makalah kami mengisisi celah ini dengan
+diagnosis terkontrol dan solusi kalibrasi minimal.
 
-\paragraph{Adaptasi domain.} CORAL dan MMD menyelaraskan statistik distribusi
-antar-domain; pada data tabular jaringan penerapannya masih terbatas.
+\paragraph{Adaptasi domain.} CORAL~\cite{coral} menyelaraskan statistik orde-2
+(kovarians) antar-domain, sedangkan pendekatan berbasis MMD menyelaraskan momen
+distribusi; pada data \emph{tabular} jaringan penerapan dan evaluasinya masih
+terbatas. Pendekatan \emph{few-shot} juga mulai dieksplorasi untuk NIDS
+data-terbatas~\cite{fewshot}. Kami mengevaluasi CORAL, pelatihan gabungan
+(\emph{joint}), \emph{few-shot}, dan \emph{mixup} lintas-dataset secara langsung
+pada pasangan CIC-IDS2018 dan UNSW-NB15.
 
-\paragraph{Serangan adversarial pada NIDS.} Banyak karya menerapkan FGSM/PGD
-pada fitur alir (\emph{flow}) tanpa memperhatikan validitas protokol, sehingga
-menghasilkan \emph{flow} yang tak dapat dikirim. Selain itu, evaluasi seringkali
-hanya \emph{transfer}, bukan \emph{adaptive white-box}, sehingga melebih-lebihkan
-ketahanan. Makalah ini menutup kedua celah tersebut.
+\paragraph{Serangan adversarial pada NIDS.} Banyak karya menerapkan serangan
+\emph{evasion} berbasis gradien atau GAN pada fitur alir~\cite{randhawa,mbow}
+tanpa memperhatikan validitas protokol, sehingga menghasilkan \emph{flow} yang
+tak dapat dikirim di jaringan nyata. Selain itu, evaluasi ketangguhan seringkali
+hanya \emph{transfer}/grey-box, bukan \emph{adaptive white-box}, sehingga
+berisiko melebih-lebihkan ketahanan --- fenomena \emph{obfuscated
+gradients}~\cite{obfuscated} dan pentingnya \emph{adaptive
+attacks}~\cite{adaptive} telah dibahas pada domain adversarial ML umum. Makalah
+ini menutup kedua celah tersebut pada domain NIDS tabular lintas-jaringan:
+serangan dibatasi \emph{functional-preserving} dan dievaluasi secara
+\emph{adaptive white-box}.
 
 % ============================================================
 \section{Data dan Semantic Feature Mapping}
@@ -647,6 +671,27 @@ and Privacy (ICISSP)}, Funchal, Portugal, 2018, pp.~108--116.
 \bibitem{xgboost} T.~Chen and C.~Guestrin, ``XGBoost: A scalable tree boosting
 system,'' in \emph{Proc. 22nd ACM SIGKDD Int. Conf. Knowledge Discovery and
 Data Mining (KDD)}, San Francisco, CA, USA, 2016, pp.~785--794.
+
+\bibitem{cantone} M.~Cantone, C.~Marrocco, and A.~Bria, ``Machine learning in
+network intrusion detection: A cross-dataset generalization study,'' \emph{IEEE
+Access}, vol.~12, pp.~144491--144509, 2024.
+
+\bibitem{aceto} G.~Aceto, F.~Giampaolo, C.~Guida, S.~Izzo, A.~Pescap\`e,
+F.~Piccialli, and E.~Prezioso, ``Synthetic and privacy-preserving traffic trace
+generation using generative AI models for training network intrusion detection
+systems,'' \emph{J. Netw. Comput. Appl.}, vol.~229, art.~103926, 2024.
+
+\bibitem{fewshot} C.~Xu, Y.~Zhan, G.~Chen, Z.~Wang, S.~Liu, and W.~Hu,
+``Elevated few-shot network intrusion detection via self-attention mechanisms
+and iterative refinement,'' \emph{PLoS ONE}, vol.~20, no.~1, art.~e0317713, 2025.
+
+\bibitem{randhawa} R.~H.~Randhawa, N.~Aslam, M.~Alauthman, and H.~Rafiq,
+``Evasion generative adversarial network for low data regimes,'' \emph{IEEE
+Trans. Artif. Intell.}, vol.~4, no.~5, pp.~1076--1088, 2023.
+
+\bibitem{mbow} M.~Mbow, R.~Roman, T.~Takahashi, and K.~Sakurai, ``Evading IoT
+intrusion detection systems with GAN,'' in \emph{Proc. 19th Asia Joint Conf.
+Information Security (AsiaJCIS)}, 2024, pp.~48--55.
 \end{thebibliography}
 
 \end{document}
