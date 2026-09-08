@@ -29,6 +29,10 @@
   (Jika upload gagal karena izin, upload manual dengan `aws s3 cp` — perintah tercetak di notebook.)
 - **Skrip → S3:** `unsw_extract_infer.py`, `capture_target.sh`, `attack_scenario.sh`,
   `benign_traffic.sh` → `s3://ssh-detection-features-232032302717/unsw-far/scripts/`.
+  > **Cara cepat (satu perintah):** dari folder `aws/`, jalankan `./upload_to_s3.sh`. Skrip ini
+  > otomatis: (a) **GATE** memverifikasi `unsw_extract_infer.py` sudah versi ter-FIX (`dur_feat_s`),
+  > (b) cek kredensial & akses bucket, (c) upload keempat skrip (+ model bila ada di folder), lalu
+  > (d) menampilkan isi S3. Batal bila gate/kredensial gagal. Override: `S3_BUCKET=... REGION=... ./upload_to_s3.sh`.
   > **Pastikan `unsw_extract_infer.py` sudah versi ter-FIX** (fitur `duration` dalam
   > DETIK, `dur_feat_s = dur_ms/1000`). Cek: `grep dur_feat_s unsw_extract_infer.py`
   > harus muncul sebelum di-upload. Lihat prasyarat ramp di Bagian 3A.
