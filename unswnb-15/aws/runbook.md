@@ -27,8 +27,8 @@
   - `deploy_meta_9feat.json` (`{"features":[9], "scaler_mean":[9], "scaler_scale":[9]}`), lalu
   - **mengunggah keduanya** ke `s3://ssh-detection-features-232032302717/unsw-far/models/`.
   (Jika upload gagal karena izin, upload manual dengan `aws s3 cp` — perintah tercetak di notebook.)
-- **Skrip → S3:** `unsw_extract_infer.py`, `capture_target.sh`, `attack_scenario.sh` →
-  `s3://ssh-detection-features-232032302717/unsw-far/scripts/`.
+- **Skrip → S3:** `unsw_extract_infer.py`, `capture_target.sh`, `attack_scenario.sh`,
+  `benign_traffic.sh` → `s3://ssh-detection-features-232032302717/unsw-far/scripts/`.
   > **Pastikan `unsw_extract_infer.py` sudah versi ter-FIX** (fitur `duration` dalam
   > DETIK, `dur_feat_s = dur_ms/1000`). Cek: `grep dur_feat_s unsw_extract_infer.py`
   > harus muncul sebelum di-upload. Lihat prasyarat ramp di Bagian 3A.
@@ -82,14 +82,16 @@ chmod +x /opt/unsw/scripts/*.sh
 
 ## 3. FASE 1 — FAR (TANPA serangan)
 
-> **JANGAN langsung 24 jam.** Jalankan **RAMP BERTAHAP S0-S4 (Bagian 3A)** dulu:
-> smoke ~3m -> 10m -> 30m -> 2j -> 24j, tiap tahap lolos GATE. Bagian di bawah ini
-> (24 jam kontinu) adalah tahap **S4** — dijalankan HANYA setelah S0-S3 lolos.
+> **JANGAN langsung 24 jam.** Jalankan **RAMP BERTAHAP S0->D1->D2->D3 (Bagian 3A)** dulu:
+> smoke ~3m (gate) -> **1 jam** -> **6 jam** -> **24 jam**, tiap tahap lolos GATE. Bagian
+> di bawah ini (24 jam kontinu) adalah tahap **D3** — dijalankan HANYA setelah S0/D1/D2 lolos.
 >
-> **Skenario utama (percobaan awal): 24 jam kontinu** — mencakup satu siklus harian
-> penuh (siang/malam). Cukup kredibel sebagai validasi awal FAR. **Eskalasi 3–7 hari**
-> (variasi weekday/weekend) dilakukan HANYA bila diminta reviewer — infra sama, tinggal
-> jalankan lebih lama.
+> **Desain multi-durasi (percobaan bertahap untuk PERBANDINGAN, bukan sekadar gate).**
+> Titik durasi: **1 jam -> 6 jam -> 24 jam**, lalu eskalasi opsional **3 hari -> 7 hari**.
+> Tujuannya bukan cuma validasi pipeline, tetapi **membandingkan FAR antar-durasi observasi**
+> (lihat Tabel §7.2) — membuktikan FAR rendah **stabil** seiring waktu, bukan artefak snapshot
+> pendek. Setiap durasi memakai infra yang SAMA; hanya waktu capture yang berbeda. Eskalasi
+> 3-7 hari (variasi weekday/weekend) dijalankan setelah 24 jam kredibel.
 >
 > **Penting agar FAR berisi:** jaga trafik normal tetap aktif (banyak flow benign) selama
 > 24 jam — curl loop + unduhan berkala + sesi SSH terjadwal. FAR dari puluhan ribu flow
@@ -114,13 +116,26 @@ Hasil FAR ditambahkan ke `/opt/unsw/results/far_log.jsonl` (+ auto-upload S3).
 
 ---
 
-## 3A. RAMP BERTAHAP S0-S4 (validasi sebelum 24 jam) — WAJIB dijalankan berurutan
+## 3A. RAMP BERTAHAP S0 -> D1(1j) -> D2(6j) -> D3(24j) -> [D4(3h) -> D5(7h)] — WAJIB berurutan
 
 > **Alasan:** langsung 24 jam berisiko — bila ada error di tengah (mismatch satuan
 > fitur, capture 0 flow, gagal rotasi/upload) biaya jam-jaman terbuang. Ramp menaikkan
 > durasi bertahap; tiap tahap punya **GATE terukur**. Bila gate GAGAL -> **STOP**, jangan
 > naik tahap; diagnosa & perbaiki dulu, lalu ulang tahap dari awal.
 > Kaitan spec: `.kiro/specs/t10-ramp-execution/requirements.md`.
+>
+> **Peta tahap & tujuan ganda (gate + titik perbandingan FAR):**
+>
+> | Tahap | Durasi | Peran | Dilaporkan di paper? |
+> |---|---|---|---|
+> | **S0** | ~3 menit | smoke test: gate pipeline (flow>0, no error, satuan `duration` detik) | tidak (internal) |
+> | **D1** | 1 jam | FAR titik-1 + gate satuan/scaler (\|z\|<=6, FAR!=1) | ya (baris tabel) |
+> | **D2** | 6 jam | FAR lintas beberapa jam (variasi intra-hari) | ya (baris tabel) |
+> | **D3** | 24 jam | FAR satu siklus harian penuh (siang/malam) | ya (baris tabel) |
+> | **D4** | 3 hari | eskalasi: variasi weekday | ya (opsional) |
+> | **D5** | 7 hari | eskalasi: variasi weekday/weekend | ya (opsional) |
+>
+> Setiap D1-D5 mengisi satu baris **Tabel Perbandingan FAR Antar-Durasi (§7.2)**.
 
 ### Prasyarat ramp (sebelum S0)
 - **Bug `duration` sudah diperbaiki** di `unsw_extract_infer.py`: fitur `duration` kini
@@ -140,8 +155,19 @@ Hasil FAR ditambahkan ke `/opt/unsw/results/far_log.jsonl` (+ auto-upload S3).
   ```bash
   aws ec2 stop-instances --region ap-southeast-1 --instance-ids <AttackerId>
   ```
-- **Trafik benign harus aktif** selama tiap tahap (curl loop / unduhan / SSH sah) agar
-  ada banyak flow. FAR dari ribuan flow jauh lebih kredibel daripada dari puluhan.
+- **Trafik benign harus aktif** selama tiap tahap agar ada banyak flow. FAR dari ribuan
+  flow jauh lebih kredibel daripada dari puluhan. Gunakan skrip pembangkit benign siap-pakai
+  di **Target** (jalankan di background sebelum/berbarengan capture, hentikan saat tahap selesai):
+  ```bash
+  cd /opt/unsw/scripts
+  # TARGET_IP=127.0.0.1 (loopback) atau IP privat Target agar lewat ens5
+  nohup sudo TARGET_IP=127.0.0.1 ./benign_traffic.sh > /opt/unsw/benign.log 2>&1 &
+  # ... jalankan capture tahap (S0/D1/D2/D3) ...
+  sudo pkill -f benign_traffic.sh   # stop setelah capture tahap selesai
+  ```
+  Skrip menghasilkan flow beragam (HTTP lokal + publik via NAT, DNS, unduhan kecil). Sesi
+  SSH sah OFF secara default (agar tak menyerupai pola gagal-login/brute-force); aktifkan
+  hanya bila kredensial valid tersedia (`BENIGN_SSH=1 SSH_USER=... SSH_PASS=...`).
 
 ### Helper capture berdurasi tetap (tahap pendek S0-S3)
 `capture_target.sh far` memakai rotasi per JAM (`-G 3600`) — cocok untuk S4. Untuk tahap
@@ -162,13 +188,13 @@ aws s3 cp /opt/unsw/captures/ramp_<TAHAP>.pcap s3://$S3_BUCKET/unsw-far/captures
 
 ---
 
-### S0 — Smoke (~2-3 menit) | tangkap error mendasar & bug satuan
-- **Capture:** `timeout 150 tcpdump -i $IFACE ... ramp_s0.pcap` (150 detik), trafik benign aktif.
+### S0 — Smoke (~3 menit) | GATE saja (tidak dilaporkan) | tangkap error mendasar & bug satuan
+- **Capture:** `timeout 180 tcpdump -i $IFACE ... ramp_s0.pcap` (180 detik), trafik benign aktif.
 - **Proses:** `unsw_extract_infer.py far ramp_s0.pcap`.
 - **GATE S0:**
   - **S0-a** NFStream menghasilkan **>0 flow** (jika 0 -> hampir pasti `-i any`/SLL, atau IFACE salah).
-  - **S0-b** pipeline extract+infer selesai **tanpa error** (tidak ada exception, `far_log.jsonl` bertambah 1 baris).
-  - **S0-c** **sanity `duration`:** nilai fitur `duration` (di `ramp_s0_flows.csv`) berada di rentang **detik** masuk akal (mis. mayoritas < ~300 s), BUKAN skala ribuan/puluhan-ribu (tanda bug ms belum keangkut).
+  - **S0-b** pipeline extract+infer selesai **tanpa error** (`far_log.jsonl` bertambah 1 baris).
+  - **S0-c** **sanity `duration`:** nilai fitur `duration` (di `ramp_s0_flows.csv`) di rentang **detik** masuk akal (mayoritas < ~300 s), BUKAN skala ribuan/puluhan-ribu (tanda bug ms belum keangkut).
 - **Cek cepat S0-c (Analyzer):**
   ```bash
   python3 - <<'PY'
@@ -180,63 +206,62 @@ aws s3 cp /opt/unsw/captures/ramp_<TAHAP>.pcap s3://$S3_BUCKET/unsw-far/captures
   ```
 - **STOP bila:** flow=0, ada error, atau `duration` berskala ms. Diagnosa (IFACE? skrip lama? model/meta?) lalu ulang S0.
 
-### S1 — 10 menit | FAR masuk akal + cek satuan semua fitur
-- **Capture:** `timeout 600 tcpdump -i $IFACE ... ramp_s1.pcap`. Proses mode `far`.
-- **GATE S1:**
-  - **S1-a** FAR **masuk akal**: `0 <= FAR < 1` dan **tidak = 1** (FAR=1 berarti semua flow dialarm -> hampir pasti mismatch skala/scaler, bukan model buruk).
-  - **S1-b** **z-of-mean tiap fitur** terhadap `scaler_mean`/`scaler_scale` training tidak ekstrem. Ambang kerja: **|z| <= ~6** untuk semua 9 fitur. Fitur dengan |z| besar menandai mismatch satuan/scaler.
-- **Cek S1-b (Analyzer):**
+### D1 — 1 jam | titik perbandingan FAR #1 + GATE satuan/scaler
+- **Capture (1 file 1 jam):** `sudo timeout 3600 tcpdump -i "$IFACE" -w /opt/unsw/captures/far_%Y%m%d_%H.pcap` (trafik benign aktif). Proses mode `far`.
+- **GATE D1 (wajib lolos sebelum naik ke D2):**
+  - **D1-a** FAR **masuk akal**: `0 <= FAR < 1` dan **tidak = 1** (FAR=1 -> hampir pasti mismatch skala/scaler, bukan model buruk).
+  - **D1-b** **z-of-mean tiap fitur** terhadap `scaler_mean`/`scaler_scale` training tidak ekstrem: **|z| <= ~6** untuk semua 9 fitur.
+  - **D1-c** volume flow benign tercatat (jadi baris pertama tabel perbandingan §7.2).
+- **Cek D1-b (Analyzer):**
   ```bash
   python3 - <<'PY'
-  import json, numpy as np, pandas as pd
+  import json, numpy as np, pandas as pd, glob, os
   meta = json.load(open('/opt/unsw/models/deploy_meta_9feat.json'))
   mean = np.array(meta['scaler_mean']); scale = np.array(meta['scaler_scale'])
   CANON = ["duration","fwd_pkts","bwd_pkts","fwd_bytes","bwd_bytes","fwd_mean","bwd_mean","src_load","dst_load"]
-  d = pd.read_csv('/opt/unsw/results/ramp_s1_flows.csv')[CANON]
+  f = sorted(glob.glob('/opt/unsw/results/far_*_flows.csv'), key=os.path.getmtime)[-1]
+  d = pd.read_csv(f)[CANON]
   z = (d.mean().values - mean) / scale
-  for f,zz in zip(CANON, z):
-      flag = '  <-- CEK' if abs(zz) > 6 else ''
-      print(f'{f:10s} z_of_mean={zz:+.2f}{flag}')
+  for c,zz in zip(CANON, z):
+      print(f'{c:10s} z_of_mean={zz:+.2f}' + ('  <-- CEK' if abs(zz)>6 else ''))
   PY
   ```
-- **STOP bila:** FAR=1 / absurd, atau ada fitur |z|>~6. Perbaiki satuan/scaler/mapping lalu ulang S1.
+- **STOP bila:** FAR=1/absurd, atau ada fitur |z|>~6. Perbaiki satuan/scaler/mapping lalu ulang D1.
+- **Catat:** FAR + n_flow D1 -> baris "1 jam" Tabel §7.2.
 
-### S2 — 30 menit | rotasi pcap + jalur S3 (upload+download) + konsistensi FAR
-- **Capture rotasi:** di Target jalankan capture dengan rotasi interval pendek (mis. 10 menit -> 3 file) untuk MENGUJI mekanisme rotasi & upload:
+### D2 — 6 jam | titik perbandingan FAR #2 + rotasi/upload + stabilitas antar-jam
+- **Capture rotasi per jam (6 file):**
   ```bash
-  sudo timeout 1800 tcpdump -i "$IFACE" -G 600 -w /opt/unsw/captures/ramp_s2_%H%M.pcap
+  sudo timeout 21600 tcpdump -i "$IFACE" -G 3600 -w /opt/unsw/captures/far_%Y%m%d_%H.pcap
   ```
-- **Proses tiap file rotasi langsung di mesin gabungan**; (opsional) backup pcap ke S3 (lihat helper di atas).
-- **GATE S2:**
-  - **S2-a** setiap pcap rotasi **berhasil ter-upload** ke `.../unsw-far/captures/` (cek `aws s3 ls`).
-  - **S2-b** mesin gabungan **memproses** tiap file rotasi tanpa error (baris bertambah di `far_log.jsonl` per file).
-  - **S2-c** FAR **konsisten** dengan S1 (selisih dalam toleransi kerja, mis. dalam beberapa poin persen; jika melonjak jauh, selidiki segmen).
-- **STOP bila:** ada file gagal upload/download/proses, atau FAR meloncat tak wajar.
+- Proses tiap file (mode `far`); (opsional) backup pcap ke S3.
+- **GATE D2:**
+  - **D2-a** setiap pcap rotasi **ter-upload** & **terproses** tanpa error (baris bertambah di `far_log.jsonl` per file).
+  - **D2-b** FAR **stabil antar-jam** (tak ada jam yang meledak; variasi dalam batas wajar) dan **konsisten dengan D1** (selisih dalam beberapa poin persen).
+  - **D2-c** total flow benign terkumpul cukup (target kerja: ribuan flow).
+- **STOP bila:** ada file gagal upload/proses, FAR meloncat tak wajar, atau volume flow terlalu sedikit (naikkan intensitas trafik benign, ulang).
+- **Catat:** FAR agregat 6 jam + FAR min-max per jam + n_flow -> baris "6 jam" Tabel §7.2.
 
-### S3 — 2 jam | stabilitas FAR antar-segmen + volume flow cukup
-- **Capture rotasi per jam** (2 file) seperti mode `far`:
-  ```bash
-  sudo timeout 7200 tcpdump -i "$IFACE" -G 3600 -w /opt/unsw/captures/far_%Y%m%d_%H.pcap
-  ```
-- Proses tiap file (mode `far`).
-- **GATE S3:**
-  - **S3-a** FAR **stabil antar-segmen** (tiap jam/segmen tidak ada yang meledak; variasi dalam batas wajar).
-  - **S3-b** total **flow benign cukup banyak** untuk FAR kredibel (target kerja: minimal ribuan flow terkumpul; catat angka nyatanya).
-- **STOP bila:** ada segmen dengan FAR meledak, atau volume flow terlalu sedikit (naikkan intensitas trafik benign, ulang).
+### D3 — 24 jam | titik perbandingan FAR #3 (satu siklus harian) — eksekusi utama layak paper
+- **Capture:** `capture_target.sh far` (rotasi per jam, `-G 3600`) selama ~24 jam, trafik benign aktif sepanjang waktu (siang & malam).
+- **Proses per jam** tiap `far_YYYYMMDD_HH.pcap` (mode `far`).
+- **GATE D3:**
+  - **D3-a** FAR dihitung **per jam** dan **agregat 24 jam** dari `far_log.jsonl` (angka nyata).
+  - **D3-b** total flow benign **besar** (layak paper).
+  - **D3-c** **seluruh hasil ter-upload** ke `.../unsw-far/results/` **sebelum teardown**.
+- **STOP bila D3-c:** ada hasil belum ter-upload -> tunda teardown sampai lengkap.
+- **Catat:** FAR agregat 24 jam + FAR min-max per jam + n_flow -> baris "24 jam" Tabel §7.2.
 
-### S4 — 24 jam | eksekusi final layak paper
-- **Capture:** `capture_target.sh far` (rotasi per jam, `-G 3600`) selama ~24 jam, trafik benign aktif sepanjang waktu.
-- **Proses per jam** (atau berkala) tiap `far_YYYYMMDD_HH.pcap` (mode `far`).
-- **GATE S4:**
-  - **S4-a** FAR dihitung **per jam** dan **agregat 24 jam** dari `far_log.jsonl` (angka nyata).
-  - **S4-b** total flow benign **besar** (layak paper).
-  - **S4-c** **seluruh hasil ter-upload** ke `.../unsw-far/results/` **sebelum teardown**.
-- **STOP bila S4-c:** ada hasil belum ter-upload -> tunda teardown sampai lengkap.
-- Isi angka nyata ke **§7.2** runbook ini, lalu ke tabel FAR (§12) naskah. **JANGAN dikarang.**
+### D4 / D5 — 3 hari / 7 hari | eskalasi (opsional, variasi weekday/weekend)
+- Infra & prosedur **sama persis** dengan D3, hanya durasi capture diperpanjang (rotasi per jam berjalan 72 / 168 jam). Jalankan HANYA setelah D3 kredibel (atau bila diminta reviewer).
+- **Kontrol biaya WAJIB:** deployment berhari-hari mahal — pantau AWS Budgets, cek EIP idle, pertimbangkan jadwal on/off malam bila trafik benign masih representatif. Rujuk `cost-estimate.md`.
+- **GATE D4/D5:** FAR dihitung **per hari** (bandingkan antar-hari, cek weekday vs weekend) + agregat total; semua hasil ter-upload sebelum teardown.
+- **Catat:** FAR agregat per durasi -> baris "3 hari" / "7 hari" Tabel §7.2.
 
 > **Kontrol biaya antar tahap:** bila ada jeda panjang antar tahap, stop instance
-> (§5) untuk hemat; resume saat lanjut. Teardown penuh (§6) hanya setelah S4 selesai
-> & semua hasil di S3. Rujuk `cost-estimate.md` untuk ambang AWS Budgets & cek EIP idle.
+> (§5) untuk hemat; resume saat lanjut. Teardown penuh (§6) hanya setelah tahap terakhir
+> yang direncanakan selesai & semua hasil di S3. Rujuk `cost-estimate.md` untuk ambang AWS
+> Budgets & cek EIP idle.
 
 ---
 ## 4. FASE 2 — Deteksi (DENGAN serangan, ~7 menit)
@@ -297,13 +322,27 @@ aws ec2 describe-addresses --region ap-southeast-1
 | Latensi inferensi per flow @1 vCPU | _(diisi)_ µs |
 | Throughput | _(diisi)_ flow/detik |
 
-### 7.2 FAR (Fase 1, §12 naskah) — percobaan awal 24 jam
+### 7.2 FAR (Fase 1, §12 naskah) — PERBANDINGAN ANTAR-DURASI (percobaan bertahap)
+
+**Tabel utama — FAR per durasi observasi** (satu baris per tahap D1-D5; isi angka nyata):
+| Durasi | Total n_flow benign | Total false_alarm | FAR agregat | FAR per-jam min-max |
+|---|---|---|---|---|
+| 1 jam (D1)  | | | | |
+| 6 jam (D2)  | | | | |
+| 24 jam (D3) | | | | |
+| 3 hari (D4) *(opsional)* | | | | |
+| 7 hari (D5) *(opsional)* | | | | |
+
+**Tabel rinci per jam (D3, satu siklus harian)** — untuk melihat pola siang/malam:
 | Jam ke- | n_flow | false_alarm | FAR |
 |---|---|---|---|
 | _(diisi per jam dari far_log.jsonl)_ | | | |
-| **Total/Rata-rata 24 jam** | | | |
-Durasi observasi: **24 jam kontinu** (percobaan awal) — catat jujur. Eskalasi multi-hari
-bila diminta reviewer.
+| **Agregat 24 jam** | | | |
+
+Catatan jujur: laporkan durasi apa adanya per tahap. **Interpretasi yang diharapkan:** FAR
+agregat **stabil/rendah dan konsisten** lintas durasi (1j -> 6j -> 24j -> ...) membuktikan
+FAR bukan artefak snapshot pendek. Bila ada durasi dengan FAR menyimpang, laporkan & analisis
+(mis. lonjakan trafik anomali benign, bukan disembunyikan).
 
 ### 7.3 Deteksi (Fase 2)
 | Varian | MCC | F1 | Precision | Recall |

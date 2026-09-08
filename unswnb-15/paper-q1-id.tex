@@ -799,49 +799,80 @@ pelatihan lintas-dataset; kami menunjukkan bahwa celah generalisasi berakar pada
 evaluasi adversarial melalui \emph{functional-preserving} dan
 \emph{adaptive white-box}.
 
-\paragraph{Validasi \emph{real-traffic} awal (AWS, 24 jam).} Sebagai validasi
-awal atas kesiapan penyebaran, NIDS di-\emph{deploy} pada trafik nyata di AWS
-selama \textbf{24 jam} (satu siklus harian penuh) untuk mengukur \emph{False
-Alarm Rate} (FAR) di bawah fluktuasi trafik normal. Gambar~\ref{fig:deploy}
-menyajikan arsitektur yang dipakai: trafik ditangkap pada antarmuka sensor
-(EC2 + NFStream), fitur \emph{flow} diekstraksi, diselaraskan via SFM dan
-\emph{z-score} (memakai parameter latih \emph{offline}), lalu diinferensikan oleh
-model XGBoost ringan untuk deteksi \emph{real-time} sekaligus pencatatan FAR.
-\emph{Pengamatan multi-hari (variasi hari kerja/akhir pekan) diserahkan sebagai
-kerja lanjutan.}
+\paragraph{Desain skenario pengujian \emph{real-traffic}.} Agar pembaca memahami
+ragam percobaan, kami jelaskan asal-usul skenario. Skenario serangan pada fase
+deteksi mengikuti urutan \emph{benign} $\rightarrow$ \emph{SSH brute-force}
+$\rightarrow$ \emph{Slowloris} $\rightarrow$ \emph{SYN flood} $\rightarrow$
+\emph{benign}. Ide skenario dipilih dengan dua pertimbangan sekaligus.
+\emph{Pertama, selaras secara kategori serangan} dengan ruang label yang dikenal
+model: brute-force, \emph{denial-of-service} (Slowloris), dan \emph{flooding}
+(SYN) memiliki padanan pada kategori UNSW-NB15 (mis. \emph{DoS}, aktivitas
+\emph{Exploits}/brute-force, \emph{Generic}), sehingga evaluasi MCC/F1 bermakna;
+skenario ini juga sengaja \emph{mereplikasi pola percobaan paper NIDS pertama}
+demi keterbandingan (\emph{comparability}) antar-studi. \emph{Kedua, sengaja
+berbeda dari kondisi pembangkitan dataset} pada aspek lingkungan: dataset
+UNSW-NB15 dibangkitkan generator perangkat keras (IXIA PerfectStorm, 2015),
+sedangkan pengujian ini adalah trafik nyata di AWS EC2 (perkakas serangan asli:
+\texttt{hydra}, \texttt{slowloris}, \texttt{nping}) yang diekstraksi dengan
+NFStream---berbeda tahun, topologi, dan alat ekstraksi. Perbedaan yang disengaja
+inilah yang menguji ketiga gap secara realistis (generalisasi lintas-jaringan
+dan \emph{feature-extractor mismatch}), bukan sekadar mengonfirmasi diri sendiri.
+Fase FAR sepenuhnya \emph{benign} (tanpa serangan) untuk mengukur \emph{False
+Alarm Rate} pada trafik normal dunia nyata.
+
+\paragraph{Validasi \emph{real-traffic} bertahap (AWS, multi-durasi).} Sebagai
+validasi kesiapan penyebaran, NIDS di-\emph{deploy} pada trafik nyata di AWS dan
+FAR diukur pada \textbf{durasi observasi yang bertambah bertahap}:
+\textbf{1 jam $\rightarrow$ 6 jam $\rightarrow$ 24 jam} (satu siklus harian
+penuh), dengan opsi eskalasi \textbf{3 hari $\rightarrow$ 7 hari} (variasi hari
+kerja/akhir pekan). Tujuan pentahapan ini bukan sekadar validasi teknis,
+melainkan \emph{membandingkan FAR antar-durasi}: FAR agregat yang rendah dan
+konsisten seiring bertambahnya durasi membuktikan hasil bukan artefak
+\emph{snapshot} pendek. Gambar~\ref{fig:deploy} menyajikan arsitektur yang
+dipakai di semua durasi: trafik ditangkap pada antarmuka sensor (EC2 + NFStream),
+fitur \emph{flow} diekstraksi, diselaraskan via SFM dan \emph{z-score} (memakai
+parameter latih \emph{offline}), lalu diinferensikan oleh model XGBoost ringan
+untuk deteksi \emph{real-time} sekaligus pencatatan FAR.
 
 \begin{table}[h]
 \centering
-\caption{Hasil validasi awal FAR (deployment AWS 24 jam, trafik normal). Angka
-diisi dari eksekusi nyata.}
+\caption{Rencana perbandingan FAR antar-durasi observasi (deployment AWS, trafik
+normal). Infrastruktur identik; hanya durasi capture berbeda. Angka diisi dari
+eksekusi nyata (\texttt{far\_log.jsonl}).}
 \label{tab:far}
-\begin{tabular}{lc}
+\begin{tabular}{lccc}
 \toprule
-Metrik (24 jam, trafik normal) & Nilai \\
+Durasi observasi & Total \emph{flow} benign & \emph{False alarm} & FAR (\%) \\
 \midrule
-Total \emph{flow} teramati & \texttt{[hasil]} \\
-\emph{False alarm} (benign diprediksi attack) & \texttt{[hasil]} \\
-\emph{False Alarm Rate} (FAR) & \texttt{[hasil]}\% \\
+1 jam            & \texttt{[hasil]} & \texttt{[hasil]} & \texttt{[hasil]} \\
+6 jam            & \texttt{[hasil]} & \texttt{[hasil]} & \texttt{[hasil]} \\
+24 jam           & \texttt{[hasil]} & \texttt{[hasil]} & \texttt{[hasil]} \\
+3 hari \emph{(opsional)} & \texttt{[hasil]} & \texttt{[hasil]} & \texttt{[hasil]} \\
+7 hari \emph{(opsional)} & \texttt{[hasil]} & \texttt{[hasil]} & \texttt{[hasil]} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \noindent Tabel~\ref{tab:far} akan diisi dari log \emph{deployment} nyata
-(\texttt{far\_log.jsonl}); sampai eksekusi selesai, dilaporkan sebagai
-validasi yang direncanakan agar naskah tidak memuat angka karangan.
+(\texttt{far\_log.jsonl}) per durasi; sampai eksekusi selesai, dilaporkan sebagai
+validasi yang direncanakan agar naskah tidak memuat angka karangan. Durasi awal
+(1--24 jam) sudah cukup untuk validasi FAR; durasi 3--7 hari dijalankan sebagai
+eskalasi bila diperlukan.
 
 \paragraph{Kerja mendatang lain.} (i) Klasifikasi multi-kelas dan model
 \emph{ensemble} robust dengan tetap mempertimbangkan anggaran komputasi
 \emph{edge}; (ii) adaptasi domain yang lebih kuat untuk mengatasi asimetri arah;
 (iii) pertahanan yang benar-benar tahan \emph{adaptive white-box};
-(iv) perpanjangan \emph{deployment} FAR ke skala multi-hari (3--7 hari).
+(iv) perpanjangan \emph{deployment} FAR ke skala multi-hari (3--7 hari) untuk
+melengkapi perbandingan antar-durasi (Tabel~\ref{tab:far}).
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.98\linewidth]{fig6_deployment_blueprint.png}
 \caption{Arsitektur penyebaran di AWS untuk validasi FAR \emph{real-traffic}:
-pipeline sensor$\rightarrow$SFM$\rightarrow$XGBoost robust. Percobaan awal
-dijalankan 24 jam; dapat diperpanjang ke multi-hari.}
+pipeline sensor$\rightarrow$SFM$\rightarrow$XGBoost robust. Percobaan dijalankan
+bertahap 1 jam $\rightarrow$ 6 jam $\rightarrow$ 24 jam, dapat diperpanjang ke
+multi-hari (3--7 hari).}
 \label{fig:deploy}
 \end{figure}
 
