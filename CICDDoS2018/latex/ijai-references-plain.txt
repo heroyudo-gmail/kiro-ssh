@@ -1,0 +1,107 @@
+﻿[1] M. Tavallaee, E. Bagheri, W. Lu, and A. A. Ghorbani, "A detailed analysis of the KDD Cup 99 data set," in Proc. IEEE Symp. Computational Intelligence for Security and Defense Applications (CISDA), 2009, pp. 1-6, doi: 10.1109/CISDA.2009.5356528.
+
+[2] N. Moustafa and J. Slay, "UNSW-NB15: a comprehensive data set for network intrusion detection systems," in Proc. Military Communications and Information Systems Conf. (MilCIS), 2015, pp. 1-6, doi: 10.1109/MilCIS.2015.7348942.
+
+[3] I. Sharafaldin, A. H. Lashkari, and A. A. Ghorbani, "Toward generating a new intrusion detection dataset and intrusion traffic characterization," in Proc. Int. Conf. Information Systems Security and Privacy (ICISSP), 2018, pp. 108-116, doi: 10.5220/0006639801080116.
+
+[4] N. Koroniotis, N. Moustafa, E. Sitnikova, and B. Turnbull, "Towards the development of realistic botnet dataset for IoT networks," IEEE Access, vol. 7, pp. 94529-94541, 2019, doi: 10.1109/ACCESS.2019.2926442.
+
+[5] A. Alsaedi, N. Moustafa, Z. Tari, A. N. Mahmood, and A. Anwar, "TON_IoT telemetry dataset: a new generation dataset of IoT and IIoT for data-driven intrusion detection systems," IEEE Access, vol. 8, pp. 165130-165150, 2020, doi: 10.1109/ACCESS.2020.3022862.
+
+[6] E. C. P. Neto, S. Dadkhah, R. Ferreira, A. Zohourian, R. Lu, and A. A. Ghorbani, "CICIoT2023: a real-time dataset and benchmark for large-scale attacks in IoT environment," Sensors, vol. 23, no. 13, 2023, doi: 10.3390/s23135941.
+
+[7] M. Al-Ajlan and M. Ykhlef, "A review of generative adversarial networks for intrusion detection systems: advances, challenges, and future directions," Computers, Materials & Continua, vol. 81, no. 2, pp. 2053-2076, 2024, doi: 10.32604/cmc.2024.055891.
+
+[8] A. Dunmore, J. Jang-Jaccard, F. Sabrina, and J. Kwak, "Generative adversarial networks for malware detection: a survey," arXiv preprint arXiv:2302.08558, 2023, doi: 10.48550/arXiv.2302.08558.
+
+[9] Y. Huang, K. G. Fields, and Y. Ma, "A tutorial on generative adversarial networks with application to classification of imbalanced data," Statistical Analysis and Data Mining, vol. 15, no. 5, pp. 543-552, 2022, doi: 10.1002/sam.11570.
+
+[10] I. Goodfellow et al., "Generative adversarial nets," in Advances in Neural Information Processing Systems, 2014, pp. 2672-2680.
+
+[11] M. Mirza and S. Osindero, "Conditional generative adversarial nets," arXiv preprint arXiv:1411.1784, 2014, doi: 10.48550/arXiv.1411.1784.
+
+[12] M. Arjovsky, S. Chintala, and L. Bottou, "Wasserstein GAN," arXiv preprint arXiv:1701.07875, 2017, doi: 10.48550/arXiv.1701.07875.
+
+[13] A. Radford, L. Metz, and S. Chintala, "Unsupervised representation learning with deep convolutional generative adversarial networks," arXiv preprint arXiv:1511.06434, 2015, doi: 10.48550/arXiv.1511.06434.
+
+[14] H. Zhang, I. Goodfellow, D. Metaxas, and A. Odena, "Self-attention generative adversarial networks," in Proc. 36th Int. Conf. Machine Learning (ICML), PMLR, vol. 97, 2019, pp. 7354-7363.
+
+[15] A. Odena, C. Olah, and J. Shlens, "Conditional image synthesis with auxiliary classifier GANs," in Proc. 34th Int. Conf. Machine Learning (ICML), PMLR, vol. 70, 2017, pp. 2642-2651.
+
+[16] L. Xu, M. Skoularidou, A. Cuesta-Infante, and K. Veeramachaneni, "Modeling tabular data using conditional GAN," in Advances in Neural Information Processing Systems, vol. 32, 2019.
+
+[17] A.-G. Mari, D. Zinca, and V. Dobrota, "Development of a machine-learning intrusion detection system and testing of its performance using a generative adversarial network," Sensors, vol. 23, no. 3, p. 1315, 2023, doi: 10.3390/s23031315.
+
+[18] V. Kumar and D. Sinha, "Synthetic attack data generation model applying generative adversarial network for intrusion detection," Computers & Security, vol. 125, p. 103054, 2023, doi: 10.1016/j.cose.2022.103054.
+
+[19] B. A. Alabsi, M. Anbar, and S. D. A. Rihan, "Conditional tabular generative adversarial based intrusion detection system for detecting DDoS and DoS attacks on the Internet of Things networks," Sensors, vol. 23, no. 12, p. 5644, 2023, doi: 10.3390/s23125644.
+
+[20] K. S. Babu and Y. N. Rao, "MCGAN: modified conditional generative adversarial network for class imbalance problems in network intrusion detection system," Applied Sciences, vol. 13, no. 4, 2023, doi: 10.3390/app13042576.
+
+[21] S. Rahman, S. Pal, S. Mittal, T. Chawla, and C. Karmakar, "Syn-GAN: a robust intrusion detection system using GAN-based synthetic data for IoT security," Internet of Things, vol. 26, p. 101212, 2024, doi: 10.1016/j.iot.2024.101212.
+
+[22] Y. Yang et al., "A CE-GAN based approach to address data imbalance in network intrusion detection systems," Scientific Reports, vol. 15, no. 1, p. 7916, 2025, doi: 10.1038/s41598-025-92562-z.
+
+[23] P. F. de Araujo-Filho, M. Naili, G. Kaddoum, E. T. Fapi, and Z. Zhu, "Unsupervised GAN-based intrusion detection system using temporal convolutional networks and self-attention," IEEE Trans. Network and Service Management, vol. 20, no. 4, pp. 4951-4963, 2023, doi: 10.1109/TNSM.2023.3260039.
+
+[24] H. Yang, J. Xu, Y. Xiao, and L. Hu, "SPE-ACGAN: a resampling approach for class imbalance problem in network intrusion detection systems," Electronics, vol. 12, no. 15, p. 3323, 2023, doi: 10.3390/electronics12153323.
+
+[25] M. A. Rahman, H. Shahriar, V. Clincy, M. F. Hossain, and M. Rahman, "A quantum generative adversarial network-based intrusion detection system," in Proc. IEEE 47th Annu. Computers, Software, and Applications Conf. (COMPSAC), 2023, pp. 1810-1815, doi: 10.1109/COMPSAC57700.2023.00280.
+
+[26] H. Ding, Y. Sun, N. Huang, Z. Shen, and X. Cui, "TMG-GAN: generative adversarial networks-based imbalanced learning for network intrusion detection," IEEE Trans. Information Forensics and Security, vol. 19, pp. 1156-1167, 2024, doi: 10.1109/TIFS.2023.3331240.
+
+[27] C. Park, J. Lee, Y. Kim, J.-G. Park, H. Kim, and D. Hong, "An enhanced AI-based network intrusion detection system using generative adversarial networks," IEEE Internet of Things Journal, vol. 10, no. 3, pp. 2330-2345, 2023, doi: 10.1109/JIOT.2022.3211346.
+
+[28] C. Xu, Y. Zhan, G. Chen, Z. Wang, S. Liu, and W. Hu, "Elevated few-shot network intrusion detection via self-attention mechanisms and iterative refinement," PLoS ONE, vol. 20, no. 1, p. e0317713, 2025, doi: 10.1371/journal.pone.0317713.
+
+[29] S. Zhao, J. Li, J. Wang, Z. Zhang, L. Zhu, and Y. Zhang, "AttackGAN: adversarial attack against black-box IDS using generative adversarial networks," Procedia Computer Science, vol. 187, pp. 128-133, 2021, doi: 10.1016/j.procs.2021.04.118.
+
+[30] S. Aldhaheri and A. Alhuzali, "SGAN-IDS: self-attention-based generative adversarial network against intrusion detection systems," Sensors, vol. 23, no. 18, p. 7796, 2023, doi: 10.3390/s23187796.
+
+[31] D. Wang, X. Wang, and J. Fei, "IDS-GAN: adversarial attack against intrusion detection based on generative adversarial networks," in Proc. 5th Int. Conf. Computer Vision, Image and Deep Learning (CVIDL), 2024, pp. 1130-1134, doi: 10.1109/CVIDL62147.2024.10604156.
+
+[32] R. H. Randhawa, N. Aslam, M. Alauthman, and H. Rafiq, "Evasion generative adversarial network for low data regimes," IEEE Trans. Artificial Intelligence, vol. 4, no. 5, pp. 1076-1088, 2023, doi: 10.1109/TAI.2022.3196283.
+
+[33] D. Xu, Y. Lv, M. Wang, B. Zheng, J. Zhao, and J. Yu, "DEMGAN: a machine learning-based intrusion detection system evasion scheme," Computers, Materials & Continua, vol. 84, no. 1, pp. 1731-1746, 2025, doi: 10.32604/cmc.2025.063734.
+
+[34] M. Mbow, R. Roman, T. Takahashi, and K. Sakurai, "Evading IoT intrusion detection systems with GAN," in Proc. 19th Asia Joint Conf. Information Security (AsiaJCIS), 2024, pp. 48-55, doi: 10.1109/AsiaJCIS64263.2024.00018.
+
+[35] D. M. Trung, N. H. Khoa, P. T. Duy, V.-H. Pham, and N. T. Cam, "AAGAN: Android malware generation system based on generative adversarial network," Int. J. Semantic Computing, vol. 14, no. 1, 2024, doi: 10.1142/S1793351X24500028.
+
+[36] D. Devadiga et al., "GLEAM: GAN and LLM for evasive adversarial malware," in Proc. 14th Int. Conf. Information and Communication Technology Convergence (ICTC), 2023, pp. 53-58, doi: 10.1109/ICTC58733.2023.10392738.
+
+[37] M. A. Merzouk, E. Beurier, R. Yaich, N. Boulahia-Cuppens, F. Cuppens, and F. Khomh, "Diffusion-based adversarial purification for intrusion detection," in Proc. IFIP Annu. Conf. Data and Applications Security and Privacy, Springer, 2025, pp. 351-370, doi: 10.1007/978-3-031-65172-4_22.
+
+[38] R. Riaz, G. Han, K. Shaukat, N. U. Khan, H. Zhu, and L. Wang, "A novel ensemble Wasserstein GAN framework for effective anomaly detection in industrial Internet of Things environments," Scientific Reports, vol. 15, no. 1, p. 26786, 2025, doi: 10.1038/s41598-025-11321-2.
+
+[39] M. S. Alshehri, O. Saidani, W. A. Malwi, F. Asiri, S. Latif, A. A. Khattak, and J. Ahmad, "A hybrid Wasserstein GAN and autoencoder model for robust intrusion detection in IoT," Computer Modeling in Engineering & Sciences, vol. 143, no. 3, pp. 3899-3920, 2025, doi: 10.32604/cmes.2025.065343.
+
+[40] U. Hassan, D. Chen, S.-C. Cheung, and C.-N. Chuah, "HE-GAN: differentially private GAN using Hamiltonian Monte Carlo based exponential mechanism," in Proc. IEEE Int. Conf. Acoustics, Speech and Signal Processing (ICASSP), 2023, pp. 3186-3190, doi: 10.1109/ICASSP49357.2023.10096046.
+
+[41] X. Jiang, Y. Zhang, X. Zhou, and J. Grossklags, "Distributed GAN-based privacy-preserving publication of vertically-partitioned data," Proc. Privacy Enhancing Technologies, vol. 2023, no. 2, pp. 50-69, 2023, doi: 10.56553/popets-2023-0037.
+
+[42] J. Wang, K. Yang, and M. Li, "NIDS-FGPA: a federated learning network intrusion detection algorithm based on secure aggregation of gradient similarity models," PLoS ONE, vol. 19, no. 10, p. e0308639, 2024, doi: 10.1371/journal.pone.0308639.
+
+[43] M. Cantone, C. Marrocco, and A. Bria, "Machine learning in network intrusion detection: a cross-dataset generalization study," IEEE Access, vol. 12, pp. 144491-144509, 2024, doi: 10.1109/ACCESS.2024.3472159.
+
+[44] G. Aceto et al., "Synthetic and privacy-preserving traffic trace generation using generative AI models for training network intrusion detection systems," J. Network and Computer Applications, vol. 229, p. 103926, 2024, doi: 10.1016/j.jnca.2024.103926.
+
+[45] Educative, "What are the challenges in training GAN?" 2025. [Online]. Available: https://www.educative.io/answers/what-are-the-challenges-in-training-gan
+
+[46] R. Kohavi, "A study of cross-validation and bootstrap for accuracy estimation and model selection," in Proc. 14th Int. Joint Conf. Artificial Intelligence (IJCAI), 1995, pp. 1137-1143.
+
+[47] F. Pedregosa et al., "Scikit-learn: machine learning in Python," J. Machine Learning Research, vol. 12, pp. 2825-2830, 2011.
+
+[48] T. Chen and C. Guestrin, "XGBoost: a scalable tree boosting system," in Proc. 22nd ACM SIGKDD Int. Conf. Knowledge Discovery and Data Mining, 2016, pp. 785-794, doi: 10.1145/2939672.2939785.
+
+[49] C. Szegedy et al., "Intriguing properties of neural networks," in Proc. Int. Conf. Learning Representations (ICLR), 2014.
+
+[50] K. Simonyan, A. Vedaldi, and A. Zisserman, "Deep inside convolutional networks: visualising image classification models and saliency maps," in Workshop at Int. Conf. Learning Representations (ICLR), 2014.
+
+[51] I. J. Goodfellow, J. Shlens, and C. Szegedy, "Explaining and harnessing adversarial examples," in Proc. Int. Conf. Learning Representations (ICLR), 2015.
+
+[52] A. Madry, A. Makelov, L. Schmidt, D. Tsipras, and A. Vladu, "Towards deep learning models resistant to adversarial attacks," in Proc. Int. Conf. Learning Representations (ICLR), 2018.
+
+[53] B. W. Matthews, "Comparison of the predicted and observed secondary structure of T4 phage lysozyme," Biochimica et Biophysica Acta (BBA) - Protein Structure, vol. 405, no. 2, pp. 442-451, 1975, doi: 10.1016/0005-2795(75)90109-9.
+
+[54] D. Chicco and G. Jurman, "The advantages of the Matthews correlation coefficient (MCC) over F1 score and accuracy in binary classification evaluation," BMC Genomics, vol. 21, no. 1, p. 6, 2020, doi: 10.1186/s12864-019-6413-7.
