@@ -1,4 +1,4 @@
-﻿AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: '2010-09-09'
 Description: >
   T10 UNSW-NB15 - Stack 2-EC2 (dipisah dari stack VPC). Dua instance di PRIVATE
   subnet, internet via NAT, akses via SSM:

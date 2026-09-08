@@ -370,3 +370,54 @@ FAR bukan artefak snapshot pendek. Bila ada durasi dengan FAR menyimpang, lapork
 - Stack VPC: `unsw-far-vpc` | Stack EC2: `unsw-far-ec2` | VPC: _(id)_ | Bucket: _(nama)_
 - Attacker: _(id / privIP 10.5.2.x)_ | Target+Analyzer: _(id / privIP 10.5.2.x)_  (keduanya PRIVATE)
 - S3 layout: `models/`, `scripts/`, `captures/`, `results/` di prefix `unsw-far/`.
+
+---
+
+## 9. STATUS SESI TERAKHIR (catatan resume — diperbarui manual)
+
+> Ringkasan posisi terakhir agar sesi berikutnya langsung paham tanpa mengandalkan
+> ingatan chat. Perbarui bagian ini setiap akhir sesi kerja AWS.
+
+### Tanggal: 2026-09-08 (teardown penuh)
+
+**Kondisi AWS:** SEMUA stack CloudFormation sudah dihapus (`ACTIVE_STACKS=0` di
+region ap-southeast-1). Tidak ada biaya EC2/NAT berjalan. Stack yang pernah dibuat &
+sudah dihapus di sesi ini: `unsw-far-vpc`, `unsw-far-ec2`, `rw-backup-*`, `ransomware-*`,
+`security-lab-*`, `nids01-*`.
+
+**Belum diperiksa (TODO sesi berikutnya):** Elastic IP idle & EBS volume `available`
+yang mungkin nyangkut (biaya kecil) — cek via Console: EC2 -> Elastic IPs & Volumes.
+
+**Progres T10 (deploy pernah BERHASIL lalu di-teardown):**
+- Model + meta + 4 skrip sudah ada di S3 (`s3://ssh-detection-features-232032302717/unsw-far/`).
+  Model & meta dari notebook 09; skrip dari `upload_to_s3.sh`. TIDAK perlu upload ulang.
+- Template `unsw-vpc.yaml` + `unsw-2ec2.yaml` sudah DIPERBAIKI & tervalidasi:
+  1. BOM UTF-8 dihapus (dulu bikin error `[???AWSTemplateFormatVersion]`).
+  2. Deskripsi SG rule: karakter `->` diganti `ke` (AWS tolak `>` di description).
+  Deploy ulang berikutnya harusnya mulus. **Belum di-commit ke Git** (per 2026-09-08).
+- Fix satuan `duration` di `unsw_extract_infer.py` sudah benar: `dur_feat_us = dur_ms*1000`
+  (mikrodetik, samakan scaler CIC yang `scaler_mean[duration]`~1.2e7). Pembagi laju tetap
+  detik (`dur_s`). Gate `dur_feat_us` dipakai di `upload_to_s3.sh` & S0-c.
+
+**BUG yang HARUS diperbaiki saat deploy ulang (belum difix):** saat download skrip/model
+ke Target via `ssm send-command`, JANGAN pakai variabel `$S3_BUCKET` di dalam array
+`commands` (tidak ter-expand -> folder kosong, `s3 cp` diam-diam gagal). Pakai path S3
+**LITERAL**:
+```bash
+aws s3 cp s3://ssh-detection-features-232032302717/unsw-far/scripts/ /opt/unsw/scripts/ --recursive
+aws s3 cp s3://ssh-detection-features-232032302717/unsw-far/models/  /opt/unsw/models/  --recursive
+```
+
+**Langkah lanjut T10 (saat mau eksekusi lagi):**
+1. Deploy `unsw-vpc.yaml` -> tunggu CREATE_COMPLETE -> deploy `unsw-2ec2.yaml`.
+2. Ambil Outputs (instance id + private IP target).
+3. Via SSM: download skrip+model (path LITERAL) ke Target; `grep dur_feat_us` harus muncul.
+4. S0 smoke (~3 menit): cek `duration` orde ~1e6-1e7 us (sanity S0-c).
+5. Lolos -> D1 (1 jam) -> gate |z|<=6 & FAR!=1 -> D2 (6j) -> D3 (24j) -> [D4 3h / D5 7h].
+6. Isi hasil ke Tabel §7.2 (perbandingan FAR antar-durasi) lalu ke Tabel FAR naskah.
+
+**Catatan lingkungan kerja:** terminal PowerShell di mesin lokal sering menelan stdout
+perintah panjang (kosmetik). Trik andal: tulis output ke file lalu baca file, atau pakai
+perintah pendek `describe-stacks ... --output text`. AWS CLI di lokal pakai user IAM `hero`
+(akun 232032302717) — punya izin CloudFormation/EC2/SSM. Terminal SageMaker TIDAK punya
+izin itu (execution role hanya S3/SageMaker) -> jalankan CloudFormation dari lokal.

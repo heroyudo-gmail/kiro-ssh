@@ -1,4 +1,4 @@
-﻿AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: '2010-09-09'
 Description: >
   T10 UNSW-NB15 - Stack VPC (jaringan saja). VPC + public subnet (NAT) +
   private subnet + IGW + NAT + Security Group + IAM (SSM + S3).
@@ -104,7 +104,7 @@ Resources:
       SecurityGroupIngress:
         - IpProtocol: -1
           CidrIp: 10.5.0.0/16
-          Description: Semua trafik internal VPC (attacker->target, dll)
+          Description: Semua trafik internal VPC (attacker ke target, dll)
       SecurityGroupEgress:
         - IpProtocol: -1
           CidrIp: 0.0.0.0/0
