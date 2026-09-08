@@ -25,13 +25,15 @@ for s in "${SCRIPTS[@]}"; do
   [ -f "$s" ] || { echo "ERROR: $s tidak ada. Jalankan dari folder aws/."; exit 1; }
 done
 
-# --- 1) GATE: verifikasi bug 'duration' sudah ter-fix (detik, bukan ms) ---
-if ! grep -q "dur_feat_s" unsw_extract_infer.py; then
-  echo "ERROR: unsw_extract_infer.py belum versi ter-FIX (baris 'dur_feat_s' tak ditemukan)."
-  echo "       Fitur 'duration' HARUS dalam detik (dur_ms/1000) sebelum di-upload. Batalkan."
+# --- 1) GATE: verifikasi satuan 'duration' sudah selaras scaler CIC (mikrodetik) ---
+# Scaler deployment di-fit pada CIC Flow Duration (us); extractor HARUS keluarkan us
+# untuk fitur duration (dur_ms*1000), sambil pembagi laju tetap detik (dur_s).
+if ! grep -q "dur_feat_us" unsw_extract_infer.py; then
+  echo "ERROR: unsw_extract_infer.py belum versi ter-FIX (baris 'dur_feat_us' tak ditemukan)."
+  echo "       Fitur 'duration' HARUS mikrodetik (dur_ms*1000) agar cocok scaler CIC. Batalkan."
   exit 1
 fi
-echo "[GATE] duration-fix OK (dur_feat_s ditemukan)."
+echo "[GATE] duration-unit OK (dur_feat_us ditemukan; selaras scaler CIC mikrodetik)."
 
 # --- 2) Verifikasi kredensial & bucket dapat diakses ---
 aws sts get-caller-identity --region "$REGION" >/dev/null 2>&1 || {

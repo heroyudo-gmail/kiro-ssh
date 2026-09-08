@@ -30,11 +30,12 @@
 - **Skrip → S3:** `unsw_extract_infer.py`, `capture_target.sh`, `attack_scenario.sh`,
   `benign_traffic.sh` → `s3://ssh-detection-features-232032302717/unsw-far/scripts/`.
   > **Cara cepat (satu perintah):** dari folder `aws/`, jalankan `./upload_to_s3.sh`. Skrip ini
-  > otomatis: (a) **GATE** memverifikasi `unsw_extract_infer.py` sudah versi ter-FIX (`dur_feat_s`),
+  > otomatis: (a) **GATE** memverifikasi `unsw_extract_infer.py` sudah versi ter-FIX (`dur_feat_us`),
   > (b) cek kredensial & akses bucket, (c) upload keempat skrip (+ model bila ada di folder), lalu
   > (d) menampilkan isi S3. Batal bila gate/kredensial gagal. Override: `S3_BUCKET=... REGION=... ./upload_to_s3.sh`.
   > **Pastikan `unsw_extract_infer.py` sudah versi ter-FIX** (fitur `duration` dalam
-  > DETIK, `dur_feat_s = dur_ms/1000`). Cek: `grep dur_feat_s unsw_extract_infer.py`
+  > MIKRODETIK agar cocok scaler CIC, `dur_feat_us = dur_ms*1000`; pembagi laju tetap
+  > detik `dur_s = dur_ms/1000`). Cek: `grep dur_feat_us unsw_extract_infer.py`
   > harus muncul sebelum di-upload. Lihat prasyarat ramp di Bagian 3A.
 
 > EC2 tidak perlu SageMaker: cukup `aws s3 cp` dari bucket di atas (langkah §2).
@@ -142,10 +143,13 @@ Hasil FAR ditambahkan ke `/opt/unsw/results/far_log.jsonl` (+ auto-upload S3).
 > Setiap D1-D5 mengisi satu baris **Tabel Perbandingan FAR Antar-Durasi (§7.2)**.
 
 ### Prasyarat ramp (sebelum S0)
-- **Bug `duration` sudah diperbaiki** di `unsw_extract_infer.py`: fitur `duration` kini
-  dihitung DETIK (`dur_feat_s = dur_ms/1000`), bukan milidetik. (Training Model A memakai
-  detik: UNSW `dur` = CIC `Flow Duration`.) `src_load` (byte/s) & `dst_load` (paket/s)
-  tidak diubah — sudah benar.
+- **Satuan `duration` sudah diselaraskan** di `unsw_extract_infer.py`: fitur `duration`
+  dihitung **MIKRODETIK** (`dur_feat_us = dur_ms*1000`). Alasan (hasil audit 9 fitur):
+  scaler deployment di-fit pada **CIC `Flow Duration` (mikrodetik)**, jadi extractor wajib
+  menghasilkan mikrodetik agar z-score cocok (bila detik -> mismatch 1e6x, gate D1-b gagal).
+  Pembagi laju **tetap detik** (`dur_s = dur_ms/1000`) karena `src_load` (CIC `Flow Byts/s`,
+  byte/**detik**) & `dst_load` (CIC `Bwd Pkts/s`, paket/**detik**) memang per-detik — sudah
+  benar & tak diubah. Fitur duration dan pembagi laju sengaja beda satuan.
 - **Upload ulang skrip terbaru ke S3 + verifikasi Analyzer mengunduhnya:**
   ```bash
   # dari mesin kerja (yang memegang skrip terbaru)
@@ -153,7 +157,7 @@ Hasil FAR ditambahkan ke `/opt/unsw/results/far_log.jsonl` (+ auto-upload S3).
     s3://ssh-detection-features-232032302717/unsw-far/scripts/unsw_extract_infer.py --region ap-southeast-1
   # di ANALYZER (via SSM), tarik ulang lalu cek baris fix ada
   aws s3 cp s3://ssh-detection-features-232032302717/unsw-far/scripts/ /opt/unsw/scripts/ --recursive
-  grep -n "dur_feat_s" /opt/unsw/scripts/unsw_extract_infer.py   # harus muncul
+  grep -n "dur_feat_us" /opt/unsw/scripts/unsw_extract_infer.py   # harus muncul
   ```
 - **Attacker di-stop** selama seluruh Fase 1 (tak dipakai untuk FAR) — hemat biaya:
   ```bash
@@ -198,17 +202,19 @@ aws s3 cp /opt/unsw/captures/ramp_<TAHAP>.pcap s3://$S3_BUCKET/unsw-far/captures
 - **GATE S0:**
   - **S0-a** NFStream menghasilkan **>0 flow** (jika 0 -> hampir pasti `-i any`/SLL, atau IFACE salah).
   - **S0-b** pipeline extract+infer selesai **tanpa error** (`far_log.jsonl` bertambah 1 baris).
-  - **S0-c** **sanity `duration`:** nilai fitur `duration` (di `ramp_s0_flows.csv`) di rentang **detik** masuk akal (mayoritas < ~300 s), BUKAN skala ribuan/puluhan-ribu (tanda bug ms belum keangkut).
+  - **S0-c** **sanity `duration` (MIKRODETIK):** fitur `duration` (di `ramp_s0_flows.csv`) harus berskala **mikrodetik** — flow beberapa detik ~ orde `1e6`-`1e7` us (mis. 10 s = 1e7). BUKAN nilai kecil <~1000 (tanda masih detik/ms; scaler CIC mengharapkan us). Bandingkan juga dengan `scaler_mean[duration]` (~1,2e7) di `deploy_meta_9feat.json` — orde harus sebanding.
 - **Cek cepat S0-c (Analyzer):**
   ```bash
   python3 - <<'PY'
-  import pandas as pd
+  import pandas as pd, json
   d = pd.read_csv('/opt/unsw/results/ramp_s0_flows.csv')
+  meta = json.load(open('/opt/unsw/models/deploy_meta_9feat.json'))
   print('n_flow=', len(d))
-  print(d['duration'].describe())   # max wajar dalam detik, bukan 1e4-1e5
+  print(d['duration'].describe())          # orde 1e6-1e7 us untuk flow beberapa detik
+  print('scaler_mean[duration]=', meta['scaler_mean'][0])  # ~1.2e7 (referensi orde)
   PY
   ```
-- **STOP bila:** flow=0, ada error, atau `duration` berskala ms. Diagnosa (IFACE? skrip lama? model/meta?) lalu ulang S0.
+- **STOP bila:** flow=0, ada error, atau `duration` berorde jauh dari `scaler_mean[duration]` (mis. masih detik/ms). Diagnosa (IFACE? skrip versi lama yang masih pakai `dur_ms/1000` detik alih-alih `dur_feat_us`? model/meta?) lalu ulang S0.
 
 ### D1 — 1 jam | titik perbandingan FAR #1 + GATE satuan/scaler
 - **Capture (1 file 1 jam):** `sudo timeout 3600 tcpdump -i "$IFACE" -w /opt/unsw/captures/far_%Y%m%d_%H.pcap` (trafik benign aktif). Proses mode `far`.

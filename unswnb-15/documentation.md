@@ -639,10 +639,27 @@ sitasi karangan sekaligus tetap menjawab substansi reviewer.
 
 **Status: SELESAI.**
 
-### 18.3 Catatan Teknis Lain yang Ditemukan (untuk T10 AWS)
-Saat meninjau aset AWS, ditemukan **bug satuan** di `aws/unsw_extract_infer.py` fungsi
-`extract9()`: fitur `duration` diisi dari `dur_ms` (milidetik) tanpa `/1000`, padahal Model A
-dilatih dengan `duration` dalam **detik** (mapping training: UNSW `dur` detik = CIC
-`Flow Duration`) → salah faktor 1000×. `dst_load` (paket/detik) & `src_load` (byte/detik)
-**sudah benar** (sesuai mapping `dload`→`Bwd Pkts/s`, `sload`→`Flow Byts/s`). Perbaikan bug
-`duration` dijadikan prasyarat sebelum ramp T10 (lihat spec `.kiro/specs/t10-ramp-execution/`).
+### 18.3 Catatan Teknis: Audit Satuan 9 Fitur untuk Deployment (prasyarat T10 AWS)
+Saat menyiapkan deployment, dilakukan **audit satuan ke-9 fitur Model A** dengan membandingkan
+satuan **scaler deployment** (di-fit pada CIC/CICFlowMeter di notebook 09, identik T3) vs
+satuan **output extractor NFStream** (`unsw_extract_infer.py`). Konteks penting: pada
+eksperimen offline T3–T9, z-score dilakukan **per dataset** sehingga perbedaan satuan µs/detik
+"tersembunyi" (ternormalkan masing-masing). Namun pada **deployment real-traffic**, hanya ada
+**satu scaler** (CIC) yang menormalkan trafik NFStream — jadi satuan extractor **wajib sama
+dengan satuan CIC** yang dipakai fit scaler.
+
+Hasil audit: **hanya 1 dari 9 fitur mismatch**, yaitu `duration`.
+- `duration` ← CIC `Flow Duration` = **mikrodetik**; `scaler_mean[duration]` terukur ≈ **1,2×10⁷**
+  (dari `deploy_meta_9feat.json` hasil notebook 09), mengonfirmasi satuan µs. Extractor semula
+  keluarkan **detik** (`dur_ms/1000`) → mismatch **10⁶×**. **Perbaikan:** fitur `duration` kini
+  `dur_ms*1000` (**µs**) agar cocok scaler CIC.
+- `src_load` ← CIC `Flow Byts/s` (byte/**detik**) & `dst_load` ← CIC `Bwd Pkts/s` (paket/**detik**):
+  laju per-detik → pembagi laju **tetap detik** (`dur_s = dur_ms/1000`). **Benar, tak diubah.**
+  Konsekuensi halus: fitur `duration` (µs) dan pembagi laju (`dur_s`, detik) **sengaja beda satuan**.
+- 6 fitur lain (`fwd_pkts`, `bwd_pkts`, `fwd_bytes`, `bwd_bytes`, `fwd_mean`, `bwd_mean`) adalah
+  count/bytes/rasio murni — bebas satuan waktu, **cocok**.
+
+Catatan koreksi: versi awal §18.3 menyebut fix "duration dalam detik" — itu **keliru untuk
+deployment** (karena scaler di-fit pada CIC-µs, bukan UNSW-detik). Versi ini adalah yang benar:
+**duration = mikrodetik**. Gate D1-b (|z|≤6) & sanity S0-c (orde `duration` vs `scaler_mean`)
+di `aws/runbook.md` menjadi jaring pengaman bila masih ada mismatch tersisa saat ramp.
