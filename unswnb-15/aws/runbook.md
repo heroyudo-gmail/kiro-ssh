@@ -338,7 +338,7 @@ aws ec2 describe-addresses --region ap-southeast-1
 | Durasi | Total n_flow benign | Total false_alarm | FAR agregat | FAR per-jam min-max |
 |---|---|---|---|---|
 | 1 jam (D1)  | 3687 | 14 | 0,3797% | 0,3797% (1 jam) |
-| 6 jam (D2)  | | | | |
+| 6 jam (D2)  | 22644 | 94 | 0,4152% | 0,363%–0,481% (per jam) |
 | 24 jam (D3) | | | | |
 | 3 hari (D4) *(opsional)* | | | | |
 | 7 hari (D5) *(opsional)* | | | | |
@@ -355,14 +355,40 @@ FAR bukan artefak snapshot pendek. Bila ada durasi dengan FAR menyimpang, lapork
 (mis. lonjakan trafik anomali benign, bukan disembunyikan).
 
 ### 7.3 Deteksi (Fase 2)
-| Varian | MCC | F1 | Precision | Recall |
-|---|---|---|---|---|
-| clean | | | | |
-| evasion | | | | |
+| Varian | MCC | F1 | Precision | Recall | n_flow | Catatan |
+|---|---|---|---|---|---|---|
+| clean (brute+slowloris+SYN200/s) | 0,0265 | 0,006 | 1,000 | 0,003 | 434 | model TAK mengenali (recall~0) |
+| volumetric (SYN5000/s+HTTP flood+UDP) | 0,0007 | 0,0006 | 1,000 | 0,0003 | 17319 | tetap TAK terdeteksi (lihat diagnosa) |
+| evasion | _(dilewati)_ | | | | | tak berguna bila clean sudah recall~0 |
+
+**TEMUAN PENTING Fase 2 (2026-09-09) — model UNSW TIDAK mendeteksi serangan nyata AWS:**
+Dua varian diuji, keduanya recall ~0:
+- `clean` (brute + slowloris + SYN 200/s): 434 flow, MCC 0,027, recall 0,003.
+- `volumetric` (SYN 5000/s + HTTP flood + UDP flood): pcap 305 MB, 17.319 flow, MCC 0,0007, recall 0,0003.
+
+**Diagnosa (bukan feature mismatch/satuan — SFM & unit OK):** z-score fitur wajar; banyak fitur
+(fwd_bytes, fwd_mean, bwd_mean) SUDAH cocok dgn train. Yang meleset FUNDAMENTAL: **`src_load`
+& `dst_load`** (laju byte/paket per-detik). Flow AWS berdurasi **panjang** (`duration` median
+~64 detik pd volumetric) → laju = bytes/durasi jadi RENDAH (`src_load` med 15,6 vs train 2,5e5;
+`dst_load` med 0,12 vs train 1,5e4). Serangan DoS UNSW = flow **PENDEK, laju TINGGI**. Memperbesar
+volume serangan TIDAK menutup gap ini karena akarnya **karakteristik durasi/laju flow** (distribution
+shift), bukan volume. prob_attack naik sedikit (clean mean 0,048 → volumetric 0,113; max 0,877) tapi
+tetap < ambang 0,5.
+
+**Makna untuk paper (mendukung tesis):** keunggulan benchmark TIDAK otomatis mentransfer ke trafik
+nyata karena distribution shift pada distribusi fitur serangan. Solusi yang selaras paper = **kalibrasi
+domain (few-shot 1% / mixup)** memakai sampel domain AWS — BUKAN mengubah serangan. Ini konsisten
+dgn temuan offline (baseline single-source runtuh; few-shot memulihkan).
+
+**Opsi lanjut (belum diputuskan):** (a) laporkan apa adanya sebagai bukti distribution shift di AWS;
+(b) kalibrasi few-shot dgn sampel AWS lalu uji ulang pcap yang sama; (c) atur timeout NFStream
+(`active_timeout`/`idle_timeout` pendek) agar flow terpecah pendek → laju naik, lihat efeknya.
 
 ### 7.4 Catatan lingkungan (transparansi)
-- Interface capture (mesin Target+Analyzer): _(ens5?)_  | Instance types: _(t3.medium?)_
-- Temuan feature-mismatch (z-of-mean real vs train), bila ada: _(catat)_.
+- Interface capture (mesin Target+Analyzer): **ens5** | Instance types: **t3.medium**
+- Temuan z-of-mean real vs train: Fase 1 |z|<=1,22 (fitur cocok). Fase 2 clean: fitur cocok kecuali
+  `src_load`/`dst_load` sangat rendah (serangan lambat) → alasan recall~0.
+- AMI: Amazon Linux 2023; AWS CLI v1 bawaan rusak → dipakai CLI v2 (Target & Attacker).
 
 ---
 
@@ -421,10 +447,44 @@ prefix pembeda (mis. `d2_%Y%m%d_%H%M%S.pcap`), atau `sudo chmod 1777 /opt/unsw/c
 Selalu VERIFIKASI pcap benar-benar tumbuh (~20 dtk setelah start: `ls -la` ukuran > 0 &
 tcpdump log berisi `listening on ens5`, bukan `Permission denied`).
 
-**D2 (6 jam) — SEDANG BERJALAN (start 2026-09-09 ~01:24 UTC):** capture rotasi `-G 3600`
-ke `/opt/unsw/captures/d2_*.pcap`, benign aktif, runner `run_d2.sh` via setsid nohup. Di
-akhir: loop proses tiap pcap (mode far) + upload. Gate D2-a (tiap pcap proses+upload),
-D2-b (FAR stabil antar-jam & konsisten ~D1 0,38%), D2-c (volume ribuan flow). Lalu D3 (24j).
+**D2 (6 jam) — SELESAI, SEMUA GATE LOLOS (DONE 2026-09-09 07:24 UTC):** 6 pcap rotasi per jam
+(`d2_*.pcap`), semua terproses + terupload. **Agregat: 22.644 flow, 94 false alarm, FAR=0,4152%**;
+per-jam **0,363%–0,481%** (sangat stabil). Gate D2-a (6/6 pcap proses+upload) ✓; D2-b (FAR stabil
+antar-jam & konsisten D1 0,38%) ✓; D2-c (22.644 flow) ✓. Latensi ~8,6 us/flow. Proses berhenti bersih.
+Lalu **D3 (24 jam)** — tahap terakhir Fase 1.
+
+**KEPUTUSAN RUANG LINGKUP (2026-09-09):** Fase 1 dihentikan di **D3 (24 jam)** — cukup kredibel
+(satu siklus harian penuh, layak paper). **D4 (3 hari) & D5 (7 hari) DILEWATI** sementara
+(opsional, hanya bila reviewer minta). Estimasi biaya total S0->D3 < ~$5. Infra Fase 1 aktual:
+**1 EC2 t3.medium (Target+Analyzer) + NAT** (~$3/hari); Attacker di-stop. NAT penyumbang biaya
+utama & tetap kena biaya walau instance di-stop -> untuk jeda panjang, teardown stack.
+
+### Tanggal: 2026-09-09 (sesi lanjut — Fase 2 dijalankan, lalu TEARDOWN)
+
+**Yang dikerjakan:** D2 (6 jam) selesai (FAR 0,4152%, gate lolos, Tabel §7.2 terisi). **D3 (24 jam)
+BELUM dijalankan** (dilewati sesi ini; bisa dilanjut kapan saja, infra sama). Langsung ke **Fase 2
+(deteksi)** memakai Attacker + Target.
+
+**HASIL FASE 2 (lihat §7.3):** model UNSW **TIDAK mendeteksi** serangan AWS. clean MCC 0,027 R 0,003;
+volumetric MCC 0,0007 R 0,0003. Diagnosa: **distribution shift** pada `src_load`/`dst_load` — flow AWS
+durasi panjang (~64 dtk) → laju rendah; serangan UNSW = flow pendek laju tinggi. Volume TIDAK menutup
+gap. Bukan feature mismatch (z wajar, SFM/satuan OK). Ini justru mendukung tesis paper (perlu kalibrasi
+domain few-shot, bukan ubah serangan). Ditambahkan varian `volumetric` di `attack_scenario.sh` (SYN
+5000/s + HTTP flood + UDP flood).
+
+**DATA AWS AMAN DI S3** (`unsw-far/results/`): CSV 9-fitur berlabel semua tahap — `ramp_s0_flows`,
+`far_20260908_23_flows` (D1), 6× `d2_*_flows` (D2), `detect_clean_flows`, `detect_volumetric_flows`,
++ metrics.json + `far_log.jsonl`. Cukup untuk analisis/few-shot offline (pcap mentah tak perlu).
+
+**TEARDOWN (2026-09-09):** kedua EC2 di-stop lalu **stack `unsw-far-ec2` & `unsw-far-vpc` DIHAPUS**
+(termasuk NAT) → biaya nol. Bucket S3 tetap (hasil aman). Deploy ulang: `unsw-vpc.yaml` lalu
+`unsw-2ec2.yaml` (private IP akan berubah; skrip+model tinggal tarik ulang dari S3, ingat pakai
+AWS CLI v2). TODO resume: cek EIP idle & EBS `available` nyangkut.
+
+**IDE LANJUTAN (diskusi, belum diputuskan):** buat "dataset AWS" dari CSV flow AWS yg sudah ada,
+lalu **few-shot**: latih `UNSW + X% AWS`, uji sisa AWS → harap recall pulih (bukti tesis end-to-end
+di trafik nyata). Latih di SageMaker (ambil CSV dari S3). Opsi lain: set NFStream active/idle_timeout
+pendek agar flow terpecah → `src_load` naik, uji sensitivitasnya.
 
 ---
 

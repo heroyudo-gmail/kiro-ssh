@@ -908,6 +908,57 @@ label cocok. Namun manfaatnya hanya terasa bila model juga mengenal pola seranga
 tersebut; menguji serangan yang sama sekali baru justru dapat menjadi uji
 generalisasi yang menarik, selama dilaporkan apa adanya.
 
+\subsection{Hasil Fase 2 di Trafik Nyata: Deteksi Gagal karena \emph{Distribution Shift}}
+\label{sec:rt-phase2}
+
+\noindent\emph{Catatan: hasil awal ini dilaporkan apa adanya sebagai temuan; angka
+bersumber dari eksperimen AWS nyata (region \texttt{ap-southeast-1}).}
+
+Kami menjalankan Fase~2 pada infrastruktur AWS: penyerang melancarkan serangan
+sungguhan ke korban, trafik ditangkap, lalu dinilai oleh Model~A (9 fitur,
+dilatih pada UNSW-NB15) \emph{tanpa} kalibrasi ulang. Dua varian diuji:
+\emph{clean} (SSH \emph{brute-force} + Slowloris + SYN \emph{flood} $200$/s) dan
+\emph{volumetric} (SYN \emph{flood} $5000$/s + HTTP \emph{flood} + UDP \emph{flood},
+dirancang agar laju alir mendekati kelas DoS/Generic UNSW). Hasilnya pada
+Tabel~\ref{tab:rt-detect}.
+
+\begin{table}[h]
+\centering
+\caption{Deteksi Fase~2 di AWS (Model~A UNSW, tanpa kalibrasi). Model gagal
+mengenali serangan nyata (\emph{recall} $\approx 0$) pada kedua varian.}
+\label{tab:rt-detect}
+\small
+\begin{tabular}{lccccc}
+\toprule
+Varian & $n$ \emph{flow} & MCC & F1 & Precision & Recall \\
+\midrule
+clean       & $434$    & $0{,}0265$ & $0{,}006$  & $1{,}0$ & $0{,}003$ \\
+volumetric  & $17{.}319$ & $0{,}0007$ & $0{,}0006$ & $1{,}0$ & $0{,}0003$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Diagnosis.} Kegagalan ini \emph{bukan} akibat \emph{feature-extractor
+mismatch} atau kesalahan satuan (\emph{z-score} ke-9 fitur wajar; SFM dan konversi
+satuan sudah benar, sebagaimana dikonfirmasi Fase~1 dengan $|z|\le 1{,}22$).
+Penyebabnya adalah \emph{distribution shift} pada distribusi fitur \emph{laju}
+(\texttt{src\_load}, \texttt{dst\_load}). Alir di AWS berdurasi \emph{panjang}
+(median \texttt{duration} $\approx 64$ detik pada varian \emph{volumetric}), sehingga
+laju $=$ byte$/$durasi menjadi kecil (\texttt{src\_load} median $15{,}6$ vs rerata
+latih $\approx 2{,}55\times10^{5}$; \texttt{dst\_load} $0{,}12$ vs $\approx 1{,}53\times10^{4}$).
+Sebaliknya, serangan DoS pada UNSW-NB15 berupa alir \emph{pendek} ber-laju
+\emph{tinggi}. Memperbesar volume serangan (\emph{volumetric}) \emph{tidak} menutup
+celah ini karena akar masalahnya adalah karakteristik durasi/laju alir, bukan volume.
+
+\paragraph{Makna.} Temuan ini memperkuat tesis utama makalah: keunggulan pada
+\emph{benchmark} tidak otomatis mentransfer ke trafik nyata akibat
+\emph{distribution shift}, dan pemulihannya menuntut \emph{kalibrasi domain}
+(mis.\ \emph{few-shot} dengan sedikit label dari domain target) --- bukan sekadar
+memperbaiki fitur/satuan atau mengubah bentuk serangan. Sebagai kelanjutan, sampel
+alir berlabel dari domain AWS dapat dipakai untuk kalibrasi \emph{few-shot} dan
+diuji ulang pada trafik AWS yang sama; ini menutup lingkaran validasi lintas-jaringan
+langsung di trafik nyata.
+
 % ============================================================
 \section{Diskusi}
 \label{sec:discussion}
