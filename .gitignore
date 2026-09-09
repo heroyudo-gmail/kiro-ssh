@@ -303,3 +303,8 @@ ransomware/aws/results-windows/aes_key.bin
 # Word documents (tidak perlu di-upload)
 *.doc
 *.docx
+
+# File sementara sesi kerja (output SSM/CLI, cek status) — jangan commit
+_*.txt
+_*.json
+**/aws/_*

@@ -736,6 +736,179 @@ berbasis pohon, menyulitkan penyerang mengoptimasi arah \emph{evasion}. Kedua
 pendekatan ini merupakan arah lanjutan yang wajar bagi NIDS tabular.
 
 % ============================================================
+\section{Validasi Trafik Nyata: Dari Paket ke Keputusan (Penjelasan untuk Tim)}
+\label{sec:realtraffic}
+
+\noindent\emph{Catatan penggunaan: bagian ini ditulis dengan gaya penjelas agar
+dapat dipahami pembaca non-spesialis (mis.\ anggota tim dan pembimbing). Isinya
+menjelaskan bagaimana model yang dibahas pada bagian-bagian sebelumnya diuji pada
+trafik jaringan nyata di AWS, mulai dari penangkapan paket hingga keputusan
+akhir. Seluruh prosedur bersifat dapat-direproduksi.}
+
+\subsection{Gambaran Umum: Tiga Tahap Sederhana}
+Untuk menguji model pada trafik nyata, kami menjalankan tiga tahap berurutan pada
+sebuah mesin di jaringan cloud (AWS): (i) \textbf{menangkap} paket jaringan
+mentah, (ii) \textbf{mengubah} paket-paket itu menjadi ringkasan per-\emph{flow}
+berisi $9$ angka fitur, dan (iii) \textbf{menilai} tiap \emph{flow} dengan model
+XGBoost apakah tergolong normal atau serangan. Analogi sederhananya: sebuah
+kamera CCTV merekam lalu-lintas (tahap~i), petugas meringkas tiap kendaraan yang
+lewat menjadi beberapa catatan angka (tahap~ii), lalu sistem menilai apakah tiap
+kendaraan mencurigakan atau tidak (tahap~iii).
+
+\subsection{Tahap 1 --- Menangkap Paket (\emph{Packet Capture})}
+Trafik jaringan yang lewat pada antarmuka mesin (\texttt{ens5}) direkam apa adanya
+menggunakan \texttt{tcpdump} ke dalam berkas \texttt{.pcap} (\emph{packet
+capture}). Satu poin teknis penting: penangkapan \textbf{wajib} pada antarmuka
+spesifik (\texttt{-i ens5}), \emph{bukan} \texttt{-i any}. Bila memakai
+\texttt{any}, sistem operasi menyisipkan lapisan tautan semu (\emph{Linux cooked
+capture}/SLL) yang membuat pustaka ekstraksi \emph{flow} gagal mengenali paket
+sehingga menghasilkan \emph{nol} \emph{flow}. Berkas \texttt{.pcap} inilah bahan
+mentah untuk tahap berikutnya.
+
+\subsection{Tahap 2 --- Ekstraksi 9 Fitur per \emph{Flow}}
+Sebuah \emph{flow} adalah satu percakapan jaringan --- rangkaian paket antara
+sepasang alamat/porta dalam satu arah bolak-balik (mis.\ satu unduhan berkas atau
+satu sesi permintaan HTTP). Alat \emph{NFStream} membaca \texttt{.pcap},
+mengelompokkan paket menjadi \emph{flow}, lalu menghitung statistik per-\emph{flow}.
+Dari statistik ini kami memetakannya menjadi \textbf{9 fitur SFM} yang sama persis
+dengan fitur latih Model~A (Bagian~\ref{sec:sfm}), sehingga model tak perlu
+diubah. Kesembilan fitur beserta maknanya ringkas pada
+Tabel~\ref{tab:9feat}.
+
+\begin{table}[h]
+\centering
+\caption{Sembilan fitur SFM (Model A) dan asal kolom NFStream. Nama fitur di
+kolom kiri identik dengan fitur latih agar model dapat langsung dipakai.}
+\label{tab:9feat}
+\small
+\begin{tabular}{lll}
+\toprule
+Fitur & Makna & Asal (NFStream) \\
+\midrule
+\texttt{duration}  & lama \emph{flow} & \texttt{bidirectional\_duration\_ms} \\
+\texttt{fwd\_pkts}  & jumlah paket arah maju & \texttt{src2dst\_packets} \\
+\texttt{bwd\_pkts}  & jumlah paket arah balik & \texttt{dst2src\_packets} \\
+\texttt{fwd\_bytes} & total byte arah maju & \texttt{src2dst\_bytes} \\
+\texttt{bwd\_bytes} & total byte arah balik & \texttt{dst2src\_bytes} \\
+\texttt{fwd\_mean}  & rata-rata ukuran paket maju & \texttt{src2dst\_mean\_ps} \\
+\texttt{bwd\_mean}  & rata-rata ukuran paket balik & \texttt{dst2src\_mean\_ps} \\
+\texttt{src\_load}  & laju byte/detik (maju) & \texttt{src2dst\_bytes}$/$durasi(detik) \\
+\texttt{dst\_load}  & laju paket/detik (balik) & \texttt{dst2src\_packets}$/$durasi(detik) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Satu jebakan satuan yang krusial (\emph{feature-extractor mismatch}
+dalam praktik).} Model dilatih pada fitur dari CICFlowMeter, yang mengukur
+\texttt{Flow Duration} dalam \textbf{mikrodetik}. Namun NFStream memberi durasi
+dalam \textbf{milidetik}. Bila perbedaan ini diabaikan, nilai fitur
+\texttt{duration} akan meleset $\sim$$10^6$ kali lipat dari yang diharapkan
+\emph{scaler} model --- akibatnya seluruh \emph{flow} salah dinilai (mis.\ FAR
+melonjak ke $100\%$). Karena itu ekstraktor mengubah durasi menjadi mikrodetik
+untuk fitur (\texttt{dur\_feat\_us}~$=$~ms~$\times 1000$), \emph{tetapi} pembagi
+laju (\texttt{src\_load}, \texttt{dst\_load}) tetap memakai satuan detik karena
+padanan CIC-nya (byte/detik, paket/detik) memang per-detik. Kedua satuan sengaja
+berbeda dan keduanya benar. Ini contoh konkret dari isu \emph{feature-extractor
+mismatch} yang dibahas di Bagian~\ref{sec:sfm}, kini muncul saat penyebaran nyata.
+
+Setelah 9 fitur terbentuk, tiap fitur dinormalisasi dengan \emph{z-score}
+memakai \emph{mean} dan \emph{scale} dari data latih (disimpan di
+\texttt{deploy\_meta\_9feat.json}), lalu dinilai oleh model
+(\texttt{modelA\_9feat.json}). Keluaran model per-\emph{flow}: probabilitas
+kelas \emph{attack}; ambang $0{,}5$ menetapkan label akhir (attack/normal).
+
+\subsection{Tahap 3 --- Dua Jenis Evaluasi yang Sengaja Dipisah}
+Model yang sama diuji pada dua situasi berbeda, dengan tujuan berbeda, dan
+metrik berbeda. Pemisahan ini penting agar tiap angka bersih dan tidak saling
+mencemari.
+
+\paragraph{Fase 1 --- \emph{False Alarm Rate} (FAR): ``tenang saat damai''.}
+FAR (\emph{False Alarm Rate}, laju alarm palsu) mengukur seberapa sering sistem
+keliru menuduh trafik \emph{normal} sebagai serangan. Secara umum FAR identik
+dengan \emph{False Positive Rate}:
+\begin{equation}
+\label{eq:far}
+\mathrm{FAR} \;=\; \frac{FP}{FP + TN}
+\;=\; \frac{\text{jumlah \emph{flow} normal yang salah ditandai serangan}}
+{\text{total \emph{flow} normal}} .
+\end{equation}
+Pada Fase~1 kami \emph{tidak} menjalankan serangan sama sekali (mesin penyerang
+dimatikan), sehingga \emph{semua} \emph{flow} pasti normal. Akibatnya
+$TP=FN=0$ dan Persamaan~\eqref{eq:far} menyederhana menjadi
+$\mathrm{FAR} = n_{\text{alarm-palsu}} / n_{\text{flow}}$. Nilai FAR yang
+\emph{rendah} berarti sistem tidak ``cerewet''; nilai $\mathrm{FAR}=1$ hampir
+selalu menandakan \emph{bug} satuan/skala (seperti jebakan mikrodetik di atas),
+bukan model yang buruk.
+
+Agar FAR kredibel, ia harus dihitung dari \emph{banyak} \emph{flow} dan
+\emph{stabil seiring waktu}, bukan dari cuplikan pendek yang kebetulan sepi.
+Karena itu Fase~1 dijalankan bertahap dengan durasi yang meningkat
+(Tabel~\ref{tab:ramp}); tiap tahap menghasilkan satu titik perbandingan FAR.
+Trafik normal dibangkitkan sendiri oleh mesin (permintaan HTTP lokal, pencarian
+DNS, unduhan kecil, akses situs publik via NAT) agar tersedia ribuan \emph{flow}
+benign yang beragam.
+
+\begin{table}[h]
+\centering
+\caption{Ramp durasi Fase~1 (FAR). Semua tahap memakai trafik \emph{normal saja};
+yang berubah hanya lama pengamatan. Tujuannya membuktikan FAR rendah bersifat
+\emph{stabil}, bukan artefak cuplikan pendek.}
+\label{tab:ramp}
+\small
+\begin{tabular}{llp{7.2cm}}
+\toprule
+Tahap & Durasi & Peran \\
+\midrule
+S0 & $\sim$3 menit & uji-asap: pastikan pipeline hidup \& satuan benar \\
+D1 & 1 jam  & titik FAR ke-1 + pemeriksaan skala fitur \\
+D2 & 6 jam  & FAR lintas beberapa jam + uji rotasi/unggah berkas per jam \\
+D3 & 24 jam & FAR satu siklus harian penuh (siang/malam) \\
+D4 & 3 hari & eskalasi opsional: variasi antar-hari kerja \\
+D5 & 7 hari & eskalasi opsional: variasi hari kerja vs akhir pekan \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Kenaikan durasi bertahap ini juga berfungsi sebagai \emph{pengendalian risiko
+biaya}: bila ada kesalahan (mis.\ salah satuan, gagal unggah), ia terdeteksi pada
+tahap pendek sebelum menghabiskan biaya komputasi berjam-jam. Setiap tahap punya
+\emph{gate} (syarat lolos): jumlah \emph{flow} $>0$, satuan durasi berorde
+mikrodetik, dan $\mathrm{FAR}\neq 1$. Bila gate gagal, tahap dihentikan,
+diperbaiki, lalu diulang --- tanpa naik ke durasi berikutnya.
+
+\paragraph{Fase 2 --- Deteksi: ``sigap saat diserang''.}
+Pada Fase~2, mesin penyerang dinyalakan dan melancarkan serangan nyata ke mesin
+target, sementara target merekam dan menilai. Berbeda dengan Fase~1, di sini
+durasi \emph{tidak} divariasikan; yang divariasikan adalah \emph{varian}
+serangan. Satu skenario berlangsung $\sim$7~menit dan berisi rangkaian berfase
+--- normal (1 menit) $\rightarrow$ \emph{SSH brute-force} (2 menit) $\rightarrow$
+\emph{Slowloris} (2 menit) $\rightarrow$ \emph{SYN flood} (1 menit) $\rightarrow$
+normal (1 menit) --- sehingga rekaman memuat campuran \emph{flow} normal dan
+serangan. Durasi $\sim$7~menit bukan angka keramat, melainkan jumlah durasi tiap
+sub-fase yang dikalibrasi agar tiap jenis serangan menghasilkan cukup \emph{flow}
+untuk metrik yang stabil, sambil menjaga eksperimen ringkas dan mudah diulang.
+Skenario dijalankan sekali per varian: \texttt{clean} (serangan polos) dan
+\texttt{evasion} (serangan yang disamarkan dengan menambah variasi waktu-antar
+paket). Metrik yang dihitung adalah MCC, F1, \emph{Precision}, dan \emph{Recall}
+--- membandingkan label prediksi terhadap kebenaran-dasar (\emph{ground truth})
+yang diketahui dari lini masa serangan.
+
+Perlu ditegaskan bahwa dua fase ini mengukur hal berbeda: Fase~1 menjawab
+``apakah sistem tenang saat tidak ada serangan, dan tetap tenang seiring waktu?''
+sedangkan Fase~2 menjawab ``apakah sistem mengenali serangan saat benar-benar
+terjadi, termasuk yang menyamar?''. Keduanya berasal dari \emph{model yang sama},
+sehingga bila keduanya baik, sistem terbukti \emph{tidak cerewet namun tetap
+peka} --- kombinasi yang sulit dan berharga, sebab banyak detektor mencapai
+\emph{recall} tinggi dengan mengorbankan FAR.
+
+\paragraph{Perluasan di masa depan.} Karena Fase~2 bersifat modular, menambah
+jenis serangan baru dilakukan dengan menambahkan sub-fase pada skenario (durasi
+total otomatis memanjang) \emph{dan} memperbarui lini masa kebenaran-dasar agar
+label cocok. Namun manfaatnya hanya terasa bila model juga mengenal pola serangan
+tersebut; menguji serangan yang sama sekali baru justru dapat menjadi uji
+generalisasi yang menarik, selama dilaporkan apa adanya.
+
+% ============================================================
 \section{Diskusi}
 \label{sec:discussion}
 

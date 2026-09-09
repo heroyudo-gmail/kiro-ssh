@@ -337,7 +337,7 @@ aws ec2 describe-addresses --region ap-southeast-1
 **Tabel utama — FAR per durasi observasi** (satu baris per tahap D1-D5; isi angka nyata):
 | Durasi | Total n_flow benign | Total false_alarm | FAR agregat | FAR per-jam min-max |
 |---|---|---|---|---|
-| 1 jam (D1)  | | | | |
+| 1 jam (D1)  | 3687 | 14 | 0,3797% | 0,3797% (1 jam) |
 | 6 jam (D2)  | | | | |
 | 24 jam (D3) | | | | |
 | 3 hari (D4) *(opsional)* | | | | |
@@ -378,6 +378,56 @@ FAR bukan artefak snapshot pendek. Bila ada durasi dengan FAR menyimpang, lapork
 > Ringkasan posisi terakhir agar sesi berikutnya langsung paham tanpa mengandalkan
 > ingatan chat. Perbarui bagian ini setiap akhir sesi kerja AWS.
 
+### Tanggal: 2026-09-09 (deploy ulang + S0 smoke LOLOS)
+
+**Kondisi AWS:** Infra AKTIF (deploy ulang berhasil di region ap-southeast-1).
+- Stack `unsw-far-vpc` = CREATE_COMPLETE; stack `unsw-far-ec2` = CREATE_COMPLETE.
+- **Attacker** `i-066818d68e6ae6506` (privIP 10.5.2.138) — **di-STOP** (Fase 1 tak pakai Attacker).
+- **Target+Analyzer** `i-098defb1359d5ab54` (privIP 10.5.2.62) — RUNNING, SSM Online.
+- Kondisi awal sesi ini bersih (0 stack, 0 EIP). Akun 232032302717 user IAM `hero`.
+
+**AMI:** Amazon Linux 2023 (AL2023) x86_64, dari SSM param
+`/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64` (kedua EC2).
+
+**Yang sudah beres di Target+Analyzer:**
+- **AWS CLI v2 terpasang** (`aws-cli/2.36.41` di `/usr/local/bin/aws`) — WAJIB, karena CLI v1
+  bawaan rusak (lihat "BUG AWS CLI v1 RUSAK" di atas). Ini fix penting sesi ini.
+- Skrip + model terunduh via CLI v2 (path LITERAL) ke `/opt/unsw/scripts` (4 file) &
+  `/opt/unsw/models` (`modelA_9feat.json` 3MB, `deploy_meta_9feat.json`). `grep dur_feat_us`
+  MUNCUL (baris 47,50) — satuan sudah ter-FIX.
+- Lingkungan runtime OK: tcpdump 4.99.1, python3.9 + nfstream 6.6.0 / xgboost 2.1.4 /
+  pandas 2.3.3 / numpy 2.0.2. IFACE = `ens5`. sshd & nginx `active`.
+
+**S0 smoke (~3 menit) — LOLOS SEMUA GATE:**
+- 203 flow (S0-a flow>0 ✓), pipeline tanpa error + auto-upload S3 (S0-b ✓).
+- `duration` mikrodetik: mean 1.64e6, max 1.62e8 us vs `scaler_mean[duration]`=1.22e7 → orde
+  sebanding (S0-c ✓). FAR=0.0000% (203 flow benign), latensi 52.0 us/flow (single-thread).
+- Hasil ter-upload ke `s3://ssh-detection-features-232032302717/unsw-far/results/`
+  (`ramp_s0_flows.csv`, `far_log.jsonl`).
+
+**D1 (1 jam) — SELESAI, SEMUA GATE LOLOS (2026-09-09 00:21 UTC):**
+- pcap `far_20260908_23.pcap` 19,1 MB; **3687 flow** benign; **14 false alarm**; **FAR=0,3797%**.
+- Gate D1-a (0<=FAR<1, FAR!=1) ✓; D1-b **MAX_ABS_Z=1,22** (semua fitur |z|<=6, terbesar
+  bwd_mean +1,22) ✓; D1-c n_flow=3687 ✓. Latensi 8,7 us/flow, throughput ~115k fps.
+- Hasil ter-upload ke S3 results/. Baris "1 jam" Tabel §7.2 sudah diisi.
+
+**BUG CAPTURE (ditemukan 2026-09-09, sudah difix): tcpdump "Permission denied" saat
+tulis ke subfolder baru milik root.** tcpdump dijalankan `sudo` lalu **drop-privilege ke
+user `tcpdump`**; bila `-w` menunjuk subfolder yang baru dibuat sebagai root
+(mis. `/opt/unsw/captures/d2/`), user `tcpdump` TAK bisa menulis → tcpdump exit seketika,
+`timeout ... || true` menelan error, dan capture "selesai" dalam hitungan detik (pcap 0).
+**Fix:** tulis pcap ke `/opt/unsw/captures/` langsung (folder terbukti writable di D1) dengan
+prefix pembeda (mis. `d2_%Y%m%d_%H%M%S.pcap`), atau `sudo chmod 1777 /opt/unsw/captures`.
+Selalu VERIFIKASI pcap benar-benar tumbuh (~20 dtk setelah start: `ls -la` ukuran > 0 &
+tcpdump log berisi `listening on ens5`, bukan `Permission denied`).
+
+**D2 (6 jam) — SEDANG BERJALAN (start 2026-09-09 ~01:24 UTC):** capture rotasi `-G 3600`
+ke `/opt/unsw/captures/d2_*.pcap`, benign aktif, runner `run_d2.sh` via setsid nohup. Di
+akhir: loop proses tiap pcap (mode far) + upload. Gate D2-a (tiap pcap proses+upload),
+D2-b (FAR stabil antar-jam & konsisten ~D1 0,38%), D2-c (volume ribuan flow). Lalu D3 (24j).
+
+---
+
 ### Tanggal: 2026-09-08 (teardown penuh)
 
 **Kondisi AWS:** SEMUA stack CloudFormation sudah dihapus (`ACTIVE_STACKS=0` di
@@ -407,6 +457,24 @@ ke Target via `ssm send-command`, JANGAN pakai variabel `$S3_BUCKET` di dalam ar
 aws s3 cp s3://ssh-detection-features-232032302717/unsw-far/scripts/ /opt/unsw/scripts/ --recursive
 aws s3 cp s3://ssh-detection-features-232032302717/unsw-far/models/  /opt/unsw/models/  --recursive
 ```
+
+**BUG AWS CLI v1 RUSAK di AMI AL2023 (ditemukan 2026-09-09, WAJIB fix tiap deploy baru):**
+`aws` bawaan (`/usr/bin/aws`, AWS CLI v1 berbasis Python 3.9) di instance GAGAL dengan
+`ModuleNotFoundError: No module named 'dateutil'`. Akibatnya `aws s3 cp` diam-diam gagal &
+folder `/opt/unsw/scripts` + `models` tetap KOSONG (Status SSM tetap "Success" — menipu!).
+Penyebab BUKAN dateutil hilang (paket `python3-dateutil` ADA via dnf 2.8.1 & pip 2.9.0);
+masalahnya **konflik jalur Python** `/usr/lib` vs `/usr/local/lib` yang bikin CLI v1 tak
+menemukan modulnya. **Solusi bersih & andal:** pasang **AWS CLI v2 resmi** (self-contained,
+tak tergantung Python sistem) lalu pakai `/usr/local/bin/aws`:
+```bash
+sudo dnf install -y unzip
+curl -s 'https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip' -o /tmp/awscliv2.zip
+cd /tmp && unzip -oq awscliv2.zip && sudo ./aws/install --update
+hash -r; aws --version   # harus aws-cli/2.x
+```
+Lalu ulangi download skrip+model dengan `sudo /usr/local/bin/aws s3 cp ...` (path LITERAL).
+> Tip SSM: kirim command via `--parameters file://payload.json` (bukan inline) untuk hindari
+> masalah escaping PowerShell; sertakan `executionTimeout` untuk langkah lama (capture).
 
 **Langkah lanjut T10 (saat mau eksekusi lagi):**
 1. Deploy `unsw-vpc.yaml` -> tunggu CREATE_COMPLETE -> deploy `unsw-2ec2.yaml`.
