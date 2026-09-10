@@ -1028,6 +1028,81 @@ $W_1\approx 1{,}16$ terhadap keduanya) --- konsisten dengan respons layanan nyat
 akar residual \emph{shift} yang membuat model gagal zero-shot dan yang menjadi
 sasaran kalibrasi \emph{few-shot} berikutnya.
 
+\subsection{\emph{Repair} via Few-Shot: Memulihkan Deteksi di Trafik Nyata AWS}
+\label{sec:rt-fewshot}
+
+Setelah mendiagnosis \emph{shift}, kami menutup lingkaran validasi: memulihkan deteksi
+di AWS memakai kalibrasi \emph{few-shot} dengan sedikit label domain target. Dari
+alir AWS berlabel (gabungan \emph{clean}+\emph{volumetric}: $17{.}753$ alir; $17{.}620$
+serangan, $133$ jinak), kami melakukan \emph{split} berlapis (\emph{stratified})
+menjadi \emph{train} ($60\%$) dan \emph{test} tetap ($40\%$: $7{.}049$ serangan,
+$53$ jinak; \emph{test} ini tak pernah dilatih). Model XGBoost dilatih pada
+\emph{source} (UNS atau CIC) ditambah fraksi $k\%$ label AWS-\emph{train}
+($k\in\{0,1,5,10,20,50\}$), lalu diuji pada AWS-\emph{test}. Sebagai acuan-atas,
+model dilatih hanya dari AWS-\emph{train} (\emph{AWS-only}). Hasil pada
+Tabel~\ref{tab:rt-fewshot} dan Gambar~\ref{fig:rt-fewshot}.
+
+\begin{table}[h]
+\centering
+\caption{Few-shot domain calibration ke AWS (MCC pada AWS-\emph{test}). $k=0$ adalah
+\emph{zero-shot} (source saja). Sedikit label AWS memulihkan MCC secara dramatis;
+$10$--$20\%$ menyamai acuan-atas AWS-only.}
+\label{tab:rt-fewshot}
+\small
+\begin{tabular}{lcc}
+\toprule
+$k\%$ label AWS & UNS$+$AWS & CIC$+$AWS \\
+\midrule
+$0$ (\emph{zero-shot}) & $0{,}074$ & $-0{,}217$ \\
+$1$   & $0{,}490$ & $0{,}132$ \\
+$5$   & $0{,}479$ & $0{,}370$ \\
+$10$  & $0{,}588$ & $0{,}207$ \\
+$20$  & $0{,}596$ & $0{,}456$ \\
+$50$  & $0{,}574$ & $0{,}135$ \\
+\midrule
+\emph{AWS-only} (acuan-atas) & \multicolumn{2}{c}{$0{,}598$} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.78\linewidth]{aws_fewshot_curve.png}
+\caption{Kurva few-shot ke AWS. UNS$+$AWS memulihkan MCC dari $\approx 0$ ke
+$\sim 0{,}59$ (mendekati AWS-only) hanya dengan $10$--$20\%$ label AWS; CIC$+$AWS
+memulihkan pula namun lebih berisik, konsisten dengan asimetri domain
+(\S\ref{sec:asymmetry}).}
+\label{fig:rt-fewshot}
+\end{figure}
+
+Tiga observasi. \emph{Pertama}, \emph{zero-shot} gagal pada kedua \emph{source}
+(UNS $0{,}074$; CIC bahkan $-0{,}217$, prediksi berlawanan arah dengan kebenaran),
+menegaskan bahwa keunggulan \emph{benchmark} tak mentransfer ke trafik nyata.
+\emph{Kedua}, kalibrasi \emph{few-shot} memulihkan deteksi secara efisien: hanya
+$1\%$ label AWS ($107$ alir) melompatkan MCC UNS$+$AWS ke $0{,}49$, dan $10$--$20\%$
+mencapai $\sim 0{,}59$ --- setara \emph{AWS-only} ($0{,}598$) yang dilatih penuh.
+\emph{Ketiga}, arah UNS lebih unggul dan lebih stabil daripada CIC di semua fraksi,
+sejalan dengan analisis asimetri domain (\S\ref{sec:asymmetry}): \emph{source}
+yang lebih heterogen (UNSW) lebih mudah dikalibrasi ke trafik nyata yang beragam.
+
+\paragraph{Catatan metrik.} Karena AWS-\emph{test} sangat tak-seimbang ($\approx 99\%$
+serangan), F1 tetap tinggi ($\approx 0{,}99$) bahkan saat \emph{zero-shot} --- sehingga
+menyesatkan. Kami karenanya melaporkan \textbf{MCC} sebagai metrik utama, yang
+memperhitungkan seluruh sel matriks kebingungan dan bergerak jujur mengikuti
+kualitas deteksi sebenarnya. Perlu dicatat pula bahwa angka \emph{zero-shot} di
+Tabel~\ref{tab:rt-fewshot} berbeda dari Tabel~\ref{tab:rt-detect}: yang pertama
+memakai model dilatih-ulang dari fitur \emph{source} yang telah dikoreksi satuan
+(\S\ref{sec:rt-shift}) dengan penyeimbangan kelas, sedangkan Tabel~\ref{tab:rt-detect}
+memakai model tersebar apa adanya; keduanya sama-sama menunjukkan kegagalan
+\emph{zero-shot} namun tidak dibandingkan langsung.
+
+\paragraph{Implikasi.} Temuan ini melengkapi narasi \emph{diagnosis}$\to$\emph{repair}:
+SFM menyelaraskan ruang fitur antar-lingkungan (\S\ref{sec:rt-shift}), dan kalibrasi
+\emph{few-shot} menyerap sisa \emph{shift} spesifik-lingkungan dengan biaya label
+yang minim. Prosedur ini dapat \emph{diulang} pada setiap lingkungan baru
+(SFM$+$few-shot), menjadikannya resep adaptasi yang praktis, bukan klaim model
+universal yang terbukti rapuh.
+
 % ============================================================
 \section{Diskusi}
 \label{sec:discussion}
