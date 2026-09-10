@@ -553,7 +553,7 @@ untuk arah dari sumber berdistribusi kaya.
 
 Karena celah bersifat \emph{distribution shift}, kami menguji \emph{few-shot
 target adaptation}: melatih pada source ditambah fraksi kecil label target
-($0/1/5/10/25\%$; fraksi diambil dari \emph{train} target, uji di \emph{test}
+($0/1/5/10\%$; fraksi diambil dari \emph{train} target, uji di \emph{test}
 target tanpa kebocoran). Sebagai pembanding tanpa label target, kami memakai
 \emph{cross-dataset mixup} (interpolasi Beta antar-\emph{flow} kedua dataset).
 
@@ -569,7 +569,6 @@ $0\%$ (baseline)  & $-0{,}072$ & $-0{,}061$ \\
 $1\%$             & $0{,}648$  & $0{,}899$  \\
 $5\%$             & $0{,}662$  & $0{,}911$  \\
 $10\%$            & $0{,}681$  & $0{,}911$  \\
-$25\%$            & $0{,}695$  & $0{,}912$  \\
 \midrule
 Mixup (tanpa label target) & $0{,}680$ & $0{,}798$ \\
 \bottomrule
