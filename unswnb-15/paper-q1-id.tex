@@ -31,9 +31,11 @@
 %   \adversarialfalse -> PAPER 1 (fokus generalisasi, tanpa adversarial) -- CADANGAN
 % Semua blok adversarial dibungkus \ifadversarial ... \fi.
 % ============================================================
-% Toggle bisa di-set dari file wrapper (paper1-*.tex / paper2-*.tex) SEBELUM \input.
-% Bila di-compile langsung, default = true (Paper 2). Ganti manual bila perlu.
-\ifdefined\ifadversarial\else \newif\ifadversarial \adversarialtrue \fi
+% VERSI PAPER (ganti satu baris di bawah):
+%   \adversarialfalse -> PAPER 1 (fokus generalisasi, tanpa adversarial)  <-- AKTIF
+%   \adversarialtrue  -> PAPER 2 (lengkap: + evaluasi adversarial)
+\ifdefined\ifadversarial\else \newif\ifadversarial \fi
+\adversarialfalse
 
 \ifadversarial
   % PAPER 2 (untuk submit): fokus generalisasi + evaluasi adversarial
