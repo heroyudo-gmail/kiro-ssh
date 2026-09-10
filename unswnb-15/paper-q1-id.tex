@@ -1129,7 +1129,7 @@ serangan, $133$ jinak), kami melakukan \emph{split} berlapis (\emph{stratified})
 menjadi \emph{train} ($60\%$) dan \emph{test} tetap ($40\%$: $7{.}049$ serangan,
 $53$ jinak; \emph{test} ini tak pernah dilatih). Model XGBoost dilatih pada
 \emph{source} (UNS atau CIC) ditambah fraksi $k\%$ label AWS-\emph{train}
-($k\in\{0,1,5,10,20,50\}$), lalu diuji pada AWS-\emph{test}. Sebagai acuan-atas,
+($k\in\{0,1,5,10,20\}$), lalu diuji pada AWS-\emph{test}. Sebagai acuan-atas,
 model dilatih hanya dari AWS-\emph{train} (\emph{AWS-only}). Hasil pada
 Tabel~\ref{tab:rt-fewshot} dan Gambar~\ref{fig:rt-fewshot}.
 
@@ -1149,7 +1149,6 @@ $1$   & $0{,}490$ & $0{,}132$ \\
 $5$   & $0{,}479$ & $0{,}370$ \\
 $10$  & $0{,}588$ & $0{,}207$ \\
 $20$  & $0{,}596$ & $0{,}456$ \\
-$50$  & $0{,}574$ & $0{,}135$ \\
 \midrule
 \emph{AWS-only} (acuan-atas) & \multicolumn{2}{c}{$0{,}598$} \\
 \bottomrule
