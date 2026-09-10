@@ -1,10 +1,1737 @@
+\documentclass[11pt,a4paper]{article}
+
 % ============================================================
-% PAPER 1 (cadangan): Generalisasi Cross-Dataset NIDS
-%   SFM + Few-Shot + Validasi Trafik Cloud Nyata (AWS), TANPA adversarial.
-% Cara compile di Overleaf: set file ini sebagai "Main document"
-%   (Menu > Main document > paper1-generalisasi.tex), lalu Recompile.
-% File ini hanya menyetel toggle lalu memuat sumber tunggal paper-q1-id.tex.
+% Paper (versi Bahasa Indonesia) — draft kerja. SATU sumber, DUA versi via toggle:
+%   Paper 1 (\adversarialfalse): Generalisasi Cross-Dataset NIDS (SFM+few-shot+AWS)
+%   Paper 2 (\adversarialtrue) : Paper 1 + evaluasi adversarial (untuk submit)
+% CSE-CIC-IDS2018 x UNSW-NB15 + validasi trafik cloud nyata (AWS)
+% CATATAN: seluruh angka berasal dari eksperimen NYATA (T3-T9),
+%          disimpan di unswnb-15/*.json. Bukan angka ilustratif.
 % ============================================================
-\newif\ifadversarial
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[bahasa]{babel}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath,amssymb}
+\usepackage{siunitx}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{caption}
+\usepackage{multirow}
+\geometry{margin=2.5cm}
+\graphicspath{{figure-q1/}}
+
+\hypersetup{colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue}
+
+% ============================================================
+% TOGGLE VERSI PAPER
+%   \adversarialtrue  -> PAPER 2 (lengkap: + evaluasi adversarial) -- untuk SUBMIT
+%   \adversarialfalse -> PAPER 1 (fokus generalisasi, tanpa adversarial) -- CADANGAN
+% Semua blok adversarial dibungkus \ifadversarial ... \fi.
+% ============================================================
+% VERSI PAPER (ganti satu baris di bawah):
+%   \adversarialfalse -> PAPER 1 (fokus generalisasi, tanpa adversarial)  <-- AKTIF
+%   \adversarialtrue  -> PAPER 2 (lengkap: + evaluasi adversarial)
+\ifdefined\ifadversarial\else \newif\ifadversarial \fi
 \adversarialfalse
-\input{paper-q1-id.tex}
+
+\ifadversarial
+  % PAPER 2 (untuk submit): fokus generalisasi + evaluasi adversarial
+  \title{\textbf{Generalisasi Cross-Dataset pada NIDS Menggunakan Semantic
+  Feature Mapping dan Few-Shot Adaptation dengan Validasi Trafik Cloud Nyata
+  serta Evaluasi Ketahanan Adversarial}}
+\else
+  % PAPER 1 (cadangan): fokus generalisasi saja
+  \title{\textbf{Generalisasi Cross-Dataset pada NIDS Menggunakan Semantic
+  Feature Mapping dan Few-Shot Adaptation dengan Validasi Trafik Cloud Nyata}}
+\fi
+
+\author{Hero Yudo Martono\thanks{Penulis koresponden: \texttt{hero@pens.ac.id}},
+\quad Iwan Syarif, \quad Ferry Astika Saputra \\[0.3em]
+\textit{Departemen Teknik Informatika, Politeknik Elektronika Negeri Surabaya,
+Surabaya, Indonesia} \\
+\texttt{hero@pens.ac.id; iwanarif@pens.ac.id; ferryas@pens.ac.id}}
+
+\date{Draft --- \today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Sistem deteksi intrusi jaringan (NIDS) berbasis pembelajaran mesin mencapai
+akurasi tinggi ketika dilatih dan diuji pada jaringan yang sama, namun
+kemampuannya untuk digeneralisasi lintas-jaringan jarang diuji secara jujur.
+Makalah ini menyelidiki \ifadversarial tiga\else dua\fi{} masalah yang saling berkaitan pada NIDS praktis:
+(1) ketidakmampuan generalisasi lintas-jaringan\ifadversarial, (2)\else{} dan (2)\fi{} ketidaksepadanan fitur
+antar-alat ekstraksi (\emph{feature-extractor mismatch})\ifadversarial, dan (3) kerentanan
+terhadap serangan \emph{evasion} adaptif\fi. Menggunakan pasangan dataset
+CSE-CIC-IDS2018 (68 fitur, CICFlowMeter) dan UNSW-NB15 (42 fitur, Argus/Bro)
+yang diekstraksi dengan alat berbeda dari sumber trafik berbeda, kami menyusun
+\emph{Semantic Feature Mapping} (SFM) yang divalidasi secara statistik untuk
+memperoleh himpunan fitur irisan yang benar-benar sepadan. Kami menemukan bahwa
+model XGBoost tunggal yang unggul di dalam-jaringan (MCC $0{,}91$ pada CIC;
+$0{,}74$ pada UNSW) \emph{runtuh} lintas-jaringan (MCC $\approx 0$). Melalui
+serangkaian eksperimen terkontrol, kami menunjukkan bahwa
+\ifadversarial (i) \emph{adversarial
+training} memperkuat ketahanan terhadap \emph{evasion} di dalam-jaringan tetapi
+\emph{tidak} menutup celah generalisasi lintas-jaringan; (ii)\else (i)\fi{} celah tersebut
+berakar pada \emph{distribution shift}, bukan ketidakcukupan fitur, sebab
+pelatihan gabungan mencapai performa mendekati in-domain pada kedua jaringan
+sekaligus; dan \ifadversarial (iii)\else (ii)\fi{} kalibrasi minimal --- hanya \emph{1\%} label jaringan
+target, atau \emph{mixup} lintas-dataset tanpa label target sama sekali ---
+memulihkan MCC lintas-jaringan ke rentang $0{,}65$--$0{,}91$. Kami memvalidasi
+temuan ini pada trafik nyata AWS: model \emph{zero-shot} gagal (MCC $\approx 0$)
+namun kalibrasi \emph{few-shot} dengan sedikit label domain memulihkan deteksi.
+\ifadversarial Terakhir, dengan
+memberlakukan \emph{functional-preserving constraint} pada serangan, kami
+menunjukkan bahwa evaluasi adversarial tak-terbatas melebih-lebihkan ancaman,
+sementara evaluasi \emph{adaptive white-box} mengungkap bahwa \emph{adversarial
+training} memberikan rasa aman yang keliru: pertahanan yang tampak kuat terhadap
+serangan transfer (MCC $0{,}99$) runtuh terhadap penyerang adaptif
+(MCC $0{,}25$--$0{,}43$). \fi Temuan-temuan ini, seluruhnya berbasis eksperimen
+nyata dan dilaporkan apa adanya, memberikan panduan yang jujur untuk merancang
+dan mengevaluasi NIDS yang tangguh di dunia nyata.
+
+\vspace{0.5em}
+\noindent\textbf{Kata kunci:} sistem deteksi intrusi jaringan, generalisasi
+lintas-jaringan, pemetaan fitur semantik, adaptasi domain, \emph{few-shot},
+validasi trafik nyata\ifadversarial, serangan adversarial adaptif\fi, XGBoost.
+\end{abstract}
+
+% ============================================================
+\section{Pendahuluan}
+\label{sec:intro}
+
+Serangan siber menimbulkan kerugian ekonomi global yang ditaksir mencapai
+sekitar satu triliun dolar AS pada tahun 2020 --- meningkat lebih dari 50\% sejak
+2018~\cite{cremer} --- sehingga sistem deteksi intrusi jaringan (NIDS) berbasis
+pembelajaran mesin menjadi lini pertahanan yang semakin penting~\cite{torres,sarker,khraisat,buczak,bhuyan}.
+Selama dua
+dekade, komunitas riset mengevaluasi NIDS pada dataset \emph{benchmark} publik
+yang berturut-turut diperbarui untuk mengejar realisme: dari KDD~Cup~99~\cite{kdd}
+dan NSL-KDD, hingga UNSW-NB15~\cite{unsw,unsweval} serta
+CIC-IDS2017/CSE-CIC-IDS2018~\cite{cicids}, dan varian yang lebih baru untuk
+lingkungan IoT dan DDoS~\cite{botiot,toniot,ciciot,cicddos,ring}. Pada
+dataset-dataset ini, akurasi yang
+dilaporkan kian mendekati sempurna --- seringkali menembus 99\% pada berbagai
+metrik~\cite{layeghy}. Namun performa akademik yang nyaris paripurna itu belum
+pernah benar-benar terwujud sebagai NIDS praktis yang sepadan di jaringan
+produksi nyata.
+
+Kesenjangan antara janji \emph{benchmark} dan kenyataan penyebaran ini berakar
+pada satu asumsi yang jarang teruji: bahwa data latih dan data operasional
+berasal dari distribusi yang sama. Bukti terbaru menunjukkan sebaliknya. Layeghy
+\emph{et al.}~\cite{layeghy} membandingkan distribusi statistik trafik jinak dari
+tiga dataset sintetik (UNSW-NB15, CIC-IDS2017, ToN-IoT) terhadap dua jaringan
+produksi nyata, dan menemukan bahwa jarak Wasserstein~\cite{wasserstein}
+antar-kelompok
+sintetik-versus-nyata jauh lebih besar daripada jarak intra-kelompok ---
+misalnya, rata-rata \emph{packet time} trafik jinak UNSW-NB15 hanya
+$\sim$\SI{0.02}{\second} sementara jaringan ISP nyata mencapai
+$\sim$\SI{2.28}{\second}. Dari sisi kinerja klasifikasi, Cantone
+\emph{et al.}~\cite{cantone} mengukur secara sistematis penurunan lintas-dataset:
+\emph{Matthews Correlation Coefficient} (MCC) rata-rata anjlok dari $0{,}946$
+(\emph{within-dataset}) menjadi hanya $0{,}294$ (\emph{cross-dataset}) --- praktis
+setara tebakan acak. Studi-studi ini~\cite{cantone,layeghy,dhooge,verkerken}
+menegaskan adanya masalah, namun umumnya berhenti pada \emph{pengamatan}
+penurunan: mereka jarang mengisolasi \emph{penyebab} (ketidakcukupan fitur versus
+pergeseran distribusi) maupun menawarkan solusi berbiaya-rendah yang tervalidasi
+secara terkontrol.
+
+Makalah ini merupakan kelanjutan langsung dari penelitian NIDS sebelumnya pada
+CSE-CIC-IDS2018 (reduksi fitur XGBoost~\cite{xgboost} + \emph{adversarial
+training} berbasis \emph{saliency map}~\cite{saliency} + validasi
+\emph{real-traffic} AWS), yang
+secara jujur mengakui tiga keterbatasan. Ketiga keterbatasan itulah yang menjadi
+\textbf{gap inti} makalah ini:
+\begin{enumerate}
+  \item \textbf{Ketidakmampuan generalisasi lintas-jaringan.} Model kolaps saat
+  menghadapi karakteristik trafik dari topologi jaringan berbeda.
+  \item \textbf{Feature-extractor mismatch.} Perbedaan definisi fitur antar-alat
+  ekstraksi (CICFlowMeter vs Argus/Bro) merusak akurasi pada inferensi nyata.
+\ifadversarial
+  \item \textbf{Kerentanan evasion adaptif.} \emph{Adversarial training}
+  konvensional umumnya hanya dievaluasi terhadap serangan statis/transfer
+  (grey-box), bukan penyerang \emph{white-box} yang menyesuaikan diri.
+\fi
+\end{enumerate}
+
+\paragraph{Kontribusi.} Kontribusi makalah ini adalah:
+\begin{itemize}
+  \item \textbf{Semantic Feature Mapping (SFM)} lintas-dataset yang divalidasi
+  secara statistik, termasuk temuan \emph{feature-extractor mismatch} pada fitur
+  TCP window (Bagian~\ref{sec:sfm}).
+  \item \textbf{Bukti kuantitatif} bahwa NIDS single-source runtuh
+  lintas-jaringan\ifadversarial, dan \textbf{pemisahan empiris} antara
+  \emph{adversarial-robustness} dan \emph{cross-network-robustness} sebagai dua
+  masalah berbeda (Bagian~\ref{sec:baseline},~\ref{sec:advtrain})\else{} (Bagian~\ref{sec:baseline})\fi.
+  \item \textbf{Diagnosis} bahwa celah lintas-jaringan berakar pada
+  \emph{distribution shift}, dan \textbf{solusi berbiaya-rendah}: kalibrasi
+  minimal $1\%$ label target atau \emph{mixup} lintas-dataset
+  (Bagian~\ref{sec:align},~\ref{sec:da}).
+  \item \textbf{Validasi trafik nyata} pada infrastruktur cloud (AWS): mengukur
+  \emph{False Alarm Rate}, mendiagnosis \emph{distribution shift} tiga-domain
+  secara kuantitatif, dan memulihkan deteksi melalui kalibrasi \emph{few-shot}
+  (Bagian~\ref{sec:realtraffic}).
+\ifadversarial
+  \item \textbf{Metodologi evaluasi adversarial yang realistis}:
+  \emph{functional-preserving evasion} dan \emph{adaptive white-box} yang
+  mengoreksi klaim ketahanan yang berlebihan (Bagian~\ref{sec:fpe},~\ref{sec:awb}).
+\fi
+\end{itemize}
+
+\paragraph{Prinsip kejujuran data.} Seluruh angka pada makalah ini bersumber
+dari eksperimen nyata yang dapat direproduksi; tidak ada angka ilustratif yang
+disamarkan sebagai hasil.\ifadversarial{} Termasuk pelaporan jujur bahwa pertahanan kami sendiri
+belum sepenuhnya tahan terhadap serangan adaptif.\fi
+
+% ============================================================
+\section{Karya Terkait}
+\label{sec:related}
+
+\paragraph{NIDS berbasis pembelajaran mesin.} Model berbasis pohon (mis.
+XGBoost~\cite{xgboost,husain,zhou}) dan jaringan saraf
+dalam~\cite{shone,liulang,mahdavifar,wu,duan} banyak dipakai pada dataset
+\emph{benchmark}~\cite{unsw,cicids}. Mayoritas melaporkan hasil \emph{in-domain}
+(latih-uji pada dataset sama) dengan akurasi tinggi, tetapi kondisi ini tidak
+menjamin ketangguhan pada trafik jaringan yang berbeda dari data latih. Kami
+sengaja memilih XGBoost sebagai pengklasifikasi karena efisiensinya yang tinggi,
+kemampuan menangani data tabular tak-seimbang, dan jejak sumber daya yang ringan
+--- sifat-sifat yang relevan untuk penyebaran \emph{edge}.
+
+\paragraph{Generalisasi lintas-dataset.} Sejumlah studi mengukur seberapa buruk
+NIDS bergeneralisasi antar-jaringan. D'Hooge \emph{et al.}~\cite{dhooge}
+mengevaluasi banyak pengklasifikasi terawasi lintas CIC-IDS2017 dan
+CSE-CIC-IDS2018 serta menyimpulkan model gagal bekerja pada jaringan yang tak
+terlihat saat latih. Verkerken \emph{et al.}~\cite{verkerken} melaporkan
+penurunan AUROC rata-rata $30{,}45\%$ pada eksperimen lintas-dataset dengan model
+tak-terawasi. Cantone \emph{et al.}~\cite{cantone} memperluas analisis ini ke
+empat dataset dan mendokumentasikan jatuhnya MCC dari $0{,}946$ (\emph{within})
+ke $0{,}294$ (\emph{cross}), sekaligus menunjukkan bahwa hanya beberapa fitur
+sering cukup untuk memisahkan kelas \emph{dalam} satu dataset --- gejala
+\emph{over-correlation} spesifik-dataset yang justru merusak generalisasi. Untuk
+menstandarkan perbandingan, Sarhan \emph{et al.}~\cite{sarhan,sarhannf} mengusulkan
+himpunan fitur NetFlow terpadu. Studi-studi ini menegaskan adanya masalah, namun
+umumnya berhenti pada pengamatan penurunan --- belum memisahkan kontribusi
+\emph{ketidakcukupan fitur} versus \emph{pergeseran distribusi}, dan belum
+menawarkan pemulihan berbiaya-rendah. Makalah kami mengisi celah ini dengan
+diagnosis terkontrol dan solusi kalibrasi minimal.
+
+\paragraph{Integritas dan realisme dataset.} Sebagian penurunan lintas-dataset
+sesungguhnya bersumber dari cacat konstruksi dataset itu sendiri. Engelen
+\emph{et al.}~\cite{engelen} merekonstruksi CIC-IDS2017 dan menemukan lebih dari
+$20\%$ alir perlu diperbaiki/dilabel-ulang; Rosay \emph{et al.}~\cite{rosay}
+mengidentifikasi duplikasi fitur, salah-hitung, dan kesalahan deteksi protokol
+pada CICFlowMeter (senada dengan Lanvin \emph{et al.}~\cite{lanvin}); sedangkan
+Liu \emph{et al.}~\cite{liu} melaporkan tingkat
+kesalahan pelabelan $6{,}67\%$ dan $7{,}53\%$ masing-masing pada CIC-IDS2017 dan
+CSE-CIC-IDS2018. Catillo \emph{et al.}~\cite{catillo} bahkan mempertanyakan
+apakah kemajuan NIDS pada dataset publik mencerminkan kemajuan nyata atau sekadar
+euforia akademik. Pada arah komplementer, Layeghy \emph{et al.}~\cite{layeghy}
+menunjukkan bahwa distribusi statistik trafik jinak dataset sintetik berbeda
+signifikan (jarak Wasserstein besar) dari jaringan produksi nyata, sehingga
+mempertanyakan sejauh mana kinerja model yang dilatih pada data sintetik dapat
+ditransfer. Temuan-temuan ini memperkuat motivasi kami untuk (i) menyusun
+pemetaan fitur yang sepadan secara semantik antar-alat ekstraksi, dan (ii)
+memvalidasi model pada trafik nyata (Bagian~\ref{sec:conclusion}).
+
+\paragraph{Adaptasi domain dan pembelajaran kolaboratif.} CORAL~\cite{coral}
+menyelaraskan statistik orde-2 (kovarians) antar-domain, sedangkan pendekatan
+berbasis MMD menyelaraskan momen distribusi; pada data \emph{tabular} jaringan
+penerapan dan evaluasinya masih terbatas. Pendekatan \emph{few-shot} juga mulai
+dieksplorasi untuk NIDS data-terbatas~\cite{fewshot}. Sebagai alternatif,
+\emph{federated learning} berupaya meningkatkan generalisasi dengan melatih model
+global lintas beberapa organisasi tanpa berbagi data
+mentah~\cite{nidsfgpa,popoola,bertoli,agrawal}, meski
+umumnya model tetap terpapar data dari seluruh sumber saat evaluasi, yang dapat
+membiaskan pengukuran generalisasi sejati~\cite{cantone}. Kami mengevaluasi CORAL,
+pelatihan gabungan (\emph{joint}), \emph{few-shot}, dan \emph{mixup}
+lintas-dataset secara langsung pada pasangan CIC-IDS2018 dan UNSW-NB15.
+
+\ifadversarial
+\paragraph{Serangan adversarial dan GAN pada NIDS.} Generative Adversarial
+Networks~\cite{gan} bersifat \emph{dual-use} pada keamanan siber~\cite{alauthman}:
+di sisi bertahan, varian seperti WGAN~\cite{wgan}, CGAN~\cite{cgan},
+DCGAN~\cite{dcgan}, SAGAN~\cite{sagan}, ACGAN~\cite{acgan}, dan
+CTGAN~\cite{ctgan} dipakai untuk augmentasi dan penyeimbangan kelas
+minoritas~\cite{kumar,zhaogan,tmggan,cegan,ctganids,park,ewgan}, serta sebagai
+pendeteksi anomali~\cite{tcn} maupun sintesis trafik yang menjaga
+privasi~\cite{aceto}; bahkan model difusi mulai dieksplorasi~\cite{diffids}. Di sisi menyerang, GAN menghasilkan trafik
+\emph{evasive}: attackGAN melaporkan tingkat keberhasilan serangan hingga
+$81{,}37\%$ (versus $40{,}87\%$
+untuk GAN dasar)~\cite{attackgan}; SGAN-IDS menurunkan tingkat deteksi lima NIDS
+mutakhir rata-rata $15{,}93\%$~\cite{sganids}; dan IDS-GAN melaporkan tingkat
+\emph{evasion} di atas $95\%$~\cite{idsgan}. Ancaman serupa meluas ke domain
+\emph{malware} dan Android~\cite{aagan,gleam,dunmore}. Karya-karya
+ini~\cite{randhawa,mbow,demgan}
+umumnya menerapkan serangan berbasis gradien atau GAN pada fitur alir \emph{tanpa}
+memperhatikan validitas protokol, sehingga menghasilkan \emph{flow} yang tak
+dapat dikirim di jaringan nyata. Survei terbaru~\cite{alauthman,alajlan} merangkum
+lanskap \emph{dual-use} ini beserta celah evaluasinya. Lebih jauh, evaluasi ketangguhan seringkali
+hanya \emph{transfer}/grey-box, bukan \emph{adaptive white-box}, sehingga
+berisiko melebih-lebihkan ketahanan --- fenomena \emph{obfuscated
+gradients}~\cite{obfuscated} dan pentingnya \emph{adaptive attacks}~\cite{adaptive}
+telah dibahas panjang pada domain adversarial ML umum~\cite{szegedy,fgsm,madry}.
+Makalah ini menutup kedua celah tersebut pada domain NIDS tabular
+lintas-jaringan: serangan dibatasi \emph{functional-preserving} dan dievaluasi
+secara \emph{adaptive white-box}.
+\fi
+
+% ============================================================
+\section{Data dan Semantic Feature Mapping}
+\label{sec:sfm}
+
+\subsection{Dataset}
+Kami memakai pasangan yang sengaja \emph{berbeda sumber}:
+\begin{itemize}
+  \item \textbf{CSE-CIC-IDS2018}: trafik \emph{testbed} CIC (2018), diekstraksi
+  dengan CICFlowMeter, 68 fitur bersih. Label multi-kelas (Benign + 14 jenis
+  serangan); untuk tahap ini digabung menjadi biner (attack/normal).
+  \item \textbf{UNSW-NB15}: trafik dibangkitkan IXIA PerfectStorm (2015),
+  diekstraksi dengan Argus \& Bro/Zeek, 42 fitur, 10 kelas. Berkas partisi:
+  $175{.}341$ record (dipakai sebagai data latih) dan $82{.}332$ record (data
+  uji).\footnote{Penamaan berkas rilis UNSW tertukar dengan isinya; kami memakai
+  berkas berdasarkan jumlah record, bukan nama.}
+\end{itemize}
+Perbedaan alat ekstraksi dan sumber trafik ini bukan kelemahan, melainkan justru
+prasyarat untuk menguji tiga gap inti secara jujur.
+
+\subsection{Penyusunan dan Validasi Pemetaan}
+\label{sec:sfmmap}
+SFM memetakan fitur berfungsi-sama antar-dataset meski bernama kolom berbeda
+(mis. \texttt{Flow Duration}$\leftrightarrow$\texttt{dur}). Karena alat ekstraksi
+berbeda (CICFlowMeter vs Argus/Bro), setiap pasangan kandidat \emph{tidak}
+diterima berdasarkan kemiripan nama, melainkan \emph{divalidasi secara statistik}
+melalui tiga langkah: (i) mencocokkan definisi semantik fitur dari dokumentasi
+resmi kedua alat; (ii) mengembalikan fitur CIC ke skala asli
+($x_{\text{orig}} = x_{\text{scaled}}\cdot\sigma + \mu$, karena rilis CIC yang kami
+pakai sudah ter-\emph{z-score}); dan (iii) membandingkan statistik ringkas
+(median, persentil-99, maksimum) tiap pasangan untuk menilai kesetaraan
+\emph{orde skala}. Sebuah pasangan dinyatakan \emph{selaras} bila rasio median dan
+p99 antar-dataset berada dalam orde yang sama; \emph{scale-mismatch} bila berbeda
+$1$--$3$ orde (perlu konversi satuan); dan \emph{beda-fitur} bila $>3$ orde.
+
+Tabel~\ref{tab:sfm} merangkum hasil pemetaan. Sembilan pasangan lolos sebagai
+irisan kuat (Model~A), dua pasangan IAT dipertahankan sebagai tambahan opsional
+(Model~B), dan dua pasangan ``TCP window'' \emph{dibuang} karena terbukti tidak
+sepadan meski bernama mirip.
+
+\begin{table*}[t]
+\centering
+\caption{Pemetaan Fitur Semantik (SFM) CSE-CIC-IDS2018 $\leftrightarrow$
+UNSW-NB15, divalidasi statistik pada \emph{skala asli} (CIC di-\emph{unscale}
+lebih dulu). Kolom median menunjukkan orde nilai tiap dataset; kolom
+\emph{catatan} merangkum verdict kesepadanan. Sembilan pasangan teratas =
+\textbf{Model~A}; dua IAT = tambahan \textbf{Model~B}; dua TCP window
+\emph{dibuang} (\emph{feature-extractor mismatch}). Perbedaan skala/satuan
+diselesaikan oleh normalisasi \emph{z-score} per-dataset, sehingga pasangan
+tetap \emph{sepadan-semantik} meski median berbeda orde.}
+\label{tab:sfm}
+\small
+\begin{tabular}{lllrrl}
+\toprule
+Fitur CIC & Fitur UNSW & Makna & Median CIC & Median UNSW & Catatan kesepadanan \\
+\midrule
+\texttt{Flow Duration}     & \texttt{dur}    & Durasi alir & $20761$ & $0{,}0016$ & Model A; beda satuan ($\mu$s vs detik) \\
+\texttt{Tot Fwd Pkts}      & \texttt{spkts}  & Paket maju  & $2$ & $2$ & Model A; selaras \\
+\texttt{Tot Bwd Pkts}      & \texttt{dpkts}  & Paket balik & $1$ & $2$ & Model A; orde sama \\
+\texttt{TotLen Fwd Pkts}   & \texttt{sbytes} & Byte maju   & $43$ & $430$ & Model A; orde sebanding \\
+\texttt{TotLen Bwd Pkts}   & \texttt{dbytes} & Byte balik  & $101$ & $164$ & Model A; selaras \\
+\texttt{Fwd Pkt Len Mean}  & \texttt{smean}  & Rerata paket maju  & $36$ & $73$ & Model A; selaras \\
+\texttt{Bwd Pkt Len Mean}  & \texttt{dmean}  & Rerata paket balik & $66$ & $44$ & Model A; selaras \\
+\texttt{Flow Byts/s}       & \texttt{sload}  & Laju byte sumber & $787{,}5$ & $8{,}80{\times}10^{5}$ & Model A; beda satuan (byte/s vs bit/s)$^\dagger$ \\
+\texttt{Bwd Pkts/s}        & \texttt{dload}  & Laju paket tujuan & $3{,}70$ & $1447$ & Model A; beda satuan (paket/s vs bit/s)$^\dagger$ \\
+\midrule
+\texttt{Fwd IAT Mean}      & \texttt{sinpkt} & Antar-paket maju  & $3544$ & $0{,}28$ & Model B; beda satuan ($\mu$s vs ms) \\
+\texttt{Bwd IAT Mean}      & \texttt{dinpkt} & Antar-paket balik & $0$ & $0{,}006$ & Model B; opsional \\
+\midrule
+\texttt{Init Fwd Win Byts} & \texttt{swin}   & TCP window (maju)  & $953$ & $0$ & \emph{Dibuang}: UNSW biner $\{0,255\}$ vs CIC kontinu \\
+\texttt{Init Bwd Win Byts} & \texttt{dwin}   & TCP window (balik) & $-1$ & $0$ & \emph{Dibuang}: UNSW biner $\{0,255\}$ vs CIC kontinu \\
+\bottomrule
+\end{tabular}
+
+\vspace{0.4em}
+\raggedright{\footnotesize $^\dagger$Fitur laju: \texttt{sload}/\texttt{dload}
+UNSW dilaporkan Argus dalam \emph{bit/detik}; CIC \texttt{Flow Byts/s} dalam
+\emph{byte/detik} dan \texttt{Bwd Pkts/s} dalam \emph{paket/detik}.
+Ketidaksepadanan satuan ini dikoreksi eksplisit pada validasi trafik nyata
+(\S\ref{sec:rt-shift}). Median UNSW dihitung pada berkas latih $175{.}341$ record;
+median CIC pada nilai yang telah dikembalikan ke skala asli.}
+\end{table*}
+
+\paragraph{Temuan kunci: TCP window mismatch.} Pemeriksaan nilai unik
+membuktikan \texttt{swin}/\texttt{dwin} pada UNSW bersifat praktis biner
+($\{0, 255\}$), sedangkan \texttt{Init Fwd/Bwd Win Byts} pada CIC kontinu
+($0$--$65535$). Meski deskripsi resmi menyebut keduanya ``TCP window'', datanya
+tidak sepadan. Kami \emph{membuang} pasangan ini dan melaporkannya sebagai studi
+kasus \emph{feature-extractor mismatch} (gap \#2). Kasus ini menegaskan pentingnya
+validasi statistik: tanpa pemeriksaan distribusi, pasangan bernama-mirip ini akan
+lolos dan menyuntikkan derau lintas-jaringan.
+
+\subsection{Himpunan Fitur Final dan Pra-pemrosesan}
+Kami memakai StandardScaler (z-score) \emph{per dataset terpisah} sehingga
+perbedaan satuan/skala ternormalisasi tanpa mengarang konversi. Fitur final
+(\textbf{Model A}, 9 fitur irisan kuat): \texttt{dur, spkts, dpkts, sbytes,
+dbytes, smean, dmean, sload, dload}. \textbf{Model B} menambahkan
+\texttt{sinpkt, dinpkt} (Fwd/Bwd IAT). Model A dipilih sebagai basis karena
+setara Model B namun lebih ringkas.
+
+\subsection{Pilihan Model Tunggal XGBoost: Perspektif \emph{Edge} dan \emph{Green AI}}
+\label{sec:edge}
+Kami sengaja mempertahankan \textbf{model tunggal XGBoost} alih-alih
+\emph{ensemble} berat atau \emph{deep learning} kompleks. Selain menjaga
+\emph{comparability} dengan penelitian sebelumnya dan mengisolasi variabel
+kontribusi (SFM dan adaptasi lintas-jaringan, bukan kapasitas model), pilihan ini
+selaras dengan kebutuhan \textbf{penyebaran di \emph{edge}} dan prinsip
+\textbf{\emph{Green AI}}. Pada perangkat \emph{edge} nyata --- \emph{smart router},
+\emph{IoT gateway}, atau sensor \emph{inline} --- model \emph{ensemble} multi-algoritma
+atau jaringan dalam berukuran besar tidak realistis karena konsumsi memori, CPU,
+dan energi yang tinggi, serta latensi inferensi yang dapat melampaui laju
+kedatangan \emph{flow}. Sebaliknya, XGBoost tunggal dengan $9$ fitur menghasilkan
+model biner ringan dan inferensi bertingkat-pohon yang cepat, menjadikannya
+kandidat \emph{Edge-friendly Robust NIDS}.
+
+\begin{table}[h]
+\centering
+\caption{Profil efisiensi Model A (9 fitur), diukur nyata pada satu inti CPU
+(\emph{single-thread}, meniru \emph{edge} 1 vCPU).}
+\label{tab:efficiency}
+\begin{tabular}{lc}
+\toprule
+Metrik & Nilai \\
+\midrule
+Ukuran model biner (Model A, 9 fitur, 200 pohon) & $2{,}9$ MB \\
+Rata-rata latensi inferensi per \emph{flow} (batch$=1$) & $\approx 439\ \mu$s \\
+\emph{Throughput} inferensi (1 vCPU, inkremental) & $\approx 2\,276$ \emph{flow}/detik \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent Angka pada Tabel~\ref{tab:efficiency} berasal dari pengukuran nyata
+(XGBoost \emph{single-thread}, batch$=1$; median $434\ \mu$s, std $23\ \mu$s atas
+$\sim$2000 \emph{flow}). Model $2{,}9$ MB (200 pohon, kedalaman 8) cukup ringkas
+untuk dimuat pada perangkat \emph{edge}, dan laju $>2\,000$ \emph{flow}/detik per
+satu inti memadai untuk banyak titik pemantauan jaringan --- mendukung klaim
+\emph{Edge-friendly}. Kami melaporkan angka apa adanya: latensi berorde ratusan
+mikrodetik (bukan puluhan), dan menghindari pelaporan \emph{throughput} \emph{batch}
+yang dapat menyesatkan akibat optimasi vektorisasi.
+
+% ============================================================
+\section{Baseline Lintas-Dataset: Celah Generalisasi}
+\label{sec:baseline}
+
+Kami melatih XGBoost (\texttt{max\_depth}=8, \texttt{lr}=0{,}1,
+\texttt{n\_estimators}=200, \texttt{subsample}/\texttt{colsample}=0{,}8) dan
+mengevaluasi empat skenario menggunakan \emph{scikit-learn}~\cite{sklearn} dengan
+pembagian latih/uji berstrata~\cite{kohavi}. Metrik utama adalah \emph{Matthews
+Correlation Coefficient} (MCC)~\cite{matthews,chicco}, yang lebih informatif dan
+tahan terhadap \emph{class imbalance} dibanding akurasi.
+
+Verifikasi label dilakukan: pada CIC \texttt{Benign}$=0$; konversi biner
+menghasilkan tepat $1{.}348{.}453$ normal dan $274{.}808$ attack, sehingga MCC
+negatif lintas-jaringan adalah fenomena nyata, bukan artefak label.
+
+\begin{table}[h]
+\centering
+\caption{Baseline lintas-dataset (MCC, Model A). Performa in-domain tinggi namun
+lintas-jaringan runtuh.}
+\label{tab:baseline}
+\begin{tabular}{lcc}
+\toprule
+Skenario & Model A & Model B \\
+\midrule
+Same-CIC (latih \& uji CIC)   & $0{,}913$ & $0{,}914$ \\
+Same-UNSW (latih \& uji UNSW) & $0{,}745$ & $0{,}743$ \\
+CIC$\rightarrow$UNSW          & $-0{,}072$ & $0{,}004$ \\
+UNSW$\rightarrow$CIC          & $-0{,}061$ & $-0{,}046$ \\
+\midrule
+\emph{Generalization gap}     & $0{,}81$--$0{,}99$ & $0{,}79$--$0{,}91$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.72\linewidth]{fig1_generalization_gap.png}
+\caption{Deteksi in-domain vs lintas-dataset. Model yang unggul di dalam-jaringan
+jatuh ke MCC $\approx 0$ lintas-jaringan.}
+\label{fig:gap}
+\end{figure}
+
+Tabel~\ref{tab:baseline} dan Gambar~\ref{fig:gap} menunjukkan bahwa MCC $\approx 0$
+(setara tebakan acak) hingga negatif lintas-jaringan. Ini bukti empiris gap \#1.
+
+\ifadversarial
+% ============================================================
+\section{Adversarial Training Tidak Menutup Celah Lintas-Jaringan}
+\label{sec:advtrain}
+
+Kami menerapkan \emph{adversarial training} bergaya makalah sebelumnya. Karena
+XGBoost berbasis pohon dan \emph{non-differentiable}, gradien loss terhadap fitur
+tidak tersedia secara analitik. Kami mengestimasinya dengan skema
+\emph{central finite-difference}: untuk setiap fitur ke-$i$,
+\begin{equation}
+\label{eq:fd}
+\widehat{\left[\nabla_{\mathbf{x}} L(\theta,\mathbf{x},y)\right]}_i
+\;=\;
+\frac{L\!\left(\theta,\mathbf{x}+h\,\mathbf{e}_i,\,y\right)
+      - L\!\left(\theta,\mathbf{x}-h\,\mathbf{e}_i,\,y\right)}{2h},
+\qquad i=1,\dots,d,
+\end{equation}
+dengan $\mathbf{e}_i$ vektor basis satuan pada dimensi ke-$i$, $h$ langkah kecil
+($h=0{,}01$ pada ruang ter-\emph{z-score}), $d$ jumlah fitur, dan $L$ \emph{binary
+cross-entropy}
+$L(\theta,\mathbf{x},y) = -\bigl[y\log p_\theta(\mathbf{x}) + (1-y)\log(1-p_\theta(\mathbf{x}))\bigr]$,
+$p_\theta(\mathbf{x})$ probabilitas kelas \emph{attack}. Estimasi
+Persamaan~\eqref{eq:fd} memerlukan $2d$ evaluasi model per sampel.
+
+Sampel adversarial dibangkitkan dengan \emph{Fast Gradient Sign Method} (FGSM),
+\begin{equation}
+\label{eq:fgsm}
+\mathbf{x}_{adv} \;=\; \mathbf{x} + \epsilon\,\mathrm{sign}\!\left(\widehat{\nabla_{\mathbf{x}} L(\theta,\mathbf{x},y)}\right),
+\end{equation}
+lalu model diperkuat melalui augmentasi $D_{robust}=D_{clean}\cup D_{adv}$ dengan
+rasio $80{:}20$ dan dilatih ulang. Formulasi ini setara dengan pendekatan
+\emph{min-max} (\emph{saddle-point}) $\min_\theta \mathbb{E}\bigl[\max_{\|\boldsymbol{\delta}\|_\infty \le \epsilon} L(\theta,\mathbf{x}+\boldsymbol{\delta},y)\bigr]$,
+dengan $\max$ dalam diaproksimasi oleh FGSM satu langkah.
+
+Hasilnya \emph{asimetris terhadap tujuan}: robustness \emph{evasion} in-domain
+membaik tajam (MCC $-0{,}09 \rightarrow +0{,}36$ pada $\epsilon=0{,}1$),
+\emph{tetapi} MCC lintas-jaringan tetap $\approx 0$ (CIC$\rightarrow$UNSW
+$-0{,}072 \rightarrow -0{,}011$; UNSW$\rightarrow$CIC $-0{,}061 \rightarrow
+-0{,}066$). Ini memisahkan secara empiris \emph{adversarial-robustness} dari
+\emph{cross-network-robustness}: keduanya masalah berbeda dan memerlukan solusi
+berbeda.
+\fi
+
+% ============================================================
+\section{Diagnosis: Celah Berakar pada \emph{Distribution Shift}}
+\label{sec:align}
+
+Kami membandingkan tiga strategi (Tabel~\ref{tab:align},
+Gambar~\ref{fig:align}): \emph{baseline} single-source, \emph{CORAL}
+(\emph{unsupervised domain adaptation}, penyelarasan kovarians source$\rightarrow$
+target), dan \emph{joint training} (gabungan CIC+UNSW, uji test masing-masing).
+
+\begin{table}[h]
+\centering
+\caption{Strategi penyelarasan lintas-jaringan (MCC pada target).}
+\label{tab:align}
+\begin{tabular}{lcc}
+\toprule
+Strategi & CIC$\rightarrow$UNSW & UNSW$\rightarrow$CIC \\
+\midrule
+Baseline single-source & $-0{,}072$ & $-0{,}061$ \\
+CORAL (unsup. DA)      & $-0{,}185$ & $+0{,}164$ \\
+Joint training (uji test) & \multicolumn{2}{c}{UNSW $0{,}732$ \quad CIC $0{,}912$} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.72\linewidth]{fig3_alignment.png}
+\caption{Strategi penyelarasan. Joint training mencapai $\approx$ in-domain pada
+kedua jaringan; CORAL membantu asimetris.}
+\label{fig:align}
+\end{figure}
+
+Temuan terpenting: \emph{joint training} mencapai MCC $0{,}912$ (CIC) dan
+$0{,}732$ (UNSW) \emph{serentak}, hampir setara in-domain. Ini membuktikan
+\textbf{SFM valid} --- 9 fitur irisan cukup ekspresif merepresentasikan kedua
+jaringan. Maka celah generalisasi \emph{bukan} pada fitur, melainkan pada
+\emph{distribution shift}: model single-source tak melihat distribusi target.
+CORAL membantu sebagian dan asimetris (UNSW$\rightarrow$CIC naik ke $+0{,}164$;
+CIC$\rightarrow$UNSW malah turun), menandakan penyelarasan orde-2 belum memadai
+untuk arah dari sumber berdistribusi kaya.
+
+% ============================================================
+\section{Solusi Berbiaya-Rendah: Kalibrasi Minimal dan \emph{Mixup}}
+\label{sec:da}
+
+Karena celah bersifat \emph{distribution shift}, kami menguji \emph{few-shot
+target adaptation}: melatih pada source ditambah fraksi kecil label target
+($0/1/5/10\%$; fraksi diambil dari \emph{train} target, uji di \emph{test}
+target tanpa kebocoran). Sebagai pembanding tanpa label target, kami memakai
+\emph{cross-dataset mixup} (interpolasi Beta antar-\emph{flow} kedua dataset).
+
+\begin{table}[h]
+\centering
+\caption{Few-shot target adaptation (MCC lintas-jaringan).}
+\label{tab:fewshot}
+\begin{tabular}{lcc}
+\toprule
+Fraksi label target & CIC$\rightarrow$UNSW & UNSW$\rightarrow$CIC \\
+\midrule
+$0\%$ (baseline)  & $-0{,}072$ & $-0{,}061$ \\
+$1\%$             & $0{,}648$  & $0{,}899$  \\
+$5\%$             & $0{,}662$  & $0{,}911$  \\
+$10\%$            & $0{,}681$  & $0{,}911$  \\
+\midrule
+Mixup (tanpa label target) & $0{,}680$ & $0{,}798$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.72\linewidth]{fig2_fewshot_curve.png}
+\caption{Kurva few-shot. Hanya $1\%$ label target memulihkan MCC dari negatif ke
+$0{,}65$--$0{,}90$; kurva mendatar setelahnya.}
+\label{fig:fewshot}
+\end{figure}
+
+Tabel~\ref{tab:fewshot} dan Gambar~\ref{fig:fewshot} menunjukkan lompatan
+dramatis: hanya $1\%$ label target ($1{.}753$ \emph{flow} UNSW atau $11{.}362$
+\emph{flow} CIC) membalik MCC dari negatif menjadi $0{,}648$ (CIC$\rightarrow$UNSW)
+dan $0{,}899$ (UNSW$\rightarrow$CIC, mendekati in-domain $0{,}913$). Setelah
+$1\%$ kurva mendatar, sehingga \emph{kalibrasi minimal sudah cukup}. \emph{Mixup}
+tanpa label target pun mencapai $0{,}680$ dan $0{,}798$. Pesan praktis: berkat
+SFM, NIDS lintas-jaringan dapat dibuat berfungsi dengan sedikit --- atau tanpa
+--- label dari jaringan baru.
+
+% ------------------------------------------------------------
+\subsection{Verifikasi Kuantitatif Pergeseran Distribusi (Jarak Wasserstein)}
+\label{sec:wass}
+
+Kenaikan MCC pada Tabel~\ref{tab:fewshot} menunjukkan pemulihan performa, namun
+belum membuktikan secara langsung bahwa kalibrasi \emph{menggeser distribusi
+fitur} mendekati jaringan target. Mengikuti standar yang ditetapkan Layeghy
+\emph{et al.}~\cite{layeghy}, kami mengukur jarak statistik secara kuantitatif
+dengan \emph{jarak Wasserstein orde-1} ($W_1$, \emph{Earth Mover's Distance})
+\cite{wasserstein} pada ke-9 fitur SFM, sebelum dan sesudah kalibrasi domain.
+Untuk tiap fitur, $W_1$ dihitung antara distribusi himpunan-latih (pada tiga
+kondisi: \emph{baseline} tanpa kalibrasi, \emph{few-shot} $1\%$, dan
+\emph{mixup}) terhadap distribusi \emph{test} target yang tetap. Perhitungan
+dilakukan di ruang \emph{z-score} yang di-\emph{fit} pada \emph{train} target
+(\texttt{scipy.stats.wasserstein\_distance}, \emph{seed} $42$). Sebagai
+\emph{batas-bawah} acuan, kami sertakan $W_1$ intra-target (\emph{train} vs
+\emph{test} target yang sama), yaitu jarak minimum yang dapat dicapai.
+
+\begin{table}[h]
+\centering
+\caption{Jarak Wasserstein $W_1$ (rata-rata 9 fitur SFM) himpunan-latih terhadap
+\emph{test} target. Nilai lebih kecil = lebih dekat ke distribusi target;
+persentase = reduksi relatif terhadap \emph{baseline}.}
+\label{tab:wass}
+\begin{tabular}{lcc}
+\toprule
+Kondisi & CIC$\rightarrow$UNSW & UNSW$\rightarrow$CIC \\
+\midrule
+\emph{Baseline} (tanpa kalibrasi) & $208{.}757$ & $3{,}339$ \\
+Few-shot $1\%$        & $208{.}436$ ($-0{,}2\%$) & $3{,}136$ ($-6{,}1\%$) \\
+Mixup                 & $200{.}120$ ($-4{,}1\%$) & $2{,}725$ ($-18{,}4\%$) \\
+\midrule
+Batas-bawah (intra-target) & $0{,}031$ & $0{,}005$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{Reduksi $W_1$ per fitur SFM oleh \emph{mixup} (\% terhadap
+\emph{baseline}). Seluruh fitur mengecil pada kedua arah.}
+\label{tab:wassfeat}
+\begin{tabular}{lcc}
+\toprule
+Fitur & CIC$\rightarrow$UNSW & UNSW$\rightarrow$CIC \\
+\midrule
+\texttt{duration}  & $-4{,}1\%$ & $-16{,}8\%$ \\
+\texttt{fwd\_pkts}  & $-5{,}3\%$ & $-14{,}7\%$ \\
+\texttt{bwd\_pkts}  & $-4{,}9\%$ & $-18{,}1\%$ \\
+\texttt{fwd\_bytes} & $-4{,}2\%$ & $-20{,}1\%$ \\
+\texttt{bwd\_bytes} & $-5{,}7\%$ & $-16{,}9\%$ \\
+\texttt{fwd\_mean}  & $-3{,}9\%$ & $-18{,}4\%$ \\
+\texttt{bwd\_mean}  & $-2{,}9\%$ & $-25{,}0\%$ \\
+\texttt{src\_load}  & $-4{,}7\%$ & $-18{,}3\%$ \\
+\texttt{dst\_load}  & $-4{,}3\%$ & $-18{,}3\%$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Tabel~\ref{tab:wass} memberikan bukti kuantitatif yang diminta: kalibrasi domain
+\emph{secara konsisten memperkecil} jarak Wasserstein ke distribusi target pada
+kedua arah dan kedua metode. \emph{Mixup} paling efektif menutup jarak
+distribusi --- turun $18{,}4\%$ pada UNSW$\rightarrow$CIC dan $4{,}1\%$ pada
+CIC$\rightarrow$UNSW --- dan Tabel~\ref{tab:wassfeat} menegaskan reduksi ini
+terjadi pada \emph{seluruh} 9 fitur, bukan artefak satu fitur saja. Menarik
+dicermati, meski \emph{few-shot} $1\%$ mengungguli \emph{mixup} pada MCC
+(Tabel~\ref{tab:fewshot}), \emph{mixup} justru lebih besar memperkecil jarak
+distribusi; ini konsisten dengan sifat \emph{mixup} yang menginterpolasi
+langsung antar-\emph{flow} kedua dataset sehingga menggeser statistik fitur
+secara global, sedangkan \emph{few-shot} menyuntik sedikit sampel target yang
+lebih menolong batas keputusan ketimbang seluruh sebaran fitur.
+
+Dua catatan transparansi. Pertama, skala absolut $W_1$ pada arah
+CIC$\rightarrow$UNSW didominasi fitur \texttt{duration}: distribusi durasi
+UNSW-NB15 (dalam detik, berekor sangat panjang) berjarak $W_1 \approx
+1{,}88\times10^{6}$ dari CIC di ruang z-score target, sehingga rata-rata 9 fitur
+membengkak dan menyamarkan reduksi pada delapan fitur lain; bila \texttt{duration}
+dikeluarkan, reduksi rata-rata \emph{mixup} arah ini menjadi $4{,}3\%$ (selaras
+dengan reduksi per-fitur pada Tabel~\ref{tab:wassfeat}). Kami memilih tetap
+melaporkan rata-rata penuh apa adanya dan mengungkap dominasi ini secara jujur,
+bukan memangkas fitur agar angka tampak lebih baik. Kedua, jarak inter-domain
+tetap jauh di atas batas-bawah intra-target ($0{,}031$ dan $0{,}005$),
+menegaskan --- selaras temuan Layeghy \emph{et al.} bahwa jarak
+sintetik-versus-nyata jauh melampaui jarak intra-kelompok --- bahwa kalibrasi
+memperkecil celah namun tidak menghapusnya sepenuhnya; inilah alasan sedikit
+label target (\emph{few-shot}) masih memberi manfaat tambahan pada keputusan
+klasifikasi.
+
+\ifadversarial
+% ============================================================
+\section{Evaluasi Adversarial yang Realistis}
+
+\subsection{Functional-Preserving Evasion}
+\label{sec:fpe}
+
+FGSM tak-terbatas (Persamaan~\eqref{eq:fgsm}) dapat menghasilkan \emph{flow}
+mustahil (paket pecahan, \emph{bytes} $<$ paket, durasi negatif) yang tak dapat
+dikirim di jaringan nyata. Kami merumuskan serangan sebagai \emph{constrained
+optimization}: penyerang mencari perturbasi yang memaksimalkan loss namun tetap
+berada di dalam \emph{ruang perturbasi layak} $\mathcal{S}_{valid}(\mathbf{x})$,
+\begin{equation}
+\label{eq:fpe-opt}
+\mathbf{x}_{adv} \;=\; \arg\max_{\mathbf{x}' \in \mathcal{S}_{valid}(\mathbf{x})}\;
+L\!\left(\theta,\mathbf{x}',y\right),
+\qquad
+\|\mathbf{x}' - \mathbf{x}\|_\infty \le \epsilon .
+\end{equation}
+Misalkan fitur dinyatakan pada ruang asli (bukan ter-\emph{z-score}). Ruang
+$\mathcal{S}_{valid}$ didefinisikan oleh himpunan kendala protokol/fisik berikut:
+\begin{subequations}
+\label{eq:constraints}
+\begin{align}
+x'_j &\ge 0, && \forall j \ \text{(non-negatif: durasi, volume, laju)}, \label{eq:c-nonneg}\\
+x'_j &\in \mathbb{Z}^{+}, && j \in \{spkts,\, dpkts\} \ \text{(jumlah paket bulat)}, \label{eq:c-int}\\
+sbytes' &\ge spkts', \quad dbytes' \ge dpkts', && \text{(tiap paket} \ge 1 \ \text{byte)}, \label{eq:c-consistency}\\
+smean' &= \tfrac{sbytes'}{spkts'}, \quad dmean' = \tfrac{dbytes'}{dpkts'}, && \text{(konsistensi rata-rata)}, \label{eq:c-mean}\\
+x'_j &\ge x_j, && j \in \{spkts, dpkts, sbytes, dbytes, dur\} \ \text{(monotonic \emph{add-only})}. \label{eq:c-mono}
+\end{align}
+\end{subequations}
+Kendala~\eqref{eq:c-mono} mencerminkan keterbatasan penyerang nyata: ia hanya
+dapat \emph{menambah} trafik (padding, paket sisipan), tidak dapat mengurangi
+paket/byte yang sudah terkirim. Untuk fitur biner/kategori, batas langkah
+efektif $\delta = 0$ (tak boleh diubah). Secara operasional, kami memakai
+\emph{projected FGSM}: langkah FGSM Persamaan~\eqref{eq:fgsm} diikuti proyeksi
+$\Pi_{\mathcal{S}_{valid}}(\cdot)$ yang menerapkan Persamaan~\eqref{eq:constraints}
+di ruang asli sebelum dipetakan kembali ke ruang ter-\emph{z-score}.
+
+Operator proyeksi $\Pi_{\mathcal{S}_{valid}}$ didefinisikan secara operasional
+sebagai komposisi terurut berikut. Diberikan sampel kandidat $\mathbf{x}'$ pada
+ruang ter-\emph{z-score} dan \emph{scaler} per-dataset $(\boldsymbol{\mu},
+\boldsymbol{\sigma})$:
+\begin{enumerate}
+  \item \textbf{Denormalisasi:} $\mathbf{u} \leftarrow \mathbf{x}' \odot
+  \boldsymbol{\sigma} + \boldsymbol{\mu}$ (ke ruang fitur asli).
+  \item \textbf{Non-negatif:} $u_j \leftarrow \max(u_j, 0)$ untuk semua $j$
+  [Pers.~\eqref{eq:c-nonneg}].
+  \item \textbf{Pembulatan paket:} $u_j \leftarrow \operatorname{round}(u_j)$
+  untuk $j\in\{spkts, dpkts\}$ [Pers.~\eqref{eq:c-int}].
+  \item \textbf{Monotonic \emph{add-only}:} $u_j \leftarrow \max(u_j, x^{\text{orig}}_j)$
+  untuk $j\in\{spkts, dpkts, sbytes, dbytes, dur\}$, dengan $\mathbf{x}^{\text{orig}}$
+  sampel bersih acuan [Pers.~\eqref{eq:c-mono}].
+  \item \textbf{Konsistensi volume:} $sbytes \leftarrow \max(sbytes, spkts)$;
+  $dbytes \leftarrow \max(dbytes, dpkts)$ [Pers.~\eqref{eq:c-consistency}].
+  \item \textbf{Penyetelan rata-rata:} $smean \leftarrow sbytes/spkts$ bila
+  $spkts>0$ (analog untuk $dmean$), menjaga identitas statistik
+  [Pers.~\eqref{eq:c-mean}].
+  \item \textbf{Renormalisasi:} $\Pi_{\mathcal{S}_{valid}}(\mathbf{x}') \leftarrow
+  (\mathbf{u} - \boldsymbol{\mu}) \oslash \boldsymbol{\sigma}$ (kembali ke ruang
+  ter-\emph{z-score}).
+\end{enumerate}
+Urutan langkah penting: penegakan \emph{add-only} (4) mendahului konsistensi
+volume (5) dan penyetelan rata-rata (6) agar hasil akhir memenuhi seluruh kendala
+secara simultan. Fitur biner/kategori (tidak dipakai pada Model A) memiliki
+$\delta=0$ sehingga dilewati proyeksi.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.82\linewidth]{fig4_functional_evasion.png}
+\caption{Evasion \emph{functional-preserving} vs tak-terbatas ($\epsilon=0{,}1$).
+Serangan tak-terbatas melebih-lebihkan ancaman.}
+\label{fig:fpe}
+\end{figure}
+
+Pada keempat model (Gambar~\ref{fig:fpe}), MCC \emph{functional} jauh di atas
+\emph{unconstrained} (mis. UNSW baseline $-0{,}134 \rightarrow +0{,}313$),
+membuktikan evaluasi tak-terbatas melebih-lebihkan ancaman. Namun MCC
+\emph{functional} tetap turun tajam dari kondisi bersih (CIC $0{,}912 \rightarrow
+0{,}127$), sehingga ancaman \emph{flow} valid tetap nyata.
+
+\paragraph{Landasan teoretis: preservasi fungsional.} Formulasi kendala pada
+Persamaan~\eqref{eq:constraints} bukan batasan heuristik \emph{ad hoc}, melainkan
+instansiasi di tingkat protokol jaringan dari prinsip yang telah dikenal dalam
+literatur pembangkitan sampel adversarial: bahwa contoh yang \emph{realizable}
+harus mempertahankan sifat \emph{format-preservation} (nilai tetap sah menurut
+tata bentuk fitur) dan \emph{executability-preservation} (objek hasil tetap dapat
+diwujudkan/dikirim di dunia nyata). Dalam ranah NIDS, survei \emph{dual-use}
+GAN~\cite{alauthman,alajlan} menandai bahwa tantangan terbuka utama pembangkitan
+trafik adversarial justru adalah menjaga kedua sifat ini: banyak serangan
+berbasis gradien atau GAN memperturbasi vektor fitur secara bebas dan
+menghasilkan \emph{flow} yang tak dapat dikirim (paket pecahan, \emph{bytes} $<$
+paket, durasi negatif). Kendala kami memetakan prinsip abstrak tersebut ke
+semantik protokol yang konkret: non-negatif dan integralitas paket
+(Pers.~\eqref{eq:c-nonneg}--\eqref{eq:c-int}) menegakkan
+\emph{format-preservation}, sementara konsistensi volume--paket dan aturan
+\emph{monotonic add-only} (Pers.~\eqref{eq:c-consistency},~\eqref{eq:c-mono})
+menegakkan \emph{executability-preservation} --- sebab penyerang nyata hanya
+dapat \emph{menambah} trafik (padding, paket sisipan), tidak mengurangi paket
+atau byte yang telah terkirim. Dengan demikian, kontribusi pengujian adversarial
+kami menjawab secara langsung tantangan preservasi fungsional yang dirumuskan
+literatur generatif terbaru, sekaligus menjadikan estimasi ancaman kami
+konsisten dengan kelayakan operasional di jaringan target.
+
+\subsection{Adaptive White-Box}
+\label{sec:awb}
+
+Skenario terburuk: penyerang mengetahui model pertahanan dan membangkitkan
+\emph{evasion} langsung dari gradien model \emph{robust} itu sendiri (bukan
+transfer dari baseline). Seluruh serangan tetap \emph{functional-preserving}.
+
+\begin{table}[h]
+\centering
+\caption{Adaptive white-box (MCC model \emph{robust}, $\epsilon=0{,}1$).}
+\label{tab:awb}
+\begin{tabular}{lccc}
+\toprule
+Arah & Bersih & Serangan transfer & Serangan adaptif \\
+\midrule
+CIC  & $0{,}911$ & $0{,}993$ & $0{,}425$ \\
+UNSW & $0{,}733$ & $0{,}985$ & $0{,}248$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.72\linewidth]{fig5_adaptive_whitebox.png}
+\caption{Evaluasi \emph{adaptive white-box}. Pertahanan kuat terhadap transfer
+($0{,}99$) namun runtuh terhadap penyerang adaptif ($0{,}25$--$0{,}43$).}
+\label{fig:awb}
+\end{figure}
+
+Tabel~\ref{tab:awb} dan Gambar~\ref{fig:awb} mengungkap \emph{false robustness}:
+model \emph{robust} tampak sangat kuat terhadap serangan transfer (MCC $0{,}99$)
+tetapi runtuh terhadap penyerang adaptif (MCC $0{,}425$ pada CIC; $0{,}248$ pada
+UNSW). Ini konsisten dengan fenomena \emph{obfuscated gradients}: model
+``menghafal'' pola serangan transfer, bukan menjadi robust sejati. Konsekuensi
+metodologis: evaluasi ketahanan NIDS \emph{wajib} menyertakan
+\emph{adaptive white-box}; laporan yang hanya \emph{transfer} menyesatkan.
+
+\paragraph{Arah mitigasi (kerja mendatang).} Temuan ini tidak berhenti pada
+pengungkapan kelemahan. Beberapa strategi menjanjikan untuk memperkuat ketahanan
+terhadap serangan adaptif dapat dieksplorasi: (i) \emph{adversarial training}
+berbasis \emph{multi-step} PGD dengan \emph{functional-preserving constraint}
+diterapkan sejak fase pelatihan (bukan FGSM satu langkah), sehingga model
+menghadapi perturbasi terkuat-yang-valid alih-alih menghafal satu pola transfer;
+dan (ii) \emph{randomized smoothing} atau penghalusan batas keputusan
+(\emph{decision-boundary smoothing}) yang mengaburkan sinyal gradien pada model
+berbasis pohon, menyulitkan penyerang mengoptimasi arah \emph{evasion}. Kedua
+pendekatan ini merupakan arah lanjutan yang wajar bagi NIDS tabular.
+\fi
+
+% ============================================================
+\section{Validasi Trafik Nyata: Dari Paket ke Keputusan (Penjelasan untuk Tim)}
+\label{sec:realtraffic}
+
+\noindent\emph{Catatan penggunaan: bagian ini ditulis dengan gaya penjelas agar
+dapat dipahami pembaca non-spesialis (mis.\ anggota tim dan pembimbing). Isinya
+menjelaskan bagaimana model yang dibahas pada bagian-bagian sebelumnya diuji pada
+trafik jaringan nyata di AWS, mulai dari penangkapan paket hingga keputusan
+akhir. Seluruh prosedur bersifat dapat-direproduksi.}
+
+\subsection{Gambaran Umum: Tiga Tahap Sederhana}
+Untuk menguji model pada trafik nyata, kami menjalankan tiga tahap berurutan pada
+sebuah mesin di jaringan cloud (AWS): (i) \textbf{menangkap} paket jaringan
+mentah, (ii) \textbf{mengubah} paket-paket itu menjadi ringkasan per-\emph{flow}
+berisi $9$ angka fitur, dan (iii) \textbf{menilai} tiap \emph{flow} dengan model
+XGBoost apakah tergolong normal atau serangan. Analogi sederhananya: sebuah
+kamera CCTV merekam lalu-lintas (tahap~i), petugas meringkas tiap kendaraan yang
+lewat menjadi beberapa catatan angka (tahap~ii), lalu sistem menilai apakah tiap
+kendaraan mencurigakan atau tidak (tahap~iii).
+
+\subsection{Tahap 1 --- Menangkap Paket (\emph{Packet Capture})}
+Trafik jaringan yang lewat pada antarmuka mesin (\texttt{ens5}) direkam apa adanya
+menggunakan \texttt{tcpdump} ke dalam berkas \texttt{.pcap} (\emph{packet
+capture}). Satu poin teknis penting: penangkapan \textbf{wajib} pada antarmuka
+spesifik (\texttt{-i ens5}), \emph{bukan} \texttt{-i any}. Bila memakai
+\texttt{any}, sistem operasi menyisipkan lapisan tautan semu (\emph{Linux cooked
+capture}/SLL) yang membuat pustaka ekstraksi \emph{flow} gagal mengenali paket
+sehingga menghasilkan \emph{nol} \emph{flow}. Berkas \texttt{.pcap} inilah bahan
+mentah untuk tahap berikutnya.
+
+\subsection{Tahap 2 --- Ekstraksi 9 Fitur per \emph{Flow}}
+Sebuah \emph{flow} adalah satu percakapan jaringan --- rangkaian paket antara
+sepasang alamat/porta dalam satu arah bolak-balik (mis.\ satu unduhan berkas atau
+satu sesi permintaan HTTP). Alat \emph{NFStream} membaca \texttt{.pcap},
+mengelompokkan paket menjadi \emph{flow}, lalu menghitung statistik per-\emph{flow}.
+Dari statistik ini kami memetakannya menjadi \textbf{9 fitur SFM} yang sama persis
+dengan fitur latih Model~A (Bagian~\ref{sec:sfm}), sehingga model tak perlu
+diubah. Kesembilan fitur beserta maknanya ringkas pada
+Tabel~\ref{tab:9feat}.
+
+\begin{table}[h]
+\centering
+\caption{Sembilan fitur SFM (Model A) dan asal kolom NFStream. Nama fitur di
+kolom kiri identik dengan fitur latih agar model dapat langsung dipakai.}
+\label{tab:9feat}
+\small
+\begin{tabular}{lll}
+\toprule
+Fitur & Makna & Asal (NFStream) \\
+\midrule
+\texttt{duration}  & lama \emph{flow} & \texttt{bidirectional\_duration\_ms} \\
+\texttt{fwd\_pkts}  & jumlah paket arah maju & \texttt{src2dst\_packets} \\
+\texttt{bwd\_pkts}  & jumlah paket arah balik & \texttt{dst2src\_packets} \\
+\texttt{fwd\_bytes} & total byte arah maju & \texttt{src2dst\_bytes} \\
+\texttt{bwd\_bytes} & total byte arah balik & \texttt{dst2src\_bytes} \\
+\texttt{fwd\_mean}  & rata-rata ukuran paket maju & \texttt{src2dst\_mean\_ps} \\
+\texttt{bwd\_mean}  & rata-rata ukuran paket balik & \texttt{dst2src\_mean\_ps} \\
+\texttt{src\_load}  & laju byte/detik (maju) & \texttt{src2dst\_bytes}$/$durasi(detik) \\
+\texttt{dst\_load}  & laju paket/detik (balik) & \texttt{dst2src\_packets}$/$durasi(detik) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Satu jebakan satuan yang krusial (\emph{feature-extractor mismatch}
+dalam praktik).} Model dilatih pada fitur dari CICFlowMeter, yang mengukur
+\texttt{Flow Duration} dalam \textbf{mikrodetik}. Namun NFStream memberi durasi
+dalam \textbf{milidetik}. Bila perbedaan ini diabaikan, nilai fitur
+\texttt{duration} akan meleset $\sim$$10^6$ kali lipat dari yang diharapkan
+\emph{scaler} model --- akibatnya seluruh \emph{flow} salah dinilai (mis.\ FAR
+melonjak ke $100\%$). Karena itu ekstraktor mengubah durasi menjadi mikrodetik
+untuk fitur (\texttt{dur\_feat\_us}~$=$~ms~$\times 1000$), \emph{tetapi} pembagi
+laju (\texttt{src\_load}, \texttt{dst\_load}) tetap memakai satuan detik karena
+padanan CIC-nya (byte/detik, paket/detik) memang per-detik. Kedua satuan sengaja
+berbeda dan keduanya benar. Ini contoh konkret dari isu \emph{feature-extractor
+mismatch} yang dibahas di Bagian~\ref{sec:sfm}, kini muncul saat penyebaran nyata.
+
+Setelah 9 fitur terbentuk, tiap fitur dinormalisasi dengan \emph{z-score}
+memakai \emph{mean} dan \emph{scale} dari data latih (disimpan di
+\texttt{deploy\_meta\_9feat.json}), lalu dinilai oleh model
+(\texttt{modelA\_9feat.json}). Keluaran model per-\emph{flow}: probabilitas
+kelas \emph{attack}; ambang $0{,}5$ menetapkan label akhir (attack/normal).
+
+\subsection{Tahap 3 --- Dua Jenis Evaluasi yang Sengaja Dipisah}
+Model yang sama diuji pada dua situasi berbeda, dengan tujuan berbeda, dan
+metrik berbeda. Pemisahan ini penting agar tiap angka bersih dan tidak saling
+mencemari.
+
+\paragraph{Fase 1 --- \emph{False Alarm Rate} (FAR): ``tenang saat damai''.}
+FAR (\emph{False Alarm Rate}, laju alarm palsu) mengukur seberapa sering sistem
+keliru menuduh trafik \emph{normal} sebagai serangan. Secara umum FAR identik
+dengan \emph{False Positive Rate}:
+\begin{equation}
+\label{eq:far}
+\mathrm{FAR} \;=\; \frac{FP}{FP + TN}
+\;=\; \frac{\text{jumlah \emph{flow} normal yang salah ditandai serangan}}
+{\text{total \emph{flow} normal}} .
+\end{equation}
+Pada Fase~1 kami \emph{tidak} menjalankan serangan sama sekali (mesin penyerang
+dimatikan), sehingga \emph{semua} \emph{flow} pasti normal. Akibatnya
+$TP=FN=0$ dan Persamaan~\eqref{eq:far} menyederhana menjadi
+$\mathrm{FAR} = n_{\text{alarm-palsu}} / n_{\text{flow}}$. Nilai FAR yang
+\emph{rendah} berarti sistem tidak ``cerewet''; nilai $\mathrm{FAR}=1$ hampir
+selalu menandakan \emph{bug} satuan/skala (seperti jebakan mikrodetik di atas),
+bukan model yang buruk.
+
+Agar FAR kredibel, ia harus dihitung dari \emph{banyak} \emph{flow} dan
+\emph{stabil seiring waktu}, bukan dari cuplikan pendek yang kebetulan sepi.
+Karena itu Fase~1 dijalankan bertahap dengan durasi yang meningkat
+(Tabel~\ref{tab:ramp}); tiap tahap menghasilkan satu titik perbandingan FAR.
+Trafik normal dibangkitkan sendiri oleh mesin (permintaan HTTP lokal, pencarian
+DNS, unduhan kecil, akses situs publik via NAT) agar tersedia ribuan \emph{flow}
+benign yang beragam.
+
+\begin{table}[h]
+\centering
+\caption{Ramp durasi Fase~1 (FAR). Semua tahap memakai trafik \emph{normal saja};
+yang berubah hanya lama pengamatan. Tujuannya membuktikan FAR rendah bersifat
+\emph{stabil}, bukan artefak cuplikan pendek.}
+\label{tab:ramp}
+\small
+\begin{tabular}{llp{7.2cm}}
+\toprule
+Tahap & Durasi & Peran \\
+\midrule
+S0 & $\sim$3 menit & uji-asap: pastikan pipeline hidup \& satuan benar \\
+D1 & 1 jam  & titik FAR ke-1 + pemeriksaan skala fitur \\
+D2 & 6 jam  & FAR lintas beberapa jam + uji rotasi/unggah berkas per jam \\
+D3 & 24 jam & FAR satu siklus harian penuh (siang/malam) \\
+D4 & 3 hari & eskalasi opsional: variasi antar-hari kerja \\
+D5 & 7 hari & eskalasi opsional: variasi hari kerja vs akhir pekan \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Kenaikan durasi bertahap ini juga berfungsi sebagai \emph{pengendalian risiko
+biaya}: bila ada kesalahan (mis.\ salah satuan, gagal unggah), ia terdeteksi pada
+tahap pendek sebelum menghabiskan biaya komputasi berjam-jam. Setiap tahap punya
+\emph{gate} (syarat lolos): jumlah \emph{flow} $>0$, satuan durasi berorde
+mikrodetik, dan $\mathrm{FAR}\neq 1$. Bila gate gagal, tahap dihentikan,
+diperbaiki, lalu diulang --- tanpa naik ke durasi berikutnya.
+
+\paragraph{Fase 2 --- Deteksi: ``sigap saat diserang''.}
+Pada Fase~2, mesin penyerang dinyalakan dan melancarkan serangan nyata ke mesin
+target, sementara target merekam dan menilai. Berbeda dengan Fase~1, di sini
+durasi \emph{tidak} divariasikan; yang divariasikan adalah \emph{varian}
+serangan. Satu skenario berlangsung $\sim$7~menit dan berisi rangkaian berfase
+--- normal (1 menit) $\rightarrow$ \emph{SSH brute-force} (2 menit) $\rightarrow$
+\emph{Slowloris} (2 menit) $\rightarrow$ \emph{SYN flood} (1 menit) $\rightarrow$
+normal (1 menit) --- sehingga rekaman memuat campuran \emph{flow} normal dan
+serangan. Durasi $\sim$7~menit bukan angka keramat, melainkan jumlah durasi tiap
+sub-fase yang dikalibrasi agar tiap jenis serangan menghasilkan cukup \emph{flow}
+untuk metrik yang stabil, sambil menjaga eksperimen ringkas dan mudah diulang.
+Skenario dijalankan sekali per varian: \texttt{clean} (serangan polos) dan
+\texttt{evasion} (serangan yang disamarkan dengan menambah variasi waktu-antar
+paket). Metrik yang dihitung adalah MCC, F1, \emph{Precision}, dan \emph{Recall}
+--- membandingkan label prediksi terhadap kebenaran-dasar (\emph{ground truth})
+yang diketahui dari lini masa serangan.
+
+Perlu ditegaskan bahwa dua fase ini mengukur hal berbeda: Fase~1 menjawab
+``apakah sistem tenang saat tidak ada serangan, dan tetap tenang seiring waktu?''
+sedangkan Fase~2 menjawab ``apakah sistem mengenali serangan saat benar-benar
+terjadi, termasuk yang menyamar?''. Keduanya berasal dari \emph{model yang sama},
+sehingga bila keduanya baik, sistem terbukti \emph{tidak cerewet namun tetap
+peka} --- kombinasi yang sulit dan berharga, sebab banyak detektor mencapai
+\emph{recall} tinggi dengan mengorbankan FAR.
+
+\paragraph{Perluasan di masa depan.} Karena Fase~2 bersifat modular, menambah
+jenis serangan baru dilakukan dengan menambahkan sub-fase pada skenario (durasi
+total otomatis memanjang) \emph{dan} memperbarui lini masa kebenaran-dasar agar
+label cocok. Namun manfaatnya hanya terasa bila model juga mengenal pola serangan
+tersebut; menguji serangan yang sama sekali baru justru dapat menjadi uji
+generalisasi yang menarik, selama dilaporkan apa adanya.
+
+\subsection{Hasil Fase 2 di Trafik Nyata: Deteksi Gagal karena \emph{Distribution Shift}}
+\label{sec:rt-phase2}
+
+\noindent\emph{Catatan: hasil awal ini dilaporkan apa adanya sebagai temuan; angka
+bersumber dari eksperimen AWS nyata (region \texttt{ap-southeast-1}).}
+
+Kami menjalankan Fase~2 pada infrastruktur AWS: penyerang melancarkan serangan
+sungguhan ke korban, trafik ditangkap, lalu dinilai oleh Model~A (9 fitur,
+dilatih pada UNSW-NB15) \emph{tanpa} kalibrasi ulang. Dua varian diuji:
+\emph{clean} (SSH \emph{brute-force} + Slowloris + SYN \emph{flood} $200$/s) dan
+\emph{volumetric} (SYN \emph{flood} $5000$/s + HTTP \emph{flood} + UDP \emph{flood},
+dirancang agar laju alir mendekati kelas DoS/Generic UNSW). Hasilnya pada
+Tabel~\ref{tab:rt-detect}.
+
+\begin{table}[h]
+\centering
+\caption{Deteksi Fase~2 di AWS (Model~A UNSW, tanpa kalibrasi). Model gagal
+mengenali serangan nyata (\emph{recall} $\approx 0$) pada kedua varian.}
+\label{tab:rt-detect}
+\small
+\begin{tabular}{lccccc}
+\toprule
+Varian & $n$ \emph{flow} & MCC & F1 & Precision & Recall \\
+\midrule
+clean       & $434$    & $0{,}0265$ & $0{,}006$  & $1{,}0$ & $0{,}003$ \\
+volumetric  & $17{.}319$ & $0{,}0007$ & $0{,}0006$ & $1{,}0$ & $0{,}0003$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Diagnosis.} Kegagalan ini \emph{bukan} akibat \emph{feature-extractor
+mismatch} atau kesalahan satuan (\emph{z-score} ke-9 fitur wajar; SFM dan konversi
+satuan sudah benar, sebagaimana dikonfirmasi Fase~1 dengan $|z|\le 1{,}22$).
+Penyebabnya adalah \emph{distribution shift} pada distribusi fitur \emph{laju}
+(\texttt{src\_load}, \texttt{dst\_load}). Alir di AWS berdurasi \emph{panjang}
+(median \texttt{duration} $\approx 64$ detik pada varian \emph{volumetric}), sehingga
+laju $=$ byte$/$durasi menjadi kecil (\texttt{src\_load} median $15{,}6$ vs rerata
+latih $\approx 2{,}55\times10^{5}$; \texttt{dst\_load} $0{,}12$ vs $\approx 1{,}53\times10^{4}$).
+Sebaliknya, serangan DoS pada UNSW-NB15 berupa alir \emph{pendek} ber-laju
+\emph{tinggi}. Memperbesar volume serangan (\emph{volumetric}) \emph{tidak} menutup
+celah ini karena akar masalahnya adalah karakteristik durasi/laju alir, bukan volume.
+
+\paragraph{Makna.} Temuan ini memperkuat tesis utama makalah: keunggulan pada
+\emph{benchmark} tidak otomatis mentransfer ke trafik nyata akibat
+\emph{distribution shift}, dan pemulihannya menuntut \emph{kalibrasi domain}
+(mis.\ \emph{few-shot} dengan sedikit label dari domain target) --- bukan sekadar
+memperbaiki fitur/satuan atau mengubah bentuk serangan. Sebagai kelanjutan, sampel
+alir berlabel dari domain AWS dapat dipakai untuk kalibrasi \emph{few-shot} dan
+diuji ulang pada trafik AWS yang sama; ini menutup lingkaran validasi lintas-jaringan
+langsung di trafik nyata.
+
+\subsection{Verifikasi Kuantitatif \emph{Shift} Tiga Domain: Sintetik vs Nyata}
+\label{sec:rt-shift}
+
+Untuk menegaskan bahwa kegagalan zero-shot berakar pada pergeseran distribusi ---
+bukan artefak alat ukur --- kami membandingkan distribusi ke-9 fitur SFM pada tiga
+domain sekaligus: dua dataset sintetik (CIC-IDS2018, disingkat \emph{CIC};
+UNSW-NB15, disingkat \emph{UNS}) dan trafik nyata AWS (\emph{AWS-real}), memakai
+$1{,}62$ juta, $172{.}684$, dan $44{.}287$ \emph{flow} berturut-turut. Mengikuti
+protokol Layeghy \emph{et al.}~\cite{layeghy}, kami menghitung jarak Wasserstein
+$W_1$ (rata-rata 9 fitur, ruang $z$-score gabungan) dan sebuah
+\emph{domain-classifier} (\emph{random forest}, validasi silang 5-lipat) yang
+akurasinya mendekati $1$ menandakan domain terpisah sempurna (proxy
+$\mathcal{A}$-distance $\to 2$).
+
+\paragraph{Koreksi satuan lintas-ekstraktor.} Sebelum perbandingan, satuan fitur
+laju diselaraskan sesuai audit SFM: \texttt{sload}/\texttt{dload} UNSW (Argus,
+\emph{bit/detik}) dikonversi agar setara CIC (\texttt{Flow Byts/s} \emph{byte/detik};
+\texttt{Bwd Pkts/s} \emph{paket/detik}) --- \texttt{src\_load} dibagi $8$ dan
+\texttt{dst\_load} dihitung ulang sebagai \texttt{dpkts}$/$durasi. Tanpa koreksi ini,
+$W_1$ pada \texttt{dst\_load} membengkak palsu (mis.\ median UNS $1{.}447$ menjadi
+$4{,}8$ setelah koreksi, sebanding CIC $3{,}7$), yang akan salah-diinterpretasi
+sebagai \emph{shift} padahal semata perbedaan satuan.
+
+\begin{table}[h]
+\centering
+\caption{Jarak Wasserstein $W_1$ (rata-rata 9 fitur SFM, ruang $z$) dan
+\emph{domain-classifier} antar tiga domain, setelah koreksi satuan. $W_1$ kecil =
+distribusi mirip; akurasi pembeda $\to 1$ dan $\mathcal{A}$-distance $\to 2$ =
+domain terpisah.}
+\label{tab:rt-shift}
+\small
+\begin{tabular}{lccc}
+\toprule
+Pasangan & $W_1$ rata-rata & Akurasi pembeda & Proxy $\mathcal{A}$-dist. \\
+\midrule
+CIC vs UNS       & $0{,}317$ & $0{,}990$ & $1{,}961$ \\
+CIC vs AWS-real  & $0{,}230$ & $0{,}994$ & $1{,}975$ \\
+UNS vs AWS-real  & $0{,}372$ & $0{,}998$ & $1{,}993$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.78\linewidth]{fig_shift_wasserstein.png}
+\caption{Jarak Wasserstein rata-rata antar-domain (setelah koreksi satuan).
+Ketiga domain saling berjauhan; AWS-real paling dekat ke CIC pada fitur laju
+byte, namun berbeda pada ukuran paket balik (\texttt{bwd\_mean}).}
+\label{fig:rt-shift}
+\end{figure}
+
+Tiga temuan menonjol. \emph{Pertama}, \emph{domain-classifier} membedakan asal
+\emph{flow} dengan akurasi $0{,}99$ pada \emph{semua} pasangan --- ketiga domain
+praktis terpisah total di ruang 9 fitur, bukti kuat \emph{distribution shift}
+yang independen dari model deteksi. \emph{Kedua}, setelah koreksi satuan, fitur
+\emph{volume} (\texttt{fwd\_pkts}, \texttt{bwd\_pkts}, \texttt{fwd\_bytes},
+\texttt{bwd\_bytes}, \texttt{duration}) selaras di semua pasangan ($W_1<0{,}1$),
+membuktikan SFM berhasil menyamakan representasi volume; \emph{shift} tersisa
+terkonsentrasi pada fitur \emph{laju} dan \emph{bentuk paket}
+(\texttt{src\_load}, \texttt{fwd\_mean}, \texttt{bwd\_mean}). \emph{Ketiga},
+AWS-real menonjol pada \texttt{bwd\_mean} (median $351$ byte vs CIC $66$, UNS $44$;
+$W_1\approx 1{,}16$ terhadap keduanya) --- konsisten dengan respons layanan nyata
+(HTTP/SSH) yang mengirim muatan balik lebih besar daripada trafik sintetik. Inilah
+akar residual \emph{shift} yang membuat model gagal zero-shot dan yang menjadi
+sasaran kalibrasi \emph{few-shot} berikutnya.
+
+\subsection{\emph{Repair} via Few-Shot: Memulihkan Deteksi di Trafik Nyata AWS}
+\label{sec:rt-fewshot}
+
+Setelah mendiagnosis \emph{shift}, kami menutup lingkaran validasi: memulihkan deteksi
+di AWS memakai kalibrasi \emph{few-shot} dengan sedikit label domain target. Dari
+alir AWS berlabel (gabungan \emph{clean}+\emph{volumetric}: $17{.}753$ alir; $17{.}620$
+serangan, $133$ jinak), kami melakukan \emph{split} berlapis (\emph{stratified})
+menjadi \emph{train} ($60\%$) dan \emph{test} tetap ($40\%$: $7{.}049$ serangan,
+$53$ jinak; \emph{test} ini tak pernah dilatih). Model XGBoost dilatih pada
+\emph{source} (UNS atau CIC) ditambah fraksi $k\%$ label AWS-\emph{train}
+($k\in\{0,1,5,10,20\}$), lalu diuji pada AWS-\emph{test}. Sebagai acuan-atas,
+model dilatih hanya dari AWS-\emph{train} (\emph{AWS-only}). Hasil pada
+Tabel~\ref{tab:rt-fewshot} dan Gambar~\ref{fig:rt-fewshot}.
+
+\begin{table}[h]
+\centering
+\caption{Few-shot domain calibration ke AWS (MCC pada AWS-\emph{test}). $k=0$ adalah
+\emph{zero-shot} (source saja). Sedikit label AWS memulihkan MCC secara dramatis;
+$10$--$20\%$ menyamai acuan-atas AWS-only.}
+\label{tab:rt-fewshot}
+\small
+\begin{tabular}{lcc}
+\toprule
+$k\%$ label AWS & UNS$+$AWS & CIC$+$AWS \\
+\midrule
+$0$ (\emph{zero-shot}) & $0{,}074$ & $-0{,}217$ \\
+$1$   & $0{,}490$ & $0{,}132$ \\
+$5$   & $0{,}479$ & $0{,}370$ \\
+$10$  & $0{,}588$ & $0{,}207$ \\
+$20$  & $0{,}596$ & $0{,}456$ \\
+\midrule
+\emph{AWS-only} (acuan-atas) & \multicolumn{2}{c}{$0{,}598$} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.78\linewidth]{aws_fewshot_curve.png}
+\caption{Kurva few-shot ke AWS. UNS$+$AWS memulihkan MCC dari $\approx 0$ ke
+$\sim 0{,}59$ (mendekati AWS-only) hanya dengan $10$--$20\%$ label AWS; CIC$+$AWS
+memulihkan pula namun lebih berisik, konsisten dengan asimetri domain
+(\S\ref{sec:asymmetry}).}
+\label{fig:rt-fewshot}
+\end{figure}
+
+Tiga observasi. \emph{Pertama}, \emph{zero-shot} gagal pada kedua \emph{source}
+(UNS $0{,}074$; CIC bahkan $-0{,}217$, prediksi berlawanan arah dengan kebenaran),
+menegaskan bahwa keunggulan \emph{benchmark} tak mentransfer ke trafik nyata.
+\emph{Kedua}, kalibrasi \emph{few-shot} memulihkan deteksi secara efisien: hanya
+$1\%$ label AWS ($107$ alir) melompatkan MCC UNS$+$AWS ke $0{,}49$, dan $10$--$20\%$
+mencapai $\sim 0{,}59$ --- setara \emph{AWS-only} ($0{,}598$) yang dilatih penuh.
+\emph{Ketiga}, arah UNS lebih unggul dan lebih stabil daripada CIC di semua fraksi,
+sejalan dengan analisis asimetri domain (\S\ref{sec:asymmetry}): \emph{source}
+yang lebih heterogen (UNSW) lebih mudah dikalibrasi ke trafik nyata yang beragam.
+
+\paragraph{Catatan metrik.} Karena AWS-\emph{test} sangat tak-seimbang ($\approx 99\%$
+serangan), F1 tetap tinggi ($\approx 0{,}99$) bahkan saat \emph{zero-shot} --- sehingga
+menyesatkan. Kami karenanya melaporkan \textbf{MCC} sebagai metrik utama, yang
+memperhitungkan seluruh sel matriks kebingungan dan bergerak jujur mengikuti
+kualitas deteksi sebenarnya. Perlu dicatat pula bahwa angka \emph{zero-shot} di
+Tabel~\ref{tab:rt-fewshot} berbeda dari Tabel~\ref{tab:rt-detect}: yang pertama
+memakai model dilatih-ulang dari fitur \emph{source} yang telah dikoreksi satuan
+(\S\ref{sec:rt-shift}) dengan penyeimbangan kelas, sedangkan Tabel~\ref{tab:rt-detect}
+memakai model tersebar apa adanya; keduanya sama-sama menunjukkan kegagalan
+\emph{zero-shot} namun tidak dibandingkan langsung.
+
+\paragraph{Implikasi.} Temuan ini melengkapi narasi \emph{diagnosis}$\to$\emph{repair}:
+SFM menyelaraskan ruang fitur antar-lingkungan (\S\ref{sec:rt-shift}), dan kalibrasi
+\emph{few-shot} menyerap sisa \emph{shift} spesifik-lingkungan dengan biaya label
+yang minim. Prosedur ini dapat \emph{diulang} pada setiap lingkungan baru
+(SFM$+$few-shot), menjadikannya resep adaptasi yang praktis, bukan klaim model
+universal yang terbukti rapuh.
+
+% ============================================================
+\section{Diskusi}
+\label{sec:discussion}
+
+Rangkaian temuan membentuk narasi yang koheren dan jujur:
+(1) NIDS single-source runtuh lintas-jaringan;
+(2) penyebabnya adalah \emph{distribution shift}, bukan ketidakcukupan fitur;
+(3) kalibrasi minimal atau \emph{mixup} memulihkan performa secara efisien
+berkat SFM yang tervalidasi, dan pemulihan ini terkonfirmasi pada trafik nyata
+AWS via \emph{few-shot}\ifadversarial;
+(4) evaluasi adversarial harus realistis (functional-preserving) dan
+menyeluruh (adaptive white-box), jika tidak akan melebih-lebihkan ketahanan\fi.
+
+\subsection{Analisis Asimetri Performa Adaptasi}
+\label{sec:asymmetry}
+Sebuah pola konsisten muncul di seluruh eksperimen adaptasi: arah
+CIC$\rightarrow$UNSW selalu memulihkan MCC lebih rendah
+($\sim 0{,}65$--$0{,}70$ pada few-shot; $-0{,}185$ pada CORAL) dibandingkan arah
+UNSW$\rightarrow$CIC ($\sim 0{,}90$ pada few-shot; $+0{,}164$ pada CORAL). Kami
+menganalisis asimetri ini dari sudut \textbf{kompleksitas domain}.
+
+CSE-CIC-IDS2018 dibangkitkan pada infrastruktur \emph{testbed} yang relatif
+terstruktur, sedangkan UNSW-NB15 dibangkitkan dengan generator IXIA
+PerfectStorm yang menyuntikkan variasi serangan lebih beragam
+(sembilan kelas: \emph{Fuzzers, Analysis, Backdoors, DoS, Exploits, Generic,
+Reconnaissance, Shellcode, Worms}) dengan tingkat \emph{noise} lebih tinggi.
+Akibatnya, distribusi UNSW-NB15 pada ruang fitur irisan lebih ``lebar'' dan
+heterogen. Memindahkan model dari domain \emph{sederhana} (CIC) ke domain
+\emph{kompleks} (UNSW) secara inheren lebih sulit: model sumber tidak pernah
+melihat mode-mode distribusi kaya milik target. Sebaliknya, memindahkan dari
+domain kompleks (UNSW) ke domain lebih terstruktur (CIC) lebih mudah karena
+target merupakan himpunan bagian perilaku yang sebagian sudah tercakup.
+
+Interpretasi ini konsisten dengan dua bukti internal: (i) CORAL --- yang
+menyelaraskan kovarians orde-2 --- justru \emph{memperburuk} arah
+CIC$\rightarrow$UNSW ($-0{,}072 \rightarrow -0{,}185$) karena memaksa struktur
+sumber yang sempit menutupi ruang target yang lebih luas; dan (ii) pelatihan
+gabungan (\emph{joint}) tetap menyisakan selisih (UNSW $0{,}732$ vs CIC $0{,}912$),
+menandakan sebagian kompleksitas UNSW sulit direpresentasikan oleh $9$ fitur
+irisan meskipun kedua domain terlihat saat pelatihan. Asimetri ini karena itu
+merupakan properti struktural pasangan dataset, bukan artefak metode.
+
+\paragraph{Keterbatasan.} \ifadversarial Kami melaporkan secara jujur bahwa pertahanan
+\emph{adversarial training} kami belum tahan terhadap serangan adaptif; asimetri\else Asimetri\fi
+arah CIC$\rightarrow$UNSW ($\sim 0{,}65$--$0{,}70$) vs UNSW$\rightarrow$CIC
+($\sim 0{,}91$) \ifadversarial juga \fi belum sepenuhnya teratasi (dianalisis pada
+\S\ref{sec:asymmetry}). Evaluasi masih terbatas pada tugas biner. Penggunaan
+model tunggal XGBoost adalah \emph{pilihan desain} yang disengaja demi efisiensi
+\emph{edge} (\S\ref{sec:edge}), bukan sekadar keterbatasan; eksplorasi
+\emph{ensemble} robust ditinggalkan sebagai arah lanjutan yang harus tetap
+mempertimbangkan anggaran komputasi penyebaran.
+
+% ============================================================
+\section{Kesimpulan dan Kerja Mendatang}
+\label{sec:conclusion}
+
+Kami menyajikan studi lintas-jaringan yang jujur pada pasangan CSE-CIC-IDS2018
+dan UNSW-NB15. \emph{Semantic Feature Mapping} yang tervalidasi memungkinkan
+pelatihan lintas-dataset; kami menunjukkan bahwa celah generalisasi berakar pada
+\emph{distribution shift} dan dapat ditutup dengan kalibrasi berbiaya-rendah
+($1\%$ label target) atau \emph{mixup} tanpa label, dengan konfirmasi pada
+trafik nyata AWS melalui kalibrasi \emph{few-shot}.\ifadversarial{} Kami juga mengoreksi praktik
+evaluasi adversarial melalui \emph{functional-preserving} dan
+\emph{adaptive white-box}.\fi
+
+\paragraph{Desain skenario pengujian \emph{real-traffic}.} Agar pembaca memahami
+ragam percobaan, kami jelaskan asal-usul skenario. Skenario serangan pada fase
+deteksi mengikuti urutan \emph{benign} $\rightarrow$ \emph{SSH brute-force}
+$\rightarrow$ \emph{Slowloris} $\rightarrow$ \emph{SYN flood} $\rightarrow$
+\emph{benign}. Ide skenario dipilih dengan dua pertimbangan sekaligus.
+\emph{Pertama, selaras secara kategori serangan} dengan ruang label yang dikenal
+model: brute-force, \emph{denial-of-service} (Slowloris), dan \emph{flooding}
+(SYN) memiliki padanan pada kategori UNSW-NB15 (mis. \emph{DoS}, aktivitas
+\emph{Exploits}/brute-force, \emph{Generic}), sehingga evaluasi MCC/F1 bermakna;
+skenario ini juga sengaja \emph{mereplikasi pola percobaan paper NIDS pertama}
+demi keterbandingan (\emph{comparability}) antar-studi. \emph{Kedua, sengaja
+berbeda dari kondisi pembangkitan dataset} pada aspek lingkungan: dataset
+UNSW-NB15 dibangkitkan generator perangkat keras (IXIA PerfectStorm, 2015),
+sedangkan pengujian ini adalah trafik nyata di AWS EC2 (perkakas serangan asli:
+\texttt{hydra}, \texttt{slowloris}, \texttt{nping}) yang diekstraksi dengan
+NFStream---berbeda tahun, topologi, dan alat ekstraksi. Perbedaan yang disengaja
+inilah yang menguji ketiga gap secara realistis (generalisasi lintas-jaringan
+dan \emph{feature-extractor mismatch}), bukan sekadar mengonfirmasi diri sendiri.
+Fase FAR sepenuhnya \emph{benign} (tanpa serangan) untuk mengukur \emph{False
+Alarm Rate} pada trafik normal dunia nyata.
+
+\paragraph{Validasi \emph{real-traffic} bertahap (AWS, multi-durasi).} Sebagai
+validasi kesiapan penyebaran, NIDS di-\emph{deploy} pada trafik nyata di AWS dan
+FAR diukur pada \textbf{durasi observasi yang bertambah bertahap}:
+\textbf{1 jam $\rightarrow$ 6 jam $\rightarrow$ 24 jam} (satu siklus harian
+penuh), dengan opsi eskalasi \textbf{3 hari $\rightarrow$ 7 hari} (variasi hari
+kerja/akhir pekan). Tujuan pentahapan ini bukan sekadar validasi teknis,
+melainkan \emph{membandingkan FAR antar-durasi}: FAR agregat yang rendah dan
+konsisten seiring bertambahnya durasi membuktikan hasil bukan artefak
+\emph{snapshot} pendek. Gambar~\ref{fig:deploy} menyajikan arsitektur yang
+dipakai di semua durasi: trafik ditangkap pada antarmuka sensor (EC2 + NFStream),
+fitur \emph{flow} diekstraksi, diselaraskan via SFM dan \emph{z-score} (memakai
+parameter latih \emph{offline}), lalu diinferensikan oleh model XGBoost ringan
+untuk deteksi \emph{real-time} sekaligus pencatatan FAR.
+
+\begin{table}[h]
+\centering
+\caption{Rencana perbandingan FAR antar-durasi observasi (deployment AWS, trafik
+normal). Infrastruktur identik; hanya durasi capture berbeda. Angka diisi dari
+eksekusi nyata (\texttt{far\_log.jsonl}).}
+\label{tab:far}
+\begin{tabular}{lrrr}
+\toprule
+Durasi observasi & Total \emph{flow} benign & \emph{False alarm} & FAR (\%) \\
+\midrule
+S0 (uji-asap, $\sim$3 menit) & $203$    & $0$  & $0{,}0000$ \\
+D1 (1 jam)                   & $3687$   & $14$ & $0{,}3797$ \\
+D2 (6 jam)                   & $22{.}644$ & $94$ & $0{,}4152$ \\
+24 jam \emph{(opsional)}     & \multicolumn{3}{c}{belum dijalankan} \\
+3--7 hari \emph{(opsional)}  & \multicolumn{3}{c}{eskalasi bila diperlukan} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent Tabel~\ref{tab:far} diisi dari log \emph{deployment} nyata
+(\texttt{far\_log.jsonl}). FAR tetap \emph{rendah dan stabil} seiring bertambahnya
+durasi observasi (S0 $0{,}00\%$ $\rightarrow$ D1 $0{,}38\%$ $\rightarrow$ D2
+$0{,}42\%$ pada $22{.}644$ alir benign), membuktikan hasil bukan artefak
+\emph{snapshot} pendek. Nilai FAR $<0{,}5\%$ ini juga menepis dugaan \emph{bug}
+satuan/skala (yang khasnya melonjakkan FAR ke $\approx 100\%$). Durasi 24 jam dan
+3--7 hari disiapkan sebagai eskalasi opsional dan belum dijalankan; naskah tidak
+memuat angka karangan untuk baris tersebut.
+
+\ifadversarial
+\paragraph{Kerja mendatang lain.} (i) Klasifikasi multi-kelas dan model
+\emph{ensemble} robust dengan tetap mempertimbangkan anggaran komputasi
+\emph{edge}; (ii) adaptasi domain yang lebih kuat untuk mengatasi asimetri arah;
+(iii) pertahanan yang benar-benar tahan \emph{adaptive white-box};
+(iv) perpanjangan \emph{deployment} FAR ke skala multi-hari (3--7 hari) untuk
+melengkapi perbandingan antar-durasi (Tabel~\ref{tab:far}).
+\else
+\paragraph{Ketahanan adversarial dan evasion (arah lanjutan).} Makalah ini
+sengaja \emph{membatasi ruang lingkup} pada generalisasi lintas-jaringan dan
+kalibrasi domain, serta \emph{tidak} membahas ketahanan terhadap serangan
+\emph{adversarial}/\emph{evasion}. Alasannya, keduanya adalah persoalan yang
+\emph{terpisah secara empiris} dari generalisasi lintas-jaringan: dalam
+eksperimen pendahuluan kami, \emph{adversarial training} memperbaiki ketahanan
+\emph{evasion} di dalam-jaringan namun \emph{tidak} menutup celah lintas-jaringan
+--- menegaskan bahwa \emph{adversarial-robustness} dan \emph{cross-network
+robustness} menuntut solusi berbeda. Karena itu, evaluasi ketahanan yang menyeluruh
+--- meliputi \emph{functional-preserving evasion} (serangan yang menjaga
+validitas protokol) dan \emph{adaptive white-box} (penyerang yang mengetahui
+model pertahanan) --- kami tetapkan sebagai \textbf{arah lanjutan} yang akan
+dilaporkan pada studi terpisah, di atas fondasi SFM dan kalibrasi domain yang
+divalidasi di sini. Arah lanjutan lain: (i) klasifikasi multi-kelas dan
+\emph{ensemble} robust dengan tetap mempertimbangkan anggaran komputasi
+\emph{edge}; (ii) adaptasi domain yang lebih kuat untuk mengatasi asimetri arah;
+(iii) perpanjangan \emph{deployment} FAR ke skala multi-hari (3--7 hari) untuk
+melengkapi perbandingan antar-durasi (Tabel~\ref{tab:far}).
+\fi
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.98\linewidth]{fig6_deployment_blueprint.png}
+\caption{Arsitektur penyebaran di AWS untuk validasi FAR \emph{real-traffic}:
+pipeline sensor$\rightarrow$SFM$\rightarrow$XGBoost robust. Percobaan dijalankan
+bertahap 1 jam $\rightarrow$ 6 jam $\rightarrow$ 24 jam, dapat diperpanjang ke
+multi-hari (3--7 hari).}
+\label{fig:deploy}
+\end{figure}
+
+% ============================================================
+\section*{Ketersediaan Reproduksi}
+Kode, konfigurasi, \emph{notebook}, dan berkas hasil ringkas ($*.json$) tersedia
+di repositori. Dataset besar tidak disertakan (lisensi/ukuran) namun dapat
+diperoleh dari sumber resmi masing-masing.
+
+% Format referensi: gaya IEEE — inisial nama depan; judul dalam tanda kutip;
+% nama venue italik; konferensi diawali "in Proc."; halaman & tahun.
+\begin{thebibliography}{99}
+
+% ---------- Latar & dampak ekonomi ----------
+\bibitem{cremer} F.~Cremer, B.~Sheehan, M.~Fortmann, A.~N.~Kia, M.~Mullins,
+F.~Murphy, and S.~Materne, ``Cyber risk and cybersecurity: A systematic review
+of data availability,'' \emph{Geneva Papers Risk Insurance --- Issues Pract.},
+vol.~47, no.~3, pp.~698--736, 2022.
+
+\bibitem{torres} J.~M.~Torres, C.~I.~Comesa\~na, and P.~J.~Garc\'ia-Nieto,
+``Machine learning techniques applied to cybersecurity,'' \emph{Int. J. Mach.
+Learn. Cybern.}, vol.~10, no.~10, pp.~2823--2836, 2019.
+
+\bibitem{sarker} I.~H.~Sarker, A.~S.~M.~Kayes, S.~Badsha, H.~Alqahtani,
+P.~Watters, and A.~Ng, ``Cybersecurity data science: An overview from machine
+learning perspective,'' \emph{J. Big Data}, vol.~7, no.~1, pp.~1--29, 2020.
+
+\bibitem{khraisat} A.~Khraisat, I.~Gondal, P.~Vamplew, and J.~Kamruzzaman,
+``Survey of intrusion detection systems: Techniques, datasets and challenges,''
+\emph{Cybersecurity}, vol.~2, no.~1, pp.~1--22, 2019.
+
+\bibitem{buczak} A.~L.~Buczak and E.~Guven, ``A survey of data mining and
+machine learning methods for cyber security intrusion detection,'' \emph{IEEE
+Commun. Surveys Tuts.}, vol.~18, no.~2, pp.~1153--1176, 2016.
+
+\bibitem{bhuyan} M.~H.~Bhuyan, D.~K.~Bhattacharyya, and J.~K.~Kalita, ``Network
+anomaly detection: Methods, systems and tools,'' \emph{IEEE Commun. Surveys
+Tuts.}, vol.~16, no.~1, pp.~303--336, 2014.
+
+% ---------- Dataset benchmark ----------
+\bibitem{kdd} M.~Tavallaee, E.~Bagheri, W.~Lu, and A.~A.~Ghorbani, ``A detailed
+analysis of the KDD Cup 99 data set,'' in \emph{Proc. IEEE Symp. Computational
+Intelligence for Security and Defense Applications (CISDA)}, 2009, pp.~1--6.
+
+\bibitem{unsw} N.~Moustafa and J.~Slay, ``UNSW-NB15: A comprehensive data set
+for network intrusion detection systems (UNSW-NB15 network data set),'' in
+\emph{Proc. Military Communications and Information Systems Conf. (MilCIS)},
+Canberra, Australia, 2015, pp.~1--6.
+
+\bibitem{unsweval} N.~Moustafa and J.~Slay, ``The evaluation of network anomaly
+detection systems: Statistical analysis of the UNSW-NB15 data set and the
+comparison with the KDD99 data set,'' \emph{Inf. Secur. J.}, vol.~25, no.~1--3,
+pp.~18--31, 2016.
+
+\bibitem{cicids} I.~Sharafaldin, A.~H.~Lashkari, and A.~A.~Ghorbani, ``Toward
+generating a new intrusion detection dataset and intrusion traffic
+characterization,'' in \emph{Proc. 4th Int. Conf. Information Systems Security
+and Privacy (ICISSP)}, Funchal, Portugal, 2018, pp.~108--116.
+
+\bibitem{cicddos} I.~Sharafaldin, A.~H.~Lashkari, S.~Hakak, and A.~A.~Ghorbani,
+``Developing realistic distributed denial of service (DDoS) attack dataset and
+taxonomy,'' in \emph{Proc. Int. Carnahan Conf. Security Technology (ICCST)},
+2019, pp.~1--8.
+
+\bibitem{botiot} N.~Koroniotis, N.~Moustafa, E.~Sitnikova, and B.~Turnbull,
+``Towards the development of realistic botnet dataset for IoT networks,''
+\emph{IEEE Access}, vol.~7, pp.~94529--94541, 2019.
+
+\bibitem{toniot} A.~Alsaedi, N.~Moustafa, Z.~Tari, A.~N.~Mahmood, and A.~Anwar,
+``TON\_IoT telemetry dataset: A new generation dataset of IoT and IIoT for
+data-driven intrusion detection systems,'' \emph{IEEE Access}, vol.~8,
+pp.~165130--165150, 2020.
+
+\bibitem{ciciot} E.~C.~P.~Neto, S.~Dadkhah, R.~Ferreira, A.~Zohourian, R.~Lu,
+and A.~A.~Ghorbani, ``CICIoT2023: A real-time dataset and benchmark for
+large-scale attacks in IoT environment,'' \emph{Sensors}, vol.~23, no.~13,
+art.~5941, 2023.
+
+\bibitem{ring} M.~Ring, S.~Wunderlich, D.~Scheuring, D.~Landes, and A.~Hotho,
+``A survey of network-based intrusion detection data sets,'' \emph{Comput.
+Secur.}, vol.~86, pp.~147--167, 2019.
+
+% ---------- Integritas & realisme dataset ----------
+\bibitem{engelen} G.~Engelen, V.~Rimmer, and W.~Joosen, ``Troubleshooting an
+intrusion detection dataset: The CICIDS2017 case study,'' in \emph{Proc. IEEE
+Security and Privacy Workshops (SPW)}, 2021, pp.~7--12.
+
+\bibitem{rosay} A.~Rosay, E.~Cheval, F.~Carlier, and P.~Leroux, ``Network
+intrusion detection: A comprehensive analysis of CIC-IDS2017,'' in \emph{Proc.
+8th Int. Conf. Information Systems Security and Privacy (ICISSP)}, 2022,
+pp.~25--36.
+
+\bibitem{lanvin} M.~Lanvin, P.-F.~Gimenez, Y.~Han, F.~Majorczyk, L.~M\'e, and
+\'E.~Totel, ``Errors in the CICIDS2017 dataset and the significant differences
+in detection performances it makes,'' in \emph{Proc. Int. Conf. Risks and
+Security of Internet and Systems (CRiSIS)}. Cham, Switzerland: Springer, 2022,
+pp.~18--33.
+
+\bibitem{liu} L.~Liu, G.~Engelen, T.~Lynar, D.~Essam, and W.~Joosen, ``Error
+prevalence in NIDS datasets: A case study on CIC-IDS-2017 and CSE-CIC-IDS-2018,''
+in \emph{Proc. IEEE Conf. Communications and Network Security (CNS)}, 2022,
+pp.~254--262.
+
+\bibitem{catillo} M.~Catillo, A.~Pecchia, and U.~Villano, ``Machine learning on
+public intrusion datasets: Academic hype or concrete advances in NIDS?'' in
+\emph{Proc. 53rd Annu. IEEE/IFIP Int. Conf. Dependable Systems and Networks
+(DSN-S)}, 2023, pp.~132--136.
+
+\bibitem{layeghy} S.~Layeghy, M.~Gallagher, and M.~Portmann, ``Benchmarking the
+benchmark --- Comparing synthetic and real-world network IDS datasets,''
+\emph{J. Inf. Secur. Appl.}, vol.~80, art.~103689, 2024.
+
+\bibitem{sarhan} M.~Sarhan, S.~Layeghy, and M.~Portmann, ``Towards a standard
+feature set for network intrusion detection system datasets,'' \emph{Mobile
+Netw. Appl.}, vol.~27, no.~1, pp.~357--370, 2022.
+
+\bibitem{sarhannf} M.~Sarhan, S.~Layeghy, N.~Moustafa, and M.~Portmann,
+``NetFlow datasets for machine learning-based network intrusion detection
+systems,'' in \emph{Big Data Technologies and Applications}. Cham, Switzerland:
+Springer, 2021, pp.~117--135.
+
+% ---------- Generalisasi lintas-dataset & federated ----------
+\bibitem{cantone} M.~Cantone, C.~Marrocco, and A.~Bria, ``Machine learning in
+network intrusion detection: A cross-dataset generalization study,'' \emph{IEEE
+Access}, vol.~12, pp.~144491--144509, 2024.
+
+\bibitem{dhooge} L.~D'Hooge, T.~Wauters, B.~Volckaert, and F.~De~Turck,
+``Inter-dataset generalization strength of supervised machine learning methods
+for intrusion detection,'' \emph{J. Inf. Secur. Appl.}, vol.~54, art.~102564,
+2020.
+
+\bibitem{verkerken} M.~Verkerken, L.~D'Hooge, T.~Wauters, B.~Volckaert, and
+F.~De~Turck, ``Towards model generalization for intrusion detection:
+Unsupervised machine learning techniques,'' \emph{J. Netw. Syst. Manage.},
+vol.~30, no.~1, pp.~1--25, 2022.
+
+\bibitem{popoola} S.~I.~Popoola, G.~Gui, B.~Adebisi, M.~Hammoudeh, and
+H.~Gacanin, ``Federated deep learning for collaborative intrusion detection in
+heterogeneous networks,'' in \emph{Proc. IEEE 94th Vehicular Technology Conf.
+(VTC-Fall)}, 2021, pp.~1--6.
+
+\bibitem{bertoli} G.~de~Carvalho~Bertoli, L.~A.~Pereira~Jr., O.~Saotome, and
+A.~L.~dos~Santos, ``Generalizing intrusion detection for heterogeneous networks:
+A stacked-unsupervised federated learning approach,'' \emph{Comput. Secur.},
+vol.~127, art.~103106, 2023.
+
+\bibitem{agrawal} S.~Agrawal, S.~Sarkar, O.~Aouedi, G.~Yenduri, K.~Piamrat,
+M.~Alazab, S.~Bhattacharya, P.~K.~R.~Maddikunta, and T.~R.~Gadekallu,
+``Federated learning for intrusion detection system: Concepts, challenges and
+future directions,'' \emph{Comput. Commun.}, vol.~195, pp.~346--361, 2022.
+
+\bibitem{nidsfgpa} J.~Wang, K.~Yang, and M.~Li, ``NIDS-FGPA: A federated learning
+network intrusion detection algorithm based on secure aggregation of gradient
+similarity models,'' \emph{PLoS ONE}, vol.~19, no.~10, art.~e0308639, 2024.
+
+% ---------- Model klasik / DL untuk NIDS ----------
+\bibitem{xgboost} T.~Chen and C.~Guestrin, ``XGBoost: A scalable tree boosting
+system,'' in \emph{Proc. 22nd ACM SIGKDD Int. Conf. Knowledge Discovery and
+Data Mining (KDD)}, San Francisco, CA, USA, 2016, pp.~785--794.
+
+\bibitem{husain} A.~Husain, A.~Salem, C.~Jim, and G.~Dimitoglou, ``Development
+of an efficient network intrusion detection model using extreme gradient
+boosting (XGBoost) on the UNSW-NB15 dataset,'' in \emph{Proc. IEEE Int. Symp.
+Signal Processing and Information Technology (ISSPIT)}, 2019, pp.~1--7.
+
+\bibitem{zhou} Y.~Zhou, G.~Cheng, S.~Jiang, and M.~Dai, ``Building an efficient
+intrusion detection system based on feature selection and ensemble classifier,''
+\emph{Comput. Netw.}, vol.~174, art.~107247, 2020.
+
+\bibitem{shone} N.~Shone, T.~N.~Ngoc, V.~D.~Phai, and Q.~Shi, ``A deep learning
+approach to network intrusion detection,'' \emph{IEEE Trans. Emerg. Topics
+Comput. Intell.}, vol.~2, no.~1, pp.~41--50, 2018.
+
+\bibitem{liulang} H.~Liu and B.~Lang, ``Machine learning and deep learning
+methods for intrusion detection systems: A survey,'' \emph{Appl. Sci.}, vol.~9,
+no.~20, art.~4396, 2019.
+
+\bibitem{mahdavifar} S.~Mahdavifar and A.~A.~Ghorbani, ``Application of deep
+learning to cybersecurity: A survey,'' \emph{Neurocomputing}, vol.~347,
+pp.~149--176, 2019.
+
+\bibitem{wu} Z.~Wu, H.~Zhang, P.~Wang, and Z.~Sun, ``RTIDS: A robust
+transformer-based approach for intrusion detection system,'' \emph{IEEE Access},
+vol.~10, pp.~64375--64387, 2022.
+
+\bibitem{duan} G.~Duan, H.~Lv, H.~Wang, and G.~Feng, ``Application of a dynamic
+line graph neural network for intrusion detection with semisupervised
+learning,'' \emph{IEEE Trans. Inf. Forensics Security}, vol.~18, pp.~699--714,
+2023.
+
+% ---------- Adaptasi domain & few-shot ----------
+\bibitem{coral} B.~Sun, J.~Feng, and K.~Saenko, ``Return of frustratingly easy
+domain adaptation,'' in \emph{Proc. 30th AAAI Conf. Artificial Intelligence
+(AAAI)}, Phoenix, AZ, USA, 2016, pp.~2058--2065.
+
+\bibitem{fewshot} C.~Xu, Y.~Zhan, G.~Chen, Z.~Wang, S.~Liu, and W.~Hu,
+``Elevated few-shot network intrusion detection via self-attention mechanisms
+and iterative refinement,'' \emph{PLoS ONE}, vol.~20, no.~1, art.~e0317713, 2025.
+
+% ---------- Fondasi adversarial ML ----------
+\bibitem{szegedy} C.~Szegedy, W.~Zaremba, I.~Sutskever, J.~Bruna, D.~Erhan,
+I.~Goodfellow, and R.~Fergus, ``Intriguing properties of neural networks,'' in
+\emph{Proc. Int. Conf. Learning Representations (ICLR)}, 2014.
+
+\bibitem{fgsm} I.~J.~Goodfellow, J.~Shlens, and C.~Szegedy, ``Explaining and
+harnessing adversarial examples,'' in \emph{Proc. Int. Conf. Learning
+Representations (ICLR)}, 2015.
+
+\bibitem{madry} A.~M\k{a}dry, A.~Makelov, L.~Schmidt, D.~Tsipras, and A.~Vladu,
+``Towards deep learning models resistant to adversarial attacks,'' in \emph{Proc.
+Int. Conf. Learning Representations (ICLR)}, 2018.
+
+\bibitem{saliency} K.~Simonyan, A.~Vedaldi, and A.~Zisserman, ``Deep inside
+convolutional networks: Visualising image classification models and saliency
+maps,'' in \emph{Workshop at Int. Conf. Learning Representations (ICLR)}, 2014.
+
+\bibitem{obfuscated} A.~Athalye, N.~Carlini, and D.~Wagner, ``Obfuscated
+gradients give a false sense of security: Circumventing defenses to adversarial
+examples,'' in \emph{Proc. 35th Int. Conf. Machine Learning (ICML)}, Stockholm,
+Sweden, 2018, pp.~274--283.
+
+\bibitem{adaptive} F.~Tram\`er, N.~Carlini, W.~Brendel, and A.~M\k{a}dry, ``On
+adaptive attacks to adversarial example defenses,'' in \emph{Proc. 34th Conf.
+Neural Information Processing Systems (NeurIPS)}, Vancouver, Canada, 2020,
+pp.~1633--1645.
+
+% ---------- GAN: fondasi & varian ----------
+\bibitem{gan} I.~Goodfellow, J.~Pouget-Abadie, M.~Mirza, B.~Xu, D.~Warde-Farley,
+S.~Ozair, A.~Courville, and Y.~Bengio, ``Generative adversarial nets,'' in
+\emph{Advances in Neural Information Processing Systems (NeurIPS)}, 2014,
+pp.~2672--2680.
+
+\bibitem{cgan} M.~Mirza and S.~Osindero, ``Conditional generative adversarial
+nets,'' \emph{arXiv:1411.1784}, 2014.
+
+\bibitem{wgan} M.~Arjovsky, S.~Chintala, and L.~Bottou, ``Wasserstein GAN,''
+\emph{arXiv:1701.07875}, 2017.
+
+\bibitem{dcgan} A.~Radford, L.~Metz, and S.~Chintala, ``Unsupervised
+representation learning with deep convolutional generative adversarial
+networks,'' \emph{arXiv:1511.06434}, 2015.
+
+\bibitem{sagan} H.~Zhang, I.~Goodfellow, D.~Metaxas, and A.~Odena,
+``Self-attention generative adversarial networks,'' in \emph{Proc. 36th Int.
+Conf. Machine Learning (ICML)}, PMLR, vol.~97, 2019, pp.~7354--7363.
+
+\bibitem{acgan} A.~Odena, C.~Olah, and J.~Shlens, ``Conditional image synthesis
+with auxiliary classifier GANs,'' in \emph{Proc. 34th Int. Conf. Machine
+Learning (ICML)}, PMLR, vol.~70, 2017, pp.~2642--2651.
+
+\bibitem{ctgan} L.~Xu, M.~Skoularidou, A.~Cuesta-Infante, and K.~Veeramachaneni,
+``Modeling tabular data using conditional GAN,'' in \emph{Advances in Neural
+Information Processing Systems (NeurIPS)}, vol.~32, 2019.
+
+% ---------- GAN untuk IDS: survei, augmentasi, evasion ----------
+\bibitem{alauthman} M.~Alauthman, N.~Aslam, A.~Al-Qerem, A.~Aldweesh, and
+P.~Sureephong, ``Generative adversarial networks for intrusion detection
+systems: A comprehensive survey of applications, challenges, and research
+directions,'' \emph{Arabian J. Sci. Eng.}, vol.~51, pp.~179--203, 2026.
+
+\bibitem{alajlan} M.~Al-Ajlan and M.~Ykhlef, ``A review of generative
+adversarial networks for intrusion detection systems: Advances, challenges, and
+future directions,'' \emph{Comput. Mater. Continua}, vol.~81, no.~2,
+pp.~2053--2076, 2024.
+
+\bibitem{dunmore} A.~Dunmore, J.~Jang-Jaccard, F.~Sabrina, and J.~Kwak,
+``Generative adversarial networks for malware detection: A survey,''
+\emph{arXiv:2302.08558}, 2023.
+
+\bibitem{aceto} G.~Aceto, F.~Giampaolo, C.~Guida, S.~Izzo, A.~Pescap\`e,
+F.~Piccialli, and E.~Prezioso, ``Synthetic and privacy-preserving traffic trace
+generation using generative AI models for training network intrusion detection
+systems,'' \emph{J. Netw. Comput. Appl.}, vol.~229, art.~103926, 2024.
+
+\bibitem{kumar} V.~Kumar and D.~Sinha, ``Synthetic attack data generation model
+applying generative adversarial network for intrusion detection,'' \emph{Comput.
+Secur.}, vol.~125, art.~103054, 2023.
+
+\bibitem{zhaogan} X.~Zhao, K.~W.~Fok, and V.~L.~L.~Thing, ``Enhancing network
+intrusion detection performance using generative adversarial networks,''
+\emph{Comput. Secur.}, vol.~145, art.~104005, 2024.
+
+\bibitem{tmggan} H.~Ding, Y.~Sun, N.~Huang, Z.~Shen, and X.~Cui, ``TMG-GAN:
+Generative adversarial networks-based imbalanced learning for network intrusion
+detection,'' \emph{IEEE Trans. Inf. Forensics Security}, vol.~19, pp.~1156--1167,
+2024.
+
+\bibitem{cegan} Y.~Yang, X.~Liu, D.~Wang, Q.~Sui, C.~Yang, H.~Li, Y.~Li, and
+T.~Luan, ``A CE-GAN based approach to address data imbalance in network
+intrusion detection systems,'' \emph{Sci. Rep.}, vol.~15, no.~1, art.~7916,
+2025.
+
+\bibitem{ctganids} B.~A.~Alabsi, M.~Anbar, and S.~D.~A.~Rihan, ``Conditional
+tabular generative adversarial based intrusion detection system for detecting
+DDoS and DoS attacks on the internet of things networks,'' \emph{Sensors},
+vol.~23, no.~12, art.~5644, 2023.
+
+\bibitem{tcn} P.~F.~de~Araujo-Filho, M.~Naili, G.~Kaddoum, E.~T.~Fapi, and
+Z.~Zhu, ``Unsupervised GAN-based intrusion detection system using temporal
+convolutional networks and self-attention,'' \emph{IEEE Trans. Netw. Serv.
+Manage.}, vol.~20, no.~4, pp.~4951--4963, 2023.
+
+\bibitem{park} C.~Park, J.~Lee, Y.~Kim, J.-G.~Park, H.~Kim, and D.~Hong, ``An
+enhanced AI-based network intrusion detection system using generative
+adversarial networks,'' \emph{IEEE Internet Things J.}, vol.~10, no.~3,
+pp.~2330--2345, 2023.
+
+\bibitem{attackgan} S.~Zhao, J.~Li, J.~Wang, Z.~Zhang, L.~Zhu, and Y.~Zhang,
+``attackGAN: Adversarial attack against black-box IDS using generative
+adversarial networks,'' \emph{Procedia Comput. Sci.}, vol.~187, pp.~128--133,
+2021.
+
+\bibitem{sganids} S.~Aldhaheri and A.~Alhuzali, ``SGAN-IDS: Self-attention-based
+generative adversarial network against intrusion detection systems,''
+\emph{Sensors}, vol.~23, no.~18, art.~7796, 2023.
+
+\bibitem{idsgan} D.~Wang, X.~Wang, and J.~Fei, ``IDS-GAN: Adversarial attack
+against intrusion detection based on generative adversarial networks,'' in
+\emph{Proc. 5th Int. Conf. Computer Vision, Image and Deep Learning (CVIDL)},
+2024, pp.~1130--1134.
+
+\bibitem{randhawa} R.~H.~Randhawa, N.~Aslam, M.~Alauthman, and H.~Rafiq,
+``Evasion generative adversarial network for low data regimes,'' \emph{IEEE
+Trans. Artif. Intell.}, vol.~4, no.~5, pp.~1076--1088, 2023.
+
+\bibitem{demgan} D.~Xu, Y.~Lv, M.~Wang, B.~Zheng, J.~Zhao, and J.~Yu, ``DEMGAN:
+A machine learning-based intrusion detection system evasion scheme,''
+\emph{Comput. Mater. Continua}, vol.~84, no.~1, pp.~1731--1746, 2025.
+
+\bibitem{mbow} M.~Mbow, R.~Roman, T.~Takahashi, and K.~Sakurai, ``Evading IoT
+intrusion detection systems with GAN,'' in \emph{Proc. 19th Asia Joint Conf.
+Information Security (AsiaJCIS)}, 2024, pp.~48--55.
+
+\bibitem{aagan} D.~M.~Trung, N.~H.~Khoa, P.~T.~Duy, V.-H.~Pham, and N.~T.~Cam,
+``AAGAN: Android malware generation system based on generative adversarial
+network,'' \emph{Int. J. Semant. Comput.}, vol.~14, no.~1, 2024.
+
+\bibitem{gleam} D.~Devadiga, G.~Jin, B.~Potdar, H.~Koo, A.~Han, A.~Shringi,
+A.~Singh, K.~Chaudhari, and S.~Kumar, ``GLEAM: GAN and LLM for evasive
+adversarial malware,'' in \emph{Proc. 14th Int. Conf. Information and
+Communication Technology Convergence (ICTC)}, 2023, pp.~53--58.
+
+\bibitem{ewgan} R.~Riaz, G.~Han, K.~Shaukat, N.~U.~Khan, H.~Zhu, and L.~Wang,
+``A novel ensemble Wasserstein GAN framework for effective anomaly detection in
+industrial internet of things environments,'' \emph{Sci. Rep.}, vol.~15, no.~1,
+art.~26786, 2025.
+
+\bibitem{diffids} Y.~Yang, X.~Tang, Z.~Liu, J.~Cheng, H.~Fang, and C.~Zhang,
+``Diff-IDS: A network intrusion detection model based on diffusion model for
+imbalanced data samples,'' \emph{Comput. Mater. Continua}, vol.~82, no.~3,
+pp.~4389--4408, 2025.
+
+% ---------- Metrik & perkakas ----------
+\bibitem{matthews} B.~W.~Matthews, ``Comparison of the predicted and observed
+secondary structure of T4 phage lysozyme,'' \emph{Biochim. Biophys. Acta ---
+Protein Structure}, vol.~405, no.~2, pp.~442--451, 1975.
+
+\bibitem{chicco} D.~Chicco and G.~Jurman, ``The advantages of the Matthews
+correlation coefficient (MCC) over F1 score and accuracy in binary
+classification evaluation,'' \emph{BMC Genomics}, vol.~21, no.~1, art.~6, 2020.
+
+\bibitem{wasserstein} A.~Ramdas, N.~G.~Trillos, and M.~Cuturi, ``On Wasserstein
+two-sample testing and related families of nonparametric tests,''
+\emph{Entropy}, vol.~19, no.~2, art.~47, 2017.
+
+\bibitem{sklearn} F.~Pedregosa \emph{et al.}, ``Scikit-learn: Machine learning
+in Python,'' \emph{J. Mach. Learn. Res.}, vol.~12, pp.~2825--2830, 2011.
+
+\bibitem{kohavi} R.~Kohavi, ``A study of cross-validation and bootstrap for
+accuracy estimation and model selection,'' in \emph{Proc. 14th Int. Joint Conf.
+Artificial Intelligence (IJCAI)}, 1995, pp.~1137--1143.
+
+\end{thebibliography}
+
+\end{document}
