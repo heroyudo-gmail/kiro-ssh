@@ -1185,7 +1185,26 @@ sasaran kalibrasi \emph{few-shot} berikutnya.
 \label{sec:rt-fewshot}
 
 Setelah mendiagnosis \emph{shift}, kami menutup lingkaran validasi: memulihkan deteksi
-di AWS memakai kalibrasi \emph{few-shot} dengan sedikit label domain target. Dari
+di AWS memakai kalibrasi \emph{few-shot} dengan sedikit label domain target.
+
+\paragraph{Asal-usul label domain AWS.} Label alir AWS \emph{tidak} diperoleh
+melalui pelabelan manual per-alir, melainkan secara \emph{otomatis} dari
+\emph{ground-truth timeline} skenario serangan terkontrol. Karena mesin penyerang
+kami sendiri yang menjalankan serangan pada jendela waktu yang \emph{diketahui}
+(urutan berfase: \emph{benign} $\rightarrow$ \emph{SSH brute-force} $\rightarrow$
+\emph{Slowloris} $\rightarrow$ \emph{SYN flood} $\rightarrow$ \emph{benign}), tiap
+alir dilabeli \emph{attack}/\emph{benign} berdasarkan waktu-kemunculannya
+(\emph{elapsed} relatif terhadap alir pertama, memakai
+\texttt{bidirectional\_first\_seen\_ms} agar bebas dari selisih jam absolut
+antar-mesin). Sub-fase \emph{benign} eksplisit di awal dan akhir menyediakan
+kelas jinak. Perlu ditegaskan bahwa pelabelan berbasis-\emph{timeline} ini
+\emph{murah} justru karena eksperimen terkontrol; pada penyebaran nyata --- di
+mana waktu serangan tak diketahui --- pelabelan menuntut mekanisme lain (analis
+SOC, tanda-tangan IDS pendamping, atau \emph{active learning}). Keterbatasan ini
+kami akui secara jujur dan kami tetapkan sebagai arah lanjutan (kalibrasi
+berkelanjutan otonom), bukan bagian dari klaim makalah ini.
+
+Dari
 alir AWS berlabel (gabungan \emph{clean}+\emph{volumetric}: $17{.}753$ alir; $17{.}620$
 serangan, $133$ jinak), kami melakukan \emph{split} berlapis (\emph{stratified})
 menjadi \emph{train} ($60\%$) dan \emph{test} tetap ($40\%$: $7{.}049$ serangan,
