@@ -962,6 +962,72 @@ alir berlabel dari domain AWS dapat dipakai untuk kalibrasi \emph{few-shot} dan
 diuji ulang pada trafik AWS yang sama; ini menutup lingkaran validasi lintas-jaringan
 langsung di trafik nyata.
 
+\subsection{Verifikasi Kuantitatif \emph{Shift} Tiga Domain: Sintetik vs Nyata}
+\label{sec:rt-shift}
+
+Untuk menegaskan bahwa kegagalan zero-shot berakar pada pergeseran distribusi ---
+bukan artefak alat ukur --- kami membandingkan distribusi ke-9 fitur SFM pada tiga
+domain sekaligus: dua dataset sintetik (CIC-IDS2018, disingkat \emph{CIC};
+UNSW-NB15, disingkat \emph{UNS}) dan trafik nyata AWS (\emph{AWS-real}), memakai
+$1{,}62$ juta, $172{.}684$, dan $44{.}287$ \emph{flow} berturut-turut. Mengikuti
+protokol Layeghy \emph{et al.}~\cite{layeghy}, kami menghitung jarak Wasserstein
+$W_1$ (rata-rata 9 fitur, ruang $z$-score gabungan) dan sebuah
+\emph{domain-classifier} (\emph{random forest}, validasi silang 5-lipat) yang
+akurasinya mendekati $1$ menandakan domain terpisah sempurna (proxy
+$\mathcal{A}$-distance $\to 2$).
+
+\paragraph{Koreksi satuan lintas-ekstraktor.} Sebelum perbandingan, satuan fitur
+laju diselaraskan sesuai audit SFM: \texttt{sload}/\texttt{dload} UNSW (Argus,
+\emph{bit/detik}) dikonversi agar setara CIC (\texttt{Flow Byts/s} \emph{byte/detik};
+\texttt{Bwd Pkts/s} \emph{paket/detik}) --- \texttt{src\_load} dibagi $8$ dan
+\texttt{dst\_load} dihitung ulang sebagai \texttt{dpkts}$/$durasi. Tanpa koreksi ini,
+$W_1$ pada \texttt{dst\_load} membengkak palsu (mis.\ median UNS $1{.}447$ menjadi
+$4{,}8$ setelah koreksi, sebanding CIC $3{,}7$), yang akan salah-diinterpretasi
+sebagai \emph{shift} padahal semata perbedaan satuan.
+
+\begin{table}[h]
+\centering
+\caption{Jarak Wasserstein $W_1$ (rata-rata 9 fitur SFM, ruang $z$) dan
+\emph{domain-classifier} antar tiga domain, setelah koreksi satuan. $W_1$ kecil =
+distribusi mirip; akurasi pembeda $\to 1$ dan $\mathcal{A}$-distance $\to 2$ =
+domain terpisah.}
+\label{tab:rt-shift}
+\small
+\begin{tabular}{lccc}
+\toprule
+Pasangan & $W_1$ rata-rata & Akurasi pembeda & Proxy $\mathcal{A}$-dist. \\
+\midrule
+CIC vs UNS       & $0{,}317$ & $0{,}990$ & $1{,}961$ \\
+CIC vs AWS-real  & $0{,}230$ & $0{,}994$ & $1{,}975$ \\
+UNS vs AWS-real  & $0{,}372$ & $0{,}998$ & $1{,}993$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.78\linewidth]{fig_shift_wasserstein.png}
+\caption{Jarak Wasserstein rata-rata antar-domain (setelah koreksi satuan).
+Ketiga domain saling berjauhan; AWS-real paling dekat ke CIC pada fitur laju
+byte, namun berbeda pada ukuran paket balik (\texttt{bwd\_mean}).}
+\label{fig:rt-shift}
+\end{figure}
+
+Tiga temuan menonjol. \emph{Pertama}, \emph{domain-classifier} membedakan asal
+\emph{flow} dengan akurasi $0{,}99$ pada \emph{semua} pasangan --- ketiga domain
+praktis terpisah total di ruang 9 fitur, bukti kuat \emph{distribution shift}
+yang independen dari model deteksi. \emph{Kedua}, setelah koreksi satuan, fitur
+\emph{volume} (\texttt{fwd\_pkts}, \texttt{bwd\_pkts}, \texttt{fwd\_bytes},
+\texttt{bwd\_bytes}, \texttt{duration}) selaras di semua pasangan ($W_1<0{,}1$),
+membuktikan SFM berhasil menyamakan representasi volume; \emph{shift} tersisa
+terkonsentrasi pada fitur \emph{laju} dan \emph{bentuk paket}
+(\texttt{src\_load}, \texttt{fwd\_mean}, \texttt{bwd\_mean}). \emph{Ketiga},
+AWS-real menonjol pada \texttt{bwd\_mean} (median $351$ byte vs CIC $66$, UNS $44$;
+$W_1\approx 1{,}16$ terhadap keduanya) --- konsisten dengan respons layanan nyata
+(HTTP/SSH) yang mengirim muatan balik lebih besar daripada trafik sintetik. Inilah
+akar residual \emph{shift} yang membuat model gagal zero-shot dan yang menjadi
+sasaran kalibrasi \emph{few-shot} berikutnya.
+
 % ============================================================
 \section{Diskusi}
 \label{sec:discussion}
