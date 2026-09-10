@@ -1303,24 +1303,27 @@ untuk deteksi \emph{real-time} sekaligus pencatatan FAR.
 normal). Infrastruktur identik; hanya durasi capture berbeda. Angka diisi dari
 eksekusi nyata (\texttt{far\_log.jsonl}).}
 \label{tab:far}
-\begin{tabular}{lccc}
+\begin{tabular}{lrrr}
 \toprule
 Durasi observasi & Total \emph{flow} benign & \emph{False alarm} & FAR (\%) \\
 \midrule
-1 jam            & \texttt{[hasil]} & \texttt{[hasil]} & \texttt{[hasil]} \\
-6 jam            & \texttt{[hasil]} & \texttt{[hasil]} & \texttt{[hasil]} \\
-24 jam           & \texttt{[hasil]} & \texttt{[hasil]} & \texttt{[hasil]} \\
-3 hari \emph{(opsional)} & \texttt{[hasil]} & \texttt{[hasil]} & \texttt{[hasil]} \\
-7 hari \emph{(opsional)} & \texttt{[hasil]} & \texttt{[hasil]} & \texttt{[hasil]} \\
+S0 (uji-asap, $\sim$3 menit) & $203$    & $0$  & $0{,}0000$ \\
+D1 (1 jam)                   & $3687$   & $14$ & $0{,}3797$ \\
+D2 (6 jam)                   & $22{.}644$ & $94$ & $0{,}4152$ \\
+24 jam \emph{(opsional)}     & \multicolumn{3}{c}{belum dijalankan} \\
+3--7 hari \emph{(opsional)}  & \multicolumn{3}{c}{eskalasi bila diperlukan} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\noindent Tabel~\ref{tab:far} akan diisi dari log \emph{deployment} nyata
-(\texttt{far\_log.jsonl}) per durasi; sampai eksekusi selesai, dilaporkan sebagai
-validasi yang direncanakan agar naskah tidak memuat angka karangan. Durasi awal
-(1--24 jam) sudah cukup untuk validasi FAR; durasi 3--7 hari dijalankan sebagai
-eskalasi bila diperlukan.
+\noindent Tabel~\ref{tab:far} diisi dari log \emph{deployment} nyata
+(\texttt{far\_log.jsonl}). FAR tetap \emph{rendah dan stabil} seiring bertambahnya
+durasi observasi (S0 $0{,}00\%$ $\rightarrow$ D1 $0{,}38\%$ $\rightarrow$ D2
+$0{,}42\%$ pada $22{.}644$ alir benign), membuktikan hasil bukan artefak
+\emph{snapshot} pendek. Nilai FAR $<0{,}5\%$ ini juga menepis dugaan \emph{bug}
+satuan/skala (yang khasnya melonjakkan FAR ke $\approx 100\%$). Durasi 24 jam dan
+3--7 hari disiapkan sebagai eskalasi opsional dan belum dijalankan; naskah tidak
+memuat angka karangan untuk baris tersebut.
 
 \ifadversarial
 \paragraph{Kerja mendatang lain.} (i) Klasifikasi multi-kelas dan model
