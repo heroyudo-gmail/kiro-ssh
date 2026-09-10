@@ -299,17 +299,71 @@ Perbedaan alat ekstraksi dan sumber trafik ini bukan kelemahan, melainkan justru
 prasyarat untuk menguji tiga gap inti secara jujur.
 
 \subsection{Penyusunan dan Validasi Pemetaan}
+\label{sec:sfmmap}
 SFM memetakan fitur berfungsi-sama antar-dataset meski bernama kolom berbeda
 (mis. \texttt{Flow Duration}$\leftrightarrow$\texttt{dur}). Karena alat ekstraksi
-berbeda, setiap pasangan kandidat divalidasi secara statistik (rentang,
-distribusi, satuan) sebelum dipakai, bukan sekadar berdasarkan kemiripan nama.
+berbeda (CICFlowMeter vs Argus/Bro), setiap pasangan kandidat \emph{tidak}
+diterima berdasarkan kemiripan nama, melainkan \emph{divalidasi secara statistik}
+melalui tiga langkah: (i) mencocokkan definisi semantik fitur dari dokumentasi
+resmi kedua alat; (ii) mengembalikan fitur CIC ke skala asli
+($x_{\text{orig}} = x_{\text{scaled}}\cdot\sigma + \mu$, karena rilis CIC yang kami
+pakai sudah ter-\emph{z-score}); dan (iii) membandingkan statistik ringkas
+(median, persentil-99, maksimum) tiap pasangan untuk menilai kesetaraan
+\emph{orde skala}. Sebuah pasangan dinyatakan \emph{selaras} bila rasio median dan
+p99 antar-dataset berada dalam orde yang sama; \emph{scale-mismatch} bila berbeda
+$1$--$3$ orde (perlu konversi satuan); dan \emph{beda-fitur} bila $>3$ orde.
+
+Tabel~\ref{tab:sfm} merangkum hasil pemetaan. Sembilan pasangan lolos sebagai
+irisan kuat (Model~A), dua pasangan IAT dipertahankan sebagai tambahan opsional
+(Model~B), dan dua pasangan ``TCP window'' \emph{dibuang} karena terbukti tidak
+sepadan meski bernama mirip.
+
+\begin{table}[h]
+\centering
+\caption{Pemetaan Fitur Semantik (SFM) CSE-CIC-IDS2018 $\leftrightarrow$
+UNSW-NB15. Sembilan pasangan teratas membentuk himpunan fitur \textbf{Model~A};
+dua pasangan IAT ditambahkan pada \textbf{Model~B}. Dua pasangan TCP window
+dibuang sebagai kasus \emph{feature-extractor mismatch}. Padanan divalidasi
+statistik (median/p99/maks pada skala asli), bukan sekadar nama.}
+\label{tab:sfm}
+\small
+\begin{tabular}{lllc}
+\toprule
+Fitur CIC (CICFlowMeter) & Fitur UNSW (Argus/Bro) & Makna & Status \\
+\midrule
+\texttt{Flow Duration}     & \texttt{dur}    & Durasi alir       & Model A \\
+\texttt{Tot Fwd Pkts}      & \texttt{spkts}  & Paket arah maju    & Model A \\
+\texttt{Tot Bwd Pkts}      & \texttt{dpkts}  & Paket arah balik   & Model A \\
+\texttt{TotLen Fwd Pkts}   & \texttt{sbytes} & Byte arah maju     & Model A \\
+\texttt{TotLen Bwd Pkts}   & \texttt{dbytes} & Byte arah balik    & Model A \\
+\texttt{Fwd Pkt Len Mean}  & \texttt{smean}  & Rerata ukuran paket maju  & Model A \\
+\texttt{Bwd Pkt Len Mean}  & \texttt{dmean}  & Rerata ukuran paket balik & Model A \\
+\texttt{Flow Byts/s}       & \texttt{sload}  & Laju byte sumber   & Model A$^\dagger$ \\
+\texttt{Bwd Pkts/s}        & \texttt{dload}  & Laju paket tujuan  & Model A$^\dagger$ \\
+\midrule
+\texttt{Fwd IAT Mean}      & \texttt{sinpkt} & Antar-paket maju   & Model B \\
+\texttt{Bwd IAT Mean}      & \texttt{dinpkt} & Antar-paket balik  & Model B \\
+\midrule
+\texttt{Init Fwd Win Byts} & \texttt{swin}   & TCP window (maju)  & \emph{dibuang} \\
+\texttt{Init Bwd Win Byts} & \texttt{dwin}   & TCP window (balik) & \emph{dibuang} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent{\footnotesize $^\dagger$Fitur laju memerlukan penyelarasan satuan
+lintas-alat: \texttt{sload}/\texttt{dload} UNSW dilaporkan Argus dalam
+\emph{bit/detik}, sedangkan CIC \texttt{Flow Byts/s} dalam \emph{byte/detik} dan
+\texttt{Bwd Pkts/s} dalam \emph{paket/detik}. Ketidaksepadanan satuan ini
+dikoreksi eksplisit saat validasi trafik nyata (\S\ref{sec:rt-shift}).}
 
 \paragraph{Temuan kunci: TCP window mismatch.} Pemeriksaan nilai unik
 membuktikan \texttt{swin}/\texttt{dwin} pada UNSW bersifat praktis biner
 ($\{0, 255\}$), sedangkan \texttt{Init Fwd/Bwd Win Byts} pada CIC kontinu
 ($0$--$65535$). Meski deskripsi resmi menyebut keduanya ``TCP window'', datanya
 tidak sepadan. Kami \emph{membuang} pasangan ini dan melaporkannya sebagai studi
-kasus \emph{feature-extractor mismatch} (gap \#2).
+kasus \emph{feature-extractor mismatch} (gap \#2). Kasus ini menegaskan pentingnya
+validasi statistik: tanpa pemeriksaan distribusi, pasangan bernama-mirip ini akan
+lolos dan menyuntikkan derau lintas-jaringan.
 
 \subsection{Himpunan Fitur Final dan Pra-pemrosesan}
 Kami memakai StandardScaler (z-score) \emph{per dataset terpisah} sehingga
