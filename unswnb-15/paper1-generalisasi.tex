@@ -1306,6 +1306,56 @@ menandakan sebagian kompleksitas UNSW sulit direpresentasikan oleh $9$ fitur
 irisan meskipun kedua domain terlihat saat pelatihan. Asimetri ini karena itu
 merupakan properti struktural pasangan dataset, bukan artefak metode.
 
+\paragraph{Bukti kuantitatif kompleksitas domain.} Agar klaim ``UNSW lebih kaya''
+tidak sekadar mengutip spesifikasi generator IXIA, kami mengukurnya secara
+langsung. Untuk ke-9 fitur SFM, kami menghitung \emph{variansi} pada ruang
+$z$-score gabungan (agar skala setara antar-domain) dan \emph{entropi Shannon}
+histogram (log1p, 30 bin) pada masing-masing dataset (Tabel~\ref{tab:complexity},
+dihitung atas $1{,}62$ juta alir CIC dan $175{.}341$ alir UNSW). Hasilnya jelas:
+\textbf{variansi fitur rata-rata UNSW $3{,}64$ versus CIC $0{,}68$} --- sekitar
+$5{,}3\times$ lebih besar --- membuktikan secara kuantitatif bahwa distribusi
+UNSW jauh lebih \emph{tersebar} pada ruang fitur irisan. Kenaikan variansi
+terkonsentrasi pada fitur \emph{laju} dan \emph{ukuran paket}
+(\texttt{Flow Byts/s} $0{,}003\rightarrow 9{,}0$; \texttt{Bwd Pkts/s}
+$0{,}01\rightarrow 9{,}5$; \texttt{Fwd Pkt Len Mean} $0{,}45\rightarrow 5{,}23$),
+yakni dimensi yang paling banyak divariasikan oleh generator serangan UNSW.
+Entropi rata-rata relatif setara ($3{,}26$ CIC vs $3{,}01$ UNSW), menandakan
+perbedaan bukan pada \emph{kemerataan} okupansi bin melainkan pada \emph{rentang}
+nilai yang jauh lebih lebar --- konsisten dengan domain yang lebih heterogen.
+Temuan ini menjelaskan arah asimetri: memindahkan model dari domain ber-variansi
+rendah (CIC) ke domain ber-variansi tinggi (UNSW) menuntut menutupi mode-mode
+distribusi yang tak pernah dilihat model sumber, sehingga secara inheren lebih
+sulit --- selaras dengan suku diskrepansi $d_{\mathcal{H}\Delta\mathcal{H}}$ yang
+lebih besar pada Persamaan~\eqref{eq:bendavid}.
+
+\begin{table}[h]
+\centering
+\caption{Kuantifikasi kompleksitas domain: variansi (ruang $z$ gabungan) dan
+entropi Shannon per fitur SFM. Variansi UNSW jauh lebih tinggi (rata-rata
+$3{,}64$ vs $0{,}68$), membuktikan UNSW domain yang lebih kaya/heterogen.}
+\label{tab:complexity}
+\small
+\begin{tabular}{lrrrr}
+\toprule
+\multirow{2}{*}{Fitur SFM} & \multicolumn{2}{c}{Variansi ($z$)} & \multicolumn{2}{c}{Entropi (bit)} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+ & CIC & UNSW & CIC & UNSW \\
+\midrule
+\texttt{Flow Duration}    & $1{,}11$ & $0{,}00$ & $4{,}60$ & $2{,}36$ \\
+\texttt{Tot Fwd Pkts}     & $1{,}11$ & $0{,}01$ & $2{,}34$ & $2{,}65$ \\
+\texttt{Tot Bwd Pkts}     & $1{,}05$ & $0{,}51$ & $2{,}71$ & $2{,}75$ \\
+\texttt{TotLen Fwd Pkts}  & $0{,}47$ & $5{,}90$ & $3{,}07$ & $3{,}42$ \\
+\texttt{TotLen Bwd Pkts}  & $1{,}06$ & $0{,}42$ & $2{,}95$ & $2{,}78$ \\
+\texttt{Fwd Pkt Len Mean} & $0{,}45$ & $5{,}23$ & $3{,}14$ & $3{,}49$ \\
+\texttt{Bwd Pkt Len Mean} & $0{,}87$ & $2{,}17$ & $3{,}10$ & $2{,}69$ \\
+\texttt{Flow Byts/s}      & $0{,}00$ & $9{,}00$ & $3{,}63$ & $3{,}87$ \\
+\texttt{Bwd Pkts/s}       & $0{,}01$ & $9{,}50$ & $3{,}74$ & $3{,}06$ \\
+\midrule
+\textbf{Rata-rata}        & $\mathbf{0{,}68}$ & $\mathbf{3{,}64}$ & $3{,}26$ & $3{,}01$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \paragraph{Keterbatasan.} \ifadversarial Kami melaporkan secara jujur bahwa pertahanan
 \emph{adversarial training} kami belum tahan terhadap serangan adaptif; asimetri\else Asimetri\fi
 arah CIC$\rightarrow$UNSW ($\sim 0{,}65$--$0{,}70$) vs UNSW$\rightarrow$CIC
