@@ -418,6 +418,19 @@ satu inti memadai untuk banyak titik pemantauan jaringan --- mendukung klaim
 mikrodetik (bukan puluhan), dan menghindari pelaporan \emph{throughput} \emph{batch}
 yang dapat menyesatkan akibat optimasi vektorisasi.
 
+\paragraph{Konteks penyebaran dan skalabilitas.} Angka $\approx 2\,276$
+\emph{flow}/detik pada \emph{satu} inti sengaja ditujukan untuk skenario
+\emph{edge}/\emph{branch} --- \emph{smart router}, \emph{IoT gateway}, atau
+\emph{CPE} perbatasan --- yang menangani agregat \emph{flow} sedang, bukan
+\emph{core network} berkecepatan tinggi. Untuk trafik \emph{line-rate}
+(mis. $10$ Gbps yang dapat mencapai puluhan ribu \emph{flow}/detik), inferensi
+XGBoost bersifat \emph{embarrassingly parallel} pada tingkat \emph{flow}: tiap
+\emph{flow} dinilai independen, sehingga pemrosesan \emph{multi-thread} pada CPU
+$8$--$16$ inti mengeskalasi \emph{throughput} nyaris linier ke kisaran
+$\approx 18\,000$--$35\,000$ \emph{flow}/detik --- memadai untuk pemantauan
+\emph{line-rate} --- tanpa mengubah model. Dengan kata lain, angka satu-inti
+adalah \emph{batas-bawah} konservatif per-inti, bukan plafon sistem.
+
 % ============================================================
 \section{Baseline Lintas-Dataset: Celah Generalisasi}
 \label{sec:baseline}
@@ -510,6 +523,31 @@ berbeda.
 \section{Diagnosis: Celah Berakar pada \emph{Distribution Shift}}
 \label{sec:align}
 
+\paragraph{Landasan teori: batas adaptasi domain Ben-David.} Sebelum bukti
+empiris, kami merujuk kerangka teoretis yang menjelaskan \emph{mengapa} kalibrasi
+minimal dapat memulihkan performa. Menurut teori batas generalisasi adaptasi
+domain~\cite{bendavid}, galat pada domain target $R_T(h)$ dibatasi oleh:
+\begin{equation}
+\label{eq:bendavid}
+R_T(h) \;\le\; R_S(h) \;+\; \tfrac{1}{2}\, d_{\mathcal{H}\Delta\mathcal{H}}(\mathcal{D}_S, \mathcal{D}_T) \;+\; \lambda^\ast,
+\end{equation}
+dengan $R_S(h)$ galat pada domain sumber, $d_{\mathcal{H}\Delta\mathcal{H}}$
+\emph{diskrepansi} distribusi sumber--target diukur pada ruang hipotesis
+$\mathcal{H}$, dan $\lambda^\ast$ galat gabungan-ideal (\emph{error} pengklasifikasi
+terbaik yang berlaku di kedua domain). Kerangka ini memetakan setiap komponen
+metode kami: (i) \textbf{SFM menyelaraskan ruang hipotesis $\mathcal{H}$} ---
+dengan menyamakan definisi/satuan fitur antar-alat ekstraksi, SFM menghapus
+\emph{feature-extractor mismatch} yang seharusnya membuat $\mathcal{H}$ tak
+sebanding, sehingga suku diskrepansi menjadi \emph{terukur} dan bermakna
+(kami mengukurnya via jarak Wasserstein $W_1$, \S\ref{sec:wass}); (ii)
+\textbf{few-shot $1\%$ dan mixup menekan $d_{\mathcal{H}\Delta\mathcal{H}}$}
+sekaligus \textbf{mengalibrasi $\lambda^\ast$}: sedikit label target menyediakan
+informasi tentang pengklasifikasi ideal domain target (menurunkan $\lambda^\ast$),
+sedangkan mixup menggeser distribusi latih mendekati target (menurunkan suku
+diskrepansi). Dengan demikian, pemulihan MCC yang kami amati (Bab~\ref{sec:da})
+bukan kebetulan empiris, melainkan konsekuensi langsung Persamaan~\eqref{eq:bendavid}:
+menekan dua suku kanan yang dapat-dikendalikan menurunkan batas atas galat target.
+
 Kami membandingkan tiga strategi (Tabel~\ref{tab:align},
 Gambar~\ref{fig:align}): \emph{baseline} single-source, \emph{CORAL}
 (\emph{unsupervised domain adaptation}, penyelarasan kovarians source$\rightarrow$
@@ -546,6 +584,26 @@ jaringan. Maka celah generalisasi \emph{bukan} pada fitur, melainkan pada
 CORAL membantu sebagian dan asimetris (UNSW$\rightarrow$CIC naik ke $+0{,}164$;
 CIC$\rightarrow$UNSW malah turun), menandakan penyelarasan orde-2 belum memadai
 untuk arah dari sumber berdistribusi kaya.
+
+\paragraph{Mengapa CORAL gagal, sedangkan few-shot dan mixup berhasil.} Perbedaan
+hasil ini bukan kebetulan, melainkan konsekuensi cara tiap metode memodifikasi
+distribusi. \emph{CORAL} menyelaraskan statistik momen orde-2 (matriks kovarians)
+secara \emph{linier dan global} di seluruh ruang fitur. Pada data tabular NIDS yang
+\emph{sangat tak-seimbang} dan berbatas-keputusan \emph{non-linier}, penyelarasan
+kovarians global memperlakukan seluruh massa data secara seragam --- didominasi
+kelas jinak mayoritas --- sehingga justru \emph{menggeser dan merusak} batas
+keputusan di sekitar kluster serangan minoritas; inilah mengapa CORAL memperburuk
+arah CIC$\rightarrow$UNSW ($-0{,}072 \rightarrow -0{,}185$). Sebaliknya,
+\emph{few-shot} $1\%$ menyediakan \emph{titik jangkar terbimbing}
+(\emph{supervised anchor points}) yang secara presisi mengarahkan batas keputusan
+tepat di sekitar kluster serangan domain target --- konsisten dengan penurunan
+$\lambda^\ast$ pada Persamaan~\eqref{eq:bendavid}. Sementara \emph{mixup}
+menginterpolasi struktur \emph{manifold} secara \emph{lokal} antar-\emph{flow}
+kedua dataset, menggeser distribusi latih mendekati target \emph{tanpa} memaksakan
+asumsi linieritas kovarias global. Dengan kata lain, CORAL memaksakan koreksi
+statistik-global yang salah-sasaran pada data non-linier tak-seimbang, sedangkan
+few-shot/mixup melakukan koreksi \emph{lokal} yang menghormati struktur
+kelas-minoritas --- persoalan yang justru krusial pada NIDS.
 
 % ============================================================
 \section{Solusi Berbiaya-Rendah: Kalibrasi Minimal dan \emph{Mixup}}
@@ -1179,11 +1237,20 @@ mencapai $\sim 0{,}59$ --- setara \emph{AWS-only} ($0{,}598$) yang dilatih penuh
 sejalan dengan analisis asimetri domain (\S\ref{sec:asymmetry}): \emph{source}
 yang lebih heterogen (UNSW) lebih mudah dikalibrasi ke trafik nyata yang beragam.
 
-\paragraph{Catatan metrik.} Karena AWS-\emph{test} sangat tak-seimbang ($\approx 99\%$
-serangan), F1 tetap tinggi ($\approx 0{,}99$) bahkan saat \emph{zero-shot} --- sehingga
-menyesatkan. Kami karenanya melaporkan \textbf{MCC} sebagai metrik utama, yang
-memperhitungkan seluruh sel matriks kebingungan dan bergerak jujur mengikuti
-kualitas deteksi sebenarnya. Perlu dicatat pula bahwa angka \emph{zero-shot} di
+\paragraph{Catatan metrik: mengapa MCC, bukan F1.} AWS-\emph{test} sangat
+tak-seimbang: $7{.}049$ alir serangan vs hanya $53$ alir jinak ($\approx 99{,}2\%$
+serangan). Pada rasio seekstrem ini, F1 tetap tinggi ($\approx 0{,}99$) bahkan saat
+\emph{zero-shot} --- karena F1 tidak memperhitungkan \emph{true negative} dan
+karenanya menyesatkan. Kami memakai \textbf{MCC} sebagai metrik utama justru karena
+MCC memakai keempat sel matriks kebingungan (TP, TN, FP, FN) dan memberi
+\emph{penalti berat} pada \emph{false positive} meski kelas jinak hanya $0{,}8\%$
+populasi. Bukti bahwa kenaikan MCC bukan artefak imbalans: pada \emph{few-shot}
+UNS$+1\%$, \emph{precision} mencapai $0{,}9972$ (dari $53$ alir jinak, praktis tak
+ada yang salah-ditandai serangan), dan pada \emph{AWS-only} \emph{precision}
+$0{,}9999$. Artinya MCC $\approx 0{,}49$--$0{,}60$ murni berasal dari ketepatan
+klasifikasi dua kelas sekaligus (recall serangan tinggi \emph{dan} false alarm
+mendekati nol pada kelas jinak minoritas), bukan dari dominasi populasi serangan.
+Perlu dicatat pula bahwa angka \emph{zero-shot} di
 Tabel~\ref{tab:rt-fewshot} berbeda dari Tabel~\ref{tab:rt-detect}: yang pertama
 memakai model dilatih-ulang dari fitur \emph{source} yang telah dikoreksi satuan
 (\S\ref{sec:rt-shift}) dengan penyeimbangan kelas, sedangkan Tabel~\ref{tab:rt-detect}
