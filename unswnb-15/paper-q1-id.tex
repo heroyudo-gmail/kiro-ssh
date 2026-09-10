@@ -1,9 +1,10 @@
 \documentclass[11pt,a4paper]{article}
 
 % ============================================================
-% Paper Q1 (versi Bahasa Indonesia) — draft kerja
-% NIDS Robust Lintas-Jaringan via Semantic Feature Mapping
-% CSE-CIC-IDS2018 x UNSW-NB15 + evaluasi adversarial adaptif
+% Paper (versi Bahasa Indonesia) — draft kerja. SATU sumber, DUA versi via toggle:
+%   Paper 1 (\adversarialfalse): Generalisasi Cross-Dataset NIDS (SFM+few-shot+AWS)
+%   Paper 2 (\adversarialtrue) : Paper 1 + evaluasi adversarial (untuk submit)
+% CSE-CIC-IDS2018 x UNSW-NB15 + validasi trafik cloud nyata (AWS)
 % CATATAN: seluruh angka berasal dari eksperimen NYATA (T3-T9),
 %          disimpan di unswnb-15/*.json. Bukan angka ilustratif.
 % ============================================================
@@ -24,11 +25,25 @@
 
 \hypersetup{colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue}
 
-\title{\textbf{Diagnosing and Repairing Cross-Network Generalization of
-ML-based NIDS via Semantic Feature Mapping and Domain Calibration}}
-% Padanan Indonesia (draf kerja): "Mendiagnosis dan Memperbaiki Generalisasi
-% Lintas-Jaringan NIDS Berbasis ML melalui Pemetaan Fitur Semantik dan
-% Kalibrasi Domain".
+% ============================================================
+% TOGGLE VERSI PAPER
+%   \adversarialtrue  -> PAPER 2 (lengkap: + evaluasi adversarial) -- untuk SUBMIT
+%   \adversarialfalse -> PAPER 1 (fokus generalisasi, tanpa adversarial) -- CADANGAN
+% Semua blok adversarial dibungkus \ifadversarial ... \fi.
+% ============================================================
+\newif\ifadversarial
+\adversarialtrue   % <-- ganti ke \adversarialfalse untuk membangun Paper 1
+
+\ifadversarial
+  % PAPER 2 (untuk submit): fokus generalisasi + evaluasi adversarial
+  \title{\textbf{Generalisasi Cross-Dataset pada NIDS Menggunakan Semantic
+  Feature Mapping dan Few-Shot Adaptation dengan Validasi Trafik Cloud Nyata
+  serta Evaluasi Ketahanan Adversarial}}
+\else
+  % PAPER 1 (cadangan): fokus generalisasi saja
+  \title{\textbf{Generalisasi Cross-Dataset pada NIDS Menggunakan Semantic
+  Feature Mapping dan Few-Shot Adaptation dengan Validasi Trafik Cloud Nyata}}
+\fi
 
 \author{Hero Yudo Martono\thanks{Penulis koresponden: \texttt{hero@pens.ac.id}},
 \quad Iwan Syarif, \quad Ferry Astika Saputra \\[0.3em]
@@ -45,37 +60,41 @@ Surabaya, Indonesia} \\
 Sistem deteksi intrusi jaringan (NIDS) berbasis pembelajaran mesin mencapai
 akurasi tinggi ketika dilatih dan diuji pada jaringan yang sama, namun
 kemampuannya untuk digeneralisasi lintas-jaringan jarang diuji secara jujur.
-Makalah ini menyelidiki tiga masalah yang saling berkaitan pada NIDS praktis:
-(1) ketidakmampuan generalisasi lintas-jaringan, (2) ketidaksepadanan fitur
-antar-alat ekstraksi (\emph{feature-extractor mismatch}), dan (3) kerentanan
-terhadap serangan \emph{evasion} adaptif. Menggunakan pasangan dataset
+Makalah ini menyelidiki \ifadversarial tiga\else dua\fi{} masalah yang saling berkaitan pada NIDS praktis:
+(1) ketidakmampuan generalisasi lintas-jaringan\ifadversarial, (2)\else{} dan (2)\fi{} ketidaksepadanan fitur
+antar-alat ekstraksi (\emph{feature-extractor mismatch})\ifadversarial, dan (3) kerentanan
+terhadap serangan \emph{evasion} adaptif\fi. Menggunakan pasangan dataset
 CSE-CIC-IDS2018 (68 fitur, CICFlowMeter) dan UNSW-NB15 (42 fitur, Argus/Bro)
 yang diekstraksi dengan alat berbeda dari sumber trafik berbeda, kami menyusun
 \emph{Semantic Feature Mapping} (SFM) yang divalidasi secara statistik untuk
 memperoleh himpunan fitur irisan yang benar-benar sepadan. Kami menemukan bahwa
 model XGBoost tunggal yang unggul di dalam-jaringan (MCC $0{,}91$ pada CIC;
 $0{,}74$ pada UNSW) \emph{runtuh} lintas-jaringan (MCC $\approx 0$). Melalui
-serangkaian eksperimen terkontrol, kami menunjukkan bahwa (i) \emph{adversarial
+serangkaian eksperimen terkontrol, kami menunjukkan bahwa
+\ifadversarial (i) \emph{adversarial
 training} memperkuat ketahanan terhadap \emph{evasion} di dalam-jaringan tetapi
-\emph{tidak} menutup celah generalisasi lintas-jaringan; (ii) celah tersebut
+\emph{tidak} menutup celah generalisasi lintas-jaringan; (ii)\else (i)\fi{} celah tersebut
 berakar pada \emph{distribution shift}, bukan ketidakcukupan fitur, sebab
 pelatihan gabungan mencapai performa mendekati in-domain pada kedua jaringan
-sekaligus; dan (iii) kalibrasi minimal --- hanya \emph{1\%} label jaringan
+sekaligus; dan \ifadversarial (iii)\else (ii)\fi{} kalibrasi minimal --- hanya \emph{1\%} label jaringan
 target, atau \emph{mixup} lintas-dataset tanpa label target sama sekali ---
-memulihkan MCC lintas-jaringan ke rentang $0{,}65$--$0{,}91$. Terakhir, dengan
+memulihkan MCC lintas-jaringan ke rentang $0{,}65$--$0{,}91$. Kami memvalidasi
+temuan ini pada trafik nyata AWS: model \emph{zero-shot} gagal (MCC $\approx 0$)
+namun kalibrasi \emph{few-shot} dengan sedikit label domain memulihkan deteksi.
+\ifadversarial Terakhir, dengan
 memberlakukan \emph{functional-preserving constraint} pada serangan, kami
 menunjukkan bahwa evaluasi adversarial tak-terbatas melebih-lebihkan ancaman,
 sementara evaluasi \emph{adaptive white-box} mengungkap bahwa \emph{adversarial
 training} memberikan rasa aman yang keliru: pertahanan yang tampak kuat terhadap
 serangan transfer (MCC $0{,}99$) runtuh terhadap penyerang adaptif
-(MCC $0{,}25$--$0{,}43$). Temuan-temuan ini, seluruhnya berbasis eksperimen
+(MCC $0{,}25$--$0{,}43$). \fi Temuan-temuan ini, seluruhnya berbasis eksperimen
 nyata dan dilaporkan apa adanya, memberikan panduan yang jujur untuk merancang
 dan mengevaluasi NIDS yang tangguh di dunia nyata.
 
 \vspace{0.5em}
 \noindent\textbf{Kata kunci:} sistem deteksi intrusi jaringan, generalisasi
-lintas-jaringan, pemetaan fitur semantik, adaptasi domain, serangan adversarial
-adaptif, XGBoost.
+lintas-jaringan, pemetaan fitur semantik, adaptasi domain, \emph{few-shot},
+validasi trafik nyata\ifadversarial, serangan adversarial adaptif\fi, XGBoost.
 \end{abstract}
 
 % ============================================================
@@ -129,9 +148,11 @@ secara jujur mengakui tiga keterbatasan. Ketiga keterbatasan itulah yang menjadi
   menghadapi karakteristik trafik dari topologi jaringan berbeda.
   \item \textbf{Feature-extractor mismatch.} Perbedaan definisi fitur antar-alat
   ekstraksi (CICFlowMeter vs Argus/Bro) merusak akurasi pada inferensi nyata.
+\ifadversarial
   \item \textbf{Kerentanan evasion adaptif.} \emph{Adversarial training}
   konvensional umumnya hanya dievaluasi terhadap serangan statis/transfer
   (grey-box), bukan penyerang \emph{white-box} yang menyesuaikan diri.
+\fi
 \end{enumerate}
 
 \paragraph{Kontribusi.} Kontribusi makalah ini adalah:
@@ -140,22 +161,28 @@ secara jujur mengakui tiga keterbatasan. Ketiga keterbatasan itulah yang menjadi
   secara statistik, termasuk temuan \emph{feature-extractor mismatch} pada fitur
   TCP window (Bagian~\ref{sec:sfm}).
   \item \textbf{Bukti kuantitatif} bahwa NIDS single-source runtuh
-  lintas-jaringan, dan \textbf{pemisahan empiris} antara
+  lintas-jaringan\ifadversarial, dan \textbf{pemisahan empiris} antara
   \emph{adversarial-robustness} dan \emph{cross-network-robustness} sebagai dua
-  masalah berbeda (Bagian~\ref{sec:baseline},~\ref{sec:advtrain}).
+  masalah berbeda (Bagian~\ref{sec:baseline},~\ref{sec:advtrain})\else{} (Bagian~\ref{sec:baseline})\fi.
   \item \textbf{Diagnosis} bahwa celah lintas-jaringan berakar pada
   \emph{distribution shift}, dan \textbf{solusi berbiaya-rendah}: kalibrasi
   minimal $1\%$ label target atau \emph{mixup} lintas-dataset
   (Bagian~\ref{sec:align},~\ref{sec:da}).
+  \item \textbf{Validasi trafik nyata} pada infrastruktur cloud (AWS): mengukur
+  \emph{False Alarm Rate}, mendiagnosis \emph{distribution shift} tiga-domain
+  secara kuantitatif, dan memulihkan deteksi melalui kalibrasi \emph{few-shot}
+  (Bagian~\ref{sec:realtraffic}).
+\ifadversarial
   \item \textbf{Metodologi evaluasi adversarial yang realistis}:
   \emph{functional-preserving evasion} dan \emph{adaptive white-box} yang
   mengoreksi klaim ketahanan yang berlebihan (Bagian~\ref{sec:fpe},~\ref{sec:awb}).
+\fi
 \end{itemize}
 
 \paragraph{Prinsip kejujuran data.} Seluruh angka pada makalah ini bersumber
 dari eksperimen nyata yang dapat direproduksi; tidak ada angka ilustratif yang
-disamarkan sebagai hasil. Termasuk pelaporan jujur bahwa pertahanan kami sendiri
-belum sepenuhnya tahan terhadap serangan adaptif.
+disamarkan sebagai hasil.\ifadversarial{} Termasuk pelaporan jujur bahwa pertahanan kami sendiri
+belum sepenuhnya tahan terhadap serangan adaptif.\fi
 
 % ============================================================
 \section{Karya Terkait}
@@ -220,6 +247,7 @@ membiaskan pengukuran generalisasi sejati~\cite{cantone}. Kami mengevaluasi CORA
 pelatihan gabungan (\emph{joint}), \emph{few-shot}, dan \emph{mixup}
 lintas-dataset secara langsung pada pasangan CIC-IDS2018 dan UNSW-NB15.
 
+\ifadversarial
 \paragraph{Serangan adversarial dan GAN pada NIDS.} Generative Adversarial
 Networks~\cite{gan} bersifat \emph{dual-use} pada keamanan siber~\cite{alauthman}:
 di sisi bertahan, varian seperti WGAN~\cite{wgan}, CGAN~\cite{cgan},
@@ -246,6 +274,7 @@ telah dibahas panjang pada domain adversarial ML umum~\cite{szegedy,fgsm,madry}.
 Makalah ini menutup kedua celah tersebut pada domain NIDS tabular
 lintas-jaringan: serangan dibatasi \emph{functional-preserving} dan dievaluasi
 secara \emph{adaptive white-box}.
+\fi
 
 % ============================================================
 \section{Data dan Semantic Feature Mapping}
@@ -372,6 +401,7 @@ jatuh ke MCC $\approx 0$ lintas-jaringan.}
 Tabel~\ref{tab:baseline} dan Gambar~\ref{fig:gap} menunjukkan bahwa MCC $\approx 0$
 (setara tebakan acak) hingga negatif lintas-jaringan. Ini bukti empiris gap \#1.
 
+\ifadversarial
 % ============================================================
 \section{Adversarial Training Tidak Menutup Celah Lintas-Jaringan}
 \label{sec:advtrain}
@@ -412,6 +442,7 @@ $-0{,}072 \rightarrow -0{,}011$; UNSW$\rightarrow$CIC $-0{,}061 \rightarrow
 -0{,}066$). Ini memisahkan secara empiris \emph{adversarial-robustness} dari
 \emph{cross-network-robustness}: keduanya masalah berbeda dan memerlukan solusi
 berbeda.
+\fi
 
 % ============================================================
 \section{Diagnosis: Celah Berakar pada \emph{Distribution Shift}}
@@ -587,6 +618,8 @@ sintetik-versus-nyata jauh melampaui jarak intra-kelompok --- bahwa kalibrasi
 memperkecil celah namun tidak menghapusnya sepenuhnya; inilah alasan sedikit
 label target (\emph{few-shot}) masih memberi manfaat tambahan pada keputusan
 klasifikasi.
+
+\ifadversarial
 % ============================================================
 \section{Evaluasi Adversarial yang Realistis}
 
@@ -737,6 +770,7 @@ dan (ii) \emph{randomized smoothing} atau penghalusan batas keputusan
 (\emph{decision-boundary smoothing}) yang mengaburkan sinyal gradien pada model
 berbasis pohon, menyulitkan penyerang mengoptimasi arah \emph{evasion}. Kedua
 pendekatan ini merupakan arah lanjutan yang wajar bagi NIDS tabular.
+\fi
 
 % ============================================================
 \section{Validasi Trafik Nyata: Dari Paket ke Keputusan (Penjelasan untuk Tim)}
@@ -1109,12 +1143,12 @@ universal yang terbukti rapuh.
 
 Rangkaian temuan membentuk narasi yang koheren dan jujur:
 (1) NIDS single-source runtuh lintas-jaringan;
-(2) penyebabnya bukan \emph{evasion} dan bukan fitur, melainkan
-\emph{distribution shift};
+(2) penyebabnya adalah \emph{distribution shift}, bukan ketidakcukupan fitur;
 (3) kalibrasi minimal atau \emph{mixup} memulihkan performa secara efisien
-berkat SFM yang tervalidasi;
+berkat SFM yang tervalidasi, dan pemulihan ini terkonfirmasi pada trafik nyata
+AWS via \emph{few-shot}\ifadversarial;
 (4) evaluasi adversarial harus realistis (functional-preserving) dan
-menyeluruh (adaptive white-box), jika tidak akan melebih-lebihkan ketahanan.
+menyeluruh (adaptive white-box), jika tidak akan melebih-lebihkan ketahanan\fi.
 
 \subsection{Analisis Asimetri Performa Adaptasi}
 \label{sec:asymmetry}
@@ -1145,10 +1179,10 @@ menandakan sebagian kompleksitas UNSW sulit direpresentasikan oleh $9$ fitur
 irisan meskipun kedua domain terlihat saat pelatihan. Asimetri ini karena itu
 merupakan properti struktural pasangan dataset, bukan artefak metode.
 
-\paragraph{Keterbatasan.} Kami melaporkan secara jujur bahwa pertahanan
-\emph{adversarial training} kami belum tahan terhadap serangan adaptif; asimetri
+\paragraph{Keterbatasan.} \ifadversarial Kami melaporkan secara jujur bahwa pertahanan
+\emph{adversarial training} kami belum tahan terhadap serangan adaptif; asimetri\else Asimetri\fi
 arah CIC$\rightarrow$UNSW ($\sim 0{,}65$--$0{,}70$) vs UNSW$\rightarrow$CIC
-($\sim 0{,}91$) juga belum sepenuhnya teratasi (dianalisis pada
+($\sim 0{,}91$) \ifadversarial juga \fi belum sepenuhnya teratasi (dianalisis pada
 \S\ref{sec:asymmetry}). Evaluasi masih terbatas pada tugas biner. Penggunaan
 model tunggal XGBoost adalah \emph{pilihan desain} yang disengaja demi efisiensi
 \emph{edge} (\S\ref{sec:edge}), bukan sekadar keterbatasan; eksplorasi
@@ -1163,9 +1197,10 @@ Kami menyajikan studi lintas-jaringan yang jujur pada pasangan CSE-CIC-IDS2018
 dan UNSW-NB15. \emph{Semantic Feature Mapping} yang tervalidasi memungkinkan
 pelatihan lintas-dataset; kami menunjukkan bahwa celah generalisasi berakar pada
 \emph{distribution shift} dan dapat ditutup dengan kalibrasi berbiaya-rendah
-($1\%$ label target) atau \emph{mixup} tanpa label. Kami juga mengoreksi praktik
+($1\%$ label target) atau \emph{mixup} tanpa label, dengan konfirmasi pada
+trafik nyata AWS melalui kalibrasi \emph{few-shot}.\ifadversarial{} Kami juga mengoreksi praktik
 evaluasi adversarial melalui \emph{functional-preserving} dan
-\emph{adaptive white-box}.
+\emph{adaptive white-box}.\fi
 
 \paragraph{Desain skenario pengujian \emph{real-traffic}.} Agar pembaca memahami
 ragam percobaan, kami jelaskan asal-usul skenario. Skenario serangan pada fase
