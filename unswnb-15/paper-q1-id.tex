@@ -1322,12 +1322,33 @@ validasi yang direncanakan agar naskah tidak memuat angka karangan. Durasi awal
 (1--24 jam) sudah cukup untuk validasi FAR; durasi 3--7 hari dijalankan sebagai
 eskalasi bila diperlukan.
 
+\ifadversarial
 \paragraph{Kerja mendatang lain.} (i) Klasifikasi multi-kelas dan model
 \emph{ensemble} robust dengan tetap mempertimbangkan anggaran komputasi
 \emph{edge}; (ii) adaptasi domain yang lebih kuat untuk mengatasi asimetri arah;
 (iii) pertahanan yang benar-benar tahan \emph{adaptive white-box};
 (iv) perpanjangan \emph{deployment} FAR ke skala multi-hari (3--7 hari) untuk
 melengkapi perbandingan antar-durasi (Tabel~\ref{tab:far}).
+\else
+\paragraph{Ketahanan adversarial dan evasion (arah lanjutan).} Makalah ini
+sengaja \emph{membatasi ruang lingkup} pada generalisasi lintas-jaringan dan
+kalibrasi domain, serta \emph{tidak} membahas ketahanan terhadap serangan
+\emph{adversarial}/\emph{evasion}. Alasannya, keduanya adalah persoalan yang
+\emph{terpisah secara empiris} dari generalisasi lintas-jaringan: dalam
+eksperimen pendahuluan kami, \emph{adversarial training} memperbaiki ketahanan
+\emph{evasion} di dalam-jaringan namun \emph{tidak} menutup celah lintas-jaringan
+--- menegaskan bahwa \emph{adversarial-robustness} dan \emph{cross-network
+robustness} menuntut solusi berbeda. Karena itu, evaluasi ketahanan yang menyeluruh
+--- meliputi \emph{functional-preserving evasion} (serangan yang menjaga
+validitas protokol) dan \emph{adaptive white-box} (penyerang yang mengetahui
+model pertahanan) --- kami tetapkan sebagai \textbf{arah lanjutan} yang akan
+dilaporkan pada studi terpisah, di atas fondasi SFM dan kalibrasi domain yang
+divalidasi di sini. Arah lanjutan lain: (i) klasifikasi multi-kelas dan
+\emph{ensemble} robust dengan tetap mempertimbangkan anggaran komputasi
+\emph{edge}; (ii) adaptasi domain yang lebih kuat untuk mengatasi asimetri arah;
+(iii) perpanjangan \emph{deployment} FAR ke skala multi-hari (3--7 hari) untuk
+melengkapi perbandingan antar-durasi (Tabel~\ref{tab:far}).
+\fi
 
 \begin{figure}[h]
 \centering
