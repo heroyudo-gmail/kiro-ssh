@@ -318,43 +318,48 @@ irisan kuat (Model~A), dua pasangan IAT dipertahankan sebagai tambahan opsional
 (Model~B), dan dua pasangan ``TCP window'' \emph{dibuang} karena terbukti tidak
 sepadan meski bernama mirip.
 
-\begin{table}[h]
+\begin{table*}[t]
 \centering
 \caption{Pemetaan Fitur Semantik (SFM) CSE-CIC-IDS2018 $\leftrightarrow$
-UNSW-NB15. Sembilan pasangan teratas membentuk himpunan fitur \textbf{Model~A};
-dua pasangan IAT ditambahkan pada \textbf{Model~B}. Dua pasangan TCP window
-dibuang sebagai kasus \emph{feature-extractor mismatch}. Padanan divalidasi
-statistik (median/p99/maks pada skala asli), bukan sekadar nama.}
+UNSW-NB15, divalidasi statistik pada \emph{skala asli} (CIC di-\emph{unscale}
+lebih dulu). Kolom median menunjukkan orde nilai tiap dataset; kolom
+\emph{catatan} merangkum verdict kesepadanan. Sembilan pasangan teratas =
+\textbf{Model~A}; dua IAT = tambahan \textbf{Model~B}; dua TCP window
+\emph{dibuang} (\emph{feature-extractor mismatch}). Perbedaan skala/satuan
+diselesaikan oleh normalisasi \emph{z-score} per-dataset, sehingga pasangan
+tetap \emph{sepadan-semantik} meski median berbeda orde.}
 \label{tab:sfm}
 \small
-\begin{tabular}{lllc}
+\begin{tabular}{lllrrl}
 \toprule
-Fitur CIC (CICFlowMeter) & Fitur UNSW (Argus/Bro) & Makna & Status \\
+Fitur CIC & Fitur UNSW & Makna & Median CIC & Median UNSW & Catatan kesepadanan \\
 \midrule
-\texttt{Flow Duration}     & \texttt{dur}    & Durasi alir       & Model A \\
-\texttt{Tot Fwd Pkts}      & \texttt{spkts}  & Paket arah maju    & Model A \\
-\texttt{Tot Bwd Pkts}      & \texttt{dpkts}  & Paket arah balik   & Model A \\
-\texttt{TotLen Fwd Pkts}   & \texttt{sbytes} & Byte arah maju     & Model A \\
-\texttt{TotLen Bwd Pkts}   & \texttt{dbytes} & Byte arah balik    & Model A \\
-\texttt{Fwd Pkt Len Mean}  & \texttt{smean}  & Rerata ukuran paket maju  & Model A \\
-\texttt{Bwd Pkt Len Mean}  & \texttt{dmean}  & Rerata ukuran paket balik & Model A \\
-\texttt{Flow Byts/s}       & \texttt{sload}  & Laju byte sumber   & Model A$^\dagger$ \\
-\texttt{Bwd Pkts/s}        & \texttt{dload}  & Laju paket tujuan  & Model A$^\dagger$ \\
+\texttt{Flow Duration}     & \texttt{dur}    & Durasi alir & $20761$ & $0{,}0016$ & Model A; beda satuan ($\mu$s vs detik) \\
+\texttt{Tot Fwd Pkts}      & \texttt{spkts}  & Paket maju  & $2$ & $2$ & Model A; selaras \\
+\texttt{Tot Bwd Pkts}      & \texttt{dpkts}  & Paket balik & $1$ & $2$ & Model A; orde sama \\
+\texttt{TotLen Fwd Pkts}   & \texttt{sbytes} & Byte maju   & $43$ & $430$ & Model A; orde sebanding \\
+\texttt{TotLen Bwd Pkts}   & \texttt{dbytes} & Byte balik  & $101$ & $164$ & Model A; selaras \\
+\texttt{Fwd Pkt Len Mean}  & \texttt{smean}  & Rerata paket maju  & $36$ & $73$ & Model A; selaras \\
+\texttt{Bwd Pkt Len Mean}  & \texttt{dmean}  & Rerata paket balik & $66$ & $44$ & Model A; selaras \\
+\texttt{Flow Byts/s}       & \texttt{sload}  & Laju byte sumber & $787{,}5$ & $8{,}80{\times}10^{5}$ & Model A; beda satuan (byte/s vs bit/s)$^\dagger$ \\
+\texttt{Bwd Pkts/s}        & \texttt{dload}  & Laju paket tujuan & $3{,}70$ & $1447$ & Model A; beda satuan (paket/s vs bit/s)$^\dagger$ \\
 \midrule
-\texttt{Fwd IAT Mean}      & \texttt{sinpkt} & Antar-paket maju   & Model B \\
-\texttt{Bwd IAT Mean}      & \texttt{dinpkt} & Antar-paket balik  & Model B \\
+\texttt{Fwd IAT Mean}      & \texttt{sinpkt} & Antar-paket maju  & $3544$ & $0{,}28$ & Model B; beda satuan ($\mu$s vs ms) \\
+\texttt{Bwd IAT Mean}      & \texttt{dinpkt} & Antar-paket balik & $0$ & $0{,}006$ & Model B; opsional \\
 \midrule
-\texttt{Init Fwd Win Byts} & \texttt{swin}   & TCP window (maju)  & \emph{dibuang} \\
-\texttt{Init Bwd Win Byts} & \texttt{dwin}   & TCP window (balik) & \emph{dibuang} \\
+\texttt{Init Fwd Win Byts} & \texttt{swin}   & TCP window (maju)  & $953$ & $0$ & \emph{Dibuang}: UNSW biner $\{0,255\}$ vs CIC kontinu \\
+\texttt{Init Bwd Win Byts} & \texttt{dwin}   & TCP window (balik) & $-1$ & $0$ & \emph{Dibuang}: UNSW biner $\{0,255\}$ vs CIC kontinu \\
 \bottomrule
 \end{tabular}
-\end{table}
 
-\noindent{\footnotesize $^\dagger$Fitur laju memerlukan penyelarasan satuan
-lintas-alat: \texttt{sload}/\texttt{dload} UNSW dilaporkan Argus dalam
-\emph{bit/detik}, sedangkan CIC \texttt{Flow Byts/s} dalam \emph{byte/detik} dan
-\texttt{Bwd Pkts/s} dalam \emph{paket/detik}. Ketidaksepadanan satuan ini
-dikoreksi eksplisit saat validasi trafik nyata (\S\ref{sec:rt-shift}).}
+\vspace{0.4em}
+\raggedright{\footnotesize $^\dagger$Fitur laju: \texttt{sload}/\texttt{dload}
+UNSW dilaporkan Argus dalam \emph{bit/detik}; CIC \texttt{Flow Byts/s} dalam
+\emph{byte/detik} dan \texttt{Bwd Pkts/s} dalam \emph{paket/detik}.
+Ketidaksepadanan satuan ini dikoreksi eksplisit pada validasi trafik nyata
+(\S\ref{sec:rt-shift}). Median UNSW dihitung pada berkas latih $175{.}341$ record;
+median CIC pada nilai yang telah dikembalikan ke skala asli.}
+\end{table*}
 
 \paragraph{Temuan kunci: TCP window mismatch.} Pemeriksaan nilai unik
 membuktikan \texttt{swin}/\texttt{dwin} pada UNSW bersifat praktis biner
