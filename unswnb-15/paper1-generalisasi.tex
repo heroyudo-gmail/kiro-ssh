@@ -13,6 +13,8 @@
 \usepackage[T1]{fontenc}
 \usepackage[bahasa]{babel}
 \usepackage{graphicx}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
 \usepackage{booktabs}
 \usepackage{amsmath,amssymb}
 \usepackage{siunitx}
@@ -378,6 +380,18 @@ dbytes, smean, dmean, sload, dload}. \textbf{Model B} menambahkan
 \texttt{sinpkt, dinpkt} (Fwd/Bwd IAT). Model A dipilih sebagai basis karena
 setara Model B namun lebih ringkas.
 
+\paragraph{Tanpa kebocoran data pada penskalaan.} Untuk mencegah kontaminasi
+latih--uji, statistik penskala (rata-rata $\mu$ dan simpangan baku $\sigma$
+per-fitur) diestimasi \emph{hanya pada data latih}, lalu \emph{diterapkan}
+(hanya \emph{transform}) ke data uji tertahan dan ke trafik AWS; artinya kami
+memanggil \texttt{fit} pada data latih dan \texttt{transform} pada data evaluasi
+--- tidak pernah \texttt{fit\_transform} pada gabungan. Pada skenario \emph{few-shot},
+saat sebagian kecil label target ditambahkan ke data latih, $\mu,\sigma$
+diestimasi ulang hanya pada data latih yang telah diperbesar itu, dan data uji
+target yang tetap tidak pernah disentuh. Analisis Wasserstein pun mem-\emph{fit}
+ruang-$z$-nya hanya pada data \emph{latih} target. Dengan demikian tidak ada
+informasi waktu-uji yang memengaruhi penskalaan maupun pemilihan model.
+
 \subsection{Pilihan Model Tunggal XGBoost: Perspektif \emph{Edge} dan \emph{Green AI}}
 \label{sec:edge}
 Kami sengaja mempertahankan \textbf{model tunggal XGBoost} alih-alih
@@ -614,6 +628,49 @@ target adaptation}: melatih pada source ditambah fraksi kecil label target
 ($0/1/5/10\%$; fraksi diambil dari \emph{train} target, uji di \emph{test}
 target tanpa kebocoran). Sebagai pembanding tanpa label target, kami memakai
 \emph{cross-dataset mixup} (interpolasi Beta antar-\emph{flow} kedua dataset).
+
+\paragraph{\emph{Mixup} lintas-dataset pada fitur tabular NIDS.} Karena \emph{mixup}
+awalnya diusulkan untuk citra, kami nyatakan secara tepat penerapannya pada
+\emph{flow} tabular kami. Kesembilan fitur SFM seluruhnya bersifat
+\emph{kontinu dan ter-z-score} (tidak ada fitur kategorikal yang di-\emph{mix}),
+sehingga kombinasi konveks tetap berada di ruang fitur yang valid. Diberikan
+sebuah \emph{flow} sumber $(x_S, y_S)$ dan sebuah \emph{flow} target $(x_T, y_T)$,
+masing-masing satu dari tiap dataset, serta koefisien pencampuran
+$\lambda \sim \mathrm{Beta}(\alpha,\alpha)$ (kami pakai $\alpha=0{,}2$ sehingga
+massa terkonsentrasi di dekat $0$ dan $1$, menghasilkan interpolasi ringan), kami
+sintesiskan
+\begin{equation}
+\tilde{x} = \lambda\, x_S + (1-\lambda)\, x_T,
+\qquad
+\tilde{y} = \lambda\, y_S + (1-\lambda)\, y_T,
+\label{eq:mixup}
+\end{equation}
+diterapkan pada kesembilan fitur ter-standardisasi; label lunak
+$\tilde{y}\in[0,1]$ dipakai langsung sebagai target probabilitas XGBoost. Yang
+krusial, kedua \emph{induk} diambil dari \emph{dataset berbeda} (satu sumber, satu
+target), sehingga tiap \emph{flow} sintetik adalah interpolasi \emph{melintasi
+celah domain} --- inilah yang menggeser distribusi latih mendekati target tanpa
+memerlukan \emph{label} target (label induk-target hanya dibutuhkan untuk membentuk
+$\tilde{y}$; pada varian tanpa-label kami mencampur dalam strata kelas-prediksi
+yang sepadan). Algoritma~\ref{alg:mixup} merangkum prosedurnya.
+
+\begin{algorithm}[h]
+\caption{\emph{Cross-dataset mixup} untuk fitur tabular NIDS}
+\label{alg:mixup}
+\begin{algorithmic}[1]
+\Require himpunan sumber $\mathcal{S}$, target $\mathcal{T}$ (9 fitur ter-z-score),
+bentuk $\alpha$, jumlah $M$
+\State $\mathcal{M} \gets \emptyset$
+\For{$i = 1$ hingga $M$}
+  \State ambil $(x_S,y_S)\sim\mathcal{S}$, $(x_T,y_T)\sim\mathcal{T}$
+  \State ambil $\lambda \sim \mathrm{Beta}(\alpha,\alpha)$
+  \State $\tilde{x} \gets \lambda x_S + (1-\lambda) x_T$;\;
+         $\tilde{y} \gets \lambda y_S + (1-\lambda) y_T$
+  \State $\mathcal{M} \gets \mathcal{M} \cup \{(\tilde{x},\tilde{y})\}$
+\EndFor
+\State \Return latih XGBoost pada $\mathcal{S}\cup\mathcal{M}$
+\end{algorithmic}
+\end{algorithm}
 
 \begin{table}[h]
 \centering

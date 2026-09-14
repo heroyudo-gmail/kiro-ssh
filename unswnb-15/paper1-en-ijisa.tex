@@ -11,6 +11,8 @@
 \usepackage{multirow}
 \usepackage{siunitx}
 \usepackage{graphicx}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
 \graphicspath{{figure-q1/}}
 \usepackage{lineno}
 
@@ -37,6 +39,12 @@ Semantic Feature Mapping and Few-Shot Adaptation, Validated on Real Cloud Traffi
 Engineering, Politeknik Elektronika Negeri Surabaya (PENS)},
             city={Surabaya},
             country={Indonesia}}
+
+\begin{graphicalabstract}
+% Render graphical-abstract.tex (standalone TikZ) to PNG/PDF and include here.
+% e.g. compile graphical-abstract.tex -> graphical-abstract.pdf, then:
+\includegraphics[width=\linewidth]{graphical-abstract.pdf}
+\end{graphicalabstract}
 
 \begin{abstract}
 Machine-learning-based network intrusion detection systems (NIDS) attain
@@ -325,6 +333,18 @@ dpkts, sbytes, dbytes, smean, dmean, sload, dload}. \textbf{Model~B} adds
 \texttt{sinpkt, dinpkt} (Fwd/Bwd IAT). Model~A is the basis because it matches
 Model~B while being more compact.
 
+\paragraph{No data leakage in scaling.} To avoid any train--test contamination,
+the scaler statistics (per-feature mean $\mu$ and standard deviation $\sigma$) are
+estimated \emph{exclusively on the training set} and then \emph{applied} (transform
+only) to the held-out test set and to the AWS traffic; that is, we call
+\texttt{fit} on train and \texttt{transform} on evaluation data --- never
+\texttt{fit\_transform} on the union. In the few-shot setting, when a small
+fraction of target labels is added to training, $\mu,\sigma$ are re-estimated on
+that augmented training set only, and the fixed target test set remains untouched.
+The Wasserstein analysis (Section~\ref{sec:wass}) likewise fits its $z$-space on
+the target \emph{train} set alone. This guarantees that no test-time information
+influences either scaling or model selection.
+
 \subsection{Single XGBoost Choice: Edge and Green-AI Perspective}
 \label{sec:edge}
 We deliberately keep a \textbf{single XGBoost model} rather than a heavy ensemble
@@ -513,6 +533,47 @@ adaptation}: training on the source plus a small fraction of target labels
 the target \emph{test} set with no leakage). As a label-free comparison, we use
 \emph{cross-dataset mixup} (Beta interpolation between flows of the two datasets).
 
+\paragraph{Cross-dataset mixup on tabular NIDS features.} Mixup was originally
+proposed for images, so we state precisely how it applies to our tabular flows.
+All nine SFM features are \emph{continuous, $z$-scored} numeric quantities (no
+categorical fields are mixed), so a convex combination stays within the valid
+feature space. Given a source flow $(x_S, y_S)$ and a \emph{target} flow
+$(x_T, y_T)$ drawn one from each dataset, and a mixing coefficient
+$\lambda \sim \mathrm{Beta}(\alpha,\alpha)$ (we use $\alpha=0.2$, so mass
+concentrates near $0$ and $1$, yielding mild interpolation), we synthesize
+\begin{equation}
+\tilde{x} = \lambda\, x_S + (1-\lambda)\, x_T,
+\qquad
+\tilde{y} = \lambda\, y_S + (1-\lambda)\, y_T,
+\label{eq:mixup}
+\end{equation}
+applied over the nine standardized features; the soft label $\tilde{y}\in[0,1]$ is
+used directly as the XGBoost regression-to-probability target. Crucially, the two
+parents are sampled from \emph{different datasets} (one source, one target),
+so each synthetic flow is an interpolation \emph{across the domain gap} --- this is
+what shifts the training distribution toward the target without requiring any
+target \emph{labels} (the target parent's label is only needed to form
+$\tilde{y}$; in the label-free variant we mix within matched
+predicted-class strata). Algorithm~\ref{alg:mixup} summarizes the procedure.
+
+\begin{algorithm}[h]
+\caption{Cross-dataset mixup for tabular NIDS features}
+\label{alg:mixup}
+\begin{algorithmic}[1]
+\Require source set $\mathcal{S}$, target set $\mathcal{T}$ (9 $z$-scored
+features), shape $\alpha$, count $M$
+\State $\mathcal{M} \gets \emptyset$
+\For{$i = 1$ to $M$}
+  \State sample $(x_S,y_S)\sim\mathcal{S}$, $(x_T,y_T)\sim\mathcal{T}$
+  \State sample $\lambda \sim \mathrm{Beta}(\alpha,\alpha)$
+  \State $\tilde{x} \gets \lambda x_S + (1-\lambda) x_T$;\;
+         $\tilde{y} \gets \lambda y_S + (1-\lambda) y_T$
+  \State $\mathcal{M} \gets \mathcal{M} \cup \{(\tilde{x},\tilde{y})\}$
+\EndFor
+\State \Return train XGBoost on $\mathcal{S}\cup\mathcal{M}$
+\end{algorithmic}
+\end{algorithm}
+
 \begin{table}[h]
 \centering
 \caption{Few-shot target adaptation (cross-network MCC).}
@@ -625,6 +686,7 @@ different and both are correct --- a concrete instance of the feature-extractor
 mismatch discussed in Section~\ref{sec:sfm}.
 
 \subsection{Phase 1 --- False Alarm Rate (FAR)}
+\label{sec:rt-far}
 FAR (identical to the False Positive Rate) measures how often the system wrongly
 flags \emph{normal} traffic as an attack: $\mathrm{FAR} = FP/(FP+TN)$. In Phase~1
 we run \emph{no} attacks (attacker off), so all flows are normal and
@@ -820,6 +882,23 @@ zero-shot numbers here differ from Section~\ref{sec:rt-phase2}: the former uses 
 model retrained on unit-corrected source features (Section~\ref{sec:rt-shift}) with
 class balancing, while the latter uses the as-deployed model; both show zero-shot
 failure but are not directly compared.
+
+\paragraph{On the small benign sample in AWS-test.} We deliberately separate two
+distinct claims to avoid over-reading the $53$ benign flows in AWS-test. (i) The
+\emph{false-alarm-rate} claim does \emph{not} rest on these $53$ flows: it comes
+from the \emph{benign-only} Phase-1 experiment (Section~\ref{sec:rt-far}), where a
+large benign population is observed under load --- e.g., $22{,}644$ benign flows
+over six hours with $94$ false alarms, a FAR of $0.42\%$ (Wilson $95\%$~CI
+$[0.34\%, 0.51\%]$). That is the statistically grounded FAR evidence. (ii) The
+$53$ benign flows in AWS-test are used only to compute the \emph{minority-class}
+term of MCC in the few-shot experiment; they are sufficient to show that the
+recovered MCC is not an imbalance artifact (no benign flow is misclassified), but
+they are \emph{too few} to certify a precise FAR on the attack scenario itself ---
+with $0$ observed false positives on $53$ benign flows the Wilson $95\%$ upper
+bound on the false-positive rate is still $\approx 6.8\%$. We therefore report the
+attack-scenario result as a \emph{detection-recovery} result (MCC), and defer a
+high-confidence attack-scenario FAR to a longer real-traffic campaign with a
+larger benign sample, which we note as future work.
 
 \paragraph{Implication.} This completes the \emph{diagnosis}$\to$\emph{repair}
 narrative: SFM aligns the feature space across environments
