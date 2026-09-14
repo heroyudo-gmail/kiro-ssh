@@ -59,22 +59,6 @@ providing an honest guide for designing and evaluating NIDS that are robust in t
 real world.
 \end{abstract}
 
-\begin{highlights}
-\item A statistically validated Semantic Feature Mapping aligns features across
-extraction tools and exposes a TCP-window feature-extractor mismatch.
-\item Single-source NIDS collapse cross-network (MCC $\approx 0$); the cause is
-distribution shift, not feature insufficiency (joint training reaches near
-in-domain).
-\item Only $1\%$ target labels (or label-free cross-dataset mixup) recovers
-cross-network MCC to $0.65$--$0.91$, explained via the Ben-David domain-adaptation
-bound.
-\item Real AWS traffic validation: FAR $<0.5\%$ under benign load; three-domain
-distribution shift quantified via Wasserstein distance; few-shot restores AWS
-detection.
-\item A lightweight single XGBoost on 9 features supports edge/Green-AI deployment
-($2.9$ MB, $\sim$439~$\mu$s/flow).
-\end{highlights}
-
 \begin{keyword}
 network intrusion detection \sep cross-network generalization \sep semantic
 feature mapping \sep domain adaptation \sep few-shot \sep real-traffic validation
