@@ -300,6 +300,61 @@ Kami memakai pasangan yang sengaja \emph{berbeda sumber}:
 Perbedaan alat ekstraksi dan sumber trafik ini bukan kelemahan, melainkan justru
 prasyarat untuk menguji tiga gap inti secara jujur.
 
+\paragraph{Komposisi serangan multi-kelas.} Meski tugas deteksi pada makalah ini
+biner, kedua dataset tetap menyimpan taksonomi serangan aslinya (label CIC
+tersimpan di CSV mentah; UNSW menyediakan \texttt{attack\_cat}). Kami laporkan
+komposisi per-kategori pada populasi \emph{serangan} di Tabel~\ref{tab:attackcomp}
+dan Gambar~\ref{fig:attackcomp} agar ketidakseimbangan antar-jenis-serangan
+terlihat eksplisit. Kedua dataset didominasi segelintir kategori --- CIC oleh DDoS
+($46{,}0\%$) dan DoS ($23{,}8\%$), UNSW oleh Generic ($41{,}7\%$) dan Exploits
+($24{,}6\%$) --- sementara jenis minoritas (UNSW Analysis, Backdoor, Shellcode)
+masing-masing $<1{,}5\%$. Ketimpangan per-kategori yang tajam inilah alasan
+anggaran \emph{few-shot} $1\%$ yang seragam akan menyisakan terlalu sedikit sampel
+bagi kategori langka untuk adaptasi multi-kelas yang andal
+(Bagian~\ref{sec:conclusion}).
+
+\begin{table}[h]
+\centering
+\caption{Komposisi awal label serangan multi-kelas (hanya alir serangan, cacah
+nyata dari populasi tersampel). Kategori CIC mengelompokkan label asli 2018
+(mis. DoS = Hulk/GoldenEye/Slowloris/SlowHTTPTest); UNSW memakai \texttt{attack\_cat}.}
+\label{tab:attackcomp}
+\small
+\begin{tabular}{lr r @{\hskip 2em} lr r}
+\toprule
+\multicolumn{3}{c}{CSE-CIC-IDS2018} & \multicolumn{3}{c}{UNSW-NB15} \\
+\cmidrule(lr){1-3}\cmidrule(lr){4-6}
+Kategori & $n$ & \% & Kategori & $n$ & \% \\
+\midrule
+DDoS         & $126{.}389$ & $46{,}0$ & Generic   & $18{.}860$ & $41{,}7$ \\
+DoS          & $65{.}426$  & $23{,}8$ & Exploits  & $11{.}125$ & $24{,}6$ \\
+BruteForce   & $38{.}174$  & $13{,}9$ & Fuzzers   & $6{.}048$  & $13{,}4$ \\
+Botnet       & $28{.}618$  & $10{,}4$ & DoS       & $4{.}086$  & $9{,}0$  \\
+Infiltration & $16{.}047$  & $5{,}8$  & Recon     & $3{.}494$  & $7{,}7$  \\
+             &             &          & Analysis  & $677$      & $1{,}5$  \\
+             &             &          & Backdoor  & $583$      & $1{,}3$  \\
+             &             &          & Shellcode & $378$      & $0{,}8$  \\
+\midrule
+Total serangan & $274{.}654$ & $100$ & Total serangan & $45{.}251$ & $100$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\IfFileExists{fig_attack_composition.pdf}{%
+  \includegraphics[width=0.95\linewidth]{fig_attack_composition.pdf}%
+}{\IfFileExists{figure-q1/fig_attack_composition.pdf}{%
+  \includegraphics[width=0.95\linewidth]{figure-q1/fig_attack_composition.pdf}%
+}{\fbox{\parbox{0.9\linewidth}{\centering\small [Placeholder gambar]
+Kompilasi \texttt{fig-attack-composition.tex} $\to$
+\texttt{fig\_attack\_composition.pdf}.}}}}
+\caption{Komposisi serangan multi-kelas awal per dataset. Keduanya didominasi
+segelintir kategori bervolume tinggi, dengan ekor panjang jenis serangan minoritas
+--- ketimpangan per-kategori yang relevan bagi adaptasi \emph{few-shot} multi-kelas.}
+\label{fig:attackcomp}
+\end{figure}
+
 \subsection{Penyusunan dan Validasi Pemetaan}
 \label{sec:sfmmap}
 SFM memetakan fitur berfungsi-sama antar-dataset meski bernama kolom berbeda

@@ -271,6 +271,62 @@ We use a deliberately \emph{cross-source} pair:
 This difference in extraction tools and traffic sources is not a weakness but a
 prerequisite for honestly testing the core gaps.
 
+\paragraph{Multi-class attack composition.} Although the detection task in this
+paper is binary, both datasets retain their original attack taxonomy (CIC labels
+are preserved in the raw CSV; UNSW provides \texttt{attack\_cat}). We report the
+per-category composition of the \emph{attack} population in
+Table~\ref{tab:attackcomp} and Figure~\ref{fig:attackcomp} to make the
+class-imbalance across attack types explicit. Both datasets are dominated by a few
+categories --- CIC by DDoS ($46.0\%$) and DoS ($23.8\%$), UNSW by Generic
+($41.7\%$) and Exploits ($24.6\%$) --- while minority types (UNSW Analysis,
+Backdoor, Shellcode) each account for $<1.5\%$. This steep per-category imbalance
+is precisely why a uniform $1\%$ few-shot budget would leave rare categories with
+too few samples for reliable multi-class adaptation (Section~\ref{sec:conclusion}).
+
+\begin{table}[h]
+\centering
+\caption{Initial multi-class attack-label composition (attack flows only, real
+counts from the sampled populations). CIC categories group the original 2018 labels
+(e.g., DoS = Hulk/GoldenEye/Slowloris/SlowHTTPTest); UNSW uses \texttt{attack\_cat}.}
+\label{tab:attackcomp}
+\small
+\begin{tabular}{lr r @{\hskip 2em} lr r}
+\toprule
+\multicolumn{3}{c}{CSE-CIC-IDS2018} & \multicolumn{3}{c}{UNSW-NB15} \\
+\cmidrule(lr){1-3}\cmidrule(lr){4-6}
+Category & $n$ & \% & Category & $n$ & \% \\
+\midrule
+DDoS         & $126{,}389$ & $46.0$ & Generic   & $18{,}860$ & $41.7$ \\
+DoS          & $65{,}426$  & $23.8$ & Exploits  & $11{,}125$ & $24.6$ \\
+BruteForce   & $38{,}174$  & $13.9$ & Fuzzers   & $6{,}048$  & $13.4$ \\
+Botnet       & $28{,}618$  & $10.4$ & DoS       & $4{,}086$  & $9.0$  \\
+Infiltration & $16{,}047$  & $5.8$  & Recon     & $3{,}494$  & $7.7$  \\
+             &             &        & Analysis  & $677$      & $1.5$  \\
+             &             &        & Backdoor  & $583$      & $1.3$  \\
+             &             &        & Shellcode & $378$      & $0.8$  \\
+\midrule
+Total attack & $274{,}654$ & $100$ & Total attack & $45{,}251$ & $100$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\IfFileExists{fig_attack_composition.pdf}{%
+  \includegraphics[width=0.95\linewidth]{fig_attack_composition.pdf}%
+}{\IfFileExists{figure-q1/fig_attack_composition.pdf}{%
+  \includegraphics[width=0.95\linewidth]{figure-q1/fig_attack_composition.pdf}%
+}{\fbox{\parbox{0.9\linewidth}{\centering\small [Figure placeholder]
+Compile \texttt{fig-attack-composition.tex} $\to$
+\texttt{fig\_attack\_composition.pdf}. Pie charts of per-category attack
+composition: CIC (DDoS 46\%, DoS 24\%, \dots) and UNSW (Generic 42\%,
+Exploits 25\%, \dots).}}}}
+\caption{Initial multi-class attack composition per dataset. Both are dominated by
+a few high-volume categories, with a long tail of minority attack types --- a steep
+per-category imbalance relevant to multi-class few-shot adaptation.}
+\label{fig:attackcomp}
+\end{figure}
+
 \subsection{Mapping Construction and Validation}
 \label{sec:sfmmap}
 SFM maps functionally equivalent features across datasets even when column names
