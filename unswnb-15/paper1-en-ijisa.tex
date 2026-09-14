@@ -41,9 +41,21 @@ Engineering, Politeknik Elektronika Negeri Surabaya (PENS)},
             country={Indonesia}}
 
 \begin{graphicalabstract}
-% Render graphical-abstract.tex (standalone TikZ) to PNG/PDF and include here.
-% e.g. compile graphical-abstract.tex -> graphical-abstract.pdf, then:
-\includegraphics[width=\linewidth]{graphical-abstract.pdf}
+% Render graphical-abstract.tex (standalone TikZ) to graphical-abstract.pdf
+% (place it in figure-q1/ or the project root), then it appears automatically.
+% If the file is absent, a text placeholder is shown so the build never breaks.
+\IfFileExists{graphical-abstract.pdf}{%
+  \includegraphics[width=\linewidth]{graphical-abstract.pdf}%
+}{\IfFileExists{figure-q1/graphical-abstract.pdf}{%
+  \includegraphics[width=\linewidth]{figure-q1/graphical-abstract.pdf}%
+}{%
+  \fbox{\parbox{0.95\linewidth}{\centering\small
+  [Graphical Abstract placeholder]\\[2pt]
+  Compile \texttt{graphical-abstract.tex} to \texttt{graphical-abstract.pdf}
+  and place it beside the manuscript.\\
+  Flow: SFM $\rightarrow$ Diagnosis (distribution shift) $\rightarrow$
+  Few-Shot/Mixup repair $\rightarrow$ Real AWS validation.}}%
+}}
 \end{graphicalabstract}
 
 \begin{abstract}
