@@ -925,9 +925,67 @@ simultaneously realign all decision boundaries. Third, the Ben-David bound
 (Eq.~\eqref{eq:bendavid}) applies per binary sub-problem; a one-vs-rest
 decomposition inherits a per-class discrepancy term $d_{\mathcal{H}\Delta\mathcal{H}}$
 and ideal error $\lambda^\ast$, and the worst-case class dominates overall
-multi-class error. A rigorous multi-class cross-network study --- including a
-per-category feature-shift matrix (e.g., DoS vs.\ brute-force) and class-aware
-few-shot budgeting --- is therefore an important direction we leave to future work.
+multi-class error, and the worst-case class dominates overall multi-class error.
+
+To make the second point concrete --- and to directly address the reviewer
+request for a per-category shift analysis --- we computed a
+\emph{per-category feature-shift matrix} across both datasets. For each dataset we
+recovered the original attack taxonomy (CIC labels are preserved in the raw CSV;
+UNSW provides \texttt{attack\_cat}), grouped labels into comparable coarse
+categories, standardized the nine SFM features per dataset, and measured the
+Wasserstein distance $W_1$ of each attack category to its own benign traffic.
+Table~\ref{tab:catshift} and Figure~\ref{fig:catshift} report the result.
+
+\begin{table}[h]
+\centering
+\caption{Per-category feature-shift matrix ($W_1$ to benign, per-dataset
+$z$-standardized nine SFM features). Higher = larger shift from benign. The
+\textsc{Mean} column averages the nine features; bold marks the single most-shifted
+feature per row. Categories with $<200$ flows omitted.}
+\label{tab:catshift}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{llrrrrr}
+\toprule
+Data & Category & $n$ & \textsc{Mean} & Top feature & $W_1$ & 2nd feature \\
+\midrule
+CIC  & DDoS         & 126{,}389 & 0.182 & fwd\_mean  & \textbf{0.702} & dst\_load (0.42) \\
+CIC  & DoS          & 65{,}426  & 0.270 & dst\_load  & \textbf{0.806} & fwd\_mean (0.78) \\
+CIC  & BruteForce   & 38{,}174  & 0.554 & dst\_load  & \textbf{3.631} & fwd\_mean (0.59) \\
+CIC  & Botnet       & 28{,}618  & 0.158 & bwd\_mean  & \textbf{0.657} & fwd\_mean (0.53) \\
+CIC  & Infiltration & 16{,}047  & 0.101 & dst\_load  & \textbf{0.392} & fwd\_mean (0.30) \\
+\midrule
+UNSW & DoS          & 4{,}086   & 0.269 & duration   & \textbf{0.294} & bwd\_pkts (0.27) \\
+UNSW & Exploits     & 11{,}125  & 0.151 & fwd\_bytes & \textbf{0.172} & duration (0.14) \\
+UNSW & Generic      & 18{,}860  & 0.273 & bwd\_mean  & \textbf{0.674} & src\_load (0.44) \\
+UNSW & Fuzzers      & 6{,}048   & 0.225 & bwd\_mean  & \textbf{0.575} & src\_load (0.38) \\
+UNSW & Recon        & 3{,}494   & 0.220 & bwd\_mean  & \textbf{0.620} & src\_load (0.26) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.92\linewidth]{fig_category_shift_matrix.png}
+\caption{Per-category feature-shift matrix, cross-dataset ($W_1$ to benign). Each
+row is an attack category from CIC or UNSW; each column is one of the nine SFM
+features. The heat pattern is markedly non-uniform both across features within a
+category and across the two datasets for nominally comparable categories.}
+\label{fig:catshift}
+\end{figure}
+
+Two observations confirm the qualitative argument. (i) The dominant shifting
+feature is \emph{category-specific}: CIC BruteForce is overwhelmingly driven by
+the destination-load (packet-rate) feature ($W_1\!=\!3.63$, far above any other
+cell), whereas CIC DDoS is driven by the forward packet-length mean and Botnet by
+the backward mean --- so no single feature realignment can serve all categories.
+(ii) Nominally comparable categories shift \emph{differently across networks}:
+CIC DoS and UNSW DoS have almost identical mean shift ($0.270$ vs $0.269$) yet
+concentrate in different features (destination-load for CIC vs.\ flow duration and
+packet counts for UNSW), so a calibration tuned on one network's DoS need not
+transfer to another's. This empirically substantiates why class-aware few-shot
+budgeting --- rather than a single global calibration --- is required for a
+rigorous multi-class cross-network deployment, which we develop in future work.
 
 % ============================================================
 \section{Conclusion and Future Work}
