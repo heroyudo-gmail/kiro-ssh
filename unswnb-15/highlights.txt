@@ -1,0 +1,7 @@
+Highlights (Elsevier: 3-5 items, each <= 85 characters incl. spaces)
+
+- Validated Semantic Feature Mapping aligns NIDS features across extraction tools
+- Single-source NIDS collapse cross-network (MCC ~0) due to distribution shift
+- Only 1% target labels or label-free mixup recovers cross-network MCC to 0.65-0.91
+- Real AWS traffic: FAR below 0.5%; few-shot restores zero-shot detection failure
+- Lightweight single XGBoost on 9 features fits edge/Green-AI deployment
