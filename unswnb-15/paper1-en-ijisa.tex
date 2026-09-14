@@ -1249,6 +1249,25 @@ AWS traffic via few-shot calibration. A recommended operational configuration is
 UNSW-source model plus $\sim$$10\%$ target-domain labels, which nearly matches a
 model trained fully on the target.
 
+\paragraph{Real-traffic (AWS) validation, in summary.} The cloud experiment
+delivers three consistent conclusions. First, under benign-only traffic the
+detector is \emph{quiet and stable}: the False Alarm Rate stays below $0.5\%$ and
+does not drift with observation length ($0.00\%$ at 3~min $\rightarrow$ $0.38\%$ at
+1~h $\rightarrow$ $0.42\%$ over $22{,}644$ benign flows at 6~h), which also rules
+out any unit/scaling defect (such bugs spike the FAR toward $100\%$). Second,
+\emph{benchmark excellence does not transfer zero-shot}: a model excelling on public
+datasets fails to detect real AWS attacks (MCC $\approx 0$; $-0.22$ for the CIC
+source), and a three-domain analysis attributes this to genuine distribution shift
+(domain-classifier accuracy $\approx 0.99$ among CIC/UNSW/AWS), concentrated in the
+rate features (\texttt{src\_load}/\texttt{dst\_load}) and the backward packet size
+(\texttt{bwd\_mean}) --- not to a feature or unit error. Third, the shift is
+\emph{cheaply repairable}: only $1\%$ AWS labels ($\sim$$107$ flows) lift MCC from
+$\approx 0$ to $0.49$, and $10$--$20\%$ reaches $\sim 0.59$, on par with a model
+trained entirely on AWS ($0.598$). In short, SFM plus few-shot calibration works on
+real cloud traffic, and the recipe can be repeated at each new environment at
+minimal labeling cost; we report MCC as the primary metric because AWS-test is
+$\approx 99\%$ attack, where F1 would be misleadingly high.
+
 \paragraph{Adversarial robustness and evasion (future direction).} This paper
 deliberately \emph{scopes out} adversarial/evasion robustness. In our preliminary
 experiments, adversarial training improved in-domain evasion robustness but did

@@ -1659,6 +1659,27 @@ trafik nyata AWS melalui kalibrasi \emph{few-shot}.\ifadversarial{} Kami juga me
 evaluasi adversarial melalui \emph{functional-preserving} dan
 \emph{adaptive white-box}.\fi
 
+\paragraph{Ringkasan validasi trafik nyata (AWS).} Eksperimen cloud memberi tiga
+kesimpulan yang konsisten. \emph{Pertama}, pada trafik benign-saja detektor
+\emph{tenang dan stabil}: \emph{False Alarm Rate} tetap di bawah $0{,}5\%$ dan tidak
+menyimpang seiring durasi observasi ($0{,}00\%$ pada 3~menit $\rightarrow$
+$0{,}38\%$ pada 1~jam $\rightarrow$ $0{,}42\%$ pada $22{.}644$ alir benign selama
+6~jam), yang sekaligus menepis dugaan \emph{bug} satuan/skala (yang khasnya
+melonjakkan FAR ke $\approx 100\%$). \emph{Kedua}, \emph{keunggulan benchmark tidak
+mentransfer secara zero-shot}: model yang unggul di dataset publik gagal mendeteksi
+serangan AWS nyata (MCC $\approx 0$; $-0{,}22$ untuk sumber CIC), dan analisis
+tiga-domain mengaitkannya pada \emph{distribution shift} sejati (akurasi
+domain-classifier $\approx 0{,}99$ antar CIC/UNSW/AWS), terkonsentrasi pada fitur
+laju (\texttt{src\_load}/\texttt{dst\_load}) dan ukuran paket balik
+(\texttt{bwd\_mean}) --- bukan pada kesalahan fitur atau satuan. \emph{Ketiga},
+pergeseran itu \emph{murah untuk diperbaiki}: hanya $1\%$ label AWS ($\sim$$107$
+alir) menaikkan MCC dari $\approx 0$ ke $0{,}49$, dan $10$--$20\%$ mencapai
+$\sim 0{,}59$, setara model yang dilatih penuh pada AWS ($0{,}598$). Singkatnya, SFM
+plus kalibrasi \emph{few-shot} bekerja pada trafik cloud nyata, dan resep ini dapat
+diulang di tiap lingkungan baru dengan biaya pelabelan minimal; kami memakai MCC
+sebagai metrik utama karena AWS-test $\approx 99\%$ serangan, di mana F1 akan
+menyesatkan (tampak tinggi).
+
 \paragraph{Desain skenario pengujian \emph{real-traffic}.} Agar pembaca memahami
 ragam percobaan, kami jelaskan asal-usul skenario. Skenario serangan pada fase
 deteksi mengikuti urutan \emph{benign} $\rightarrow$ \emph{SSH brute-force}
