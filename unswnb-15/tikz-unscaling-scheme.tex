@@ -1,0 +1,24 @@
+% TikZ-only (input-able). Requires: \usepackage{tikz}\usetikzlibrary{arrows.meta,positioning}
+\begin{tikzpicture}[
+  font=\small, >={Stealth[length=2.6mm]},
+  b/.style={rounded corners=2pt, draw=black!70, line width=0.7pt, align=center,
+            inner sep=4pt, minimum height=11mm, text width=30mm},
+  cic/.style={b, fill=blue!8}, uns/.style={b, fill=orange!10},
+  op/.style={b, fill=black!5, text width=34mm}, shared/.style={b, fill=green!12, text width=34mm},
+  a/.style={->, line width=1pt, draw=black!65},
+]
+\node[cic] (cicz) {CIC release\\(\emph{already} $z$-scored)};
+\node[op, right=8mm of cicz] (uns1) {Un-scale\\$x_{\text{orig}}=x_{\text{scaled}}\sigma+\mu$};
+\node[cic, right=8mm of uns1] (cico) {CIC in\\original units};
+\node[uns, below=10mm of cicz] (unsraw) {UNSW release\\(raw units,\\Argus/Bro)};
+\node[shared, right=8mm of cico] (cmp) {Compare on\\\emph{original scale}\\(median, p99 ratio)\\$\Rightarrow$ SFM verdict};
+\node[op, below=10mm of cmp, text width=40mm] (rez)
+  {Per-dataset re-$z$-scoring\\\textbf{fit on train only}\\then transform test/AWS};
+\node[shared, left=10mm of rez, text width=30mm] (model) {9 shared\\SFM features};
+\draw[a] (cicz) -- (uns1);
+\draw[a] (uns1) -- (cico);
+\draw[a] (cico) -- (cmp);
+\draw[a] (unsraw.east) -- ++(0.6,0) |- (cmp.west);
+\draw[a] (cmp) -- (rez);
+\draw[a] (rez) -- (model);
+\end{tikzpicture}

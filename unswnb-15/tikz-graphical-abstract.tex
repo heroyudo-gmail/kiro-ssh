@@ -1,0 +1,23 @@
+% TikZ-only (input-able) graphical abstract. Requires in preamble:
+% \usepackage{tikz}\usetikzlibrary{arrows.meta,positioning,fit,backgrounds}
+\begin{tikzpicture}[
+  font=\small,
+  >={Stealth[length=3mm]},
+  box/.style={rounded corners=3pt, draw=black!70, line width=0.8pt,
+              align=center, minimum height=20mm, text width=30mm, inner sep=4pt},
+  s1/.style={box, fill=blue!8}, s2/.style={box, fill=orange!10},
+  s3/.style={box, fill=green!10}, s4/.style={box, fill=red!8},
+  arr/.style={->, line width=1.1pt, draw=black!65},
+]
+\node[s1] (sfm) at (0,0) {\textbf{1. Semantic\\Feature Mapping}\\[2pt]
+  \scriptsize 68 CIC $\cap$ 42 UNSW\\ $=$ \textbf{9 features}};
+\node[s2, right=8mm of sfm] (diag) {\textbf{2. Theoretical\\Diagnosis}\\[2pt]
+  \scriptsize single-source\\ collapses (MCC $\approx$ 0)\\ = distribution shift};
+\node[s3, right=8mm of diag] (fs) {\textbf{3. Few-Shot\\Repair}\\[2pt]
+  \scriptsize 1\% labels or\\ label-free mixup\\ $\Rightarrow$ MCC 0.65--0.91};
+\node[s4, right=8mm of fs] (aws) {\textbf{4. Real AWS\\Validation}\\[2pt]
+  \scriptsize FAR $<$ 0.5\%\\ few-shot restores\\ detection};
+\draw[arr] (sfm) -- (diag);
+\draw[arr] (diag) -- (fs);
+\draw[arr] (fs) -- (aws);
+\end{tikzpicture}

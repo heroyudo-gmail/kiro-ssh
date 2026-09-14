@@ -13,6 +13,8 @@
 \usepackage{graphicx}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,fit,backgrounds}
 \graphicspath{{figure-q1/}}
 \usepackage{lineno}
 
@@ -41,21 +43,8 @@ Engineering, Politeknik Elektronika Negeri Surabaya (PENS)},
             country={Indonesia}}
 
 \begin{graphicalabstract}
-% Render graphical-abstract.tex (standalone TikZ) to graphical-abstract.pdf
-% (place it in figure-q1/ or the project root), then it appears automatically.
-% If the file is absent, a text placeholder is shown so the build never breaks.
-\IfFileExists{graphical-abstract.pdf}{%
-  \includegraphics[width=\linewidth]{graphical-abstract.pdf}%
-}{\IfFileExists{figure-q1/graphical-abstract.pdf}{%
-  \includegraphics[width=\linewidth]{figure-q1/graphical-abstract.pdf}%
-}{%
-  \fbox{\parbox{0.95\linewidth}{\centering\small
-  [Graphical Abstract placeholder]\\[2pt]
-  Compile \texttt{graphical-abstract.tex} to \texttt{graphical-abstract.pdf}
-  and place it beside the manuscript.\\
-  Flow: SFM $\rightarrow$ Diagnosis (distribution shift) $\rightarrow$
-  Few-Shot/Mixup repair $\rightarrow$ Real AWS validation.}}%
-}}
+\centering
+\resizebox{\linewidth}{!}{\input{tikz-graphical-abstract.tex}}
 \end{graphicalabstract}
 
 \begin{abstract}
@@ -319,15 +308,7 @@ Total attack & $274{,}654$ & $100$ & Total attack & $45{,}251$ & $100$ \\
 
 \begin{figure}[h]
 \centering
-\IfFileExists{fig_attack_composition.pdf}{%
-  \includegraphics[width=0.95\linewidth]{fig_attack_composition.pdf}%
-}{\IfFileExists{figure-q1/fig_attack_composition.pdf}{%
-  \includegraphics[width=0.95\linewidth]{figure-q1/fig_attack_composition.pdf}%
-}{\fbox{\parbox{0.9\linewidth}{\centering\small [Figure placeholder]
-Compile \texttt{fig-attack-composition.tex} $\to$
-\texttt{fig\_attack\_composition.pdf}. Pie charts of per-category attack
-composition: CIC (DDoS 46\%, DoS 24\%, \dots) and UNSW (Generic 42\%,
-Exploits 25\%, \dots).}}}}
+\resizebox{0.95\linewidth}{!}{\input{tikz-attack-composition.tex}}
 \caption{Initial multi-class attack composition per dataset. Both are dominated by
 a few high-volume categories, with a long tail of minority attack types --- a steep
 per-category imbalance relevant to multi-class few-shot adaptation.}
@@ -431,14 +412,7 @@ re-$z$-scoring fitted on training data only.
 
 \begin{figure}[h]
 \centering
-\IfFileExists{fig_unscaling_scheme.pdf}{%
-  \includegraphics[width=0.95\linewidth]{fig_unscaling_scheme.pdf}%
-}{\IfFileExists{figure-q1/fig_unscaling_scheme.pdf}{%
-  \includegraphics[width=0.95\linewidth]{figure-q1/fig_unscaling_scheme.pdf}%
-}{\fbox{\parbox{0.9\linewidth}{\centering\small [Figure placeholder]
-Compile \texttt{fig-unscaling-scheme.tex} $\to$ \texttt{fig\_unscaling\_scheme.pdf}.
-Scheme: CIC un-scale ($x_{\text{orig}}=x_{\text{scaled}}\sigma+\mu$) $\to$ compare
-on original scale $\to$ per-dataset re-$z$-score (fit on train only).}}}}
+\resizebox{0.95\linewidth}{!}{\input{tikz-unscaling-scheme.tex}}
 \caption{Cross-extractor alignment for SFM. CIC features are un-scaled to their
 original units, compared with raw UNSW on the original scale (median/p99 ratios) to
 assign the comparability verdict, then both datasets are independently
@@ -574,15 +548,7 @@ mechanisms acts on them.
 
 \begin{figure}[h]
 \centering
-\IfFileExists{fig_bendavid.pdf}{%
-  \includegraphics[width=0.9\linewidth]{fig_bendavid.pdf}%
-}{\IfFileExists{figure-q1/fig_bendavid.pdf}{%
-  \includegraphics[width=0.9\linewidth]{figure-q1/fig_bendavid.pdf}%
-}{\fbox{\parbox{0.9\linewidth}{\centering\small [Figure placeholder]
-Compile \texttt{fig-bendavid.tex} $\to$ \texttt{fig\_bendavid.pdf}.
-Source/target clouds separated by $d_{\mathcal{H}\Delta\mathcal{H}}$; $\lambda^\ast$
-= ideal joint error. SFM makes $\mathcal{H}$ comparable; mixup lowers
-$d_{\mathcal{H}\Delta\mathcal{H}}$; $1\%$ few-shot lowers $\lambda^\ast$.}}}}
+\resizebox{0.9\linewidth}{!}{\input{tikz-bendavid.tex}}
 \caption{Geometric view of the Ben--David bound. The source ($\mathcal{D}_S$) and
 target ($\mathcal{D}_T$) feature distributions are separated by the discrepancy
 $d_{\mathcal{H}\Delta\mathcal{H}}$; $\lambda^\ast$ is the ideal joint error. SFM
@@ -790,15 +756,6 @@ labels (few-shot) still add value to the classification decision.
 \section{Multi-Class Attack Classification}
 \label{sec:multiclass}
 
-% ============================================================================
-% TODO (fill after running notebooks/24_multiclass.ipynb -> multiclass_results.json):
-%   - in_domain.CIC / in_domain.UNSW: macro_f1, weighted_f1, mcc, balanced_acc
-%   - per_class recall for the strong vs rare categories
-%   - confusion matrices -> figure-q1/confusion_CIC.png, confusion_UNSW.png
-%   - cross_dataset (Benign/DoS) macro_f1, mcc
-% Placeholders below are marked ?? and must be replaced with real numbers.
-% ============================================================================
-
 While the core study is deliberately binary to isolate the cross-network
 generalization variable, an operational NIDS often needs to name the attack
 \emph{category} for an appropriate response. We therefore add a multi-class
@@ -820,8 +777,7 @@ class support rather than a modeling failure.
 \begin{table}[h]
 \centering
 \caption{In-domain multi-class classification on the nine SFM features
-(XGBoost \texttt{multi:softprob}, $70/30$ split, scaler fit on train only).
-\textbf{Numbers to be filled from} \texttt{multiclass\_results.json}.}
+(XGBoost \texttt{multi:softprob}, $70/30$ split, scaler fit on train only).}
 \label{tab:mc-indomain}
 \small
 \begin{tabular}{lccccc}
@@ -836,19 +792,8 @@ UNSW-NB15       & 10 & $0.505$ & $0.827$ & $0.774$ & $0.482$ \\
 
 \begin{figure}[h]
 \centering
-\IfFileExists{confusion_CIC.png}{%
-  \includegraphics[width=0.48\linewidth]{confusion_CIC.png}%
-}{\IfFileExists{figure-q1/confusion_CIC.png}{%
-  \includegraphics[width=0.48\linewidth]{figure-q1/confusion_CIC.png}}{%
-  \fbox{\parbox{0.44\linewidth}{\centering\small [CIC confusion matrix]\\
-  from \texttt{24\_multiclass.ipynb}}}}}
-\hfill
-\IfFileExists{confusion_UNSW.png}{%
-  \includegraphics[width=0.48\linewidth]{confusion_UNSW.png}%
-}{\IfFileExists{figure-q1/confusion_UNSW.png}{%
-  \includegraphics[width=0.48\linewidth]{figure-q1/confusion_UNSW.png}}{%
-  \fbox{\parbox{0.44\linewidth}{\centering\small [UNSW confusion matrix]\\
-  from \texttt{24\_multiclass.ipynb}}}}}
+\includegraphics[width=0.48\linewidth]{confusion_CIC.png}\hfill
+\includegraphics[width=0.48\linewidth]{confusion_UNSW.png}
 \caption{Row-normalized multi-class confusion matrices (in-domain). Left: CSE-CIC-IDS2018;
 right: UNSW-NB15. Each row sums to $1$; the diagonal is per-category recall.}
 \label{fig:mc-cm}
@@ -1547,9 +1492,11 @@ survey, \textit{Neurocomputing} 347 (2019) 149--176.
 Z.~Wu, H.~Zhang, P.~Wang, Z.~Sun, RTIDS: A robust transformer-based approach for
 intrusion detection system, \textit{IEEE Access} 10 (2022) 64375--64387.
 
-\bibitem[Duan et al.(2022)]{duan}
-Duan et al., Deep learning for network intrusion detection (survey/method),
-2022.
+\bibitem[Duan et al.(2023)]{duan}
+G.~Duan, H.~Lv, H.~Wang, G.~Feng, Application of a dynamic line graph neural
+network for intrusion detection with semisupervised learning, \textit{IEEE
+Transactions on Information Forensics and Security} 18 (2023) 699--714.
+
 
 \bibitem[Sun et al.(2016)]{coral}
 B.~Sun, J.~Feng, K.~Saenko, Return of frustratingly easy domain adaptation, in:

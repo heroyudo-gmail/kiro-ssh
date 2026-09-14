@@ -15,6 +15,8 @@
 \usepackage{graphicx}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,fit,backgrounds}
 \usepackage{booktabs}
 \usepackage{amsmath,amssymb}
 \usepackage{siunitx}
@@ -342,13 +344,7 @@ Total serangan & $274{.}654$ & $100$ & Total serangan & $45{.}251$ & $100$ \\
 
 \begin{figure}[h]
 \centering
-\IfFileExists{fig_attack_composition.pdf}{%
-  \includegraphics[width=0.95\linewidth]{fig_attack_composition.pdf}%
-}{\IfFileExists{figure-q1/fig_attack_composition.pdf}{%
-  \includegraphics[width=0.95\linewidth]{figure-q1/fig_attack_composition.pdf}%
-}{\fbox{\parbox{0.9\linewidth}{\centering\small [Placeholder gambar]
-Kompilasi \texttt{fig-attack-composition.tex} $\to$
-\texttt{fig\_attack\_composition.pdf}.}}}}
+\resizebox{0.95\linewidth}{!}{\input{tikz-attack-composition.tex}}
 \caption{Komposisi serangan multi-kelas awal per dataset. Keduanya didominasi
 segelintir kategori bervolume tinggi, dengan ekor panjang jenis serangan minoritas
 --- ketimpangan per-kategori yang relevan bagi adaptasi \emph{few-shot} multi-kelas.}
@@ -1007,15 +1003,6 @@ pendekatan ini merupakan arah lanjutan yang wajar bagi NIDS tabular.
 \section{Klasifikasi Serangan Multi-Kelas}
 \label{sec:multiclass}
 
-% ============================================================================
-% TODO (isi setelah menjalankan notebooks/24_multiclass.ipynb -> multiclass_results.json):
-%   - in_domain.CIC / in_domain.UNSW: macro_f1, weighted_f1, mcc, balanced_acc
-%   - recall per-kelas untuk kategori kuat vs langka
-%   - confusion matrix -> figure-q1/confusion_CIC.png, confusion_UNSW.png
-%   - cross_dataset (Benign/DoS) macro_f1, mcc
-% Placeholder di bawah ditandai ?? dan wajib diganti dengan angka nyata.
-% ============================================================================
-
 Meski studi inti sengaja dibuat biner untuk mengisolasi variabel generalisasi
 lintas-jaringan, NIDS operasional kerap perlu menamai \emph{kategori} serangan
 untuk penanganan yang tepat. Karena itu kami menambahkan eksperimen multi-kelas
@@ -1037,8 +1024,7 @@ cerminan jujur dari dukungan kelas, bukan kegagalan model.
 \begin{table}[h]
 \centering
 \caption{Klasifikasi multi-kelas in-domain pada sembilan fitur SFM
-(XGBoost \texttt{multi:softprob}, split $70/30$, penskala fit pada train saja).
-\textbf{Angka diisi dari} \texttt{multiclass\_results.json}.}
+(XGBoost \texttt{multi:softprob}, split $70/30$, penskala fit pada train saja).}
 \label{tab:mc-indomain}
 \small
 \begin{tabular}{lccccc}
@@ -1053,19 +1039,8 @@ UNSW-NB15       & 10 & $0{,}505$ & $0{,}827$ & $0{,}774$ & $0{,}482$ \\
 
 \begin{figure}[h]
 \centering
-\IfFileExists{confusion_CIC.png}{%
-  \includegraphics[width=0.48\linewidth]{confusion_CIC.png}%
-}{\IfFileExists{figure-q1/confusion_CIC.png}{%
-  \includegraphics[width=0.48\linewidth]{figure-q1/confusion_CIC.png}}{%
-  \fbox{\parbox{0.44\linewidth}{\centering\small [Confusion matrix CIC]\\
-  dari \texttt{24\_multiclass.ipynb}}}}}
-\hfill
-\IfFileExists{confusion_UNSW.png}{%
-  \includegraphics[width=0.48\linewidth]{confusion_UNSW.png}%
-}{\IfFileExists{figure-q1/confusion_UNSW.png}{%
-  \includegraphics[width=0.48\linewidth]{figure-q1/confusion_UNSW.png}}{%
-  \fbox{\parbox{0.44\linewidth}{\centering\small [Confusion matrix UNSW]\\
-  dari \texttt{24\_multiclass.ipynb}}}}}
+\includegraphics[width=0.48\linewidth]{confusion_CIC.png}\hfill
+\includegraphics[width=0.48\linewidth]{confusion_UNSW.png}
 \caption{Confusion matrix multi-kelas ternormalisasi-baris (in-domain). Kiri:
 CSE-CIC-IDS2018; kanan: UNSW-NB15. Tiap baris berjumlah $1$; diagonal = recall
 per-kategori.}
@@ -1721,8 +1696,8 @@ untuk deteksi \emph{real-time} sekaligus pencatatan FAR.
 
 \begin{table}[h]
 \centering
-\caption{Rencana perbandingan FAR antar-durasi observasi (deployment AWS, trafik
-normal). Infrastruktur identik; hanya durasi capture berbeda. Angka diisi dari
+\caption{Perbandingan FAR antar-durasi observasi (deployment AWS, trafik
+normal). Infrastruktur identik; hanya durasi capture berbeda. Angka berasal dari
 eksekusi nyata (\texttt{far\_log.jsonl}).}
 \label{tab:far}
 \begin{tabular}{lrrr}
