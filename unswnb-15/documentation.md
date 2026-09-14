@@ -265,6 +265,62 @@ Notebook `02_mapping_validation.ipynb` membandingkan rentang/distribusi tiap pas
 | **Init Fwd Win Byts ↔ `swin`** | scale-mismatch | **BUANG — mismatch definisi** (lihat 10.7) |
 | **Init Bwd Win Byts ↔ `dwin`** | scale-mismatch | **BUANG — mismatch definisi** (lihat 10.7) |
 
+### 10.6a Dasar Teori & Rumus Validasi Pemetaan (Tanya-Jawab)
+
+Bagian ini menjelaskan **rumusan matematis dan dasar teori** yang dipakai `02_mapping_validation.ipynb`, ditulis sebagai tanya-jawab agar mudah dipelajari. Semua rumus di sini persis mencerminkan kode notebook (bukan idealisasi).
+
+**T: Rumusan matematis / dasar teori apa yang dipakai untuk melakukan mapping validation?**
+
+Ada empat langkah, masing-masing dengan dasar teorinya:
+
+**(1) Un-scaling — kembalikan CIC ke skala asli.**
+`cleaned_100.pkl` menyimpan fitur yang sudah di-`StandardScaler`. Agar adil dibandingkan dengan UNSW mentah, tiap fitur dibalik ke satuan asli:
+
+$$x_{\text{orig}} = x_{\text{scaled}} \cdot \sigma_{\text{scaler}} + \mu_{\text{scaler}}$$
+
+Kode: `X_orig = X * scaler.scale_ + scaler.mean_`.
+*Dasar teori:* perbandingan skala hanya bermakna pada satuan asli; membandingkan data yang sudah di-z-score menyembunyikan perbedaan satuan yang justru ingin kita deteksi.
+
+**(2) Ringkasan distribusi berbasis kuantil (robust terhadap outlier).**
+Untuk tiap fitur dihitung: min, **median (Q₅₀)**, **persentil-99 (p99)**, max, mean, std. Yang dipakai untuk keputusan adalah **median** dan **p99**, bukan mean/max.
+*Dasar teori:* trafik jaringan sangat *heavy-tailed* (sedikit flow ekstrem berukuran raksasa). Median dan p99 adalah estimator lokasi/sebaran yang tahan outlier, sehingga perbandingan tidak didominasi ekor ekstrem.
+
+**(3) Uji kesetaraan skala via rasio dan jarak orde-magnitudo (log₁₀).**
+Ini inti verdict. Untuk tiap pasangan fitur dihitung rasio p99 dan jarak orde-magnitudo:
+
+$$r = \frac{\text{p99}_{\text{CIC}}}{\text{p99}_{\text{UNSW}}}, \qquad a = \left| \log_{10} r \right|$$
+
+Aturan keputusan:
+
+| Kondisi | Verdict | Makna |
+|---|---|---|
+| $a \le 1$ (rasio 0{,}1×–10×) | `aligned` | skala setara langsung |
+| $1 < a \le 3$ | `scale-mismatch` | beda 1–3 orde → diselamatkan via z-score |
+| $a > 3$ | `likely-different-feature` | terlalu jauh → kandidat dibuang |
+
+*Dasar teori:* dua fitur yang benar-benar mengukur besaran fisik sama seharusnya punya **support (rentang nilai) pada orde-magnitudo yang sama** setelah satuan disamakan. $|\log_{10} r|$ mengukur berapa "desimal" jarak antar-skala; rasio p99 dipakai sebagai proksi robust untuk membandingkan support tanpa terpengaruh nilai maksimum yang liar.
+
+**(4) Kuantifikasi kompleksitas domain (variansi & entropi Shannon).**
+Untuk mendukung klaim "UNSW = domain lebih kaya/kompleks", pada **z-space gabungan** (mean/std di-*fit* pada CIC∪UNSW agar setara) dihitung dua ukuran per fitur, lalu dirata-rata antar-9-fitur:
+
+- **Variansi** di z-space gabungan: $\operatorname{Var}(z_f)$.
+- **Entropi Shannon** histogram (30 bin, transform $\log(1+x)$):
+
+$$H = -\sum_{i} p_i \log_2 p_i$$
+
+*Dasar teori:* entropi Shannon mengukur ketidakpastian/keberagaman distribusi; makin tinggi $H$, makin kaya sebaran nilai fitur. Transform $\log(1+x)$ dipakai agar histogram tidak "menempel" di satu bin akibat ekor panjang.
+
+**T: Apakah ini uji hipotesis statistik yang formal?**
+
+Bukan. Verdict di atas adalah **indikator berbasis skala/distribusi**, bukan uji hipotesis dua-sampel formal (tidak ada p-value). Notebook sendiri menegaskan konfirmasi akhir tetap butuh **penalaran domain** (satuan, definisi extractor). Karena itu:
+
+- `Flow Duration ↔ dur` yang otomatis ter-*flag* `likely-different` **diselamatkan** secara manual sebagai "beda satuan μs vs detik" (bukan beda fitur), lalu ditangani z-score.
+- `Init Fwd/Bwd Win Byts ↔ swin/dwin` justru **dibuang** meski rasionya tidak ekstrem, karena pemeriksaan nilai unik membuktikan definisinya berbeda (lihat §10.7).
+
+**T: Apa batas metode ini dan bagaimana memperkuatnya?**
+
+Titik lemahnya: tanpa uji distribusi formal, verdict bergantung ambang $a$ yang dipilih (1 dan 3) dan pada penalaran domain manual. Untuk memperkuat landasan statistik, pasangan fitur dapat diuji dengan (pada skala yang telah disamakan): **Kolmogorov–Smirnov** dua-sampel, **Anderson–Darling**, atau **jarak Wasserstein / energy distance**. Ini menjadi opsi penguatan bila reviewer menuntut ketegasan uji distribusi.
+
 ### 10.7 Temuan Kunci: TCP Window Mismatch (Bukti Feature-Extractor Mismatch)
 Pemeriksaan nilai unik membuktikan `swin`/`dwin` di UNSW **bukan** ukuran window bytes:
 - CIC `Init Fwd/Bwd Win Byts`: kontinu **0–65535** (byte window sesungguhnya); di Paper 1 ini fitur **paling sensitif** terhadap evasion.
