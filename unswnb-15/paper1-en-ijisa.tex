@@ -41,13 +41,18 @@ Engineering, Politeknik Elektronika Negeri Surabaya (PENS)},
 \begin{abstract}
 Machine-learning-based network intrusion detection systems (NIDS) attain
 near-perfect accuracy when trained and tested on the same network, yet their
-ability to generalize across networks is rarely evaluated honestly. This paper
+ability to generalize across networks is rarely evaluated honestly. The
+contribution of this paper is \emph{not} another off-the-shelf classifier on a
+benchmark, but a \emph{methodology} for diagnosing and repairing cross-network
+generalization, together with its validation on real cloud traffic. This paper
 investigates two intertwined problems in practical NIDS: (1) the failure to
 generalize across networks, and (2) feature-extractor mismatch across extraction
 tools. Using a deliberately cross-source dataset pair --- CSE-CIC-IDS2018 (68
 features, CICFlowMeter) and UNSW-NB15 (42 features, Argus/Bro) --- we construct a
 statistically validated \emph{Semantic Feature Mapping} (SFM) that yields a truly
-comparable intersection feature set. We find that a single XGBoost model
+comparable intersection feature set. A single XGBoost model is used only as a
+\emph{controlled backbone} to isolate the effect of the methodology, not as the
+contribution. We find that a single XGBoost model
 excelling in-domain (MCC $0.91$ on CIC; $0.74$ on UNSW) \emph{collapses}
 cross-network (MCC $\approx 0$). Through controlled experiments we show that
 (i) the gap is rooted in \emph{distribution shift} rather than feature
@@ -133,8 +138,21 @@ honestly acknowledged its limitations. Two of these limitations form the
   (Section~\ref{sec:realtraffic}).
 \end{itemize}
 
+\paragraph{Positioning and novelty.} We stress that this work is \emph{not} the
+routine application of an existing classifier to a standard dataset. The novelty
+lies in the methodology --- a statistically validated cross-tool feature mapping,
+a controlled diagnosis separating feature insufficiency from distribution shift
+(grounded in the Ben-David bound), and an end-to-end validation on real cloud
+traffic including False Alarm Rate, a quantified three-domain distribution shift,
+and few-shot repair. XGBoost is deliberately fixed as a lightweight, reproducible
+backbone precisely so that any measured effect is attributable to the methodology
+rather than to model capacity; the security contribution is the transferable
+recipe for making a single-source NIDS work on a previously unseen network at
+minimal labeling cost.
+
 \paragraph{Data-honesty principle.} Every number in this paper comes from real,
-reproducible experiments; no illustrative figures are disguised as results.
+reproducible experiments; no illustrative figures are disguised as results,
+including negative and non-monotone outcomes reported as-is.
 
 % ============================================================
 \section{Related Work}
