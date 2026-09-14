@@ -209,6 +209,25 @@ true generalization \citep{cantone}. We evaluate CORAL, joint training,
 \emph{few-shot}, and cross-dataset \emph{mixup} directly on the CIC-IDS2018 and
 UNSW-NB15 pair.
 
+\paragraph{Why not deep domain adaptation?} More expressive deep domain-adaptation
+methods --- e.g., Deep CORAL and adversarial alignment such as DANN --- can, in
+principle, learn non-linear domain-invariant representations. We deliberately do
+not adopt them here for three reasons aligned with our edge-deployment target.
+(i) \emph{Cost.} DANN and Deep CORAL require training a deep feature extractor
+(and, for DANN, an adversarial domain discriminator), incurring memory, compute,
+and energy budgets that are impractical for smart routers, IoT gateways, or inline
+sensors, and inference latency that may exceed the flow arrival rate --- precisely
+what our single, $2.9$~MB, sub-millisecond XGBoost avoids. (ii) \emph{Data regime.}
+Deep alignment typically needs large volumes of (unlabeled) target data to
+estimate stable invariant representations; our premise is the opposite --- a new
+network offers little target data, which is exactly where a few labeled anchors
+(few-shot) are more data-efficient. (iii) \emph{Tabular mismatch.} On tabular
+flow features, tree ensembles remain strong and stable, while adversarial
+alignment is notoriously unstable to train and offers limited gains over simpler
+statistics-matching on this data type. We therefore treat deep DA as a
+complementary, heavier-weight alternative rather than a baseline for the
+edge-constrained regime studied here.
+
 % ============================================================
 \section{Data and Semantic Feature Mapping}
 \label{sec:sfm}
@@ -884,10 +903,31 @@ proving UNSW is the richer/more heterogeneous domain.}
 
 \paragraph{Limitations.} The direction asymmetry CIC$\rightarrow$UNSW
 ($\sim 0.65$--$0.70$) vs UNSW$\rightarrow$CIC ($\sim 0.91$) is not fully resolved
-(analyzed in Section~\ref{sec:asymmetry}). The evaluation is limited to the binary
-task. Using a single XGBoost is a deliberate design choice for edge efficiency
-(Section~\ref{sec:edge}), not merely a limitation; exploring robust ensembles is
-left as future work that must still respect deployment compute budgets.
+(analyzed in Section~\ref{sec:asymmetry}). Using a single XGBoost is a deliberate
+design choice for edge efficiency (Section~\ref{sec:edge}), not merely a
+limitation; exploring robust ensembles is left as future work that must still
+respect deployment compute budgets.
+
+\paragraph{From binary to multi-class adaptation.} Our evaluation is intentionally
+binary (attack vs.\ benign) to isolate the cross-network generalization variable
+across two datasets whose attack \emph{taxonomies differ} (14 attack types in CIC
+vs.\ nine classes in UNSW), which makes a shared multi-class label space non-trivial
+to define. We nonetheless discuss why multi-class few-shot adaptation is
+substantially harder. First, under few-shot calibration the \emph{per-category}
+support becomes extremely thin: a $1\%$ target budget that comfortably covers the
+binary attack class may yield only a handful --- or zero --- samples for rare
+categories (e.g., Shellcode, Worms in UNSW), so the calibration signal for minority
+attack types is dominated by frequent ones (e.g., Generic, DoS). Second, the
+residual distribution shift we quantified is \emph{category-dependent}: rate and
+packet-shape features that separate DoS/flooding from brute-force/probe shift by
+different amounts across networks, so a single global calibration cannot
+simultaneously realign all decision boundaries. Third, the Ben-David bound
+(Eq.~\eqref{eq:bendavid}) applies per binary sub-problem; a one-vs-rest
+decomposition inherits a per-class discrepancy term $d_{\mathcal{H}\Delta\mathcal{H}}$
+and ideal error $\lambda^\ast$, and the worst-case class dominates overall
+multi-class error. A rigorous multi-class cross-network study --- including a
+per-category feature-shift matrix (e.g., DoS vs.\ brute-force) and class-aware
+few-shot budgeting --- is therefore an important direction we leave to future work.
 
 % ============================================================
 \section{Conclusion and Future Work}
@@ -908,9 +948,27 @@ experiments, adversarial training improved in-domain evasion robustness but did
 and cross-network robustness demand different solutions. A thorough robustness
 evaluation --- functional-preserving evasion and adaptive white-box --- is set as
 future work in a separate study, on top of the SFM and domain-calibration
-foundation validated here. Other directions: (i) multi-class classification and
-robust ensembles under edge compute budgets; (ii) stronger domain adaptation to
-address the direction asymmetry; (iii) online/streaming continuous adaptation with
+foundation validated here.
+
+\paragraph{Automating few-shot labeling in production.} Our AWS labels were derived
+from a controlled attack timeline, which is unavailable in a passive real-world
+deployment where attack times are unknown. To make the few-shot recipe practical
+in production, we propose two complementary label-acquisition paths as future work.
+(i) \emph{Active learning}: instead of labeling arbitrary flows, the system selects
+only the most \emph{informative} flows --- those nearest the decision boundary or
+with highest predictive uncertainty --- and requests labels for a small budget
+(tens of flows per drift episode), keeping human effort minimal. (ii)
+\emph{SIEM/SOC integration}: labels can be sourced automatically from existing
+security infrastructure --- correlation rules and alerts in a SIEM, verdicts from
+companion signature-based IDS (e.g., Suricata/Snort), or analyst triage
+dispositions in the SOC --- providing weak but low-cost ground truth to drive
+few-shot recalibration. A guardrail step (validating any candidate update against a
+trusted holdout of known attacks before promotion) would mitigate the risk of
+learning attacks as normal.
+
+\paragraph{Other directions.} (i) Multi-class classification and robust ensembles
+under edge compute budgets; (ii) stronger domain adaptation to address the
+direction asymmetry; (iii) online/streaming continuous adaptation with
 concept-drift detection for extended multi-day deployment.
 
 % ============================================================
