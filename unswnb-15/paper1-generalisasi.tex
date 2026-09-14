@@ -1385,6 +1385,81 @@ model tunggal XGBoost adalah \emph{pilihan desain} yang disengaja demi efisiensi
 \emph{ensemble} robust ditinggalkan sebagai arah lanjutan yang harus tetap
 mempertimbangkan anggaran komputasi penyebaran.
 
+\paragraph{Dari biner menuju adaptasi multi-kelas.} Evaluasi kami sengaja dibuat
+biner (serangan vs.\ benign) untuk mengisolasi variabel generalisasi lintas-jaringan
+pada dua dataset yang \emph{taksonomi serangannya berbeda} (14 jenis serangan di
+CIC vs.\ sembilan kelas di UNSW), sehingga ruang label multi-kelas bersama tidak
+sepele untuk didefinisikan. Meski demikian, adaptasi \emph{few-shot} multi-kelas
+secara substansial lebih sulit karena tiga hal. Pertama, di bawah kalibrasi
+\emph{few-shot} dukungan \emph{per-kategori} menjadi sangat tipis: anggaran $1\%$
+label target yang cukup untuk kelas serangan biner bisa hanya menyisakan segelintir
+--- atau nol --- sampel untuk kategori langka, sehingga sinyal kalibrasi didominasi
+kategori yang sering muncul. Kedua, pergeseran distribusi residual bersifat
+\emph{bergantung kategori}. Ketiga, batas Ben-David (Pers.~\eqref{eq:bendavid})
+berlaku per sub-masalah biner; dekomposisi \emph{one-vs-rest} mewarisi suku
+diskrepansi per-kelas $d_{\mathcal{H}\Delta\mathcal{H}}$ dan galat ideal
+$\lambda^\ast$, dan kelas terburuk mendominasi galat multi-kelas keseluruhan.
+
+Untuk mengonkretkan poin kedua, kami menghitung \emph{matriks pergeseran fitur
+per-kategori} lintas kedua dataset. Untuk tiap dataset kami memulihkan taksonomi
+serangan aslinya (label CIC tersimpan pada CSV mentah; UNSW menyediakan
+\texttt{attack\_cat}), mengelompokkan label ke kategori kasar yang sepadan,
+menstandardisasi kesembilan fitur SFM per-dataset, lalu mengukur jarak Wasserstein
+$W_1$ tiap kategori serangan terhadap trafik benign-nya sendiri. Tabel~\ref{tab:catshift}
+dan Gambar~\ref{fig:catshift} melaporkan hasilnya.
+
+\begin{table}[h]
+\centering
+\caption{Matriks pergeseran fitur per-kategori ($W_1$ ke benign, sembilan fitur
+SFM ter-standardisasi $z$ per-dataset). Makin besar = makin jauh dari benign.
+Kolom \textsc{Rata} me-rata-rata kesembilan fitur; tebal menandai fitur paling
+bergeser per baris. Kategori dengan $<200$ aliran diabaikan.}
+\label{tab:catshift}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{llrrrrr}
+\toprule
+Data & Kategori & $n$ & \textsc{Rata} & Fitur utama & $W_1$ & Fitur ke-2 \\
+\midrule
+CIC  & DDoS         & 126{.}389 & 0{,}182 & fwd\_mean  & \textbf{0{,}702} & dst\_load (0{,}42) \\
+CIC  & DoS          & 65{.}426  & 0{,}270 & dst\_load  & \textbf{0{,}806} & fwd\_mean (0{,}78) \\
+CIC  & BruteForce   & 38{.}174  & 0{,}554 & dst\_load  & \textbf{3{,}631} & fwd\_mean (0{,}59) \\
+CIC  & Botnet       & 28{.}618  & 0{,}158 & bwd\_mean  & \textbf{0{,}657} & fwd\_mean (0{,}53) \\
+CIC  & Infiltration & 16{.}047  & 0{,}101 & dst\_load  & \textbf{0{,}392} & fwd\_mean (0{,}30) \\
+\midrule
+UNSW & DoS          & 4{.}086   & 0{,}269 & duration   & \textbf{0{,}294} & bwd\_pkts (0{,}27) \\
+UNSW & Exploits     & 11{.}125  & 0{,}151 & fwd\_bytes & \textbf{0{,}172} & duration (0{,}14) \\
+UNSW & Generic      & 18{.}860  & 0{,}273 & bwd\_mean  & \textbf{0{,}674} & src\_load (0{,}44) \\
+UNSW & Fuzzers      & 6{.}048   & 0{,}225 & bwd\_mean  & \textbf{0{,}575} & src\_load (0{,}38) \\
+UNSW & Recon        & 3{.}494   & 0{,}220 & bwd\_mean  & \textbf{0{,}620} & src\_load (0{,}26) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.92\linewidth]{fig_category_shift_matrix.png}
+\caption{Matriks pergeseran fitur per-kategori, lintas-dataset ($W_1$ ke benign).
+Tiap baris satu kategori serangan dari CIC atau UNSW; tiap kolom satu dari
+sembilan fitur SFM. Pola panas jelas tak-seragam, baik antar-fitur dalam satu
+kategori maupun antar-dataset untuk kategori yang nominalnya sepadan.}
+\label{fig:catshift}
+\end{figure}
+
+Dua pengamatan menegaskan argumen kualitatif di atas. (i) Fitur pendorong
+pergeseran bersifat \emph{spesifik-kategori}: CIC BruteForce didominasi fitur
+laju-tujuan ($W_1\!=\!3{,}63$, jauh di atas sel mana pun), sedangkan CIC DDoS
+didorong rata-rata panjang paket maju dan Botnet oleh rata-rata mundur --- jadi
+tak ada satu penyelarasan fitur yang melayani semua kategori. (ii) Kategori yang
+nominalnya sepadan bergeser \emph{berbeda antar-jaringan}: CIC DoS dan UNSW DoS
+punya rata-rata pergeseran hampir identik ($0{,}270$ vs $0{,}269$) namun
+terkonsentrasi pada fitur berbeda (laju-tujuan untuk CIC vs.\ durasi aliran dan
+cacah paket untuk UNSW), sehingga kalibrasi yang disetel pada DoS satu jaringan
+belum tentu bertransfer ke jaringan lain. Ini secara empiris menegaskan mengapa
+\emph{penganggaran few-shot sadar-kelas} --- bukan kalibrasi global tunggal ---
+dibutuhkan untuk penyebaran multi-kelas lintas-jaringan yang ketat, yang kami
+kembangkan pada kerja mendatang.
+
 % ============================================================
 \section{Kesimpulan dan Kerja Mendatang}
 \label{sec:conclusion}
