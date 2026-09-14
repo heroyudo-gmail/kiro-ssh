@@ -1045,8 +1045,8 @@ cerminan jujur dari dukungan kelas, bukan kegagalan model.
 \toprule
 Dataset & \#kelas & macro-F1 & weighted-F1 & MCC & balanced acc. \\
 \midrule
-CSE-CIC-IDS2018 & ?? & ?? & ?? & ?? & ?? \\
-UNSW-NB15       & ?? & ?? & ?? & ?? & ?? \\
+CSE-CIC-IDS2018 & 7 & $0{,}591$ & $0{,}943$ & $0{,}834$ & $0{,}605$ \\
+UNSW-NB15       & 10 & $0{,}505$ & $0{,}827$ & $0{,}774$ & $0{,}482$ \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1072,14 +1072,35 @@ per-kategori.}
 \label{fig:mc-cm}
 \end{figure}
 
+Perilaku per-kelas persis seperti diprediksi komposisi (Tabel~\ref{tab:attackcomp}).
+Kategori bervolume tinggi dikenali baik --- pada CIC: Benign (recall $0{,}99$),
+Botnet ($0{,}97$), DDoS ($0{,}94$), BruteForce ($0{,}89$); pada UNSW: Generic
+($0{,}98$), Benign ($0{,}97$), Reconnaissance ($0{,}78$). Kategori minoritas jatuh
+tajam: CIC Infiltration hanya $0{,}01$ recall; UNSW Analysis $0{,}00$, Shellcode
+$0{,}13$. Inilah sebabnya weighted-F1 agregat tetap tinggi ($0{,}94$ CIC, $0{,}83$
+UNSW) sementara macro-F1 jauh lebih rendah ($0{,}59$ dan $0{,}51$): rata-rata makro
+menyingkap kesulitan kelas langka yang disembunyikan rata-rata terbobot. Kami
+melaporkan keduanya secara jujur.
+
 \paragraph{Multi-kelas lintas-dataset pada kelas sepadan.} Studi multi-kelas
 lintas-jaringan penuh terkendala taksonomi yang berbeda (hanya \emph{Benign} dan
 \emph{DoS} muncul di keduanya). Latih di satu dataset dan uji di dataset lain pada
-kelas sepadan ini menghasilkan macro-F1 $=$ ?? (CIC$\rightarrow$UNSW) dan ??
-(UNSW$\rightarrow$CIC), menegaskan bahwa pergeseran distribusi per-kategori yang
-didokumentasikan pada Bagian~\ref{sec:conclusion} menurunkan transfer multi-kelas
-sebagaimana pada kasus biner --- dan bahwa kalibrasi sadar-kelas, bukan koreksi
-global tunggal, adalah solusi yang tepat.
+kelas sepadan ini menghasilkan macro-F1 $=0{,}47$ (CIC$\rightarrow$UNSW, MCC
+$0{,}00$) dan $0{,}40$ (UNSW$\rightarrow$CIC, MCC $-0{,}12$): model gagal
+mentransfer kategori DoS lintas-jaringan (memprediksi hampir semuanya Benign),
+kolaps persis seperti kasus biner. Ini menegaskan bahwa pergeseran distribusi
+per-kategori menurunkan transfer multi-kelas sebagaimana kasus biner --- dan bahwa
+kalibrasi sadar-kelas, bukan koreksi global tunggal, adalah solusi yang tepat.
+
+\paragraph{Cakupan pada trafik AWS nyata.} Eksperimen multi-kelas di atas dilakukan
+pada dataset benchmark yang tiap alirnya berlabel kategori andal. Pada penyebaran
+AWS, jadwal serangan kami menjalankan satu jenis serangan per selang waktu (Benign,
+Brute-Force, DoS, DDoS berurutan), sehingga label kategori pada prinsipnya dapat
+diturunkan dari timeline; namun rekonstruksinya menuntut pemrosesan ulang tangkapan
+mentah, dan kami menjaga validasi trafik nyata (Bagian~\ref{sec:realtraffic}) pada
+tingkat biner agar tidak berlebihan mengklaim dari pelabelan multi-kelas berbasis
+timeline. Deteksi multi-kelas pada trafik cloud nyata karenanya kami tetapkan
+sebagai langkah lanjutan konkret (Bagian~\ref{sec:conclusion}).
 
 % ============================================================
 \section{Validasi Trafik Nyata: Dari Paket ke Keputusan (Penjelasan untuk Tim)}

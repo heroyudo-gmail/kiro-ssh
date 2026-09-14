@@ -821,8 +821,8 @@ class support rather than a modeling failure.
 \toprule
 Dataset & \#classes & macro-F1 & weighted-F1 & MCC & balanced acc. \\
 \midrule
-CSE-CIC-IDS2018 & ?? & ?? & ?? & ?? & ?? \\
-UNSW-NB15       & ?? & ?? & ?? & ?? & ?? \\
+CSE-CIC-IDS2018 & 7 & $0.591$ & $0.943$ & $0.834$ & $0.605$ \\
+UNSW-NB15       & 10 & $0.505$ & $0.827$ & $0.774$ & $0.482$ \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -847,14 +847,36 @@ right: UNSW-NB15. Each row sums to $1$; the diagonal is per-category recall.}
 \label{fig:mc-cm}
 \end{figure}
 
+The per-class behaviour is exactly what the composition (Table~\ref{tab:attackcomp})
+predicts. High-volume categories are recognized well --- on CIC, Benign
+(recall $0.99$), Botnet ($0.97$), DDoS ($0.94$) and BruteForce ($0.89$); on UNSW,
+Generic ($0.98$), Benign ($0.97$) and Reconnaissance ($0.78$). Minority categories
+degrade sharply: CIC Infiltration reaches only $0.01$ recall and UNSW Analysis
+$0.00$, Shellcode $0.13$. This is why the aggregate weighted-F1 stays high
+($0.94$ CIC, $0.83$ UNSW) while macro-F1 is much lower ($0.59$ and $0.51$): the
+macro average exposes the rare-class difficulty that the weighted average hides.
+We report both, honestly, rather than only the flattering number.
+
 \paragraph{Cross-dataset multi-class on shared categories.} A full cross-network
 multi-class study is limited by the differing taxonomies (only \emph{Benign} and
 \emph{DoS} appear in both). Training on one dataset and testing on the other over
-these shared classes yields macro-F1 $=$ ?? (CIC$\rightarrow$UNSW) and ??
-(UNSW$\rightarrow$CIC), confirming that the per-category distribution shift
-documented in Section~\ref{sec:conclusion} degrades multi-class transfer just as it
-does the binary case --- and that class-aware calibration, not a single global
+these shared classes yields macro-F1 $=0.47$ (CIC$\rightarrow$UNSW, MCC $0.00$) and
+$0.40$ (UNSW$\rightarrow$CIC, MCC $-0.12$): the model essentially fails to transfer
+the DoS category across networks (predicting almost everything as Benign),
+collapsing exactly as the binary case does. This confirms that the per-category
+distribution shift documented in Section~\ref{sec:conclusion} degrades multi-class
+transfer as well --- and that class-aware calibration, not a single global
 correction, is the right remedy.
+
+\paragraph{Scope on real AWS traffic.} The multi-class experiment above is
+conducted on the benchmark datasets, where each flow carries a reliable
+per-category label. On the AWS deployment, our attack schedule ran one attack type
+per time window (Benign, Brute-Force, DoS, DDoS in sequence), so per-category labels
+are in principle derivable from the timeline; however, reconstructing them requires
+re-processing the raw capture, and we keep the real-traffic validation
+(Section~\ref{sec:realtraffic}) at the binary level to avoid over-claiming from a
+timeline-based multi-class labeling. Multi-class detection on real cloud traffic is
+therefore left as a concrete next step (Section~\ref{sec:conclusion}).
 
 % ============================================================
 \section{Real-Traffic Validation: From Packets to Decision}
