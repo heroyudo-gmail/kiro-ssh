@@ -66,11 +66,17 @@ contribution of this paper is \emph{not} another off-the-shelf classifier on a
 benchmark, but a \emph{methodology} for diagnosing and repairing cross-network
 generalization, together with its validation on real cloud traffic. This paper
 investigates two intertwined problems in practical NIDS: (1) the failure to
-generalize across networks, and (2) feature-extractor mismatch across extraction
-tools. Using a deliberately cross-source dataset pair --- CSE-CIC-IDS2018 (68
-features, CICFlowMeter) and UNSW-NB15 (42 features, Argus/Bro) --- we construct a
-statistically validated \emph{Semantic Feature Mapping} (SFM) that yields a truly
-comparable intersection feature set. A single XGBoost model is used only as a
+generalize across networks, and (2) \emph{feature-extractor mismatch} --- the
+often-overlooked but operationally common situation where the same nominal feature
+is computed differently by different flow-export tools (e.g., CICFlowMeter vs.\
+Argus/Bro), a real obstacle whenever a model trained on one tool's output is
+deployed behind another. Using a deliberately cross-source dataset pair ---
+CSE-CIC-IDS2018 (68 features, CICFlowMeter) and UNSW-NB15 (42 features, Argus/Bro)
+--- we construct a statistically validated \emph{Semantic Feature Mapping} (SFM)
+that yields a truly comparable intersection feature set and, in the process,
+exposes a concrete extractor mismatch on the TCP-window features (continuous in
+CICFlowMeter, effectively binary in Argus/Bro) that we discard rather than
+fabricate an equivalence. A single XGBoost model is used only as a
 \emph{controlled backbone} to isolate the effect of the methodology, not as the
 contribution. We find that a single XGBoost model
 excelling in-domain (MCC $0.91$ on CIC; $0.74$ on UNSW) \emph{collapses}
@@ -355,7 +361,28 @@ fraction of target labels is added to training, $\mu,\sigma$ are re-estimated on
 that augmented training set only, and the fixed target test set remains untouched.
 The Wasserstein analysis (Section~\ref{sec:wass}) likewise fits its $z$-space on
 the target \emph{train} set alone. This guarantees that no test-time information
-influences either scaling or model selection.
+influences either scaling or model selection. Figure~\ref{fig:unscaling}
+illustrates the full cross-extractor pipeline: un-scaling to original units,
+comparison on the original scale to derive the SFM verdict, and per-dataset
+re-$z$-scoring fitted on training data only.
+
+\begin{figure}[h]
+\centering
+\IfFileExists{fig_unscaling_scheme.pdf}{%
+  \includegraphics[width=0.95\linewidth]{fig_unscaling_scheme.pdf}%
+}{\IfFileExists{figure-q1/fig_unscaling_scheme.pdf}{%
+  \includegraphics[width=0.95\linewidth]{figure-q1/fig_unscaling_scheme.pdf}%
+}{\fbox{\parbox{0.9\linewidth}{\centering\small [Figure placeholder]
+Compile \texttt{fig-unscaling-scheme.tex} $\to$ \texttt{fig\_unscaling\_scheme.pdf}.
+Scheme: CIC un-scale ($x_{\text{orig}}=x_{\text{scaled}}\sigma+\mu$) $\to$ compare
+on original scale $\to$ per-dataset re-$z$-score (fit on train only).}}}}
+\caption{Cross-extractor alignment for SFM. CIC features are un-scaled to their
+original units, compared with raw UNSW on the original scale (median/p99 ratios) to
+assign the comparability verdict, then both datasets are independently
+$z$-scored with statistics fitted \emph{only} on their training partitions
+(no leakage into test/AWS).}
+\label{fig:unscaling}
+\end{figure}
 
 \subsection{Single XGBoost Choice: Edge and Green-AI Perspective}
 \label{sec:edge}
@@ -479,6 +506,29 @@ shifts the training distribution toward the target (lowering the discrepancy
 term). Thus the MCC recovery we observe (Section~\ref{sec:da}) is not an empirical
 coincidence but a direct consequence of Eq.~\eqref{eq:bendavid}: suppressing the
 two controllable right-hand terms lowers the target-error upper bound.
+Figure~\ref{fig:bendavid} visualizes the two bound components and how each of our
+mechanisms acts on them.
+
+\begin{figure}[h]
+\centering
+\IfFileExists{fig_bendavid.pdf}{%
+  \includegraphics[width=0.9\linewidth]{fig_bendavid.pdf}%
+}{\IfFileExists{figure-q1/fig_bendavid.pdf}{%
+  \includegraphics[width=0.9\linewidth]{figure-q1/fig_bendavid.pdf}%
+}{\fbox{\parbox{0.9\linewidth}{\centering\small [Figure placeholder]
+Compile \texttt{fig-bendavid.tex} $\to$ \texttt{fig\_bendavid.pdf}.
+Source/target clouds separated by $d_{\mathcal{H}\Delta\mathcal{H}}$; $\lambda^\ast$
+= ideal joint error. SFM makes $\mathcal{H}$ comparable; mixup lowers
+$d_{\mathcal{H}\Delta\mathcal{H}}$; $1\%$ few-shot lowers $\lambda^\ast$.}}}}
+\caption{Geometric view of the Ben--David bound. The source ($\mathcal{D}_S$) and
+target ($\mathcal{D}_T$) feature distributions are separated by the discrepancy
+$d_{\mathcal{H}\Delta\mathcal{H}}$; $\lambda^\ast$ is the ideal joint error. SFM
+makes the hypothesis space comparable (so $d_{\mathcal{H}\Delta\mathcal{H}}$ is
+measurable via $W_1$); cross-dataset mixup shifts training toward the target
+(lowering $d_{\mathcal{H}\Delta\mathcal{H}}$); and $1\%$ few-shot anchors the
+target ideal classifier (lowering $\lambda^\ast$).}
+\label{fig:bendavid}
+\end{figure}
 
 We compare three strategies (Table~\ref{tab:align}, Figure~\ref{fig:align}):
 single-source \emph{baseline}, \emph{CORAL} (unsupervised domain adaptation,
@@ -720,8 +770,6 @@ Observation duration & Benign flows & False alarms & FAR (\%) \\
 S0 (smoke test, $\sim$3 min) & $203$    & $0$  & $0.0000$ \\
 D1 (1 hour)                  & $3687$   & $14$ & $0.3797$ \\
 D2 (6 hours)                 & $22{,}644$ & $94$ & $0.4152$ \\
-24 hours \emph{(optional)}   & \multicolumn{3}{c}{not yet run} \\
-3--7 days \emph{(optional)}  & \multicolumn{3}{c}{escalation if needed} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -729,9 +777,9 @@ D2 (6 hours)                 & $22{,}644$ & $94$ & $0.4152$ \\
 \noindent FAR stays \emph{low and stable} as observation duration grows (S0
 $0.00\%$ $\rightarrow$ D1 $0.38\%$ $\rightarrow$ D2 $0.42\%$ over $22{,}644$ benign
 flows), proving the result is not a short-snapshot artifact. FAR $<0.5\%$ also
-rules out a unit/scale bug (which typically spikes FAR to $\approx 100\%$). The
-24-hour and 3--7-day stages are prepared as optional escalation and not yet run;
-the paper reports no fabricated numbers for those rows.
+rules out a unit/scale bug (which typically spikes FAR to $\approx 100\%$).
+Extending the observation window to multi-day continuous operation is part of our
+future real-traffic campaign (Section~\ref{sec:conclusion}).
 
 \subsection{Phase 2 --- Zero-Shot Detection Fails Due to Distribution Shift}
 \label{sec:rt-phase2}
