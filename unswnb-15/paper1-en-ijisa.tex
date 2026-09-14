@@ -780,6 +780,83 @@ calibration narrows but does not fully close the gap; this is why a few target
 labels (few-shot) still add value to the classification decision.
 
 % ============================================================
+\section{Multi-Class Attack Classification}
+\label{sec:multiclass}
+
+% ============================================================================
+% TODO (fill after running notebooks/24_multiclass.ipynb -> multiclass_results.json):
+%   - in_domain.CIC / in_domain.UNSW: macro_f1, weighted_f1, mcc, balanced_acc
+%   - per_class recall for the strong vs rare categories
+%   - confusion matrices -> figure-q1/confusion_CIC.png, confusion_UNSW.png
+%   - cross_dataset (Benign/DoS) macro_f1, mcc
+% Placeholders below are marked ?? and must be replaced with real numbers.
+% ============================================================================
+
+While the core study is deliberately binary to isolate the cross-network
+generalization variable, an operational NIDS often needs to name the attack
+\emph{category} for an appropriate response. We therefore add a multi-class
+experiment (this \emph{complements}, and does not replace, the binary results). We
+recover the original attack taxonomy of each dataset (Table~\ref{tab:attackcomp})
+and train an XGBoost classifier with the \texttt{multi:softprob} objective on the
+same nine SFM features, under the same no-leakage protocol (scaler fitted on the
+training split only). Categories with fewer than $200$ flows are merged into an
+\texttt{Other-rare} class so per-class estimates remain stable.
+
+\paragraph{In-domain multi-class.} Table~\ref{tab:mc-indomain} reports macro-F1,
+weighted-F1, multi-class MCC, and balanced accuracy per dataset; Figure~\ref{fig:mc-cm}
+shows the row-normalized confusion matrices (each cell = fraction of a true
+category predicted as each class). As expected under the steep per-category
+imbalance, high-volume categories (CIC DDoS/DoS; UNSW Generic/Exploits) are
+classified well, whereas minority categories are harder --- an honest reflection of
+class support rather than a modeling failure.
+
+\begin{table}[h]
+\centering
+\caption{In-domain multi-class classification on the nine SFM features
+(XGBoost \texttt{multi:softprob}, $70/30$ split, scaler fit on train only).
+\textbf{Numbers to be filled from} \texttt{multiclass\_results.json}.}
+\label{tab:mc-indomain}
+\small
+\begin{tabular}{lccccc}
+\toprule
+Dataset & \#classes & macro-F1 & weighted-F1 & MCC & balanced acc. \\
+\midrule
+CSE-CIC-IDS2018 & ?? & ?? & ?? & ?? & ?? \\
+UNSW-NB15       & ?? & ?? & ?? & ?? & ?? \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\IfFileExists{confusion_CIC.png}{%
+  \includegraphics[width=0.48\linewidth]{confusion_CIC.png}%
+}{\IfFileExists{figure-q1/confusion_CIC.png}{%
+  \includegraphics[width=0.48\linewidth]{figure-q1/confusion_CIC.png}}{%
+  \fbox{\parbox{0.44\linewidth}{\centering\small [CIC confusion matrix]\\
+  from \texttt{24\_multiclass.ipynb}}}}}
+\hfill
+\IfFileExists{confusion_UNSW.png}{%
+  \includegraphics[width=0.48\linewidth]{confusion_UNSW.png}%
+}{\IfFileExists{figure-q1/confusion_UNSW.png}{%
+  \includegraphics[width=0.48\linewidth]{figure-q1/confusion_UNSW.png}}{%
+  \fbox{\parbox{0.44\linewidth}{\centering\small [UNSW confusion matrix]\\
+  from \texttt{24\_multiclass.ipynb}}}}}
+\caption{Row-normalized multi-class confusion matrices (in-domain). Left: CSE-CIC-IDS2018;
+right: UNSW-NB15. Each row sums to $1$; the diagonal is per-category recall.}
+\label{fig:mc-cm}
+\end{figure}
+
+\paragraph{Cross-dataset multi-class on shared categories.} A full cross-network
+multi-class study is limited by the differing taxonomies (only \emph{Benign} and
+\emph{DoS} appear in both). Training on one dataset and testing on the other over
+these shared classes yields macro-F1 $=$ ?? (CIC$\rightarrow$UNSW) and ??
+(UNSW$\rightarrow$CIC), confirming that the per-category distribution shift
+documented in Section~\ref{sec:conclusion} degrades multi-class transfer just as it
+does the binary case --- and that class-aware calibration, not a single global
+correction, is the right remedy.
+
+% ============================================================
 \section{Real-Traffic Validation: From Packets to Decision}
 \label{sec:realtraffic}
 

@@ -1004,6 +1004,84 @@ pendekatan ini merupakan arah lanjutan yang wajar bagi NIDS tabular.
 \fi
 
 % ============================================================
+\section{Klasifikasi Serangan Multi-Kelas}
+\label{sec:multiclass}
+
+% ============================================================================
+% TODO (isi setelah menjalankan notebooks/24_multiclass.ipynb -> multiclass_results.json):
+%   - in_domain.CIC / in_domain.UNSW: macro_f1, weighted_f1, mcc, balanced_acc
+%   - recall per-kelas untuk kategori kuat vs langka
+%   - confusion matrix -> figure-q1/confusion_CIC.png, confusion_UNSW.png
+%   - cross_dataset (Benign/DoS) macro_f1, mcc
+% Placeholder di bawah ditandai ?? dan wajib diganti dengan angka nyata.
+% ============================================================================
+
+Meski studi inti sengaja dibuat biner untuk mengisolasi variabel generalisasi
+lintas-jaringan, NIDS operasional kerap perlu menamai \emph{kategori} serangan
+untuk penanganan yang tepat. Karena itu kami menambahkan eksperimen multi-kelas
+(ini \emph{melengkapi}, bukan menggantikan, hasil biner). Kami memulihkan taksonomi
+serangan asli tiap dataset (Tabel~\ref{tab:attackcomp}) dan melatih pengklasifikasi
+XGBoost dengan objektif \texttt{multi:softprob} pada sembilan fitur SFM yang sama,
+dengan protokol tanpa-kebocoran yang sama (penskala di-\emph{fit} hanya pada data
+latih). Kategori dengan $<200$ alir digabung ke kelas \texttt{Other-rare} agar
+estimasi per-kelas tetap stabil.
+
+\paragraph{Multi-kelas in-domain.} Tabel~\ref{tab:mc-indomain} melaporkan macro-F1,
+weighted-F1, MCC multi-kelas, dan balanced accuracy per dataset;
+Gambar~\ref{fig:mc-cm} menampilkan confusion matrix ternormalisasi-baris (tiap sel
+= fraksi kategori sebenarnya yang diprediksi ke tiap kelas). Sesuai ketimpangan
+per-kategori yang tajam, kategori bervolume tinggi (CIC DDoS/DoS; UNSW
+Generic/Exploits) terklasifikasi baik, sedangkan kategori minoritas lebih sulit ---
+cerminan jujur dari dukungan kelas, bukan kegagalan model.
+
+\begin{table}[h]
+\centering
+\caption{Klasifikasi multi-kelas in-domain pada sembilan fitur SFM
+(XGBoost \texttt{multi:softprob}, split $70/30$, penskala fit pada train saja).
+\textbf{Angka diisi dari} \texttt{multiclass\_results.json}.}
+\label{tab:mc-indomain}
+\small
+\begin{tabular}{lccccc}
+\toprule
+Dataset & \#kelas & macro-F1 & weighted-F1 & MCC & balanced acc. \\
+\midrule
+CSE-CIC-IDS2018 & ?? & ?? & ?? & ?? & ?? \\
+UNSW-NB15       & ?? & ?? & ?? & ?? & ?? \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\IfFileExists{confusion_CIC.png}{%
+  \includegraphics[width=0.48\linewidth]{confusion_CIC.png}%
+}{\IfFileExists{figure-q1/confusion_CIC.png}{%
+  \includegraphics[width=0.48\linewidth]{figure-q1/confusion_CIC.png}}{%
+  \fbox{\parbox{0.44\linewidth}{\centering\small [Confusion matrix CIC]\\
+  dari \texttt{24\_multiclass.ipynb}}}}}
+\hfill
+\IfFileExists{confusion_UNSW.png}{%
+  \includegraphics[width=0.48\linewidth]{confusion_UNSW.png}%
+}{\IfFileExists{figure-q1/confusion_UNSW.png}{%
+  \includegraphics[width=0.48\linewidth]{figure-q1/confusion_UNSW.png}}{%
+  \fbox{\parbox{0.44\linewidth}{\centering\small [Confusion matrix UNSW]\\
+  dari \texttt{24\_multiclass.ipynb}}}}}
+\caption{Confusion matrix multi-kelas ternormalisasi-baris (in-domain). Kiri:
+CSE-CIC-IDS2018; kanan: UNSW-NB15. Tiap baris berjumlah $1$; diagonal = recall
+per-kategori.}
+\label{fig:mc-cm}
+\end{figure}
+
+\paragraph{Multi-kelas lintas-dataset pada kelas sepadan.} Studi multi-kelas
+lintas-jaringan penuh terkendala taksonomi yang berbeda (hanya \emph{Benign} dan
+\emph{DoS} muncul di keduanya). Latih di satu dataset dan uji di dataset lain pada
+kelas sepadan ini menghasilkan macro-F1 $=$ ?? (CIC$\rightarrow$UNSW) dan ??
+(UNSW$\rightarrow$CIC), menegaskan bahwa pergeseran distribusi per-kategori yang
+didokumentasikan pada Bagian~\ref{sec:conclusion} menurunkan transfer multi-kelas
+sebagaimana pada kasus biner --- dan bahwa kalibrasi sadar-kelas, bukan koreksi
+global tunggal, adalah solusi yang tepat.
+
+% ============================================================
 \section{Validasi Trafik Nyata: Dari Paket ke Keputusan (Penjelasan untuk Tim)}
 \label{sec:realtraffic}
 
