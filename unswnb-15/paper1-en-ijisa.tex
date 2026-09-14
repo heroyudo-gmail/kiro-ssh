@@ -87,7 +87,10 @@ networks simultaneously; and (ii) minimal calibration --- only $1\%$ of
 target-network labels, or cross-dataset \emph{mixup} without any target labels ---
 recovers cross-network MCC to the $0.65$--$0.91$ range. We validate these findings
 on real AWS cloud traffic: zero-shot deployment fails (MCC $\approx 0$) but
-few-shot calibration with a small amount of domain labels restores detection. All
+few-shot calibration with a small amount of domain labels restores detection. As a
+complementary extension, we also classify attack \emph{categories} (multi-class) on
+the same nine features, and show that the same per-category shift that hurts binary
+transfer also limits multi-class cross-network transfer. All
 numbers are drawn from real, reproducible experiments and reported as-is,
 providing an honest guide for designing and evaluating NIDS that are robust in the
 real world.
@@ -162,6 +165,10 @@ honestly acknowledged its limitations. Two of these limitations form the
   False Alarm Rate, quantitatively diagnosing three-domain \emph{distribution
   shift}, and restoring detection via \emph{few-shot} calibration
   (Section~\ref{sec:realtraffic}).
+  \item A \textbf{multi-class extension} that classifies attack \emph{categories}
+  on the same nine SFM features, reporting in-domain per-category performance and
+  showing that the same per-category shift limits multi-class cross-network
+  transfer (Section~\ref{sec:multiclass}).
 \end{itemize}
 
 \paragraph{Positioning and novelty.} We stress that this work is \emph{not} the
@@ -1318,10 +1325,17 @@ few-shot recalibration. A guardrail step (validating any candidate update agains
 trusted holdout of known attacks before promotion) would mitigate the risk of
 learning attacks as normal.
 
-\paragraph{Other directions.} (i) Multi-class classification and robust ensembles
-under edge compute budgets; (ii) stronger domain adaptation to address the
-direction asymmetry; (iii) online/streaming continuous adaptation with
-concept-drift detection for extended multi-day deployment.
+\paragraph{Other directions.} Having extended the study to multi-class attack
+classification in-domain (Section~\ref{sec:multiclass}), the remaining directions
+are: (i) \emph{multi-class detection on real cloud traffic}, using per-category
+labels reconstructed from the attack timeline, and class-aware few-shot budgeting
+for the rare categories that our per-category analysis shows to be hardest;
+(ii) \emph{online/streaming continuous adaptation} with concept-drift detection so
+the model recalibrates itself over extended multi-day deployment without full
+retraining --- the natural successor to the one-shot few-shot recipe here;
+(iii) robust ensembles under edge compute budgets and stronger domain adaptation to
+address the direction asymmetry. Adversarial robustness is pursued separately (see
+above).
 
 % ============================================================
 \section*{CRediT authorship contribution statement}

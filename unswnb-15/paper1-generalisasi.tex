@@ -1766,11 +1766,14 @@ robustness} menuntut solusi berbeda. Karena itu, evaluasi ketahanan yang menyelu
 validitas protokol) dan \emph{adaptive white-box} (penyerang yang mengetahui
 model pertahanan) --- kami tetapkan sebagai \textbf{arah lanjutan} yang akan
 dilaporkan pada studi terpisah, di atas fondasi SFM dan kalibrasi domain yang
-divalidasi di sini. Arah lanjutan lain: (i) klasifikasi multi-kelas dan
-\emph{ensemble} robust dengan tetap mempertimbangkan anggaran komputasi
-\emph{edge}; (ii) adaptasi domain yang lebih kuat untuk mengatasi asimetri arah;
-(iii) perpanjangan \emph{deployment} FAR ke skala multi-hari (3--7 hari) untuk
-melengkapi perbandingan antar-durasi (Tabel~\ref{tab:far}).
+divalidasi di sini. Setelah memperluas studi ke klasifikasi multi-kelas in-domain
+(Bagian~\ref{sec:multiclass}), arah lanjutan lain: (i) \emph{deteksi multi-kelas
+pada trafik cloud nyata} dengan label per-kategori dari timeline serangan dan
+penganggaran \emph{few-shot} sadar-kelas untuk kategori langka; (ii)
+\emph{adaptasi online/streaming berkelanjutan} dengan deteksi \emph{concept drift}
+agar model mengalibrasi diri sepanjang penyebaran multi-hari tanpa latih-ulang
+penuh; (iii) \emph{ensemble} robust dan adaptasi domain lebih kuat untuk asimetri
+arah.
 \fi
 
 \begin{figure}[h]
