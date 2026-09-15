@@ -48,14 +48,15 @@ sekaligus (i) menjaga generalisasi lintas-jaringan dan (ii) tahan terhadap seran
 varian pelatihan --- \emph{baseline}, \emph{few-shot}, \emph{adversarial training},
 dan gabungan \emph{few-shot $+$ adversarial} --- pada dua arah lintas-jaringan
 (CSE-CIC-IDS2018 $\leftrightarrow$ UNSW-NB15), dan mengevaluasinya di bawah tiga
-rezim serangan: FGSM tak-terbatas (batas atas), FGSM \emph{functional-preserving}
-(realistis), dan \emph{adaptive white-box} (skenario terburuk). Hasilnya campuran
+rezim serangan: FGSM tak-terbatas (batas atas), FGSM \emph{protocol-consistent
+feature-space} (PCFS --- konsisten di ruang fitur, bukan klaim deliverability), dan
+\emph{adaptive white-box} (skenario terburuk). Hasilnya campuran
 dan dilaporkan jujur: generalisasi lintas-jaringan hanya datang dari \emph{few-shot}
 (MCC target pulih ke $0{,}65$--$0{,}90$), sedangkan \emph{adversarial training} saja
 tidak menutup celah lintas-jaringan. Menambahkan \emph{adversarial training} di atas
 \emph{few-shot} tidak merusak generalisasi, dan pada arah CIC$\rightarrow$UNSW
 varian \emph{few-shot$+$adv} bahkan tangguh di \textbf{kedua} sumbu sekaligus (MCC
-target $0{,}70$; ketahanan \emph{adaptive functional evasion} $0{,}50$). Namun pada
+target $0{,}70$; ketahanan \emph{adaptive PCFS evasion} $0{,}50$). Namun pada
 arah UNSW$\rightarrow$CIC ketahanan \emph{adaptive} tetap runtuh untuk semua varian.
 Temuan utama kami --- yang belum pernah dilaporkan sebelumnya --- adalah adanya
 \textbf{rezim ketangguhan asimetris}: kedua bentuk ketangguhan dapat hidup
@@ -66,8 +67,8 @@ dilaporkan apa adanya.
 
 \vspace{0.5em}
 \noindent\textbf{Kata kunci:} deteksi intrusi jaringan, ketahanan adversarial,
-\emph{functional-preserving evasion}, \emph{adaptive white-box}, generalisasi
-lintas-jaringan, pemetaan fitur semantik, \emph{few-shot}, XGBoost.
+\emph{protocol-consistent feature-space evasion}, \emph{adaptive white-box},
+generalisasi lintas-jaringan, pemetaan fitur semantik, \emph{few-shot}, XGBoost.
 \end{abstract}
 
 % ============================================================
@@ -105,14 +106,14 @@ perpindahan jaringan?}
 \noindent Pertanyaan ini bersifat \emph{ilmiah}, bukan rekayasa: bukan
 ``teknik mana yang harus digabung'', melainkan ``bagaimana dua bentuk ketangguhan
 itu berinteraksi, dan mengapa interaksinya asimetris''. Komponen yang kami pakai
-(SFM, \emph{few-shot}, FGSM, \emph{adversarial training}, kendala
-\emph{functional-preserving}, \emph{adaptive white-box}) semuanya sudah mapan;
+(SFM, \emph{few-shot}, FGSM, \emph{adversarial training}, kendala \emph{PCFS},
+\emph{adaptive white-box}) semuanya sudah mapan;
 sumbangan kami adalah \emph{temuan} tentang interaksinya, bukan komponennya.
 
 Kebaruan makalah ini \textbf{bukan} terletak pada komponen penyusunnya --- SFM,
 kalibrasi \emph{few-shot}, FGSM, \emph{adversarial training}, kendala
-\emph{functional-preserving}, dan serangan \emph{adaptive white-box} semuanya sudah
-mapan secara individual. Kebaruan kami berada pada tataran \emph{temuan ilmiah}:
+\emph{protocol-consistent feature-space} (PCFS), dan serangan \emph{adaptive
+white-box} semuanya sudah mapan secara individual. Kebaruan kami berada pada tataran \emph{temuan ilmiah}:
 kami adalah yang pertama mempelajari \emph{interaksi} antara dua sumbu ketangguhan
 --- \emph{distribution shift} lintas-jaringan dan ketahanan \emph{evasion}
 adversarial --- pada satu NIDS ringan berbasis-alir, dan mengungkap sebuah
@@ -135,8 +136,8 @@ dan mengapa keberadaannya bersyarat pada arah perpindahan jaringan.}
   \item \textbf{Kerangka evaluasi dua-sumbu} yang menyatukan pengukuran
   generalisasi lintas-jaringan dan ketahanan evasion dalam satu protokol, dengan
   ancaman berlapis yang membedakan serangan tak-realistis (FGSM tak-terbatas) dari
-  serangan \emph{valid protokol} (\emph{functional-preserving}) serta skenario
-  terburuk \emph{adaptive white-box} (Bagian~\ref{sec:ancaman}).
+  serangan konsisten-di-ruang-fitur (\emph{PCFS}) serta skenario terburuk
+  \emph{adaptive white-box} (Bagian~\ref{sec:ancaman}).
   \item \textbf{Analisis trade-off yang dilaporkan jujur}, termasuk kegagalan:
   \emph{adversarial training} saja tidak menutup celah lintas-jaringan, dan tidak
   menjamin ketahanan \emph{adaptive} di semua arah --- menandai batas nyata
@@ -193,8 +194,10 @@ gradien atau GAN~\cite{lin2022idsgan,alhajjar2021,sheatsley2022} pada fitur alir
 \emph{tanpa} memperhatikan validitas protokol, sehingga menghasilkan \emph{flow}
 yang tak dapat dikirim di jaringan nyata dan \emph{melebih-lebihkan} ancaman.
 Beberapa karya menekankan perlunya kendala realisme~\cite{apruzzese2023,merzouk2022}
-agar serangan tetap merepresentasikan trafik yang benar-benar dapat dikirim; kami
-mengadopsi \emph{functional-preserving constraints} dalam semangat ini.
+agar serangan lebih merepresentasikan trafik yang plausibel; dalam semangat ini kami
+mengadopsi kendala \emph{protocol-consistent feature-space} (PCFS) --- konsistensi
+di ruang fitur --- sambil membedakannya secara tegas dari realizability protokol
+penuh (yang kami uji terpisah pada trafik nyata, Bagian~\ref{sec:aws}).
 
 \paragraph{Adversarial training dan keterbatasannya.} \emph{Adversarial
 training}~\cite{goodfellow2015,madry2018} menambahkan sampel perturbasi ke data
@@ -214,8 +217,9 @@ secara eksplisit dan melaporkan hasilnya apa adanya, termasuk saat pertahanan ga
 \paragraph{Posisi terhadap karya terkait.} Tabel~\ref{tab:related} mengontraskan
 makalah ini dengan karya representatif pada lima dimensi. Sejauh pengetahuan kami,
 belum ada karya yang secara \emph{bersamaan} menangani generalisasi lintas-jaringan
-(via few-shot) dan ketahanan \emph{functional-preserving adaptive evasion} pada satu
-model ringan, sekaligus melaporkan uji tekanan pada trafik nyata. Secara khusus,
+(via few-shot) dan ketahanan \emph{adaptive PCFS evasion} (\emph{protocol-consistent
+feature-space}) pada satu model ringan, sekaligus melaporkan uji tekanan pada trafik
+nyata. Secara khusus,
 studi few-shot NIDS mutakhir~\cite{fewshot} berfokus pada peningkatan deteksi
 \emph{in-domain}/kelas-langka melalui \emph{self-attention} dan penyulingan
 iteratif, tetapi \emph{tidak} mengevaluasi ketahanan adversarial; sebaliknya studi
@@ -235,8 +239,9 @@ terpisah, dan yang kami jelaskan lewat geometri batas keputusan pohon
 \begin{table}[h]
 \centering
 \caption{Positioning against representative related work. CN = cross-network
-generalization; Adv = adversarial robustness studied; FP = functional-preserving
-(protocol-valid) attack; AW = adaptive white-box attack; RT = evaluated on real
+generalization; Adv = adversarial robustness studied; FP = feature-space consistency
+constraints (protocol-consistent feature space, PCFS --- not full packet-level
+deliverability); AW = adaptive white-box attack; RT = evaluated on real
 (non-benchmark) traffic. \checkmark\ = addressed, \ding{55}\ = not addressed,
 $\sim$ = partial.}
 \label{tab:related}
@@ -266,17 +271,18 @@ pipeline terkalibrasi penuh.}
 
 Gambar~\ref{fig:pipeline} memvisualkan arsitektur pipeline secara menyeluruh:
 dari sembilan fitur SFM, penggabungan data (sumber $+$ $1\%$ label target
-\emph{few-shot}), pembangkitan perturbasi FGSM \emph{functional-preserving},
-\emph{adversarial training} (\emph{few-shot$+$adv}), hingga evaluasi multi-ancaman.
+\emph{few-shot}), pembangkitan perturbasi FGSM \emph{PCFS (protocol-consistent
+feature-space)}, \emph{adversarial training} (\emph{few-shot$+$adv}), hingga
+evaluasi multi-ancaman.
 
 \begin{figure}[h]
 \centering
 \resizebox{0.95\linewidth}{!}{\input{figure-p2/tikz-p2-pipeline.tex}}
 \caption{Proposed pipeline architecture. Nine SFM features $\rightarrow$ data merge
 (source $+$ $1\%$ few-shot target, z-score fit train-only without leakage)
-$\rightarrow$ \emph{functional-preserving} FGSM perturbation generation
-$\rightarrow$ \emph{adversarial training} (few-shot$+$adv) on XGBoost
-$\rightarrow$ multi-threat evaluation (clean, unconstrained, functional-preserving,
+$\rightarrow$ \emph{PCFS (protocol-consistent feature-space)} FGSM perturbation
+generation $\rightarrow$ \emph{adversarial training} (few-shot$+$adv) on XGBoost
+$\rightarrow$ multi-threat evaluation (clean, unconstrained, PCFS,
 adaptive white-box) across two directions and two robustness axes.}
 \label{fig:pipeline}
 \end{figure}
@@ -393,9 +399,9 @@ evaluasi ketahanan satu-serangan mudah melebih-lebihkan robustness dan lazim dit
 pada literatur adversarial mutakhir~\cite{athalye2018,carlini2019evaluating}. Karena
 itu kami mengevaluasi tiga tingkat kekuatan pada model dan ruang fitur yang sama:
 \emph{(i) FGSM finite-difference satu-langkah} sebagai serangan berbiaya-rendah dan
-\emph{batas bawah} daya serang; \emph{(ii) PGD iteratif functional-preserving}
-($\text{iter}=10$, $\alpha=0{,}02$, proyeksi $\ell_\infty$-$\epsilon$ lalu ke ruang
-valid pada tiap langkah) sebagai serangan multi-langkah yang jauh lebih kuat pada
+\emph{batas bawah} daya serang; \emph{(ii) PGD iteratif PCFS}
+($\text{iter}=10$, $\alpha=0{,}02$, proyeksi $\ell_\infty$-$\epsilon$ lalu ke wilayah
+PCFS pada tiap langkah) sebagai serangan multi-langkah yang jauh lebih kuat pada
 permukaan keputusan tak-mulus; dan \emph{(iii)} kami memosisikan serangan ansambel
 \emph{parameter-free} seperti \emph{AutoAttack}~\cite{croce2020autoattack} dan evasi
 khusus-pohon berbasis-optimasi~\cite{kantchelian2016} sebagai \emph{batas atas}
@@ -409,9 +415,9 @@ dirangkum pada Tabel~\ref{tab:multiattack}; protokolnya dijabarkan berikut.
 satu realisasi, seluruh eksperimen diulang pada \textbf{lima \emph{seed}} berbeda
 ($\{13,42,101,202,303\}$) dan dilaporkan sebagai rerata $\pm$ simpangan baku dengan
 selang kepercayaan $95\%$. Selain FGSM satu-langkah, kami menambahkan serangan
-\emph{adaptive} yang lebih kuat berupa \textbf{PGD} \emph{functional-preserving}
+\emph{adaptive} yang lebih kuat berupa \textbf{PGD} \emph{PCFS}
 ($\text{iter}=10$, $\alpha=0{,}02$, proyeksi ke bola $\ell_\infty$ beranggaran
-$\epsilon$ lalu ke ruang valid pada tiap langkah) dan mengevaluasi ketiganya pada
+$\epsilon$ lalu ke wilayah PCFS pada tiap langkah) dan mengevaluasi ketiganya pada
 tiga anggaran $\epsilon\in\{0{,}05;0{,}1;0{,}2\}$ sehingga membentuk \emph{kurva
 ketahanan} (\emph{robustness curve}) MCC terhadap $\epsilon$, bukan satu titik
 tunggal. Dengan begitu estimasi ketahanan tidak bergantung pada kekuatan serangan
@@ -429,7 +435,7 @@ UNSW$\rightarrow$CIC. Rincian implementasi dan artefak reproduktif ada pada
 \texttt{14\_reviewer\_experiments.ipynb}.
 
 % ============================================================
-\section{Threat Model and Functional Constraints}
+\section{Threat Model and Protocol-Consistent Feature-Space Constraints}
 \label{sec:ancaman}
 
 \paragraph{Formalisasi model ancaman.} Kami mengikuti kerangka baku evaluasi
@@ -452,8 +458,9 @@ x' = \arg\max_{\tilde{x}\in \mathcal{C}(x),\ \lVert \tilde{x}-x\rVert_\infty \le
 \ \mathcal{L}\big(m(\tilde{x}), y\big),
 \end{equation}
 dengan $\mathcal{C}(x)$ himpunan \emph{flow} yang memenuhi seluruh batasan
-fungsional dan $\mathcal{L}$ kerugian \emph{binary cross-entropy}. Kami
-mengaproksimasi $x'$ dengan FGSM \emph{functional-preserving} (Algorithm~\ref{alg:adv}).
+konsistensi ruang-fitur (PCFS) dan $\mathcal{L}$ kerugian \emph{binary
+cross-entropy}. Kami mengaproksimasi $x'$ dengan FGSM \emph{PCFS}
+(Algorithm~\ref{alg:adv}).
 
 Sebuah serangan \emph{evasion} dicirikan oleh \emph{dua properti yang saling bebas},
 sehingga sebuah serangan dapat menggabungkan keduanya. \emph{Sumbu-1 (pengetahuan
@@ -462,21 +469,29 @@ static}}, saliency berasal dari \emph{model pengganti} sehingga penyerang tidak 
 model pertahanan (skenario lemah); sebaliknya pada \textbf{\emph{adaptive white-box}}
 saliency dihitung dari \emph{model yang diserang itu sendiri}, artinya penyerang
 mengetahui persis model pertahanan (skenario terburuk). \emph{Sumbu-2 (realisme)}
-menentukan apakah \emph{flow} hasil serangan valid: \textbf{\emph{unconstrained}}
-memperturbasi fitur bebas di ruang z-score dan dapat menghasilkan \emph{flow}
-mustahil (mis. \emph{bytes} $<$ \emph{packets}), berguna hanya sebagai \emph{batas
-atas} daya serang; sedangkan \textbf{\emph{functional-preserving}} memproyeksikan
-perturbasi ke ruang fitur yang \emph{konsisten protokol} (lihat batasan di bawah),
-jauh lebih realistis daripada \emph{unconstrained}. Istilah \emph{adaptive functional} yang dipakai pada
-kolom Tabel~\ref{tab:p2main} adalah gabungan keduanya --- serangan yang
-\textbf{sekaligus} \emph{adaptive white-box} \textbf{dan} \emph{functional-preserving},
-yaitu skenario \emph{paling berat} sekaligus \emph{paling realistis}. Kami
+menentukan seberapa \emph{konsisten} \emph{flow} hasil serangan pada ruang fitur:
+\textbf{\emph{unconstrained}} memperturbasi fitur bebas di ruang z-score dan dapat
+menghasilkan \emph{flow} mustahil (mis. \emph{bytes} $<$ \emph{packets}), berguna
+hanya sebagai \emph{batas atas} daya serang; sedangkan \textbf{\emph{protocol-consistent
+feature-space} (PCFS)} memproyeksikan perturbasi ke wilayah fitur yang \emph{konsisten
+secara aritmetik dan semantik} (non-negativitas, integralitas paket, $B\ge p$,
+rata-rata konsisten, laju direkonsiliasi, monotonik \emph{add-only}; lihat batasan
+di bawah), sehingga jauh lebih \emph{plausibel} daripada \emph{unconstrained}.
+\textbf{Penting:} PCFS menegakkan konsistensi \emph{di ruang fitur}, \emph{bukan}
+jaminan bahwa \emph{flow} tersebut dapat benar-benar dikirim paket-demi-paket
+(\emph{deliverability}); itulah sebabnya kami sengaja \emph{tidak} memakai istilah
+``\emph{functional-preserving}'' yang lazim menyiratkan realizability protokol penuh.
+Istilah \emph{adaptive PCFS} yang dipakai pada kolom Tabel~\ref{tab:p2main} adalah
+gabungan kedua sumbu --- serangan yang \textbf{sekaligus} \emph{adaptive white-box}
+\textbf{dan} \emph{PCFS} --- yaitu skenario \emph{paling berat} sekaligus \emph{paling
+konsisten di ruang fitur} (bukan klaim paling realistis di jaringan). Kami
 mengevaluasi tiga rezim ($\epsilon \in \{0{,}05; 0{,}1; 0{,}2\}$): \emph{unconstrained}
-(batas atas), \emph{functional-preserving} (realistis), dan \emph{adaptive white-box}
+(batas atas), \emph{PCFS} (konsisten di ruang fitur), dan \emph{adaptive white-box}
 (saliency dari model target sendiri).
 
-\paragraph{Formulasi batasan \emph{functional-preserving}.} Tabel~\ref{tab:constraint}
-merangkum proyeksi yang diterapkan pada tiap \emph{flow} $x$ (di ruang fitur asli,
+\paragraph{Formulasi batasan PCFS (\emph{protocol-consistent feature-space}).}
+Tabel~\ref{tab:constraint} merangkum proyeksi yang diterapkan pada tiap \emph{flow}
+$x$ (di ruang fitur asli,
 sebelum z-score). Notasi: $p^{f},p^{b}$ jumlah paket maju/mundur; $B^{f},B^{b}$ byte
 maju/mundur; $\bar{s}^{f},\bar{s}^{b}$ rata-rata ukuran paket; $d$ durasi; $\Delta$
 menandai perubahan akibat serangan.
@@ -487,24 +502,35 @@ fitur} --- non-negativitas, integralitas paket, $B \ge p$, rata-rata
 $\bar{s}=B/p$, dan monotonisitas \emph{add-only} --- \textbf{bukan} sebuah bukti
 bahwa \emph{flow} tersebut pasti dapat direalisasikan paket-demi-paket di jaringan
 (kami tidak memverifikasi MTU, urutan \emph{handshake}, \emph{timing} antar-paket,
-atau keterbatasan RTT). Selain itu, fitur laju $\ell$ (\texttt{src\_load},
-\texttt{dst\_load}) pada implementasi saat ini \emph{tidak} direkonsiliasi ulang
-terhadap $B/d$ setelah perturbasi, sehingga sebuah \emph{flow} adversarial dapat
-memuat pasangan (\emph{load}, \emph{bytes}/\emph{duration}) yang tak konsisten
-secara fisik. Karena itu istilah ``\emph{functional-preserving}'' di sini bermakna
-\emph{feature-space plausibility yang jauh lebih ketat daripada unconstrained},
-bukan jaminan \emph{deliverability} penuh. Validasi \emph{deliverability} yang
-sesungguhnya kami serahkan pada eksperimen trafik nyata yang benar-benar dikirim
-(Bagian~\ref{sec:aws}, varian \emph{network-level evasion}), dan rekonsiliasi laju
-serta konstruksi paket end-to-end kami tandai sebagai pekerjaan lanjutan.
+atau keterbatasan RTT). Perlu dicatat perbedaan versi: pada pipeline evaluasi awal (angka
+Tabel~\ref{tab:p2main}) fitur laju $\ell$ (\texttt{src\_load}, \texttt{dst\_load})
+\emph{belum} direkonsiliasi ulang terhadap $B/d$ setelah perturbasi, sehingga
+sebuah \emph{flow} adversarial dapat memuat pasangan (\emph{load},
+\emph{bytes}/\emph{duration}) yang tak konsisten; pada pipeline revisi
+(Tabel~\ref{tab:multiattack}, FGSM/PGD) rekonsiliasi laju $\ell=B/d$ sudah
+ditegakkan sebagai bagian dari proyeksi PCFS. Meskipun begitu, rekonsiliasi laju
+tetap \emph{tidak} menjadikan \emph{flow} tersebut terjamin dapat dikirim. Justru
+karena keterbatasan inilah kami memilih istilah
+\emph{protocol-consistent feature-space} (PCFS) alih-alih ``\emph{functional-preserving}'':
+PCFS bermakna \emph{konsistensi aritmetik-semantik di ruang fitur yang jauh lebih
+ketat daripada unconstrained}, \textbf{bukan} jaminan \emph{deliverability}
+paket-demi-paket. Konsistensi fitur ($B\ge p$, $\bar{s}=B/p$) tidak dengan
+sendirinya menjamin adanya barisan paket nyata yang menghasilkan \emph{flow}
+tersebut, karena fitur alir (durasi, jumlah/ukuran paket, laju) terikat korelasi
+temporal dan keadaan TCP yang tidak kami verifikasi (MTU, urutan \emph{handshake},
+\emph{timing} antar-paket, RTT). Validasi \emph{deliverability} yang sesungguhnya
+kami serahkan pada eksperimen trafik nyata yang benar-benar dikirim
+(Bagian~\ref{sec:aws}, varian \emph{network-level evasion}) --- dan pembedaan tegas
+antara evasi \emph{ruang-fitur} (PCFS) dan evasi \emph{tingkat-jaringan} inilah yang
+menjaga klaim kami tetap defensif.
 
 \begin{table}[h]
 \centering
-\caption{Functional-preserving constraints applied per feature (original space).
-Perturbations are projected onto this arithmetically consistent region;
-\emph{add-only} monotonicity forbids removing traffic that has already been sent.
-These enforce feature-space plausibility, not full packet-level deliverability
-(see the limitations note below).}
+\caption{Protocol-consistent feature-space (PCFS) constraints applied per feature
+(original space). Perturbations are projected onto this arithmetically and
+semantically consistent region; \emph{add-only} monotonicity forbids removing
+traffic that has already been sent. These enforce \emph{feature-space} consistency,
+\textbf{not} full packet-level deliverability (see the limitations note above).}
 \label{tab:constraint}
 \small
 \begin{tabular}{lll}
@@ -516,20 +542,20 @@ packets $p^{f},p^{b}$   & $p \in \mathbb{Z}_{\ge 0}$        & packet counts are 
 bytes vs packets        & $B \ge p$                         & each packet carries $\ge 1$ byte \\
 mean size $\bar{s}$     & $\bar{s} = B / p$                 & mean must stay consistent \\
 monotonic (add-only)    & $\Delta p \ge 0,\ \Delta B \ge 0,\ \Delta d \ge 0$ & attacker may only add traffic \\
-load (src/dst) $\ell$   & clip $\ell \ge 0$ (\emph{not} re-derived) & known limitation (see note) \\
+load (src/dst) $\ell$   & clip $\ell \ge 0$, re-derived from $B/d$ & rate kept consistent with bytes/duration \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \begin{algorithm}[h]
-\caption{Evaluasi \emph{adaptive functional-preserving evasion}}
+\caption{Evaluasi \emph{adaptive PCFS (protocol-consistent feature-space) evasion}}
 \label{alg:adv}
 \begin{algorithmic}[1]
 \Require model $m$, data uji target $(X,y)$, scaler $(\mu,\sigma)$, $\epsilon$
 \State $S \gets$ finite-diff saliency dari $m$ pada $(X,y)$
 \State $X' \gets X + \epsilon\,\mathrm{sign}(S)$
-\State proyeksikan $X'$ ke ruang valid (non-neg, integer paket, bytes$\ge$pkts,
-mean konsisten, monotonik \emph{add-only})
+\State proyeksikan $X'$ ke wilayah PCFS (non-neg, integer paket, bytes$\ge$pkts,
+mean konsisten, laju $\ell=B/d$ direkonsiliasi, monotonik \emph{add-only})
 \State \Return $\mathrm{MCC}(y, m(X'))$
 \end{algorithmic}
 \end{algorithm}
@@ -557,14 +583,15 @@ tinggi (Bagian~\ref{sec:aws}).
 \begin{table}[h]
 \centering
 \caption{MCC of four variants on two dimensions: cross-network generalization
-(\emph{clean target} column) and robustness to \emph{adaptive functional-preserving
-evasion} ($\epsilon=0.1$). The last column reports MCC when the model is attacked by
-an evasion that is simultaneously \emph{adaptive white-box} (saliency computed from
-the attacked model itself --- the attacker knows the defense),
-\emph{functional-preserving} (perturbation restricted to protocol-valid, deliverable
-\emph{flows}), and of strength $\epsilon=0.1$ (a shift of $\approx 0.1$ standard
-deviations per feature in z-score space); this is the hardest yet most realistic
-scenario. The \emph{clean (source)}/\emph{clean (target)} columns are MCC without
+(\emph{clean target} column) and robustness to \emph{adaptive PCFS
+(protocol-consistent feature-space) evasion} ($\epsilon=0.1$). The last column
+reports MCC when the model is attacked by an evasion that is simultaneously
+\emph{adaptive white-box} (saliency computed from the attacked model itself --- the
+attacker knows the defense) and \emph{PCFS} (perturbation restricted to an
+arithmetically/semantically consistent feature-space region --- \emph{not} a claim
+of full packet-level deliverability), of strength $\epsilon=0.1$ (a shift of
+$\approx 0.1$ standard deviations per feature in z-score space); this is the hardest
+scenario at the feature level. The \emph{clean (source)}/\emph{clean (target)} columns are MCC without
 attack on the source/target network. Values from experiments (notebook 12). Higher
 is better; MCC $\le 0$ = equal to/worse than random guessing.}
 \label{tab:p2main}
@@ -597,7 +624,7 @@ Direction & Variant & clean (source) & clean (target) & adaptive evasion ($\epsi
 \centering
 \caption{Robustness curve: MCC of the four variants under attacks of \emph{increasing
 strength} --- one-step finite-difference FGSM vs iterative PGD
-(\emph{functional-preserving}, adaptive white-box) --- across three budgets
+(\emph{PCFS: protocol-consistent feature-space}, adaptive white-box) --- across three budgets
 $\epsilon\in\{0.05,0.1,0.2\}$. Reporting a single attack overstates robustness; a
 variant may look robust under FGSM yet collapse under PGD. Values are mean over five
 seeds $\{13,42,101,202,303\}$ from \texttt{14\_reviewer\_experiments.ipynb} (columns
@@ -630,7 +657,7 @@ Direction & Variant & $\epsilon{=}0.05$ & $0.1$ & $0.2$ & $\epsilon{=}0.05$ & $0
 \centering
 \includegraphics[width=0.8\linewidth]{figure-p2/paper2_CIC_to_UNSW.png}
 \caption{CIC$\rightarrow$UNSW: comparison of generalization (clean cross-network) vs
-robustness to \emph{adaptive functional evasion} ($\epsilon=0.1$) for the four variants.}
+robustness to \emph{adaptive PCFS evasion} ($\epsilon=0.1$) for the four variants.}
 \label{fig:p2c2u}
 \end{figure}
 
@@ -638,7 +665,7 @@ robustness to \emph{adaptive functional evasion} ($\epsilon=0.1$) for the four v
 \centering
 \includegraphics[width=0.8\linewidth]{figure-p2/paper2_UNSW_to_CIC.png}
 \caption{UNSW$\rightarrow$CIC: comparison of generalization vs robustness to
-\emph{adaptive functional evasion} ($\epsilon=0.1$). \emph{Few-shot} preserves
+\emph{adaptive PCFS evasion} ($\epsilon=0.1$). \emph{Few-shot} preserves
 generalization ($0{,}897$) but \emph{adaptive} robustness still collapses for all
 variants \textbf{in this direction} --- an asymmetry finding reported as-is.}
 \label{fig:p2u2c}
@@ -656,7 +683,7 @@ UNSW$\rightarrow$CIC) --- jadi menambah pertahanan evasion \emph{tidak}
 mengorbankan generalisasi. \emph{Ketiga, ketahanan terhadap adaptive white-box
 bersifat asimetris.} Pada arah CIC$\rightarrow$UNSW, \emph{few-shot$+$adv} adalah
 satu-satunya varian yang tangguh di \textbf{kedua} sumbu sekaligus: generalisasi
-tertinggi ($0{,}696$) sekaligus ketahanan \emph{adaptive functional evasion}
+tertinggi ($0{,}696$) sekaligus ketahanan \emph{adaptive PCFS evasion}
 tertinggi ($0{,}495$, jauh di atas \emph{adv} yang justru runtuh ke $-0{,}440$).
 Namun pada arah UNSW$\rightarrow$CIC, ketahanan \emph{adaptive} tetap runtuh untuk
 semua varian ($\le 0{,}002$), termasuk \emph{few-shot$+$adv} ($-0{,}025$).
@@ -665,9 +692,9 @@ semua varian ($\le 0{,}002$), termasuk \emph{few-shot$+$adv} ($-0{,}025$).
 sebelumnya~\cite{martono2024sfm} bahwa UNSW adalah domain berdistribusi lebih
 kaya/heterogen: ketika CIC menjadi \emph{sumber}
 (target UNSW), batas keputusan yang diperkuat few-shot$+$adv cukup lebar untuk
-menahan perturbasi \emph{functional-preserving}; sebaliknya ketika CIC menjadi
+menahan perturbasi \emph{PCFS}; sebaliknya ketika CIC menjadi
 \emph{target} yang berdistribusi lebih sempit, penyerang \emph{adaptive} yang tahu
-model dapat menemukan arah evasion valid yang tetap menembus. Temuan ini
+model dapat menemukan arah evasion konsisten-fitur yang tetap menembus. Temuan ini
 menunjukkan \textbf{batas adversarial training pada model pohon di bawah
 adaptive white-box}, sekaligus \textbf{bukti positif} bahwa pada setidaknya satu
 arah, satu XGBoost ringan dapat tangguh di kedua sumbu sekaligus. Keduanya adalah
@@ -687,7 +714,7 @@ melintasi ambang; gradien sejati nyaris nol di mana-mana kecuali di batas. Estim
 \emph{finite-difference} (Pers.~saliency, $h=0{,}01$) mengatasi ini dengan
 ``merasakan'' arah menuju ambang terdekat --- dan bagi penyerang \emph{adaptive
 white-box} yang menghitung saliency dari model target sendiri, informasi ini cukup
-untuk mengarahkan perturbasi \emph{functional-preserving} melewati ambang yang
+untuk mengarahkan perturbasi \emph{PCFS} melewati ambang yang
 paling dekat. \emph{Kedua}, kerentanan ini memburuk ketika \emph{sel keputusan
 target sempit}. Pada arah UNSW$\rightarrow$CIC, domain target (CIC) berdistribusi
 lebih \emph{sempit/homogen} (varians fitur jauh lebih rendah daripada
@@ -725,8 +752,9 @@ bervolume rendah, tepat kondisi yang membuat sel keputusan menjadi tipis.
 \begin{figure}[h]
 \centering
 \resizebox{0.95\linewidth}{!}{\input{figure-p2/tikz-p2-treeboundary.tex}}
-\caption{Conceptual 2D sketch of why the same functional-preserving perturbation
-($\epsilon$, \emph{add-only}) collapses one direction but not the other. The tree
+\caption{Conceptual 2D sketch of why the same PCFS (protocol-consistent
+feature-space) perturbation ($\epsilon$, \emph{add-only}) collapses one direction
+but not the other. The tree
 decision boundary is a piecewise-constant staircase (axis-parallel splits).
 \textbf{(a)} On a high-variance target (UNSW), decision cells are \emph{wide}: a
 valid $\epsilon$-shift keeps the attack flow inside the attack cell, so it stays
@@ -759,8 +787,8 @@ dengan karya SFM~\cite{martono2024sfm} (pola dua-EC2: \emph{attacker} dan
 \emph{target+analyzer} di subnet privat, akses via SSM, region
 \texttt{ap-southeast-1}). Pipeline: tcpdump menangkap trafik pada antarmuka
 spesifik $\rightarrow$ NFStream mengekstrak sembilan fitur SFM $\rightarrow$ keempat
-model menskor tiap \emph{flow}, lalu perturbasi \emph{functional-preserving}
-(adaptive white-box) diterapkan pada fitur nyata tersebut.
+model menskor tiap \emph{flow}, lalu perturbasi \emph{PCFS (protocol-consistent
+feature-space)} (adaptive white-box) diterapkan pada fitur nyata tersebut.
 
 \paragraph{Rancangan PoC.} Dua rekaman dibangkitkan pada infrastruktur identik,
 mengikuti \emph{timeline} tujuh menit (benign $\rightarrow$ SSH brute-force
@@ -771,22 +799,26 @@ menggeser fitur \emph{flow} secara alami (jendela TCP diperkecil, \emph{jitter}
 \texttt{tc netem} $10\pm5$~ms, laju/konkurensi dikurangi). Kedua rekaman menerima
 label \emph{ground-truth} dari \emph{timeline} serangan yang dikendalikan sendiri.
 Model dinilai pada trafik nyata ini (clean dan evasion), lalu ditambah lapisan
-FGSM \emph{functional-preserving} (adaptive) pada fitur yang diekstrak
-(Algorithm~\ref{alg:adv}). Metrik utama MCC.
+FGSM \emph{PCFS} (adaptive) pada fitur yang diekstrak (Algorithm~\ref{alg:adv}).
+Perlu ditegaskan pembedaannya: \emph{network-level evasion} adalah trafik yang
+\emph{benar-benar dikirim} (menguji \emph{deliverability} sejati), sedangkan lapisan
+FGSM \emph{PCFS} adalah perturbasi \emph{ruang-fitur} di atas fitur nyata tersebut.
+Metrik utama MCC.
 
 \begin{table}[h]
 \centering
 \caption{AWS validation PoC (CIC$\rightarrow$UNSW direction): MCC of four variants on
 real traffic --- \emph{clean} (4789 flows; 4167 attack, 622 benign),
-\emph{network-level evasion} (3099 flows; 3041 attack, 58 benign), and an additional
-\emph{functional-preserving} FGSM ($\epsilon=0.1$) on the real features. Infra \&
+\emph{network-level evasion} (3099 flows; 3041 attack, 58 benign; actually-delivered
+traffic), and an additional \emph{PCFS (protocol-consistent feature-space)} FGSM
+($\epsilon=0.1$) applied on the real features. Infra \&
 scripts: \texttt{adv-vpc.yaml}, \texttt{adv-2ec2.yaml}, \texttt{atk2.sh},
 \texttt{adv-extract-infer.py}; region \texttt{ap-southeast-1}.}
 \label{tab:aws}
 \small
 \begin{tabular}{lccc}
 \toprule
-Model variant & clean (AWS) & network-level evasion & $+$functional FGSM ($\epsilon=0.1$) \\
+Model variant & clean (AWS) & network-level evasion & $+$PCFS FGSM ($\epsilon=0.1$) \\
 \midrule
 baseline     & $-0{,}022$ & $-0{,}061$ & $-0{,}143$ \\
 few-shot     & $-0{,}068$ & $-0{,}160$ & $-0{,}616$ \\
@@ -829,7 +861,7 @@ trafik AWS tanpa kalibrasi ulang) runtuh menjadi MCC $\approx 0$ pada trafik
 dasar sudah kolaps, \emph{evasion network-level} hanya menggeser MCC dalam rentang
 sempit di sekitar nol (mis. \emph{baseline} $-0{,}022 \rightarrow -0{,}061$),
 sehingga efek serangan jaringan tidak dapat dipisahkan dari derau pada model yang
-belum terkalibrasi. Sebaliknya, FGSM \emph{functional-preserving} ($\epsilon=0.1$)
+belum terkalibrasi. Sebaliknya, FGSM \emph{PCFS} ($\epsilon=0.1$)
 pada ruang fitur nyata tetap menurunkan MCC lebih jauh untuk sebagian besar varian
 (mis. \emph{few-shot} hingga $-0{,}616$), memperlihatkan bahwa evasion
 \emph{feature-space} bekerja bahkan di atas model yang sudah lemah. Menariknya,
@@ -859,7 +891,7 @@ memperkuat, bukan melemahkan, tesis makalah ini: (i) arah lintas-jaringan bersif
 \emph{asimetris} bahkan di trafik cloud nyata --- konsisten dengan asimetri pada
 \emph{benchmark}; (ii) kegagalan bukan karena model ``buta'', melainkan
 \emph{miskalibrasi domain} yang persis ditangani oleh langkah \emph{few-shot};
-(iii) FGSM \emph{functional-preserving} tetap efektif menekan kedua arah (hingga
+(iii) FGSM \emph{PCFS} tetap efektif menekan kedua arah (hingga
 $-0{,}91$ pada \emph{adv} sumber-UNSW), menegaskan bahwa evasion \emph{feature-space}
 adalah ancaman nyata terlepas dari dataset sumber. Hasil lengkap empat berkas
 tersimpan di \texttt{detect\_\{clean,evasion\}\_\{CIC\_to\_UNSW,UNSW\_to\_CIC\}}
