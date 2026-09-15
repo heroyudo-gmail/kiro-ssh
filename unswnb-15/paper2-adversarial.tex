@@ -1195,8 +1195,11 @@ few-shot+adv & $\phantom{-}0{,}000$ & $\phantom{-}0{,}000$ & $-0{,}300$ \\
 the same real traffic, plus \emph{recall}/\emph{precision} on \emph{clean} traffic
 for context. Unlike the CIC-source model that predicts uniformly (\emph{recall}$\approx
 0$), the UNSW-source model actively flags flows --- especially \emph{few-shot$+$adv}
-which catches $95{,}4\%$ of attacks. The low MCC here is mainly an artifact of class
-imbalance (see discussion). Ground-truth identical to Table~\ref{tab:aws}.}
+which catches $95{,}4\%$ of attacks (\emph{recall}$=0.954$, \emph{precision}$=0.869$).
+The near-zero MCC is \emph{not} a metric artefact: it correctly reflects a
+sensitivity--specificity trade-off --- high attack recall (TPR) but poor
+discrimination on the benign minority (low specificity / high FPR) under domain
+shift (see discussion). Ground-truth identical to Table~\ref{tab:aws}.}
 \label{tab:aws_unsw}
 \small
 \begin{tabular}{lccccc}
@@ -1238,20 +1241,30 @@ yang sama juga diinferensi dengan model sumber-UNSW (arah UNSW$\rightarrow$CIC,
 Tabel~\ref{tab:aws_unsw}). Dua mode kegagalan yang berbeda muncul, dan keduanya
 informatif. Model sumber-CIC nyaris tidak menandai apa pun (\emph{recall}$\approx
 0{,}0002$--$0{,}005$): ia meruntuh ke prediksi ``benign'' seragam, sehingga MCC
-$\approx 0$. Sebaliknya, model sumber-UNSW \emph{aktif} menandai flow tetapi
-ter-\emph{miskalibrasi}: pada trafik \emph{clean}, MCC-nya negatif kuat
-($-0{,}39$ hingga $-0{,}49$) karena batas keputusan sumber-UNSW meletakkan banyak
-serangan AWS di sisi yang salah. Namun angka mentah menyembunyikan nuansa penting:
-varian \emph{few-shot$+$adv} sumber-UNSW mencapai \emph{recall} $0{,}954$ dan
-\emph{precision} $0{,}869$ pada trafik \emph{clean} --- artinya ia sebenarnya
-menangkap hampir semua serangan; MCC-nya $-0{,}013$ semata karena metrik MCC
-sangat menghukum ketidakseimbangan kelas ekstrem pada potongan trafik ini. Pada
-trafik \emph{evasion}, seluruh varian sumber-UNSW mempertahankan \emph{precision}
-tinggi ($0{,}96$--$0{,}98$) dengan \emph{recall} $0{,}43$--$0{,}70$. Temuan ini
+$\approx 0$. Sebaliknya, model sumber-UNSW \emph{aktif} menandai flow: pada trafik \emph{clean},
+MCC-nya negatif kuat ($-0{,}39$ hingga $-0{,}49$). Namun MCC mendekati/di-bawah nol
+di sini \textbf{bukan artefak metrik} --- MCC justru bekerja sebagaimana mestinya,
+merangkum keempat sel matriks konfusi --- melainkan \emph{temuan} yang bermakna:
+\textbf{detektor tetap sangat sensitif terhadap serangan namun berdiskriminasi buruk
+pada minoritas benign}. Konkretnya, varian \emph{few-shot$+$adv} sumber-UNSW
+mencapai \emph{recall} (TPR) $0{,}954$ dan \emph{precision} $0{,}869$ pada trafik
+\emph{clean} --- ia menangkap hampir semua serangan --- tetapi \emph{specificity}-nya
+rendah (banyak benign salah-tandai, sehingga FPR tinggi), dan pada campuran kelas
+yang timpang inilah MCC menghukum kegagalan pada kelas minoritas benign hingga
+menjadi $-0{,}013$. Dengan kata lain, cerita sebenarnya adalah \emph{trade-off
+sensitivitas--spesifisitas di bawah pergeseran domain}, bukan sekadar angka MCC yang
+menyesatkan. Pada trafik \emph{evasion}, seluruh varian sumber-UNSW mempertahankan
+\emph{precision} tinggi ($0{,}96$--$0{,}98$) dengan \emph{recall} $0{,}43$--$0{,}70$.
+Tabel~\ref{tab:aws_unsw} kini melaporkan \emph{recall}/\emph{precision} secara
+eksplisit; \emph{specificity}/FPR dan matriks konfusi lengkap per potongan trafik
+tersedia sebagai artefak reproduktif (\texttt{aws/paper2\_aws/}) untuk membaca
+trade-off ini secara utuh. Temuan ini
 memperkuat, bukan melemahkan, tesis makalah ini: (i) arah lintas-jaringan bersifat
 \emph{asimetris} bahkan di trafik cloud nyata --- konsisten dengan asimetri pada
-\emph{benchmark}; (ii) kegagalan bukan karena model ``buta'', melainkan
-\emph{miskalibrasi domain} yang persis ditangani oleh langkah \emph{few-shot};
+\emph{benchmark}; (ii) MCC rendah menandai \emph{trade-off
+sensitivitas--spesifisitas} di bawah pergeseran domain (recall tinggi, spesifisitas
+rendah), bukan model yang ``buta'' maupun artefak metrik --- dan trade-off inilah
+yang digeser oleh kalibrasi \emph{few-shot};
 (iii) FGSM \emph{PCFS} tetap efektif menekan kedua arah (hingga
 $-0{,}91$ pada \emph{adv} sumber-UNSW), menegaskan bahwa evasion \emph{feature-space}
 adalah ancaman nyata terlepas dari dataset sumber. Hasil lengkap empat berkas
