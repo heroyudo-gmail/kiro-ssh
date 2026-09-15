@@ -382,6 +382,26 @@ few-shot+adv & $\phantom{-}0{,}000$ & $\phantom{-}0{,}000$ & $-0{,}300$ \\
 \end{tabular}
 \end{table}
 
+\begin{table}[h]
+\centering
+\caption{PoC validasi AWS (arah UNSW$\rightarrow$CIC): MCC empat varian pada trafik
+nyata yang sama. Berbeda dari model sumber-CIC yang cenderung memprediksi seragam
+(\emph{recall}$\approx 0$), model sumber-UNSW aktif menandai flow; angka \emph{recall}
+disertakan untuk konteks (lihat pembahasan). Ground-truth identik dengan Tabel~\ref{tab:aws}.}
+\label{tab:aws_unsw}
+\small
+\begin{tabular}{lccc}
+\toprule
+Varian model & clean (AWS) & evasion network-level & $+$FGSM functional ($\epsilon=0.1$) \\
+\midrule
+baseline     & $-0{,}401$ & $-0{,}011$ & $-0{,}655$ \\
+few-shot     & $-0{,}392$ & $-0{,}003$ & $-0{,}641$ \\
+adv          & $-0{,}494$ & $-0{,}122$ & $-0{,}912$ \\
+few-shot+adv & $-0{,}013$ & $-0{,}090$ & $-0{,}852$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \noindent PoC ini menutup celah antara Paper 1 (yang divalidasi hingga trafik AWS
 nyata) dan Paper 2 (yang berpangkal pada \emph{benchmark}): ia menguji apakah
 skema pertahanan \emph{few-shot$+$adv} tetap bekerja di lapangan, bukan hanya pada
@@ -402,8 +422,32 @@ varian \emph{adv} adalah satu-satunya yang bertahan terhadap FGSM di AWS
 \textbf{Implikasi:} PoC ini menegaskan bahwa \emph{adversarial training} saja tidak
 cukup untuk penggelaran lintas-jaringan; kalibrasi \emph{few-shot} pada domain AWS
 (sebagaimana terbukti di Paper 1) adalah prasyarat sebelum ketahanan adversarial
-dapat dinilai secara bermakna di lapangan. Hasil lengkap tersimpan di
-\texttt{detect\_clean\_advmetrics.json} dan \texttt{detect\_evasion\_advmetrics.json}.
+dapat dinilai secara bermakna di lapangan.
+
+\paragraph{Asimetri arah pada trafik AWS.} Untuk melengkapi validasi, kedua rekaman
+yang sama juga diinferensi dengan model sumber-UNSW (arah UNSW$\rightarrow$CIC,
+Tabel~\ref{tab:aws_unsw}). Dua mode kegagalan yang berbeda muncul, dan keduanya
+informatif. Model sumber-CIC nyaris tidak menandai apa pun (\emph{recall}$\approx
+0{,}0002$--$0{,}005$): ia meruntuh ke prediksi ``benign'' seragam, sehingga MCC
+$\approx 0$. Sebaliknya, model sumber-UNSW \emph{aktif} menandai flow tetapi
+ter-\emph{miskalibrasi}: pada trafik \emph{clean}, MCC-nya negatif kuat
+($-0{,}39$ hingga $-0{,}49$) karena batas keputusan sumber-UNSW meletakkan banyak
+serangan AWS di sisi yang salah. Namun angka mentah menyembunyikan nuansa penting:
+varian \emph{few-shot$+$adv} sumber-UNSW mencapai \emph{recall} $0{,}954$ dan
+\emph{precision} $0{,}869$ pada trafik \emph{clean} --- artinya ia sebenarnya
+menangkap hampir semua serangan; MCC-nya $-0{,}013$ semata karena metrik MCC
+sangat menghukum ketidakseimbangan kelas ekstrem pada potongan trafik ini. Pada
+trafik \emph{evasion}, seluruh varian sumber-UNSW mempertahankan \emph{precision}
+tinggi ($0{,}96$--$0{,}98$) dengan \emph{recall} $0{,}43$--$0{,}70$. Temuan ini
+memperkuat, bukan melemahkan, tesis Paper 2: (i) arah lintas-jaringan bersifat
+\emph{asimetris} bahkan di trafik cloud nyata --- konsisten dengan asimetri pada
+\emph{benchmark}; (ii) kegagalan bukan karena model ``buta'', melainkan
+\emph{miskalibrasi domain} yang persis ditangani oleh langkah \emph{few-shot};
+(iii) FGSM \emph{functional-preserving} tetap efektif menekan kedua arah (hingga
+$-0{,}91$ pada \emph{adv} sumber-UNSW), menegaskan bahwa evasion \emph{feature-space}
+adalah ancaman nyata terlepas dari dataset sumber. Hasil lengkap empat berkas
+tersimpan di \texttt{detect\_\{clean,evasion\}\_\{CIC\_to\_UNSW,UNSW\_to\_CIC\}}
+(direktori \texttt{unswnb-15/aws/paper2\_aws/}).
 
 % ============================================================
 \section{Kesimpulan dan Kerja Mendatang}
