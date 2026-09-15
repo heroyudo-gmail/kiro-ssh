@@ -71,16 +71,28 @@ keberadaannya bersyarat pada arah?
 
 ## 5. Peta NOTEBOOK ↔ TABEL (penting untuk reproduksi)
 
+> **PRINSIP PENTING (jangan langgar):** Notebook **11–17 SEMUA milik Paper 2**
+> (notebook ≤10 milik Paper 1, mis. `10_wasserstein_shift.ipynb`). **JANGAN membuat
+> notebook/sel baru yang menghitung ulang hasil yang sudah ada di notebook sebelumnya.**
+> Buat baru HANYA jika hasil yang dibutuhkan belum pernah dihasilkan. Sebelum menambah
+> eksperimen, cek tabel di bawah dulu — kemungkinan besar sudah ada.
+
 Semua di `unswnb-15/notebooks/`. Output → `paper2_reviewer_out/` + S3
 `s3://ssh-detection-features-232032302717/unsw-far/paper2_reviewer/`.
 
-| Notebook | Menghasilkan | Tabel di paper |
-|---|---|---|
-| `14_reviewer_experiments.ipynb` | reviewer_agg.csv, multiattack_*, significance_*, perturbation_metrics.csv, dataset_stats.csv | `tab:p2main` (nb12 lama), `tab:multiattack`, `tab:fewshot_seeds`, `tab:significance`, `tab:advmetrics`, `tab:dataset` |
-| `15_aws_fewshot_calibration.ipynb` | aws_stages_agg.csv | `tab:aws_stages` (validasi 3-tahap S0/S1/S2) |
-| `16_defense_baselines.ipynb` | defense_baselines_agg.csv | `tab:defense_baselines` (PGD-AT, Gaussian-aug, rand-smoothing) |
-| `17_decision_cell.ipynb` | decision_cell.csv | `tab:decisioncell` (kappa, w, d_boundary, crossing-prob) |
-| (notebook lama nb12/nb13) | paper2_eval_results, aws JSON | `tab:p2main`, `tab:aws`, `tab:aws_unsw` |
+| Notebook | Peran | Menghasilkan | Tabel/dipakai di paper |
+|---|---|---|---|
+| `11_adv_fewshot_pipeline.ipynb` | INTI: latih 4 varian (baseline/fewshot/adv/fewshot_adv), 2 arah; simpan model+scaler ke S3 `unsw-far/paper2/` | paper2_pipeline_meta.json, model .json + scaler.pkl | fondasi semua eksperimen + deploy AWS (runbook) |
+| `12_adv_evaluation.ipynb` | Evaluasi clean/evasion/adaptive 4 varian (single-run) | paper2_eval_results.json | `tab:p2main` |
+| `13_rangkuman_adversarial.ipynb` | Rangkuman cerita + AWS 2-EC2 (sel 5b) | ringkasan, aws JSON | `tab:aws`, `tab:aws_unsw` |
+| `14_reviewer_experiments.ipynb` | Revisi reviewer A2/A3/A5/B5 + #8/#10/#14 | reviewer_agg, multiattack_*, significance_*, perturbation_metrics, dataset_stats | `tab:multiattack`, `tab:fewshot_seeds`, `tab:significance`, `tab:advmetrics`, `tab:dataset` |
+| `15_aws_fewshot_calibration.ipynb` | Validasi 3-tahap AWS (offline, pakai ulang aws_labeled) | aws_stages_agg.csv | `tab:aws_stages` |
+| `16_defense_baselines.ipynb` | Pembanding pertahanan (PGD-AT/Gaussian/rand-smoothing) | defense_baselines_agg.csv | `tab:defense_baselines` ⏳ |
+| `17_decision_cell.ipynb` | Bukti empiris narrow-cell (kappa/w/d_boundary/crossing) | decision_cell.csv | `tab:decisioncell` ⏳ |
+
+**Aturan mana notebook menghasilkan tabel apa → JANGAN duplikasi.** Contoh: kalau butuh
+angka clean-target 4 varian, itu SUDAH ada (nb11/12 → tab:p2main; nb14 → tab:fewshot_seeds).
+Kalau butuh ASR/recall/precision adversarial, SUDAH ada (nb14 → reviewer_agg → tab:advmetrics).
 
 **Data sumber notebook (path di SageMaker):**
 `../../CICDDoS2018/data/cleaned_100.pkl`, `../data/UNSW_NB15_{testing,training}-set.csv`,
