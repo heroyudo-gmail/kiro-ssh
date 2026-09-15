@@ -3,8 +3,8 @@
 % Adversarial Robustness pada Pipeline SFM + Few-Shot untuk NIDS Lintas-Jaringan
 % Kelanjutan Paper 1 (generalisasi). Model: XGBoost tunggal, 9 fitur SFM.
 %
-% CATATAN: angka hasil bertanda ?? diisi setelah menjalankan notebook
-% 11_adv_fewshot_pipeline.ipynb dan 12_adv_evaluation.ipynb.
+% CATATAN: angka hasil sudah diisi dari eksperimen nyata
+% (paper2_eval_results.json, notebook 12). Gambar di figure-p2/.
 % ============================================================
 \documentclass[11pt,a4paper]{article}
 \usepackage[T1]{fontenc}
@@ -44,8 +44,17 @@ varian pelatihan --- \emph{baseline}, \emph{few-shot}, \emph{adversarial trainin
 dan gabungan \emph{few-shot $+$ adversarial} --- pada dua arah lintas-jaringan
 (CSE-CIC-IDS2018 $\leftrightarrow$ UNSW-NB15), dan mengevaluasinya di bawah tiga
 rezim serangan: FGSM tak-terbatas (batas atas), FGSM \emph{functional-preserving}
-(realistis), dan \emph{adaptive white-box} (skenario terburuk). Hasil menunjukkan
-\ldots{}~??. Semua angka berasal dari eksperimen nyata dan dilaporkan apa adanya.
+(realistis), dan \emph{adaptive white-box} (skenario terburuk). Hasilnya campuran
+dan dilaporkan jujur: generalisasi lintas-jaringan hanya datang dari \emph{few-shot}
+(MCC target pulih ke $0{,}65$--$0{,}90$), sedangkan \emph{adversarial training} saja
+tidak menutup celah lintas-jaringan. Menambahkan \emph{adversarial training} di atas
+\emph{few-shot} tidak merusak generalisasi, dan pada arah CIC$\rightarrow$UNSW
+varian \emph{few-shot$+$adv} bahkan tangguh di \textbf{kedua} sumbu sekaligus (MCC
+target $0{,}70$; ketahanan \emph{adaptive functional evasion} $0{,}50$). Namun pada
+arah UNSW$\rightarrow$CIC ketahanan \emph{adaptive} tetap runtuh untuk semua varian
+--- menunjukkan batas \emph{adversarial training} pada model pohon dan sifat
+asimetris ketangguhan antar-arah. Semua angka berasal dari eksperimen nyata dan
+dilaporkan apa adanya.
 
 \vspace{0.5em}
 \noindent\textbf{Kata kunci:} deteksi intrusi jaringan, ketahanan adversarial,
@@ -196,44 +205,80 @@ mean konsisten, monotonik \emph{add-only})
 Arah & Varian & clean (source) & clean (target) & adaptive evasion ($\epsilon=0.1$) \\
 \midrule
 \multirow{4}{*}{CIC$\rightarrow$UNSW}
- & baseline     & ?? & ?? & ?? \\
- & few-shot     & ?? & ?? & ?? \\
- & adv          & ?? & ?? & ?? \\
- & few-shot+adv & ?? & ?? & ?? \\
+ & baseline     & $0{,}913$ & $-0{,}074$ & $0{,}370$ \\
+ & few-shot     & $0{,}913$ & $0{,}650$ & $0{,}343$ \\
+ & adv          & $0{,}913$ & $-0{,}010$ & $-0{,}440$ \\
+ & \textbf{few-shot+adv} & $0{,}912$ & $\mathbf{0{,}696}$ & $\mathbf{0{,}495}$ \\
 \midrule
 \multirow{4}{*}{UNSW$\rightarrow$CIC}
- & baseline     & ?? & ?? & ?? \\
- & few-shot     & ?? & ?? & ?? \\
- & adv          & ?? & ?? & ?? \\
- & few-shot+adv & ?? & ?? & ?? \\
+ & baseline     & $0{,}745$ & $-0{,}060$ & $-0{,}462$ \\
+ & few-shot     & $0{,}741$ & $0{,}897$ & $-0{,}121$ \\
+ & adv          & $0{,}742$ & $-0{,}067$ & $0{,}002$ \\
+ & \textbf{few-shot+adv} & $0{,}746$ & $\mathbf{0{,}897}$ & $-0{,}025$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \begin{figure}[h]
 \centering
-% Dihasilkan notebook 12 (paper2_eval_out/); letakkan di figure-p2/.
 \includegraphics[width=0.8\linewidth]{paper2_CIC_to_UNSW.png}
 \caption{CIC$\rightarrow$UNSW: perbandingan generalisasi (clean cross-network) vs
 ketahanan \emph{adaptive functional evasion} ($\epsilon=0.1$) untuk keempat varian.}
 \label{fig:p2c2u}
 \end{figure}
 
-\paragraph{Temuan yang diharapkan (akan dikonfirmasi angka).} Hipotesis kerja:
-(i) \emph{few-shot} memulihkan generalisasi lintas-jaringan tetapi tak menaikkan
-ketahanan evasion; (ii) \emph{adv} menaikkan ketahanan evasion \emph{functional}
-tetapi tak menutup celah lintas-jaringan; (iii) \emph{few-shot $+$ adv} idealnya
-mempertahankan keduanya --- namun bila \emph{adaptive white-box} tetap
-meruntuhkannya, itu \textbf{temuan penting} yang menunjukkan batas
-\emph{adversarial training} pada model pohon, dan memotivasi arah lanjutan.
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.8\linewidth]{paper2_UNSW_to_CIC.png}
+\caption{UNSW$\rightarrow$CIC: perbandingan generalisasi vs ketahanan
+\emph{adaptive functional evasion} ($\epsilon=0.1$). \emph{Few-shot} menjaga
+generalisasi ($0{,}897$) tetapi ketahanan \emph{adaptive} tetap runtuh untuk semua
+varian \textbf{pada arah ini} --- temuan asimetri yang dilaporkan apa adanya.}
+\label{fig:p2u2c}
+\end{figure}
+
+\paragraph{Temuan.} Hasil bersifat \emph{campuran}, dan kami laporkan apa adanya.
+\emph{Pertama, generalisasi lintas-jaringan hanya datang dari few-shot, bukan dari
+adversarial training.} Varian \emph{adv} (tanpa few-shot) gagal menutup celah
+lintas-jaringan (MCC target $-0{,}010$ dan $-0{,}067$), persis seperti temuan Paper
+1; sebaliknya \emph{few-shot} dan \emph{few-shot$+$adv} memulihkan MCC target ke
+$0{,}650$--$0{,}897$. \emph{Kedua, adversarial training tidak merusak generalisasi:}
+\emph{few-shot$+$adv} mempertahankan MCC target setara \emph{few-shot} murni
+($0{,}696$ vs $0{,}650$ pada CIC$\rightarrow$UNSW; $0{,}897$ vs $0{,}897$ pada
+UNSW$\rightarrow$CIC) --- jadi menambah pertahanan evasion \emph{tidak}
+mengorbankan generalisasi. \emph{Ketiga, ketahanan terhadap adaptive white-box
+bersifat asimetris.} Pada arah CIC$\rightarrow$UNSW, \emph{few-shot$+$adv} adalah
+satu-satunya varian yang tangguh di \textbf{kedua} sumbu sekaligus: generalisasi
+tertinggi ($0{,}696$) sekaligus ketahanan \emph{adaptive functional evasion}
+tertinggi ($0{,}495$, jauh di atas \emph{adv} yang justru runtuh ke $-0{,}440$).
+Namun pada arah UNSW$\rightarrow$CIC, ketahanan \emph{adaptive} tetap runtuh untuk
+semua varian ($\le 0{,}002$), termasuk \emph{few-shot$+$adv} ($-0{,}025$).
+
+\paragraph{Interpretasi.} Asimetri ini konsisten dengan temuan Paper 1 bahwa UNSW
+adalah domain berdistribusi lebih kaya/heterogen: ketika CIC menjadi \emph{sumber}
+(target UNSW), batas keputusan yang diperkuat few-shot$+$adv cukup lebar untuk
+menahan perturbasi \emph{functional-preserving}; sebaliknya ketika CIC menjadi
+\emph{target} yang berdistribusi lebih sempit, penyerang \emph{adaptive} yang tahu
+model dapat menemukan arah evasion valid yang tetap menembus. Temuan ini
+menunjukkan \textbf{batas adversarial training pada model pohon di bawah
+adaptive white-box}, sekaligus \textbf{bukti positif} bahwa pada setidaknya satu
+arah, satu XGBoost ringan dapat tangguh di kedua sumbu sekaligus. Keduanya adalah
+kontribusi yang jujur: satu keberhasilan dan satu batas, keduanya memandu desain
+pertahanan berikutnya.
 
 % ============================================================
 \section{Kesimpulan dan Kerja Mendatang}
 \label{sec:conclusion}
 Makalah ini memperluas pipeline SFM $+$ few-shot dengan dimensi ketahanan
 adversarial pada satu XGBoost ringan, dan mengevaluasinya secara jujur di bawah
-serangan yang \emph{valid protokol} dan \emph{adaptive white-box}. \ldots{}~??
-(ringkasan hasil diisi setelah eksperimen). Arah lanjutan: (i) pertahanan yang
+serangan yang \emph{valid protokol} dan \emph{adaptive white-box}. Tiga kesimpulan:
+(i) generalisasi lintas-jaringan diperoleh melalui \emph{few-shot}, bukan
+\emph{adversarial training}; (ii) menambahkan \emph{adversarial training} di atas
+\emph{few-shot} tidak mengorbankan generalisasi, dan pada arah
+CIC$\rightarrow$UNSW menghasilkan satu model yang tangguh di kedua sumbu sekaligus;
+(iii) namun ketahanan terhadap \emph{adaptive white-box} bersifat asimetris dan
+tetap runtuh pada arah UNSW$\rightarrow$CIC, menandai batas nyata
+\emph{adversarial training} pada model pohon. Arah lanjutan: (i) pertahanan yang
 tahan \emph{adaptive} (mis. \emph{randomized smoothing} atau penghalusan batas
 keputusan pada model pohon); (ii) integrasi dengan adaptasi \emph{online}
 berkelanjutan (Paper 3); (iii) evaluasi ketahanan pada trafik cloud nyata.
