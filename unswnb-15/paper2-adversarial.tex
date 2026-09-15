@@ -488,7 +488,36 @@ x' = \arg\max_{\tilde{x}\in \mathcal{C}(x),\ \lVert \tilde{x}-x\rVert_\infty \le
 dengan $\mathcal{C}(x)$ himpunan \emph{flow} yang memenuhi seluruh batasan
 konsistensi ruang-fitur (PCFS) dan $\mathcal{L}$ kerugian \emph{binary
 cross-entropy}. Kami mengaproksimasi $x'$ dengan FGSM \emph{PCFS}
-(Algorithm~\ref{alg:adv}).
+(Algorithm~\ref{alg:adv}). Tabel~\ref{tab:threatmodel} merangkum model ancaman
+secara formal mengikuti taksonomi baku evaluasi adversarial.
+
+\begin{table}[h]
+\centering
+\caption{Formal threat model. The strongest setting we evaluate is
+\emph{adaptive white-box} evasion at inference time, restricted to a
+protocol-consistent feature-space (PCFS) region with monotonic \emph{add-only}
+changes.}
+\label{tab:threatmodel}
+\small
+\begin{tabular}{ll}
+\toprule
+Dimension & Setting \\
+\midrule
+Attacker knowledge   & white-box (adaptive) $\vert$ transfer/static (weaker, discussed) \\
+Attacker goal        & evasion (integrity, test-time) \\
+Target class         & malicious flows ($y{=}1$) \\
+Perturbation space   & feature-space (nine SFM features, z-score) \\
+Budget               & $\lVert x'-x\rVert_\infty \le \epsilon$, $\epsilon\in\{0.05,0.1,0.2\}$ \\
+Mutable features     & \texttt{duration}, fwd/bwd \texttt{pkts}/\texttt{bytes} (add-only $\uparrow$) \\
+Immutable / derived  & \texttt{fwd\_mean}, \texttt{bwd\_mean}, \texttt{src\_load}, \texttt{dst\_load} (re-derived) \\
+Attack iterations    & FGSM: $1$; PGD: $10$ ($\alpha{=}0.02$) \\
+Query budget         & score-based (finite-difference saliency; no tree-internal access) \\
+Validity constraint  & PCFS: $x\ge0$, integer packets, $B\ge p$, $\bar{s}{=}B/p$, $\ell{=}B/d$, $\Delta\ge0$ \\
+Poisoning / retrain  & none (no train-data or weight access) \\
+Success criterion    & misclassification of an attack flow to benign ($\hat{y}{=}0$) \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 Sebuah serangan \emph{evasion} dicirikan oleh \emph{dua properti yang saling bebas},
 sehingga sebuah serangan dapat menggabungkan keduanya. \emph{Sumbu-1 (pengetahuan
