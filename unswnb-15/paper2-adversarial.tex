@@ -261,9 +261,10 @@ GAN-based NIDS attack~\cite{lin2022idsgan}  & \ding{55}  & \checkmark & \ding{55
 \end{tabular}
 \end{table}
 
-\noindent{\footnotesize $^{*}$ Trafik AWS nyata diuji sebagai \emph{exploratory
-stress test} pada model \emph{zero-shot} (Bagian~\ref{sec:aws}), bukan validasi
-pipeline terkalibrasi penuh.}
+\noindent{\footnotesize $^{*}$ Trafik AWS nyata diuji melalui validasi
+\emph{tiga-tahap} (zero-shot $\rightarrow$ $+1\%$ few-shot $\rightarrow$
+$+$adversarial) pada skala berlabel terbatas (Bagian~\ref{sec:aws}), bukan kampanye
+produksi berdurasi panjang.}
 
 % ============================================================
 \section{Methodology}
@@ -790,22 +791,74 @@ succeeds --- explaining the asymmetric collapse on UNSW$\rightarrow$CIC.}
 \end{figure}
 
 % ============================================================
-\section{Exploratory Stress Test on Real AWS Traffic}
+\section{Validating the Proposed Pipeline on Real AWS Traffic}
 \label{sec:aws}
 
-\paragraph{Status dan lingkup (baca lebih dulu).} Bagian ini adalah \emph{uji
-tekanan eksploratif} (\emph{exploratory stress test}), \textbf{bukan} validasi
-pipeline yang diusulkan secara utuh. Alasannya jujur: model di sini digelar
-\emph{zero-shot} --- dilatih pada \emph{benchmark} (CIC atau UNSW) lalu diuji
-langsung pada trafik AWS \textbf{tanpa} langkah kalibrasi \emph{few-shot} domain
-AWS yang justru menjadi inti usulan kami. Domain AWS di sini berperan sebagai
-\emph{domain ketiga} yang belum pernah dilihat model, sehingga bagian ini menguji
-\emph{seberapa jauh model runtuh} di lapangan tanpa kalibrasi --- bukan
-membuktikan bahwa \emph{few-shot$+$adv} bekerja di AWS. Uji terkalibrasi penuh
-(mengumpulkan $\sim1\%$ label AWS lalu mengevaluasi ulang) memerlukan kampanye
-pelabelan tersendiri dan kami tandai sebagai pekerjaan lanjutan. Temuan di sini
-dilaporkan apa adanya dan bermakna sebagai \emph{sanity check} lintas-domain, bukan
-sebagai klaim keberhasilan pertahanan.
+\paragraph{Dari uji-tekanan eksploratif ke validasi bertahap.} Versi awal bagian ini
+hanya menggelar model \emph{zero-shot} pada AWS --- dilatih pada \emph{benchmark}
+(CIC atau UNSW) lalu diuji langsung pada trafik AWS tanpa kalibrasi. Uji semacam itu
+mengukur \emph{kegagalan domain-shift}, \textbf{bukan} membuktikan bahwa pipeline
+yang kami usulkan (sumber $+$ $1\%$ target $+$ \emph{adversarial training})
+benar-benar bekerja di lapangan. Untuk menutup celah ini kami menjalankan
+\textbf{validasi tiga-tahap} pada trafik AWS berlabel nyata (\emph{ground-truth} dari
+\emph{timeline} serangan yang dikendalikan sendiri), sehingga pertanyaan yang
+sesungguhnya --- \emph{apakah pipeline usulan kami transfer dari jaringan benchmark ke
+trafik cloud nyata?} --- dapat dijawab langsung:
+\begin{itemize}
+  \item \textbf{S0 (zero-shot)}: model sumber $\rightarrow$ AWS tanpa kalibrasi
+  (mereproduksi kegagalan domain-shift sebagai \emph{baseline}).
+  \item \textbf{S1 ($+1\%$ AWS few-shot)}: sumber $+$ $1\%$ label AWS
+  (kalibrasi lintas-domain) $\rightarrow$ AWS \emph{clean}.
+  \item \textbf{S2 ($+1\%$ AWS $+$ adv)}: S1 ditambah \emph{adversarial training}
+  $\rightarrow$ AWS \emph{clean} dan \emph{adversarial} (PCFS FGSM/PGD, adaptive).
+\end{itemize}
+Untuk mencegah kebocoran, $1\%$ few-shot diambil \textbf{hanya} dari partisi latih
+AWS dan evaluasi selalu pada partisi uji AWS yang \emph{disjoint}; \emph{z-score}
+di-\emph{fit} pada sumber saja lalu diterapkan ke AWS. Seluruh eksperimen diulang
+pada lima \emph{seed} dan dilaporkan sebagai rerata. Rincian reproduktif ada pada
+\texttt{15\_aws\_fewshot\_calibration.ipynb}; hasil ringkas pada
+Tabel~\ref{tab:aws_stages}. Karena trafik AWS di sini dilabeli sendiri pada skala
+terbatas, kami tetap menyebut ini \emph{validasi awal} (bukan kampanye produksi
+berdurasi panjang), namun kini ia benar-benar menguji \emph{pipeline usulan}, bukan
+sekadar \emph{zero-shot}.
+
+% ----- Tabel validasi tiga-tahap AWS (diisi dari nb15) -----
+% CATATAN: angka diisi dari keluaran NYATA 15_aws_fewshot_calibration.ipynb
+% (paper2_reviewer_out/aws_stages_agg.csv, rerata 5 seed). Placeholder "--" untuk
+% adversarial hanya diisi pada tahap S2. JANGAN mengarang angka.
+\begin{table}[h]
+\centering
+\caption{Three-stage validation of the proposed pipeline on real labelled AWS traffic
+(mean over five seeds; few-shot drawn only from an AWS \emph{train} split, evaluated
+on a disjoint AWS \emph{test} split). \emph{clean MCC} / \emph{recall} / \emph{prec.}
+are on unattacked AWS traffic; the last two columns report MCC under \emph{adaptive
+PCFS} FGSM/PGD ($\epsilon{=}0.1$), evaluated only for the defended stage S2. This
+answers whether \emph{source $+$ 1\% AWS $+$ adversarial training} transfers to real
+cloud traffic, rather than only measuring zero-shot domain-shift failure. Source:
+\texttt{aws\_stages\_agg.csv}.}
+\label{tab:aws_stages}
+\small
+\begin{tabular}{llccccc}
+\toprule
+Direction & Stage & clean MCC & recall & prec. & FGSM $\epsilon{=}0.1$ & PGD $\epsilon{=}0.1$ \\
+\midrule
+\multirow{3}{*}{CIC$\rightarrow$AWS}
+ & S0: source$\rightarrow$AWS (zero-shot) & -- & -- & -- & -- & -- \\
+ & S1: $+1\%$ AWS few-shot                & -- & -- & -- & -- & -- \\
+ & S2: $+1\%$ AWS $+$ adv                 & -- & -- & -- & -- & -- \\
+\midrule
+\multirow{3}{*}{UNSW$\rightarrow$AWS}
+ & S0: source$\rightarrow$AWS (zero-shot) & -- & -- & -- & -- & -- \\
+ & S1: $+1\%$ AWS few-shot                & -- & -- & -- & -- & -- \\
+ & S2: $+1\%$ AWS $+$ adv                 & -- & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Uji-tekanan zero-shot (konteks pelengkap).} Sebagai pelengkap, kami tetap
+melaporkan uji-tekanan \emph{zero-shot} awal (Tabel~\ref{tab:aws} dan
+\ref{tab:aws_unsw}) yang berguna sebagai \emph{sanity check} seberapa jauh model
+runtuh tanpa kalibrasi. Temuan di sini dilaporkan apa adanya.
 
 \paragraph{Arsitektur dan pipeline.} Kami memakai arsitektur AWS yang sejalan
 dengan karya SFM~\cite{martono2024sfm} (pola dua-EC2: \emph{attacker} dan
@@ -942,9 +995,9 @@ tetap runtuh pada arah UNSW$\rightarrow$CIC, menandai batas nyata
 \emph{adversarial training} pada model pohon. Arah lanjutan: (i) pertahanan yang
 tahan \emph{adaptive} (mis. \emph{randomized smoothing} atau penghalusan batas
 keputusan pada model pohon); (ii) integrasi dengan adaptasi \emph{online}
-berkelanjutan untuk merespons \emph{drift} domain; (iii) memperluas validasi AWS
-(Bagian~\ref{sec:aws}) dari
-\emph{proof-of-concept} ke kampanye berdurasi panjang dan multi-skenario; dan
+berkelanjutan untuk merespons \emph{drift} domain; (iii) memperluas validasi tiga-tahap AWS
+(Bagian~\ref{sec:aws}) dari skala terbatas berlabel-sendiri ke kampanye berdurasi
+panjang dan multi-skenario dengan pelabelan lebih besar; dan
 (iv) melengkapi suite serangan dengan ansambel \emph{parameter-free}
 (\emph{AutoAttack}~\cite{croce2020autoattack}) serta evasi khusus-pohon
 berbasis-optimasi~\cite{kantchelian2016} sebagai \emph{batas atas} rujukan di atas

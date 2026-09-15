@@ -228,6 +228,8 @@ __marimo__/
 !ransomware/aws/results-windows/*.csv
 # Pengecualian: CSV artefak reviewer paper2 adversarial (kecil, reproduksibilitas)
 !unswnb-15/paper2_reviewer_out/*.csv
+# Pengecualian: AWS labeled flows utk validasi few-shot tiga-tahap (nb15)
+!unswnb-15/notebooks/aws_labeled/*.csv
 
 # JANGAN PERNAH commit kunci enkripsi
 *.bin
