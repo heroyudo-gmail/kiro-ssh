@@ -73,6 +73,16 @@ eksperimen nyata dan dilaporkan apa adanya.
 \noindent\textbf{Kata kunci:} deteksi intrusi jaringan, ketahanan adversarial,
 \emph{protocol-consistent feature-space evasion}, \emph{adaptive white-box},
 generalisasi lintas-jaringan, pemetaan fitur semantik, \emph{few-shot}, XGBoost.
+
+\vspace{0.5em}
+\noindent\textbf{Highlights:}
+\begin{itemize}
+  \item We study the interaction of cross-network shift and adversarial evasion on one lightweight NIDS.
+  \item Few-shot calibration recovers cross-network generalization; adversarial training does not.
+  \item Robustness of few-shot+adv is asymmetric across the source$\rightarrow$target direction.
+  \item A protocol-consistent feature-space (PCFS) attack avoids over-claiming deliverability.
+  \item Three-stage AWS validation shows the pipeline transfers for generalization, not evasion.
+\end{itemize}
 \end{abstract}
 
 % ============================================================
@@ -1108,10 +1118,10 @@ target CIC (low-variance)   & -- & -- & -- & -- & -- \\
 \begin{figure}[h]
 \centering
 \resizebox{0.95\linewidth}{!}{\input{figure-p2/tikz-p2-treeboundary.tex}}
-\caption{Conceptual 2D sketch of why the same PCFS (protocol-consistent
-feature-space) perturbation ($\epsilon$, \emph{add-only}) collapses one direction
-but not the other. The tree
-decision boundary is a piecewise-constant staircase (axis-parallel splits).
+\caption{2D schematic of why the same PCFS (protocol-consistent feature-space)
+perturbation ($\epsilon$, \emph{add-only}) collapses one direction but not the
+other --- the mechanism is quantified empirically in Table~\ref{tab:decisioncell}.
+The tree decision boundary is a piecewise-constant staircase (axis-parallel splits).
 \textbf{(a)} On a high-variance target (UNSW), decision cells are \emph{wide}: a
 valid $\epsilon$-shift keeps the attack flow inside the attack cell, so it stays
 detected. \textbf{(b)} On a low-variance target (CIC), cells are \emph{thin}: the
