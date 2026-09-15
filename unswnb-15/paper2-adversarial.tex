@@ -305,6 +305,88 @@ keputusan pada model pohon); (ii) integrasi dengan adaptasi \emph{online}
 berkelanjutan (Paper 3); (iii) evaluasi ketahanan pada trafik cloud nyata.
 
 % ============================================================
+\clearpage
+\appendix
+\section{Glosarium Istilah}
+\label{sec:glosarium}
+Bagian ini merangkum istilah kunci yang dipakai di makalah agar pembaca dapat
+menavigasi terminologi tanpa harus kembali ke teks utama.
+
+\paragraph{Ketahanan pada dua sumbu.}
+\begin{itemize}
+  \item \textbf{Generalisasi lintas-jaringan.} Kemampuan model yang dilatih pada
+  satu jaringan/dataset untuk tetap akurat pada jaringan lain yang distribusinya
+  berbeda (\emph{distribution shift}). Diukur sebagai MCC pada dataset target.
+  \item \textbf{Ketahanan evasion (adversarial).} Kemampuan model mempertahankan
+  akurasi ketika penyerang sengaja memperturbasi fitur \emph{flow} agar serangan
+  lolos deteksi.
+\end{itemize}
+
+\paragraph{Notasi arah.} \emph{A}$\rightarrow$\emph{B} berarti model dilatih pada
+dataset \emph{sumber A} dan diuji pada dataset \emph{target B}
+(konvensi \emph{domain adaptation}). Contoh: CIC$\rightarrow$UNSW = latih di
+CSE-CIC-IDS2018, uji di UNSW-NB15.
+
+\paragraph{Dua sumbu yang membentuk sebuah serangan.} Sebuah serangan evasion
+dicirikan oleh \emph{dua properti yang saling bebas}. Karena itu sebuah serangan
+dapat memiliki kombinasi keduanya (mis. ``\emph{adaptive functional}'').
+\begin{itemize}
+  \item \emph{Sumbu-1 --- pengetahuan penyerang} (dari mana gradien dihitung):
+  \begin{itemize}
+    \item \textbf{Transfer / static.} Gradien dihitung dari \emph{model pengganti};
+    penyerang \emph{tidak} mengetahui model pertahanan. Skenario lebih lemah.
+    \item \textbf{Adaptive white-box.} Gradien dihitung dari \emph{model yang
+    diserang itu sendiri}; penyerang \emph{tahu persis} model pertahanan.
+    Skenario terburuk.
+  \end{itemize}
+  \item \emph{Sumbu-2 --- kendala realisme} (apakah \emph{flow} hasil serangan
+  valid):
+  \begin{itemize}
+    \item \textbf{Unconstrained.} Perturbasi bebas di ruang z-score; dapat
+    menghasilkan \emph{flow} yang \emph{mustahil} secara fisik (mis. \emph{bytes}
+    $<$ \emph{packets}). Berguna sebagai \emph{batas atas} daya serang, tetapi
+    tak realistis.
+    \item \textbf{Functional-preserving.} Perturbasi diproyeksikan ke ruang
+    \emph{valid protokol/fisik} (non-negatif; paket bilangan bulat;
+    \emph{bytes} $\ge$ \emph{packets}; rata-rata $=$ \emph{bytes}/\emph{packets};
+    monotonik \emph{add-only}), sehingga \emph{flow}-nya \emph{benar-benar dapat
+    dikirim} di jaringan nyata.
+  \end{itemize}
+\end{itemize}
+
+\paragraph{Maka: apakah ``\emph{adaptive white-box}'' dan ``\emph{adaptive
+functional}'' sama?} \textbf{Tidak}. ``\emph{Adaptive white-box}'' hanya menyebut
+\emph{Sumbu-1} (penyerang tahu model). ``\emph{Functional-preserving}'' hanya
+menyebut \emph{Sumbu-2} (serangan valid protokol). Istilah ``\emph{adaptive
+functional}'' yang dipakai pada kolom Tabel~\ref{tab:p2main} adalah
+\emph{gabungan keduanya}: serangan yang \textbf{sekaligus} \emph{adaptive white-box}
+DAN \emph{functional-preserving} --- yaitu skenario yang \emph{paling berat}
+(penyerang tahu model) sekaligus \emph{paling realistis} (serangan dapat dikirim).
+Analogi: ``\emph{adaptive}'' = pencuri tahu kunci rumah; ``\emph{functional}'' =
+pencuri hanya lewat pintu/jendela yang memang ada; ``\emph{adaptive functional}''
+= tahu kunci \emph{dan} hanya lewat jalur nyata.
+
+\paragraph{Istilah lain.}
+\begin{itemize}
+  \item \textbf{SFM (\emph{Semantic Feature Mapping}).} Pemetaan fitur
+  berfungsi-sama antar-alat ekstraksi (CICFlowMeter vs Argus/Bro) menjadi sembilan
+  fitur irisan yang tervalidasi statistik (kontribusi Paper 1).
+  \item \textbf{Few-shot.} Kalibrasi dengan sedikit ($1\%$) label dari jaringan
+  target untuk menutup celah generalisasi lintas-jaringan.
+  \item \textbf{Adversarial training.} Menambahkan sampel adversarial ke data
+  latih ($D_{\text{robust}} = D_{\text{clean}} \cup D_{\text{adv}}$) untuk
+  memperkuat batas keputusan.
+  \item \textbf{FGSM (\emph{Fast Gradient Sign Method}).} Serangan satu-langkah
+  $x_{\text{adv}} = x + \epsilon\,\mathrm{sign}(S(x))$; di sini $S$ diaproksimasi
+  \emph{central finite-difference} karena XGBoost tak-terdiferensiasi.
+  \item \textbf{$\epsilon$ (epsilon).} Kekuatan serangan; besar pergeseran per
+  fitur (dalam simpangan baku, ruang z-score). Grid $\{0{,}05; 0{,}1; 0{,}2\}$.
+  \item \textbf{MCC (\emph{Matthews Correlation Coefficient}).} Metrik utama;
+  tahan \emph{class imbalance}. MCC $=1$ sempurna, $=0$ setara tebakan acak,
+  $<0$ sistematis salah arah.
+\end{itemize}
+
+% ============================================================
 \begin{thebibliography}{99}
 
 \bibitem{biggio2013} B.~Biggio, I.~Corona, D.~Maiorca, B.~Nelson, N.~\v{S}rndi\'c,
