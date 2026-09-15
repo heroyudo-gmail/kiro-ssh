@@ -109,18 +109,25 @@ berakar pada \emph{distribution shift} dan tertutup oleh kalibrasi \emph{few-sho
 $1\%$ atau \emph{mixup} lintas-dataset. Makalah ini memakai fondasi tersebut apa
 adanya dan menambah dimensi adversarial.
 
-\paragraph{Serangan evasion pada NIDS.} Banyak studi membangkitkan perturbasi
-berbasis gradien atau GAN pada fitur alir tanpa memperhatikan validitas protokol,
-sehingga menghasilkan \emph{flow} yang tak dapat dikirim di jaringan nyata dan
-melebih-lebihkan ancaman. Kami mengadopsi \emph{functional-preserving constraints}
-agar serangan tetap merepresentasikan trafik yang benar-benar dapat dikirim.
+\paragraph{Serangan evasion pada NIDS.} Serangan \emph{evasion} pada pengklasifikasi
+diformalkan oleh Biggio \emph{et al.}~\cite{biggio2013} dan dipopulerkan pada ranah
+citra melalui \emph{Fast Gradient Sign Method} (FGSM)~\cite{goodfellow2015}. Pada
+NIDS, banyak studi membangkitkan perturbasi berbasis gradien atau
+GAN~\cite{lin2022idsgan} pada fitur alir \emph{tanpa} memperhatikan validitas
+protokol, sehingga menghasilkan \emph{flow} yang tak dapat dikirim di jaringan
+nyata dan \emph{melebih-lebihkan} ancaman. Beberapa karya terbaru menekankan
+perlunya kendala realisme~\cite{apruzzese2023,merzouk2022} agar serangan tetap
+merepresentasikan trafik yang benar-benar dapat dikirim. Kami mengadopsi
+\emph{functional-preserving constraints} dalam semangat ini.
 
-\paragraph{Adversarial training dan keterbatasannya.} \emph{Adversarial training}
-menambahkan sampel perturbasi ke data latih untuk memperkuat batas keputusan.
-Literatur menunjukkan pertahanan semacam ini kerap efektif terhadap serangan
-\emph{transfer/statis} namun dapat runtuh di bawah \emph{adaptive white-box}
-(gradien yang menyesuaikan pertahanan). Kami menguji hal ini secara eksplisit dan
-melaporkan hasilnya tanpa dipoles.
+\paragraph{Adversarial training dan keterbatasannya.} \emph{Adversarial
+training}~\cite{goodfellow2015,madry2018} menambahkan sampel perturbasi ke data
+latih untuk memperkuat batas keputusan. Namun Athalye \emph{et
+al.}~\cite{athalye2018} menunjukkan banyak pertahanan hanya \emph{menyamarkan
+gradien} (\emph{obfuscated gradients}) dan runtuh di bawah serangan
+\emph{adaptive white-box} yang menyesuaikan diri terhadap pertahanan. Karena itu
+kami menguji rezim \emph{adaptive white-box} secara eksplisit dan melaporkan
+hasilnya apa adanya, termasuk saat pertahanan gagal.
 
 % ============================================================
 \section{Metodologi}
@@ -131,12 +138,19 @@ Kami memakai sembilan fitur SFM (\texttt{duration, fwd\_pkts, bwd\_pkts,
 fwd\_bytes, bwd\_bytes, fwd\_mean, bwd\_mean, src\_load, dst\_load}) hasil pemetaan
 CSE-CIC-IDS2018 $\leftrightarrow$ UNSW-NB15, dengan \emph{StandardScaler} (z-score)
 di-\emph{fit} \textbf{hanya pada data latih} lalu diterapkan (\emph{transform}) ke
-data uji (tanpa kebocoran). Model: satu \texttt{XGBoost} biner
+data uji (tanpa kebocoran). Model: satu \texttt{XGBoost}~\cite{chen2016xgboost} biner
 (\texttt{max\_depth}=8, \texttt{lr}=0.1, \texttt{n\_estimators}=200,
-\texttt{subsample}/\texttt{colsample}=0.8), konsisten dengan Paper 1.
+\texttt{subsample}/\texttt{colsample}=0.8), konsisten dengan Paper 1. Dataset:
+CSE-CIC-IDS2018~\cite{sharafaldin2018} dan UNSW-NB15~\cite{moustafa2015}.
 
 \subsection{Empat Varian Pelatihan}
-Untuk tiap arah (CIC$\rightarrow$UNSW dan UNSW$\rightarrow$CIC):
+Notasi \emph{A}$\rightarrow$\emph{B} berarti model \textbf{dilatih pada dataset
+sumber \emph{A}} lalu \textbf{diuji pada dataset target \emph{B}} (konvensi baku
+\emph{domain adaptation}, sumber$\rightarrow$target). Jadi CIC$\rightarrow$UNSW =
+latih di CSE-CIC-IDS2018, uji di UNSW-NB15; dan sebaliknya. Kami mengevaluasi
+\emph{kedua} arah karena ketangguhannya \emph{tidak simetris} (UNSW berdistribusi
+lebih heterogen; lihat Paper 1). Untuk tiap arah (CIC$\rightarrow$UNSW dan
+UNSW$\rightarrow$CIC):
 \begin{enumerate}
   \item \textbf{baseline}: dilatih pada sumber (clean) saja.
   \item \textbf{few-shot}: sumber $+$ $1\%$ label target (kalibrasi lintas-jaringan).
@@ -197,7 +211,15 @@ mean konsisten, monotonik \emph{add-only})
 \centering
 \caption{MCC empat varian pada dua dimensi: generalisasi lintas-jaringan (kolom
 \emph{clean target}) dan ketahanan \emph{adaptive functional-preserving evasion}
-($\epsilon=0.1$). Angka diisi dari eksperimen (notebook 12).}
+($\epsilon=0.1$). Kolom terakhir mengukur MCC saat model diserang evasion yang
+sekaligus \emph{adaptive white-box} (saliency dihitung dari model yang diserang itu
+sendiri --- penyerang tahu pertahanan), \emph{functional-preserving} (perturbasi
+dibatasi ke \emph{flow} yang valid protokol dan dapat dikirim), dan berkekuatan
+$\epsilon=0.1$ (pergeseran $\approx 0.1$ simpangan baku per fitur di ruang z-score);
+inilah skenario terberat sekaligus paling realistis. Kolom \emph{clean source}/%
+\emph{clean target} adalah MCC tanpa serangan di jaringan sumber/target. Angka dari
+eksperimen (notebook 12). Nilai lebih tinggi lebih baik; MCC $\le 0$ = setara/lebih
+buruk dari tebakan acak.}
 \label{tab:p2main}
 \small
 \begin{tabular}{llccc}
@@ -282,5 +304,47 @@ tetap runtuh pada arah UNSW$\rightarrow$CIC, menandai batas nyata
 tahan \emph{adaptive} (mis. \emph{randomized smoothing} atau penghalusan batas
 keputusan pada model pohon); (ii) integrasi dengan adaptasi \emph{online}
 berkelanjutan (Paper 3); (iii) evaluasi ketahanan pada trafik cloud nyata.
+
+% ============================================================
+\begin{thebibliography}{99}
+
+\bibitem{biggio2013} B.~Biggio, I.~Corona, D.~Maiorca, B.~Nelson, N.~\v{S}rndi\'c,
+P.~Laskov, G.~Giacinto, F.~Roli, Evasion attacks against machine learning at test
+time, dalam: \emph{ECML PKDD}, 2013, hlm. 387--402.
+
+\bibitem{goodfellow2015} I.~J.~Goodfellow, J.~Shlens, C.~Szegedy, Explaining and
+harnessing adversarial examples, dalam: \emph{ICLR}, 2015.
+
+\bibitem{madry2018} A.~Madry, A.~Makelov, L.~Schmidt, D.~Tsipras, A.~Vladu, Towards
+deep learning models resistant to adversarial attacks, dalam: \emph{ICLR}, 2018.
+
+\bibitem{athalye2018} A.~Athalye, N.~Carlini, D.~Wagner, Obfuscated gradients give
+a false sense of security: Circumventing defenses to adversarial examples, dalam:
+\emph{ICML}, 2018, hlm. 274--283.
+
+\bibitem{lin2022idsgan} Z.~Lin, Y.~Shi, Z.~Xue, IDSGAN: Generative adversarial
+networks for attack generation against intrusion detection, dalam: \emph{PAKDD},
+2022, hlm. 79--91.
+
+\bibitem{apruzzese2023} G.~Apruzzese, M.~Andreolini, L.~Ferretti, M.~Marchetti,
+M.~Colajanni, Modeling realistic adversarial attacks against network intrusion
+detection systems, \emph{ACM Digital Threats: Research and Practice} 3~(3) (2022)
+1--19.
+
+\bibitem{merzouk2022} M.~A.~Merzouk, F.~Cuppens, N.~Boulahia-Cuppens, R.~Yaich,
+Investigating the practicality of adversarial evasion attacks on network intrusion
+detection, \emph{Annals of Telecommunications} 77 (2022) 763--775.
+
+\bibitem{chen2016xgboost} T.~Chen, C.~Guestrin, XGBoost: A scalable tree boosting
+system, dalam: \emph{ACM SIGKDD}, 2016, hlm. 785--794.
+
+\bibitem{sharafaldin2018} I.~Sharafaldin, A.~H.~Lashkari, A.~A.~Ghorbani, Toward
+generating a new intrusion detection dataset and intrusion traffic characterization,
+dalam: \emph{ICISSP}, 2018, hlm. 108--116.
+
+\bibitem{moustafa2015} N.~Moustafa, J.~Slay, UNSW-NB15: A comprehensive data set for
+network intrusion detection systems, dalam: \emph{MilCIS}, 2015, hlm. 1--6.
+
+\end{thebibliography}
 
 \end{document}
