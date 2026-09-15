@@ -25,8 +25,8 @@
 \geometry{margin=2.5cm}
 \graphicspath{{figure-q1/}{figure-p2/}}
 
-\title{Adversarial Robustness of Cross-Network Intrusion Detection via
-\emph{Semantic Mapping} and \emph{Few-Shot} XGBoost}
+\title{When Cross-Network Generalization Meets Adversarial Evasion:\\
+A Study of Few-Shot-Calibrated XGBoost NIDS under Protocol-Consistent Attacks}
 \author{Hero Yudo Martono \and Iwan Syarif \and Ferry Astika Saputra}
 \date{\today}
 
@@ -170,6 +170,22 @@ hanya $\sim 1\%$ sampel berlabel dari jaringan target ke data latih --- tanpa
 melatih ulang dari nol. Makalah ini mengadopsi kerangka sembilan fitur dan kalibrasi
 few-shot tersebut sebagai fondasi, lalu menambahkan dimensi ketahanan adversarial
 yang belum ditangani.
+
+\paragraph{Hubungan dengan karya pendahulu (Paper~1).} Makalah ini adalah
+\emph{lanjutan langsung} dari karya SFM~\cite{martono2024sfm} (selanjutnya
+``Paper~1''), dan kami tegaskan pembagiannya agar kontribusi tak rancu. \emph{Dari
+Paper~1 kami warisi apa adanya:} himpunan sembilan fitur SFM, kalibrasi
+\emph{few-shot} $1\%$, model tunggal XGBoost, \emph{z-score} per-dataset, metrik
+utama MCC, dan temuan bahwa generalisasi lintas-jaringan bersifat \emph{asimetris}
+antar-arah. Paper~1 menjawab \emph{satu} sumbu --- \emph{distribution shift} --- dan
+memvalidasinya hingga trafik AWS. \emph{Yang baru pada makalah ini:} sumbu
+\emph{kedua}, yakni ketahanan terhadap \emph{evasion} adversarial, dan --- lebih
+penting --- studi tentang \emph{interaksi} kedua sumbu tersebut: apakah kalibrasi
+\emph{few-shot} dan \emph{adversarial training} dapat hidup berdampingan pada satu
+model, dan mengapa ko-eksistensi itu \emph{bersyarat pada arah}. Jadi Paper~1
+menyumbang \emph{fondasi generalisasi}, sedangkan sumbangan orisinal kami adalah
+\emph{temuan interaksi generalisasi--ketahanan dan batas asimetrisnya} (bukan
+sekadar menambah serangan pada pipeline lama).
 
 \paragraph{Model pembelajaran mesin untuk NIDS.} Beragam keluarga model telah
 diterapkan pada deteksi intrusi, dari ansambel pohon seperti
@@ -1337,7 +1353,27 @@ tersimpan di \texttt{detect\_\{clean,evasion\}\_\{CIC\_to\_UNSW,UNSW\_to\_CIC\}}
 Alih-alih memperkenalkan teknik baru, makalah ini mempelajari \emph{interaksi}
 antara generalisasi lintas-jaringan dan ketahanan \emph{evasion} adversarial pada
 satu XGBoost ringan berbasis-alir, dan mengevaluasinya secara jujur di bawah
-serangan yang \emph{valid protokol} dan \emph{adaptive white-box}. Kontribusi
+serangan yang \emph{valid protokol} dan \emph{adaptive white-box}.
+
+\paragraph{Pesan utama (dilaporkan tanpa dihaluskan).} Kekuatan makalah ini justru
+terletak pada \emph{kejujuran hasilnya}, bukan pada klaim pertahanan sempurna. Tiga
+tesis yang kami tegakkan dengan bukti:
+\emph{(1) Adversarial training tidak universal efektif di bawah pergeseran
+distribusi lintas-jaringan} --- pada arah UNSW$\rightarrow$CIC ia gagal menahan
+\emph{adaptive evasion} (MCC serendah $-0{,}025$ pada evaluasi titik-tunggal dan
+ASR tetap $\ge0{,}74$ di bawah suite berjenjang).
+\emph{(2) Kalibrasi few-shot memulihkan generalisasi lintas-jaringan, tetapi tidak
+menjamin ketahanan adversarial} --- kedua sumbu itu terpisah dan tidak otomatis
+saling mengangkat.
+\emph{(3) Interaksi antara kalibrasi domain dan ketahanan adversarial bersifat
+terarah/asimetris} --- ko-eksistensi keduanya hanya andal pada satu arah
+sumber$\rightarrow$target. Ketiga pernyataan ini, termasuk kegagalannya, adalah
+kontribusi ilmiah yang dapat diuji dan memandu desain pertahanan berikutnya ---
+sejalan dengan prinsip bahwa evaluasi adversarial yang kredibel bertumpu pada model
+ancaman yang jelas, pengujian yang kuat, dan pelaporan batas metode secara jujur,
+bukan pada klaim ketangguhan menyeluruh.
+
+\noindent Kontribusi
 ilmiah utamanya adalah pengungkapan sebuah \emph{rezim ketangguhan asimetris}:
 kedua bentuk ketangguhan dapat hidup berdampingan, tetapi keberadaannya bersyarat
 pada arah sumber$\rightarrow$target dan dapat dijelaskan lewat geometri batas
