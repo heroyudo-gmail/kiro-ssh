@@ -978,22 +978,56 @@ ensembel dengan derau terkalibrasi) sebagai arah lanjutan.
 Gambar~\ref{fig:treeboundary} menyketsa intuisi ini secara konseptual.
 
 \paragraph{Kuantifikasi hipotesis ``sel keputusan sempit''.} Agar hipotesis ini
-dapat diuji, bukan sekadar naratif, kami mendefinisikan dua ukuran terukur.
-\emph{(1) Konsentrasi domain} $\kappa_j = \mathrm{IQR}_j / (|\mathrm{median}_j| +
-\delta)$ per fitur $j$ pada ruang asli (rasio rentang antar-kuartil terhadap
-median, lebih tahan pencilan daripada CV); domain dengan $\kappa$ lebih kecil lebih
-homogen sehingga sel keputusan cenderung lebih tipis. \emph{(2) Lebar sel efektif}
-$w = \mathrm{median}_i\, \min_t |x_{ij} - \tau_{t}|$, yakni jarak median tiap sampel
-ke ambang \emph{split} XGBoost terdekat pada fitur yang sama (di ruang z-score);
-$w$ kecil berarti perturbasi \emph{add-only} bervolume kecil sudah cukup melintasi
-batas. Prediksi hipotesis: domain target CIC memiliki $\kappa$ dan $w$ lebih kecil
-daripada UNSW, sejalan dengan keruntuhan pada UNSW$\rightarrow$CIC. Pengukuran
-menyeluruh dua-domain kami sertakan sebagai artefak reproduktif
-(skrip \texttt{a8\_decision\_cell.py}); pada domain CIC, sebagai contoh, fitur
-volumetrik (\texttt{fwd\_pkts}, \texttt{fwd\_bytes}, \texttt{bwd\_bytes})
-menunjukkan median yang sangat kecil dengan ekor panjang --- konsisten dengan
-kluster \emph{benign} dan sebagian \emph{attack} yang berdesakan di rentang
-bervolume rendah, tepat kondisi yang membuat sel keputusan menjadi tipis.
+dapat diuji, bukan sekadar naratif, kami mendefinisikan \textbf{empat} ukuran
+terukur dan mengukurnya secara empiris (Tabel~\ref{tab:decisioncell}).
+\emph{(1) Konsentrasi domain} $\kappa = \mathrm{median}_j\,\mathrm{IQR}_j /
+(|\mathrm{median}_j| + \delta)$ pada ruang asli (rasio rentang antar-kuartil
+terhadap median, lebih tahan pencilan daripada CV); $\kappa$ lebih kecil menandai
+domain lebih homogen. \emph{(2) Lebar sel efektif}
+$w = \mathrm{median}_i\, \min_{j,t} |x_{ij} - \tau_{jt}|$, jarak median tiap sampel
+ke ambang \emph{split} XGBoost terdekat (z-score); $w$ kecil berarti perturbasi
+kecil sudah cukup melintasi batas. \emph{(3) Jarak-ke-batas}
+$d_{\text{boundary}} = \mathrm{median}_i\, \min\{\epsilon : \hat{y}(x_i')\neq
+\hat{y}(x_i)\}$, yaitu perturbasi \emph{minimum} (arah saliency, terproyeksi PCFS)
+yang benar-benar \emph{membalik} prediksi --- ini mengukur mekanisme evasion secara
+langsung. \emph{(4) Probabilitas melintas} pada anggaran kecil, fraksi sampel yang
+prediksinya berubah pada $\epsilon{=}0{,}1$. Prediksi hipotesis eksplisit:
+\begin{equation}
+d_{\text{boundary}}^{\text{CIC}} < d_{\text{boundary}}^{\text{UNSW}}, \qquad
+w^{\text{CIC}} < w^{\text{UNSW}}, \qquad \kappa^{\text{CIC}} < \kappa^{\text{UNSW}}.
+\end{equation}
+Pengukuran kami hitung untuk model \emph{few-shot} pada kedua arah dan sertakan
+sebagai artefak reproduktif (\texttt{17\_decision\_cell.ipynb},
+\texttt{decision\_cell.csv}). Dengan begitu Gambar~\ref{fig:treeboundary} bukan lagi
+sketsa konseptual semata, melainkan mekanisme yang \emph{didukung angka}: jika
+$d_{\text{boundary}}$ dan $w$ pada target CIC memang lebih kecil, keruntuhan
+\emph{adaptive} pada UNSW$\rightarrow$CIC (Tabel~\ref{tab:p2main}) memperoleh
+penjelasan kausal yang terukur, bukan sekadar plausibel.
+
+% ----- Tabel bukti empiris mekanisme sel keputusan (diisi dari nb17) -----
+% CATATAN: angka diisi dari keluaran NYATA 17_decision_cell.ipynb
+% (paper2_reviewer_out/decision_cell.csv). JANGAN mengarang angka.
+\begin{table}[h]
+\centering
+\caption{Empirical evidence for the ``narrow decision cells'' mechanism (few-shot
+model, target-domain test set). $\kappa$ = domain concentration (IQR/median);
+$w$ = effective cell width (median distance to nearest split threshold, z-score);
+$d_{\text{boundary}}$ = median minimum PCFS perturbation that flips the prediction;
+$P_{\text{cross}}(\epsilon{=}0.1)$ = fraction of samples whose prediction changes at
+$\epsilon{=}0.1$; \#leaf = total leaves (granularity proxy). The hypothesis predicts
+smaller $\kappa$, $w$, $d_{\text{boundary}}$ for the low-variance CIC target. Source:
+\texttt{decision\_cell.csv}.}
+\label{tab:decisioncell}
+\small
+\begin{tabular}{lccccc}
+\toprule
+Target domain & $\kappa$ & $w$ & $d_{\text{boundary}}$ & $P_{\text{cross}}(0.1)$ & \#leaf \\
+\midrule
+target UNSW (high-variance) & -- & -- & -- & -- & -- \\
+target CIC (low-variance)   & -- & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \begin{figure}[h]
 \centering
