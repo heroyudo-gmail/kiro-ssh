@@ -297,6 +297,9 @@ ransomware/aws/results-windows/aes_key.bin
 # Pengecualian: gambar paper Q1 UNSW-NB15 (dari hasil nyata T3-T9)
 !unswnb-15/figure-q1/*.png
 
+# Pengecualian: gambar Paper 2 (adversarial) dari hasil nyata notebook 11/12
+!unswnb-15/figure-p2/*.png
+
 # PDF files (papers/references, tidak perlu di-upload)
 *.pdf
 
