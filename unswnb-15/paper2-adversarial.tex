@@ -308,22 +308,53 @@ komposisi kelas, dan protokol pembagian tiap dataset.
 
 \begin{table}[h]
 \centering
-\caption{Dataset and preprocessing summary (nine SFM features, binary
-benign/attack). UNSW-NB15 uses the two official release partitions as fixed
-train/test files (no random split); CSE-CIC-IDS2018 uses a stratified
-$70/30$ split with a fixed seed. The z-score scaler is fit on the train partition
-only and applied unchanged to test.}
+\caption{Dataset and preprocessing summary (all mapped to the same nine SFM
+features, binary benign/attack). UNSW-NB15 uses the two official release partitions
+as fixed train/test files (no random split); CSE-CIC-IDS2018 uses a stratified
+$70/30$ split with a fixed seed; AWS is self-labelled real traffic split stratified
+into train/test per seed. The z-score scaler is fit on the source-train partition
+only and applied unchanged to test. AWS counts are exact
+(\texttt{aws\_labeled/*.csv}); UNSW counts are the official release sizes.}
 \label{tab:dataset}
 \small
 \begin{tabular}{lccccc}
 \toprule
-Dataset & Role & \#train & \#test & attack:benign (test) & split protocol \\
+Dataset & \#total & attack & benign & \#feat. & split protocol \\
 \midrule
-CSE-CIC-IDS2018 & source/target & $\approx$ stratified $70\%$ & $30\%$ & imbalanced & random, seed-fixed, stratified \\
-UNSW-NB15       & source/target & $175{,}341$ & $82{,}332$ & imbalanced & official train/test files \\
+CSE-CIC-IDS2018~\cite{sharafaldin2018} & --$^{\dagger}$ & imbalanced & imbalanced & $9$ & random, stratified $70/30$, seed-fixed \\
+UNSW-NB15~\cite{moustafa2015}          & $257{,}673$ & $164{,}673$ & $93{,}000$ & $9$ & official train/test files ($175{,}341/82{,}332$) \\
+AWS (real, self-labelled)              & $17{,}753$ & $17{,}620$ & $133$ & $9$ & stratified train/test per seed \\
 \bottomrule
 \end{tabular}
+
+\vspace{0.3em}
+\noindent{\footnotesize $^{\dagger}$ CSE-CIC-IDS2018 exact post-preprocessing count
+is recorded in the reproducible artefact (\texttt{cleaned\_100.pkl}); its test
+partition is class-imbalanced and used only as source (never few-shot-calibrated in
+the cross-network experiments where it is the source).}
 \end{table}
+
+\paragraph{Detail praproses (untuk reproduktibilitas).} \emph{(1) Label mapping:}
+seluruh label dipetakan biner --- \emph{benign}$=0$ versus gabungan seluruh
+kategori serangan $=1$ (UNSW-NB15: sembilan kategori \emph{Fuzzers, Analysis,
+Backdoors, DoS, Exploits, Generic, Reconnaissance, Shellcode, Worms}; CSE-CIC-IDS2018:
+famili \emph{DoS/DDoS, brute-force, botnet, infiltrasi, web}; AWS: SSH brute-force,
+Slowloris, SYN flood). \emph{(2) Nilai hilang \& tak-hingga:} nilai $\pm\infty$
+(mis. laju saat durasi nol) diganti NaN lalu diimputasi dengan median per-fitur pada
+data latih. \emph{(3) Duplikat:} baris duplikat tidak dibuang secara khusus karena
+\emph{flow} identik dapat muncul sah pada trafik nyata; kami mengandalkan pemetaan
+sembilan fitur SFM dan tidak melakukan deduplikasi agresif yang dapat mengubah
+distribusi. \emph{(4) Normalisasi:} \emph{StandardScaler} (z-score) di-\emph{fit}
+eksklusif pada partisi latih sumber, lalu diterapkan apa adanya ke uji dan ke domain
+target/AWS. \emph{(5) Pembagian latih/uji:} UNSW-NB15 memakai dua berkas rilis fisik
+terpisah (bukan acak); CSE-CIC-IDS2018 memakai \texttt{train\_test\_split}
+\emph{acak berstrata} dengan \emph{seed} tetap; AWS dipisah \emph{stratified}
+train/test per \emph{seed}. Pembagian bersifat \emph{acak-berstrata}, bukan temporal
+--- konsisten dengan protokol rilis UNSW-NB15 dan praktik baku~\cite{kohavi}.
+\emph{(6) Split kalibrasi target:} $1\%$ few-shot diambil hanya dari partisi latih
+target (Bagian~\ref{sec:split}), disjoint dari partisi uji. Ringkasan ukuran dan
+komposisi ada pada Tabel~\ref{tab:dataset}.
+
 
 \subsection{Data Splitting and Leakage Control}
 \label{sec:split}
