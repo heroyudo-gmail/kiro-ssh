@@ -5,6 +5,13 @@
 > network-level (varian `evasion`) + FGSM functional-preserving pada fitur.
 > **Region:** ap-southeast-1. Semua hasil diunggah ke S3 sebelum infra dihapus.
 
+> **STATUS (per teardown terakhir):** Eksperimen SELESAI PENUH — 2 arah
+> (CIC→UNSW & UNSW→CIC) × 2 varian (clean/evasion) × 4 model × FGSM. Hasil masuk
+> `paper2-adversarial.tex` (Tabel `tab:aws` & `tab:aws_unsw`) + notebook 13 (sel 5b),
+> arsip 4 JSON di `unswnb-15/aws/paper2_aws/`. **Infra sudah DIHAPUS** (stack
+> `adv-far-ec2` & `adv-far-vpc` = DELETE_COMPLETE; tidak ada biaya berjalan).
+> Untuk mengulang: ikuti bagian **JALUR CEPAT** di bawah.
+
 ---
 
 ## PELAJARAN dari eksekusi pertama (WAJIB dibaca — pakai pola Paper 1, jangan coba yang baru)
