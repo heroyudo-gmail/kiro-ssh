@@ -45,6 +45,72 @@ masalah + solusi yang SUDAH TERBUKTI. Ikuti ini agar tidak terulang.
 
 ---
 
+## JALUR CEPAT untuk pengulangan (pakai ini besok — hemat waktu, hindari yang salah)
+
+Eksperimen SUDAH pernah berhasil penuh (2 arah × clean+evasion × 4 model × FGSM).
+Kalau infra dimatikan lalu diulang, ikuti urutan minimal berikut. Estimasi total
+~20 menit (mayoritas nunggu stack + serangan 7 menit × 2).
+
+**Urutan minimal yang TERBUKTI:**
+1. Deploy 2 stack (Bagian 2). Tunggu `CREATE_COMPLETE`. Ambil `AttackerId`,
+   `TargetAnalyzerId`, `TargetAnalyzerPrivateIp`.
+2. Setup node via **boto3** (Bagian 3): unduh model `unsw-far/paper2/` (KEDUA arah:
+   `CIC_to_UNSW` + `UNSW_to_CIC`) + skrip `unsw-far/scripts-p2/` ke Target-Analyzer;
+   install tool + tulis `/tmp/atk2.sh` di Attacker.
+3. Untuk tiap varian (clean, lalu evasion): mulai `tcpdump -i ens5` → jalankan
+   `atk2.sh <TARGET_IP> <varian>` (SSM `--timeout-seconds 900`) → stop tcpdump.
+   Hasil: `detect_clean.pcap` + `detect_evasion.pcap` di `/opt/adv/captures/`.
+4. Inferensi **4 kali** (2 pcap × 2 arah), backup JSON antar-arah agar tak tertimpa:
+   ```
+   # arah CIC_to_UNSW (default)
+   python3 adv-extract-infer.py detect_clean.pcap   CIC_to_UNSW
+   python3 adv-extract-infer.py detect_evasion.pcap CIC_to_UNSW
+   cp results/detect_clean_advmetrics.json   results/detect_clean_CIC_to_UNSW.json
+   cp results/detect_evasion_advmetrics.json results/detect_evasion_CIC_to_UNSW.json
+   # arah UNSW_to_CIC
+   python3 adv-extract-infer.py detect_clean.pcap   UNSW_to_CIC
+   python3 adv-extract-infer.py detect_evasion.pcap UNSW_to_CIC
+   cp results/detect_clean_advmetrics.json   results/detect_clean_UNSW_to_CIC.json
+   cp results/detect_evasion_advmetrics.json results/detect_evasion_UNSW_to_CIC.json
+   ```
+5. Baca 4 JSON via SSM `cat` (JANGAN andalkan auto-upload S3 — lihat butir "jangan
+   diulang" #3). Salin angka ke `paper2-adversarial.tex` (Tabel~\ref{tab:aws} &
+   `tab:aws_unsw`) + notebook `13_rangkuman_adversarial.ipynb` (sel 5b).
+6. **TEARDOWN** (Bagian 5): delete-stack `adv-far-ec2` lalu `adv-far-vpc`.
+
+**JANGAN diulang (buang waktu di eksekusi pertama):**
+1. ~~`dnf install hydra` / `sshpass`~~ — tidak ada di AL2023. Langsung pakai `atk2.sh`
+   (ncat/slowloris/nping/ab/curl).
+2. ~~`aws s3 cp` untuk unduh model di instance~~ — awscli instance rusak pasca pip.
+   Langsung boto3.
+3. ~~Mengandalkan auto-upload S3 dari `adv-extract-infer.py`~~ — baris `aws s3 cp` di
+   skrip GAGAL SENYAP (subprocess `capture_output=True`) karena awscli rusak; ia tetap
+   mencetak "diunggah" padahal tidak. **Ambil hasil via SSM `cat` file lokal
+   `/opt/adv/results/*.json`** (itu sumber kebenaran). (Opsional: perbaiki skrip agar
+   upload pakai boto3.)
+4. ~~`tcpdump -i any`~~ — 0 flow. Selalu `-i ens5`.
+5. ~~Perintah SSM inline dengan `||`, `\"`, heredoc panjang lewat `--parameters "commands=[...]"`~~
+   — parsing PowerShell rusak. **Pakai file: tulis JSON `{"commands":[...]}` lalu
+   `--parameters file://path.json`** (andal).
+6. ~~Baca output `aws` langsung di terminal utama~~ — sering kosong/echo berantakan
+   (exit -1). **Jalankan lewat background process** lalu `get_process_output`.
+
+**Fakta lingkungan yang sudah dipastikan (tak perlu cek ulang):**
+- Model KEDUA arah ADA di S3 `unsw-far/paper2/{CIC_to_UNSW,UNSW_to_CIC}/`
+  (baseline/fewshot/adv/fewshot_adv `.json` + `scaler.pkl`), verified.
+- Skrip Paper 2 di S3 `unsw-far/scripts-p2/`.
+- iface = `ens5`. VPC `10.6.0.0/16`. Region `ap-southeast-1`. ProjectName `adv-far`.
+- Ground-truth timeline `atk2.sh`: clean=4789 flow (4167 atk/622 benign),
+  evasion=3099 flow (3041 atk/58 benign).
+
+**Hasil referensi (untuk sanity-check — kalau angka jauh beda, ada yang salah):**
+- CIC→UNSW clean MCC: baseline −0,022 | fewshot −0,068 | adv −0,022 | fewshot_adv 0,000.
+- UNSW→CIC clean MCC: baseline −0,401 | fewshot −0,392 | adv −0,494 | fewshot_adv −0,013
+  (fewshot_adv recall 0,954 / precision 0,869 — aktif mendeteksi, MCC rendah krn imbalance).
+- FGSM ε=0.1 menekan kedua arah (hingga −0,91 pada adv UNSW).
+
+---
+
 ## 0. Arsitektur
 
 - **VPC** `10.6.0.0/16` (beda dari Paper 1 `10.5.0.0/16` agar bisa jalan berdampingan).
