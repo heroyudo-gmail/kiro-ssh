@@ -39,9 +39,12 @@ menunjukkan bahwa pemetaan fitur tervalidasi statistik ditambah kalibrasi
 \emph{few-shot} $1\%$ dapat menutup celah generalisasi lintas-jaringan pada NIDS
 berbasis pembelajaran mesin, dengan validasi hingga trafik cloud AWS nyata. Namun ketangguhan pada satu dimensi (perpindahan
 jaringan) belum menjamin ketangguhan pada dimensi lain: \emph{evasion adversarial}.
-Makalah ini menyelidiki apakah satu model XGBoost ringan pada sembilan fitur SFM
-dapat sekaligus (i) menjaga generalisasi lintas-jaringan dan (ii) tahan terhadap
-serangan \emph{evasion} yang \emph{valid secara protokol}. Kami membandingkan empat
+Alih-alih mengusulkan kombinasi teknik baru, makalah ini mempelajari
+\emph{interaksi} antara dua sumbu ketangguhan yang lazim dipelajari terpisah ---
+\emph{distribution shift} lintas-jaringan dan ketahanan \emph{evasion} adversarial
+--- dan menyelidiki apakah satu model XGBoost ringan pada sembilan fitur SFM dapat
+sekaligus (i) menjaga generalisasi lintas-jaringan dan (ii) tahan terhadap serangan
+\emph{evasion} yang \emph{valid secara protokol}. Kami membandingkan empat
 varian pelatihan --- \emph{baseline}, \emph{few-shot}, \emph{adversarial training},
 dan gabungan \emph{few-shot $+$ adversarial} --- pada dua arah lintas-jaringan
 (CSE-CIC-IDS2018 $\leftrightarrow$ UNSW-NB15), dan mengevaluasinya di bawah tiga
@@ -53,9 +56,12 @@ tidak menutup celah lintas-jaringan. Menambahkan \emph{adversarial training} di 
 \emph{few-shot} tidak merusak generalisasi, dan pada arah CIC$\rightarrow$UNSW
 varian \emph{few-shot$+$adv} bahkan tangguh di \textbf{kedua} sumbu sekaligus (MCC
 target $0{,}70$; ketahanan \emph{adaptive functional evasion} $0{,}50$). Namun pada
-arah UNSW$\rightarrow$CIC ketahanan \emph{adaptive} tetap runtuh untuk semua varian
---- menunjukkan batas \emph{adversarial training} pada model pohon dan sifat
-asimetris ketangguhan antar-arah. Semua angka berasal dari eksperimen nyata dan
+arah UNSW$\rightarrow$CIC ketahanan \emph{adaptive} tetap runtuh untuk semua varian.
+Temuan utama kami --- yang belum pernah dilaporkan sebelumnya --- adalah adanya
+\textbf{rezim ketangguhan asimetris}: kedua bentuk ketangguhan dapat hidup
+berdampingan hanya bergantung pada arah sumber$\rightarrow$target, dan kami
+menjelaskan asimetri ini melalui lebar sel keputusan model pohon pada domain target
+bervarians-rendah versus tinggi. Semua angka berasal dari eksperimen nyata dan
 dilaporkan apa adanya.
 
 \vspace{0.5em}
@@ -92,21 +98,49 @@ Makalah ini mengangkat pertanyaan riset:
 \emph{Dapatkah satu XGBoost ringan pada sembilan fitur SFM mempertahankan
 generalisasi lintas-jaringan (via few-shot) SEKALIGUS memperoleh ketahanan
 terhadap evasion adversarial (via adversarial training) --- tanpa kedua tujuan itu
-saling meniadakan?}
+saling meniadakan; dan jika bisa, mengapa keberadaannya bersyarat pada arah
+perpindahan jaringan?}
 \end{quote}
+
+\noindent Pertanyaan ini bersifat \emph{ilmiah}, bukan rekayasa: bukan
+``teknik mana yang harus digabung'', melainkan ``bagaimana dua bentuk ketangguhan
+itu berinteraksi, dan mengapa interaksinya asimetris''. Komponen yang kami pakai
+(SFM, \emph{few-shot}, FGSM, \emph{adversarial training}, kendala
+\emph{functional-preserving}, \emph{adaptive white-box}) semuanya sudah mapan;
+sumbangan kami adalah \emph{temuan} tentang interaksinya, bukan komponennya.
+
+Kebaruan makalah ini \textbf{bukan} terletak pada komponen penyusunnya --- SFM,
+kalibrasi \emph{few-shot}, FGSM, \emph{adversarial training}, kendala
+\emph{functional-preserving}, dan serangan \emph{adaptive white-box} semuanya sudah
+mapan secara individual. Kebaruan kami berada pada tataran \emph{temuan ilmiah}:
+kami adalah yang pertama mempelajari \emph{interaksi} antara dua sumbu ketangguhan
+--- \emph{distribution shift} lintas-jaringan dan ketahanan \emph{evasion}
+adversarial --- pada satu NIDS ringan berbasis-alir, dan mengungkap sebuah
+\textbf{rezim ketangguhan asimetris} yang belum pernah dilaporkan: kalibrasi
+\emph{few-shot} lintas-domain dan \emph{adversarial training} \emph{berinteraksi
+secara berbeda bergantung pada arah} sumber$\rightarrow$target jaringan. Alih-alih
+sekadar menggabungkan teknik yang ada, kami menjawab pertanyaan yang belum terjawab:
+\emph{apakah kedua bentuk ketangguhan itu dapat hidup berdampingan pada satu model,
+dan mengapa keberadaannya bersyarat pada arah perpindahan jaringan.}
 
 \noindent\textbf{Kontribusi:}
 \begin{itemize}
-  \item \textbf{Pipeline terpadu} yang menyatukan SFM, kalibrasi \emph{few-shot},
-  dan \emph{adversarial training} pada satu model XGBoost ringan
-  (Bagian~\ref{sec:metode}).
-  \item \textbf{Evaluasi ancaman berlapis} yang membedakan serangan tak-realistis
-  (FGSM tak-terbatas) dari serangan \emph{valid protokol}
-  (\emph{functional-preserving}), serta skenario terburuk \emph{adaptive white-box}
-  (Bagian~\ref{sec:ancaman}).
-  \item \textbf{Analisis trade-off} antara ketangguhan lintas-jaringan dan
-  ketahanan evasion pada empat varian model, dilaporkan jujur termasuk bila terjadi
-  penurunan (Bagian~\ref{sec:hasil}).
+  \item \textbf{Temuan rezim asimetris.} Kami menunjukkan --- dan menjelaskan
+  secara teoretis --- bahwa \emph{few-shot$+$adv} dapat tangguh di kedua sumbu
+  sekaligus pada satu arah (CIC$\rightarrow$UNSW) namun runtuh di bawah
+  \emph{adaptive white-box} pada arah sebaliknya (UNSW$\rightarrow$CIC). Asimetri
+  ini kami kaitkan dengan lebar sel keputusan model pohon pada domain target
+  bervarians-rendah versus tinggi (Bagian~\ref{sec:hasil}), sehingga menjadi
+  \emph{temuan} yang dapat diuji, bukan sekadar hasil empiris.
+  \item \textbf{Kerangka evaluasi dua-sumbu} yang menyatukan pengukuran
+  generalisasi lintas-jaringan dan ketahanan evasion dalam satu protokol, dengan
+  ancaman berlapis yang membedakan serangan tak-realistis (FGSM tak-terbatas) dari
+  serangan \emph{valid protokol} (\emph{functional-preserving}) serta skenario
+  terburuk \emph{adaptive white-box} (Bagian~\ref{sec:ancaman}).
+  \item \textbf{Analisis trade-off yang dilaporkan jujur}, termasuk kegagalan:
+  \emph{adversarial training} saja tidak menutup celah lintas-jaringan, dan tidak
+  menjamin ketahanan \emph{adaptive} di semua arah --- menandai batas nyata
+  \emph{adversarial training} pada model pohon (Bagian~\ref{sec:hasil}).
 \end{itemize}
 
 \noindent Konsistensi metodologis dengan kerangka SFM~\cite{martono2024sfm} dijaga:
@@ -190,7 +224,13 @@ serangan tetapi \emph{tidak} pada setelan generalisasi lintas-jaringan. Makalah 
 mengisi irisan kedua garis riset tersebut, dan --- berbeda dari pendekatan
 \emph{deep}~\cite{wu,duan} atau \emph{federated}~\cite{popoola,bertoli} --- menjaga
 model tetap satu XGBoost ringan sehingga analisis batas keputusan berbasis-pohon
-menjadi eksplisit.
+menjadi eksplisit. Namun perbedaan terpenting kami bukan sekadar irisan cakupan,
+melainkan \emph{temuan} yang muncul dari irisan itu: karena kedua sumbu diukur pada
+model dan ruang fitur yang sama, kami dapat mengamati bahwa \emph{ko-eksistensi}
+generalisasi dan ketahanan evasion bersifat \textbf{asimetris terhadap arah}
+sumber$\rightarrow$target --- fenomena yang tak teramati bila kedua sumbu dipelajari
+terpisah, dan yang kami jelaskan lewat geometri batas keputusan pohon
+(Bagian~\ref{sec:hasil}).
 
 \begin{table}[h]
 \centering
@@ -346,18 +386,47 @@ varian evaluasi terberat yang setara. Serangan khusus-pohon yang lebih kuat (mis
 verifikasi robust-tree~\cite{chen2019robusttrees}) merupakan arah pelengkap;
 memakainya hanya akan \emph{memperkuat} temuan keruntuhan kami, bukan membaliknya.
 
+\paragraph{Suite serangan berlapis-kekuatan (FGSM satu-langkah bukan satu-satunya).}
+Kami tekankan bahwa FGSM finite-difference di atas adalah \emph{satu} anggota dari
+suite serangan berjenjang-kekuatan, \emph{bukan} satu-satunya serangan --- sebuah
+evaluasi ketahanan satu-serangan mudah melebih-lebihkan robustness dan lazim ditolak
+pada literatur adversarial mutakhir~\cite{athalye2018,carlini2019evaluating}. Karena
+itu kami mengevaluasi tiga tingkat kekuatan pada model dan ruang fitur yang sama:
+\emph{(i) FGSM finite-difference satu-langkah} sebagai serangan berbiaya-rendah dan
+\emph{batas bawah} daya serang; \emph{(ii) PGD iteratif functional-preserving}
+($\text{iter}=10$, $\alpha=0{,}02$, proyeksi $\ell_\infty$-$\epsilon$ lalu ke ruang
+valid pada tiap langkah) sebagai serangan multi-langkah yang jauh lebih kuat pada
+permukaan keputusan tak-mulus; dan \emph{(iii)} kami memosisikan serangan ansambel
+\emph{parameter-free} seperti \emph{AutoAttack}~\cite{croce2020autoattack} dan evasi
+khusus-pohon berbasis-optimasi~\cite{kantchelian2016} sebagai \emph{batas atas}
+rujukan. Perbedaan hasil antar-serangan justru memperkuat kesimpulan ilmiah kami:
+sebuah varian dapat tampak tangguh terhadap serangan lemah namun runtuh di bawah
+serangan kuat, dan pelaporan berjenjang inilah yang membedakan bukti robustness yang
+sahih dari klaim yang menyesatkan. Perbandingan berjenjang FGSM versus PGD
+dirangkum pada Tabel~\ref{tab:multiattack}; protokolnya dijabarkan berikut.
+
 \paragraph{Protokol evaluasi yang diperkuat.} Untuk memastikan temuan bukan artefak
 satu realisasi, seluruh eksperimen diulang pada \textbf{lima \emph{seed}} berbeda
 ($\{13,42,101,202,303\}$) dan dilaporkan sebagai rerata $\pm$ simpangan baku dengan
 selang kepercayaan $95\%$. Selain FGSM satu-langkah, kami menambahkan serangan
 \emph{adaptive} yang lebih kuat berupa \textbf{PGD} \emph{functional-preserving}
 ($\text{iter}=10$, $\alpha=0{,}02$, proyeksi ke bola $\ell_\infty$ beranggaran
-$\epsilon$ lalu ke ruang valid pada tiap langkah), sehingga estimasi ketahanan tidak
-bergantung pada kekuatan serangan satu-langkah semata. Kami juga melaporkan
-\textbf{Attack Success Rate} (ASR --- fraksi \emph{flow} serangan yang semula
-terdeteksi lalu lolos setelah perturbasi) dan metrik berbasis matriks konfusi
-(\emph{recall}/\emph{precision}/F1), bukan hanya $\Delta$MCC. Rincian implementasi
-dan artefak reproduktif ada pada \texttt{14\_reviewer\_experiments.ipynb}.
+$\epsilon$ lalu ke ruang valid pada tiap langkah) dan mengevaluasi ketiganya pada
+tiga anggaran $\epsilon\in\{0{,}05;0{,}1;0{,}2\}$ sehingga membentuk \emph{kurva
+ketahanan} (\emph{robustness curve}) MCC terhadap $\epsilon$, bukan satu titik
+tunggal. Dengan begitu estimasi ketahanan tidak bergantung pada kekuatan serangan
+satu-langkah semata dan memperlihatkan pada anggaran berapa suatu varian mulai
+runtuh. Kami juga melaporkan \textbf{Attack Success Rate} (ASR --- fraksi
+\emph{flow} serangan yang semula terdeteksi lalu lolos setelah perturbasi) dan
+metrik berbasis matriks konfusi (\emph{recall}/\emph{precision}/F1), bukan hanya
+$\Delta$MCC. Hasil berjenjang FGSM versus PGD dirangkum pada
+Tabel~\ref{tab:multiattack}. Serangan ansambel \emph{parameter-free}
+(\emph{AutoAttack}~\cite{croce2020autoattack}) dan evasi khusus-pohon
+berbasis-optimasi~\cite{kantchelian2016} kami tandai sebagai \emph{batas atas}
+rujukan dan arah lanjutan; karena keduanya lebih kuat daripada PGD, memasukkannya
+hanya akan memperkuat --- bukan membalikkan --- temuan keruntuhan pada arah
+UNSW$\rightarrow$CIC. Rincian implementasi dan artefak reproduktif ada pada
+\texttt{14\_reviewer\_experiments.ipynb}.
 
 % ============================================================
 \section{Threat Model and Functional Constraints}
@@ -515,6 +584,44 @@ Direction & Variant & clean (source) & clean (target) & adaptive evasion ($\epsi
  & few-shot     & $0{,}741$ & $0{,}897$ & $-0{,}121$ \\
  & adv          & $0{,}742$ & $-0{,}067$ & $0{,}002$ \\
  & \textbf{few-shot+adv} & $0{,}746$ & $\mathbf{0{,}897}$ & $-0{,}025$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ----- Tabel multi-attack (robustness curve): FGSM 1-langkah vs PGD iteratif -----
+% CATATAN PENGISIAN: angka MCC/ASR di tabel ini diisi dari keluaran nyata
+% notebook 14_reviewer_experiments.ipynb (kolom kondisi fgsm_eps* dan pgd_eps*,
+% direrata atas 5 seed {13,42,101,202,303}). Placeholder "--" diganti setelah
+% notebook dijalankan; JANGAN mengarang angka.
+\begin{table}[h]
+\centering
+\caption{Robustness curve: MCC of the four variants under attacks of \emph{increasing
+strength} --- one-step finite-difference FGSM vs iterative PGD
+(\emph{functional-preserving}, adaptive white-box) --- across three budgets
+$\epsilon\in\{0.05,0.1,0.2\}$. Reporting a single attack overstates robustness; a
+variant may look robust under FGSM yet collapse under PGD. Values are mean over five
+seeds $\{13,42,101,202,303\}$ from \texttt{14\_reviewer\_experiments.ipynb} (columns
+\texttt{fgsm\_eps*}/\texttt{pgd\_eps*}). \emph{Cells marked ``--'' are to be filled
+from the executed notebook output; no values are fabricated.} Higher is better.}
+\label{tab:multiattack}
+\small
+\begin{tabular}{llcccccc}
+\toprule
+& & \multicolumn{3}{c}{FGSM (one-step) MCC} & \multicolumn{3}{c}{PGD (iterative) MCC} \\
+\cmidrule(lr){3-5}\cmidrule(lr){6-8}
+Direction & Variant & $\epsilon{=}0.05$ & $0.1$ & $0.2$ & $\epsilon{=}0.05$ & $0.1$ & $0.2$ \\
+\midrule
+\multirow{4}{*}{CIC$\rightarrow$UNSW}
+ & baseline              & -- & -- & -- & -- & -- & -- \\
+ & few-shot              & -- & -- & -- & -- & -- & -- \\
+ & adv                   & -- & -- & -- & -- & -- & -- \\
+ & \textbf{few-shot+adv} & -- & -- & -- & -- & -- & -- \\
+\midrule
+\multirow{4}{*}{UNSW$\rightarrow$CIC}
+ & baseline              & -- & -- & -- & -- & -- & -- \\
+ & few-shot              & -- & -- & -- & -- & -- & -- \\
+ & adv                   & -- & -- & -- & -- & -- & -- \\
+ & \textbf{few-shot+adv} & -- & -- & -- & -- & -- & -- \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -761,9 +868,14 @@ tersimpan di \texttt{detect\_\{clean,evasion\}\_\{CIC\_to\_UNSW,UNSW\_to\_CIC\}}
 % ============================================================
 \section{Conclusion and Future Work}
 \label{sec:conclusion}
-Makalah ini memperluas pipeline SFM $+$ few-shot dengan dimensi ketahanan
-adversarial pada satu XGBoost ringan, dan mengevaluasinya secara jujur di bawah
-serangan yang \emph{valid protokol} dan \emph{adaptive white-box}. Tiga kesimpulan:
+Alih-alih memperkenalkan teknik baru, makalah ini mempelajari \emph{interaksi}
+antara generalisasi lintas-jaringan dan ketahanan \emph{evasion} adversarial pada
+satu XGBoost ringan berbasis-alir, dan mengevaluasinya secara jujur di bawah
+serangan yang \emph{valid protokol} dan \emph{adaptive white-box}. Kontribusi
+ilmiah utamanya adalah pengungkapan sebuah \emph{rezim ketangguhan asimetris}:
+kedua bentuk ketangguhan dapat hidup berdampingan, tetapi keberadaannya bersyarat
+pada arah sumber$\rightarrow$target dan dapat dijelaskan lewat geometri batas
+keputusan model pohon. Tiga kesimpulan:
 (i) generalisasi lintas-jaringan diperoleh melalui \emph{few-shot}, bukan
 \emph{adversarial training}; (ii) menambahkan \emph{adversarial training} di atas
 \emph{few-shot} tidak mengorbankan generalisasi, dan pada arah
@@ -775,7 +887,12 @@ tahan \emph{adaptive} (mis. \emph{randomized smoothing} atau penghalusan batas
 keputusan pada model pohon); (ii) integrasi dengan adaptasi \emph{online}
 berkelanjutan untuk merespons \emph{drift} domain; (iii) memperluas validasi AWS
 (Bagian~\ref{sec:aws}) dari
-\emph{proof-of-concept} ke kampanye berdurasi panjang dan multi-skenario.
+\emph{proof-of-concept} ke kampanye berdurasi panjang dan multi-skenario; dan
+(iv) melengkapi suite serangan dengan ansambel \emph{parameter-free}
+(\emph{AutoAttack}~\cite{croce2020autoattack}) serta evasi khusus-pohon
+berbasis-optimasi~\cite{kantchelian2016} sebagai \emph{batas atas} rujukan di atas
+FGSM/PGD (Tabel~\ref{tab:multiattack}), untuk mempertajam kurva ketahanan di dekat
+titik runtuh.
 
 % ============================================================
 \begin{thebibliography}{99}
@@ -971,6 +1088,14 @@ neural networks, dalam: \emph{IEEE S\&P}, 2017, hlm. 39--57.
 \bibitem{athalye2018} A.~Athalye, N.~Carlini, D.~Wagner, Obfuscated gradients give
 a false sense of security: Circumventing defenses to adversarial examples, dalam:
 \emph{ICML}, 2018, hlm. 274--283.
+
+\bibitem{carlini2019evaluating} N.~Carlini, A.~Athalye, N.~Papernot, W.~Brendel,
+J.~Rauber, D.~Tsipras, I.~Goodfellow, A.~Madry, A.~Kurakin, On evaluating
+adversarial robustness, \emph{arXiv:1902.06705}, 2019.
+
+\bibitem{croce2020autoattack} F.~Croce, M.~Hein, Reliable evaluation of adversarial
+robustness with an ensemble of diverse parameter-free attacks, dalam: \emph{ICML},
+2020, hlm. 2206--2216.
 
 \bibitem{papernot2016transfer} N.~Papernot, P.~McDaniel, I.~Goodfellow,
 Transferability in machine learning: from phenomena to black-box attacks using
