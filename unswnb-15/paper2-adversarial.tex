@@ -327,20 +327,43 @@ UNSW-NB15       & source/target & $175{,}341$ & $82{,}332$ & imbalanced & offici
 
 \subsection{Data Splitting and Leakage Control}
 \label{sec:split}
-Untuk mencegah \emph{target leakage}, seluruh sampel \emph{few-shot} diambil
-\textbf{hanya dari partisi latih target} dan tidak pernah dari partisi uji. Secara
-formal, misalkan domain target dipartisi disjoint $D_{\text{tgt}} =
-D^{\text{tr}}_{\text{tgt}} \sqcup D^{\text{te}}_{\text{tgt}}$; himpunan few-shot
-$F \subset D^{\text{tr}}_{\text{tgt}}$ dengan $|F| = \lceil 0{,}01\,
-|D^{\text{tr}}_{\text{tgt}}| \rceil$, sehingga $F \cap D^{\text{te}}_{\text{tgt}} =
-\varnothing$ menurut konstruksi. Untuk UNSW-NB15, partisi latih/uji adalah dua
-berkas rilis \emph{fisik} terpisah, jadi tidak ada baris yang beririsan; untuk
-CSE-CIC-IDS2018, partisi dihasilkan \texttt{train\_test\_split} berstrata dengan
-\emph{seed} tetap, dan indeks few-shot diambil dari partisi latih saja. Selain itu,
-\emph{StandardScaler} di-\emph{fit} eksklusif pada partisi latih lalu diterapkan
-apa adanya ke uji, sehingga tidak ada kebocoran statistik penskalaan dari data uji.
-Evaluasi generalisasi lintas-jaringan (kolom \emph{clean target}) selalu memakai
-$D^{\text{te}}_{\text{tgt}}$ yang belum pernah dilihat model.
+\paragraph{Partisi disjoint kalibrasi/uji (eksplisit).} Untuk menutup kemungkinan
+\emph{target-test contamination}, domain target kami pisahkan menjadi dua himpunan
+yang \textbf{disjoint menurut konstruksi}:
+\begin{equation}
+D_{\text{tgt}} = D_{\text{calib}} \,\sqcup\, D_{\text{test}}, \qquad
+D_{\text{calib}} \cap D_{\text{test}} = \varnothing,
+\end{equation}
+dengan $D_{\text{calib}}$ = himpunan kalibrasi \emph{few-shot} ($1\%$) dan
+$D_{\text{test}}$ = sisanya ($\approx 99\%$) untuk evaluasi. Himpunan few-shot yang
+digabung ke data latih sumber adalah $F = D_{\text{calib}}$ dengan
+$|D_{\text{calib}}| = \lceil 0{,}01\,|D_{\text{tgt}}^{\text{pool}}| \rceil$, dan
+kolom \emph{clean target} pada seluruh tabel dihitung \textbf{hanya} pada
+$D_{\text{test}}$ yang \emph{belum pernah dilihat} model --- jadi tidak ada satu pun
+sampel kalibrasi yang muncul kembali saat pengujian.
+
+\paragraph{Realisasi per dataset.} Pemisahan di atas terwujud melalui dua protokol
+yang keduanya menjamin disjoint: \emph{(i) UNSW-NB15} memakai dua berkas rilis
+\emph{fisik} terpisah sebagai latih/uji, sehingga $D_{\text{calib}}$ diambil dari
+berkas latih dan $D_{\text{test}}$ adalah berkas uji --- tak ada baris yang
+beririsan; \emph{(ii) CSE-CIC-IDS2018} dipartisi \texttt{train\_test\_split}
+berstrata dengan \emph{seed} tetap, lalu $1\%$ few-shot diambil \textbf{hanya} dari
+partisi latih dan evaluasi \emph{clean target} dilakukan pada partisi uji yang
+disjoint. Untuk validasi AWS (Bagian~\ref{sec:aws}), trafik AWS berlabel dipartisi
+\emph{stratified} menjadi \emph{train}/\emph{test} disjoint per \emph{seed}, dan
+$1\%$ kalibrasi diambil hanya dari partisi \emph{train} AWS. Di semua kasus,
+\emph{StandardScaler} di-\emph{fit} eksklusif pada data latih (sumber) lalu
+diterapkan apa adanya ke uji --- tanpa kebocoran statistik penskalaan.
+
+\paragraph{Sensitivitas terhadap pemilihan few-shot ($5$ seed).} Karena hasil
+kalibrasi $1\%$ dapat \emph{sensitif} terhadap sampel mana yang terpilih, seluruh
+eksperimen kalibrasi diulang pada \textbf{lima \emph{seed}} berbeda
+($\{13,42,101,202,303\}$) --- yang mengacak \emph{sekaligus} pemartisian dan
+pemilihan $D_{\text{calib}}$ --- dan dilaporkan sebagai rerata $\pm$ simpangan baku
+dengan selang kepercayaan $95\%$ pada tabel berbasis-seed (Tabel~\ref{tab:multiattack},
+\ref{tab:aws_stages}; artefak \texttt{reviewer\_agg.csv}, \texttt{aws\_stages\_agg.csv}).
+Nilai titik-tunggal pada Tabel~\ref{tab:p2main} dipertahankan sebagai rujukan
+\emph{single-run} dan dilengkapi oleh angka rerata-lima-seed tersebut.
 
 \subsection{Four Training Variants}
 Notasi \emph{A}$\rightarrow$\emph{B} berarti model \textbf{dilatih pada dataset
@@ -620,6 +643,30 @@ Direction & Variant & clean (source) & clean (target) & adaptive evasion ($\epsi
 \end{tabular}
 \end{table}
 
+% ----- Tabel clean-target MCC mean+-std (5 seed) — sensitivitas few-shot -----
+\begin{table}[h]
+\centering
+\caption{Cross-network generalization (\emph{clean target} MCC) as mean $\pm$ std
+over five seeds $\{13,42,101,202,303\}$ that jointly randomize the target
+train/test partition and the $1\%$ few-shot selection ($D_{\text{calib}}$). The tiny
+standard deviation of the calibrated variants ($\le 0{,}016$) shows the $1\%$
+few-shot calibration is \emph{stable}, not an artefact of a lucky sample; the large
+std of \emph{adv} (source-only) reflects instability of adversarial training without
+calibration. Source: \texttt{reviewer\_agg.csv}.}
+\label{tab:fewshot_seeds}
+\small
+\begin{tabular}{lcc}
+\toprule
+Variant & CIC$\rightarrow$UNSW & UNSW$\rightarrow$CIC \\
+\midrule
+baseline              & $-0{,}062 \pm 0{,}033$ & $-0{,}086 \pm 0{,}037$ \\
+few-shot              & $0{,}650 \pm 0{,}016$ & $\mathbf{0{,}899 \pm 0{,}004}$ \\
+adv                   & $-0{,}049 \pm 0{,}203$ & $-0{,}079 \pm 0{,}052$ \\
+\textbf{few-shot+adv} & $\mathbf{0{,}662 \pm 0{,}012}$ & $0{,}898 \pm 0{,}004$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 % ----- Tabel multi-attack (robustness curve): FGSM 1-langkah vs PGD iteratif -----
 % Angka MCC diisi dari keluaran NYATA notebook 14_reviewer_experiments.ipynb
 % (kondisi fgsm_eps* / pgd_eps*, rerata 5 seed {13,42,101,202,303}, proyeksi PCFS
@@ -706,7 +753,13 @@ variants \textbf{in this direction} --- an asymmetry finding reported as-is.}
 adversarial training.} Varian \emph{adv} (tanpa few-shot) gagal menutup celah
 lintas-jaringan (MCC target $-0{,}010$ dan $-0{,}067$), persis seperti temuan Paper
 1; sebaliknya \emph{few-shot} dan \emph{few-shot$+$adv} memulihkan MCC target ke
-$0{,}650$--$0{,}897$. \emph{Kedua, adversarial training tidak merusak generalisasi:}
+$0{,}650$--$0{,}897$. Pemulihan ini \emph{stabil} lintas-\emph{seed}, bukan artefak
+sampel few-shot yang beruntung: agregasi lima \emph{seed}
+(Tabel~\ref{tab:fewshot_seeds}) memberi MCC \emph{clean target}
+$0{,}650\pm0{,}016$ (CIC$\rightarrow$UNSW) dan $0{,}899\pm0{,}004$
+(UNSW$\rightarrow$CIC) untuk \emph{few-shot} --- simpangan baku yang sangat kecil
+walau pemartisian dan pemilihan $1\%$ kalibrasi diacak ulang tiap \emph{seed}.
+\emph{Kedua, adversarial training tidak merusak generalisasi:}
 \emph{few-shot$+$adv} mempertahankan MCC target setara \emph{few-shot} murni
 ($0{,}696$ vs $0{,}650$ pada CIC$\rightarrow$UNSW; $0{,}897$ vs $0{,}897$ pada
 UNSW$\rightarrow$CIC) --- jadi menambah pertahanan evasion \emph{tidak}
