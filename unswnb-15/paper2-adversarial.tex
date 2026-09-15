@@ -15,6 +15,7 @@
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning,fit,backgrounds}
 \usepackage{booktabs}
+\usepackage{pifont} % \ding{55} untuk tabel perbandingan
 \usepackage{amsmath,amssymb}
 \usepackage{siunitx}
 \usepackage{hyperref}
@@ -176,6 +177,49 @@ dan \emph{score-based black-box}~\cite{ilyas2018blackbox} menandai spektrum
 pengetahuan penyerang. Karena itu kami menguji rezim \emph{adaptive white-box}
 secara eksplisit dan melaporkan hasilnya apa adanya, termasuk saat pertahanan gagal.
 
+\paragraph{Posisi terhadap karya terkait.} Tabel~\ref{tab:related} mengontraskan
+makalah ini dengan karya representatif pada lima dimensi. Sejauh pengetahuan kami,
+belum ada karya yang secara \emph{bersamaan} menangani generalisasi lintas-jaringan
+(via few-shot) dan ketahanan \emph{functional-preserving adaptive evasion} pada satu
+model ringan, sekaligus melaporkan uji tekanan pada trafik nyata. Secara khusus,
+studi few-shot NIDS mutakhir~\cite{fewshot} berfokus pada peningkatan deteksi
+\emph{in-domain}/kelas-langka melalui \emph{self-attention} dan penyulingan
+iteratif, tetapi \emph{tidak} mengevaluasi ketahanan adversarial; sebaliknya studi
+evasi realistis~\cite{apruzzese2023,merzouk2022,sheatsley2022} menekankan validitas
+serangan tetapi \emph{tidak} pada setelan generalisasi lintas-jaringan. Makalah ini
+mengisi irisan kedua garis riset tersebut, dan --- berbeda dari pendekatan
+\emph{deep}~\cite{wu,duan} atau \emph{federated}~\cite{popoola,bertoli} --- menjaga
+model tetap satu XGBoost ringan sehingga analisis batas keputusan berbasis-pohon
+menjadi eksplisit.
+
+\begin{table}[h]
+\centering
+\caption{Positioning against representative related work. CN = cross-network
+generalization; Adv = adversarial robustness studied; FP = functional-preserving
+(protocol-valid) attack; AW = adaptive white-box attack; RT = evaluated on real
+(non-benchmark) traffic. \checkmark\ = addressed, \ding{55}\ = not addressed,
+$\sim$ = partial.}
+\label{tab:related}
+\small
+\begin{tabular}{lccccc}
+\toprule
+Work & CN & Adv & FP & AW & RT \\
+\midrule
+SFM $+$ few-shot~\cite{martono2024sfm}      & \checkmark & \ding{55}  & \ding{55}  & \ding{55}  & \checkmark \\
+Cross-dataset study~\cite{cantone,dhooge}   & \checkmark & \ding{55}  & \ding{55}  & \ding{55}  & \ding{55} \\
+Few-shot NIDS~\cite{fewshot}                & $\sim$     & \ding{55}  & \ding{55}  & \ding{55}  & \ding{55} \\
+Realistic evasion~\cite{apruzzese2023,merzouk2022} & \ding{55} & \checkmark & \checkmark & $\sim$ & \ding{55} \\
+Tree evasion/robust~\cite{kantchelian2016,chen2019robusttrees} & \ding{55} & \checkmark & \ding{55} & \checkmark & \ding{55} \\
+GAN-based NIDS attack~\cite{lin2022idsgan}  & \ding{55}  & \checkmark & \ding{55}  & \ding{55}  & \ding{55} \\
+\textbf{This work}                          & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark$^{*}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent{\footnotesize $^{*}$ Trafik AWS nyata diuji sebagai \emph{exploratory
+stress test} pada model \emph{zero-shot} (Bagian~\ref{sec:aws}), bukan validasi
+pipeline terkalibrasi penuh.}
+
 % ============================================================
 \section{Methodology}
 \label{sec:metode}
@@ -208,7 +252,44 @@ data uji (tanpa kebocoran). Model: satu \texttt{XGBoost}~\cite{xgboost} biner
 SFM~\cite{martono2024sfm}. Dataset:
 CSE-CIC-IDS2018~\cite{sharafaldin2018} dan UNSW-NB15~\cite{moustafa2015}.
 Implementasi memakai \emph{scikit-learn}~\cite{sklearn}; pemisahan latih/uji
-mengikuti praktik baku~\cite{kohavi}.
+mengikuti praktik baku~\cite{kohavi}. Tabel~\ref{tab:dataset} merangkum ukuran,
+komposisi kelas, dan protokol pembagian tiap dataset.
+
+\begin{table}[h]
+\centering
+\caption{Dataset and preprocessing summary (nine SFM features, binary
+benign/attack). UNSW-NB15 uses the two official release partitions as fixed
+train/test files (no random split); CSE-CIC-IDS2018 uses a stratified
+$70/30$ split with a fixed seed. The z-score scaler is fit on the train partition
+only and applied unchanged to test.}
+\label{tab:dataset}
+\small
+\begin{tabular}{lccccc}
+\toprule
+Dataset & Role & \#train & \#test & attack:benign (test) & split protocol \\
+\midrule
+CSE-CIC-IDS2018 & source/target & $\approx$ stratified $70\%$ & $30\%$ & imbalanced & random, seed-fixed, stratified \\
+UNSW-NB15       & source/target & $175{,}341$ & $82{,}332$ & imbalanced & official train/test files \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Data Splitting and Leakage Control}
+\label{sec:split}
+Untuk mencegah \emph{target leakage}, seluruh sampel \emph{few-shot} diambil
+\textbf{hanya dari partisi latih target} dan tidak pernah dari partisi uji. Secara
+formal, misalkan domain target dipartisi disjoint $D_{\text{tgt}} =
+D^{\text{tr}}_{\text{tgt}} \sqcup D^{\text{te}}_{\text{tgt}}$; himpunan few-shot
+$F \subset D^{\text{tr}}_{\text{tgt}}$ dengan $|F| = \lceil 0{,}01\,
+|D^{\text{tr}}_{\text{tgt}}| \rceil$, sehingga $F \cap D^{\text{te}}_{\text{tgt}} =
+\varnothing$ menurut konstruksi. Untuk UNSW-NB15, partisi latih/uji adalah dua
+berkas rilis \emph{fisik} terpisah, jadi tidak ada baris yang beririsan; untuk
+CSE-CIC-IDS2018, partisi dihasilkan \texttt{train\_test\_split} berstrata dengan
+\emph{seed} tetap, dan indeks few-shot diambil dari partisi latih saja. Selain itu,
+\emph{StandardScaler} di-\emph{fit} eksklusif pada partisi latih lalu diterapkan
+apa adanya ke uji, sehingga tidak ada kebocoran statistik penskalaan dari data uji.
+Evaluasi generalisasi lintas-jaringan (kolom \emph{clean target}) selalu memakai
+$D^{\text{te}}_{\text{tgt}}$ yang belum pernah dilihat model.
 
 \subsection{Four Training Variants}
 Notasi \emph{A}$\rightarrow$\emph{B} berarti model \textbf{dilatih pada dataset
@@ -265,9 +346,45 @@ varian evaluasi terberat yang setara. Serangan khusus-pohon yang lebih kuat (mis
 verifikasi robust-tree~\cite{chen2019robusttrees}) merupakan arah pelengkap;
 memakainya hanya akan \emph{memperkuat} temuan keruntuhan kami, bukan membaliknya.
 
+\paragraph{Protokol evaluasi yang diperkuat.} Untuk memastikan temuan bukan artefak
+satu realisasi, seluruh eksperimen diulang pada \textbf{lima \emph{seed}} berbeda
+($\{13,42,101,202,303\}$) dan dilaporkan sebagai rerata $\pm$ simpangan baku dengan
+selang kepercayaan $95\%$. Selain FGSM satu-langkah, kami menambahkan serangan
+\emph{adaptive} yang lebih kuat berupa \textbf{PGD} \emph{functional-preserving}
+($\text{iter}=10$, $\alpha=0{,}02$, proyeksi ke bola $\ell_\infty$ beranggaran
+$\epsilon$ lalu ke ruang valid pada tiap langkah), sehingga estimasi ketahanan tidak
+bergantung pada kekuatan serangan satu-langkah semata. Kami juga melaporkan
+\textbf{Attack Success Rate} (ASR --- fraksi \emph{flow} serangan yang semula
+terdeteksi lalu lolos setelah perturbasi) dan metrik berbasis matriks konfusi
+(\emph{recall}/\emph{precision}/F1), bukan hanya $\Delta$MCC. Rincian implementasi
+dan artefak reproduktif ada pada \texttt{14\_reviewer\_experiments.ipynb}.
+
 % ============================================================
 \section{Threat Model and Functional Constraints}
 \label{sec:ancaman}
+
+\paragraph{Formalisasi model ancaman.} Kami mengikuti kerangka baku evaluasi
+adversarial dan mendefinisikan penyerang melalui empat komponen.
+\emph{(i) Tujuan (goal):} membuat \emph{flow} serangan ($y=1$) diklasifikasikan
+sebagai benign ($\hat{y}=0$) --- serangan \emph{integritas} berjenis
+\emph{misklasifikasi terarah} (attack$\rightarrow$benign), bukan sebaliknya.
+\emph{(ii) Pengetahuan (knowledge):} skenario terberat kami adalah
+\emph{white-box}, yakni penyerang mengetahui model $m$ dan menghitung saliency
+langsung darinya (adaptive); kami juga membahas varian \emph{transfer/static} yang
+lebih lemah. \emph{(iii) Kemampuan (capability):} penyerang memodifikasi
+\emph{fitur alir} pada saat inferensi (\emph{test-time evasion}), \emph{tanpa}
+akses ke data latih maupun bobot model (tidak ada \emph{poisoning}). Perubahan
+dibatasi anggaran $\lVert x' - x \rVert_\infty \le \epsilon$ di ruang z-score dan
+harus \emph{monotonik add-only} (hanya menambah paket/byte/durasi).
+\emph{(iv) Batasan (constraints):} perturbasi diproyeksikan ke ruang valid
+protokol/fisik (Tabel~\ref{tab:constraint}). Formalnya, penyerang menyelesaikan
+\begin{equation}
+x' = \arg\max_{\tilde{x}\in \mathcal{C}(x),\ \lVert \tilde{x}-x\rVert_\infty \le \epsilon}
+\ \mathcal{L}\big(m(\tilde{x}), y\big),
+\end{equation}
+dengan $\mathcal{C}(x)$ himpunan \emph{flow} yang memenuhi seluruh batasan
+fungsional dan $\mathcal{L}$ kerugian \emph{binary cross-entropy}. Kami
+mengaproksimasi $x'$ dengan FGSM \emph{functional-preserving} (Algorithm~\ref{alg:adv}).
 
 Sebuah serangan \emph{evasion} dicirikan oleh \emph{dua properti yang saling bebas},
 sehingga sebuah serangan dapat menggabungkan keduanya. \emph{Sumbu-1 (pengetahuan
@@ -280,8 +397,8 @@ menentukan apakah \emph{flow} hasil serangan valid: \textbf{\emph{unconstrained}
 memperturbasi fitur bebas di ruang z-score dan dapat menghasilkan \emph{flow}
 mustahil (mis. \emph{bytes} $<$ \emph{packets}), berguna hanya sebagai \emph{batas
 atas} daya serang; sedangkan \textbf{\emph{functional-preserving}} memproyeksikan
-perturbasi ke ruang valid protokol/fisik sehingga \emph{flow}-nya benar-benar dapat
-dikirim di jaringan nyata. Istilah \emph{adaptive functional} yang dipakai pada
+perturbasi ke ruang fitur yang \emph{konsisten protokol} (lihat batasan di bawah),
+jauh lebih realistis daripada \emph{unconstrained}. Istilah \emph{adaptive functional} yang dipakai pada
 kolom Tabel~\ref{tab:p2main} adalah gabungan keduanya --- serangan yang
 \textbf{sekaligus} \emph{adaptive white-box} \textbf{dan} \emph{functional-preserving},
 yaitu skenario \emph{paling berat} sekaligus \emph{paling realistis}. Kami
@@ -291,16 +408,34 @@ mengevaluasi tiga rezim ($\epsilon \in \{0{,}05; 0{,}1; 0{,}2\}$): \emph{unconst
 
 \paragraph{Formulasi batasan \emph{functional-preserving}.} Tabel~\ref{tab:constraint}
 merangkum proyeksi yang diterapkan pada tiap \emph{flow} $x$ (di ruang fitur asli,
-sebelum z-score) agar perturbasi tetap dapat dikirim. Notasi: $p^{f},p^{b}$ jumlah
-paket maju/mundur; $B^{f},B^{b}$ byte maju/mundur; $\bar{s}^{f},\bar{s}^{b}$ rata-rata
-ukuran paket; $d$ durasi; $\Delta$ menandai perubahan akibat serangan.
+sebelum z-score). Notasi: $p^{f},p^{b}$ jumlah paket maju/mundur; $B^{f},B^{b}$ byte
+maju/mundur; $\bar{s}^{f},\bar{s}^{b}$ rata-rata ukuran paket; $d$ durasi; $\Delta$
+menandai perubahan akibat serangan.
+
+\paragraph{Lingkup dan keterbatasan proyeksi (kejujuran metodologis).} Kami
+tekankan bahwa proyeksi ini menegakkan \textbf{konsistensi aritmetik pada ruang
+fitur} --- non-negativitas, integralitas paket, $B \ge p$, rata-rata
+$\bar{s}=B/p$, dan monotonisitas \emph{add-only} --- \textbf{bukan} sebuah bukti
+bahwa \emph{flow} tersebut pasti dapat direalisasikan paket-demi-paket di jaringan
+(kami tidak memverifikasi MTU, urutan \emph{handshake}, \emph{timing} antar-paket,
+atau keterbatasan RTT). Selain itu, fitur laju $\ell$ (\texttt{src\_load},
+\texttt{dst\_load}) pada implementasi saat ini \emph{tidak} direkonsiliasi ulang
+terhadap $B/d$ setelah perturbasi, sehingga sebuah \emph{flow} adversarial dapat
+memuat pasangan (\emph{load}, \emph{bytes}/\emph{duration}) yang tak konsisten
+secara fisik. Karena itu istilah ``\emph{functional-preserving}'' di sini bermakna
+\emph{feature-space plausibility yang jauh lebih ketat daripada unconstrained},
+bukan jaminan \emph{deliverability} penuh. Validasi \emph{deliverability} yang
+sesungguhnya kami serahkan pada eksperimen trafik nyata yang benar-benar dikirim
+(Bagian~\ref{sec:aws}, varian \emph{network-level evasion}), dan rekonsiliasi laju
+serta konstruksi paket end-to-end kami tandai sebagai pekerjaan lanjutan.
 
 \begin{table}[h]
 \centering
-\caption{Functional-preserving constraints applied per feature (original space). All
-perturbations are projected onto this valid region before the flow is deemed
-deliverable; \emph{add-only} monotonicity forbids removing traffic that has already
-been sent.}
+\caption{Functional-preserving constraints applied per feature (original space).
+Perturbations are projected onto this arithmetically consistent region;
+\emph{add-only} monotonicity forbids removing traffic that has already been sent.
+These enforce feature-space plausibility, not full packet-level deliverability
+(see the limitations note below).}
 \label{tab:constraint}
 \small
 \begin{tabular}{lll}
@@ -312,7 +447,7 @@ packets $p^{f},p^{b}$   & $p \in \mathbb{Z}_{\ge 0}$        & packet counts are 
 bytes vs packets        & $B \ge p$                         & each packet carries $\ge 1$ byte \\
 mean size $\bar{s}$     & $\bar{s} = B / p$                 & mean must stay consistent \\
 monotonic (add-only)    & $\Delta p \ge 0,\ \Delta B \ge 0,\ \Delta d \ge 0$ & attacker may only add traffic \\
-load (src/dst)          & $\ell = B / \max(d,\varepsilon)$  & load recomputed after $\Delta$ \\
+load (src/dst) $\ell$   & clip $\ell \ge 0$ (\emph{not} re-derived) & known limitation (see note) \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -462,6 +597,24 @@ menghaluskan/mengaburkan batas keputusan (mis.\ \emph{randomized smoothing},
 ensembel dengan derau terkalibrasi) sebagai arah lanjutan.
 Gambar~\ref{fig:treeboundary} menyketsa intuisi ini secara konseptual.
 
+\paragraph{Kuantifikasi hipotesis ``sel keputusan sempit''.} Agar hipotesis ini
+dapat diuji, bukan sekadar naratif, kami mendefinisikan dua ukuran terukur.
+\emph{(1) Konsentrasi domain} $\kappa_j = \mathrm{IQR}_j / (|\mathrm{median}_j| +
+\delta)$ per fitur $j$ pada ruang asli (rasio rentang antar-kuartil terhadap
+median, lebih tahan pencilan daripada CV); domain dengan $\kappa$ lebih kecil lebih
+homogen sehingga sel keputusan cenderung lebih tipis. \emph{(2) Lebar sel efektif}
+$w = \mathrm{median}_i\, \min_t |x_{ij} - \tau_{t}|$, yakni jarak median tiap sampel
+ke ambang \emph{split} XGBoost terdekat pada fitur yang sama (di ruang z-score);
+$w$ kecil berarti perturbasi \emph{add-only} bervolume kecil sudah cukup melintasi
+batas. Prediksi hipotesis: domain target CIC memiliki $\kappa$ dan $w$ lebih kecil
+daripada UNSW, sejalan dengan keruntuhan pada UNSW$\rightarrow$CIC. Pengukuran
+menyeluruh dua-domain kami sertakan sebagai artefak reproduktif
+(skrip \texttt{a8\_decision\_cell.py}); pada domain CIC, sebagai contoh, fitur
+volumetrik (\texttt{fwd\_pkts}, \texttt{fwd\_bytes}, \texttt{bwd\_bytes})
+menunjukkan median yang sangat kecil dengan ekor panjang --- konsisten dengan
+kluster \emph{benign} dan sebagian \emph{attack} yang berdesakan di rentang
+bervolume rendah, tepat kondisi yang membuat sel keputusan menjadi tipis.
+
 \begin{figure}[h]
 \centering
 \resizebox{0.95\linewidth}{!}{\input{figure-p2/tikz-p2-treeboundary.tex}}
@@ -477,18 +630,30 @@ succeeds --- explaining the asymmetric collapse on UNSW$\rightarrow$CIC.}
 \end{figure}
 
 % ============================================================
-\section{Validation on Real AWS Traffic (Proof-of-Concept)}
+\section{Exploratory Stress Test on Real AWS Traffic}
 \label{sec:aws}
-Untuk menjawab pertanyaan apakah serangan \emph{functional-preserving evasion}
-benar-benar dapat memperdaya NIDS di luar simulasi \emph{benchmark}, kami
-menghubungkan pipeline ini dengan validasi trafik cloud nyata pada arsitektur AWS
-yang sejalan dengan karya SFM~\cite{martono2024sfm} (pola dua-EC2: \emph{attacker}
-dan \emph{target+analyzer} di
-subnet privat, akses via SSM, region \texttt{ap-southeast-1}). Pipeline validasi:
-tcpdump menangkap trafik pada antarmuka spesifik $\rightarrow$ NFStream
-mengekstrak sembilan fitur SFM $\rightarrow$ keempat model yang diusulkan menskor tiap
-\emph{flow}, lalu perturbasi \emph{functional-preserving} (adaptive white-box)
-diterapkan pada fitur nyata tersebut.
+
+\paragraph{Status dan lingkup (baca lebih dulu).} Bagian ini adalah \emph{uji
+tekanan eksploratif} (\emph{exploratory stress test}), \textbf{bukan} validasi
+pipeline yang diusulkan secara utuh. Alasannya jujur: model di sini digelar
+\emph{zero-shot} --- dilatih pada \emph{benchmark} (CIC atau UNSW) lalu diuji
+langsung pada trafik AWS \textbf{tanpa} langkah kalibrasi \emph{few-shot} domain
+AWS yang justru menjadi inti usulan kami. Domain AWS di sini berperan sebagai
+\emph{domain ketiga} yang belum pernah dilihat model, sehingga bagian ini menguji
+\emph{seberapa jauh model runtuh} di lapangan tanpa kalibrasi --- bukan
+membuktikan bahwa \emph{few-shot$+$adv} bekerja di AWS. Uji terkalibrasi penuh
+(mengumpulkan $\sim1\%$ label AWS lalu mengevaluasi ulang) memerlukan kampanye
+pelabelan tersendiri dan kami tandai sebagai pekerjaan lanjutan. Temuan di sini
+dilaporkan apa adanya dan bermakna sebagai \emph{sanity check} lintas-domain, bukan
+sebagai klaim keberhasilan pertahanan.
+
+\paragraph{Arsitektur dan pipeline.} Kami memakai arsitektur AWS yang sejalan
+dengan karya SFM~\cite{martono2024sfm} (pola dua-EC2: \emph{attacker} dan
+\emph{target+analyzer} di subnet privat, akses via SSM, region
+\texttt{ap-southeast-1}). Pipeline: tcpdump menangkap trafik pada antarmuka
+spesifik $\rightarrow$ NFStream mengekstrak sembilan fitur SFM $\rightarrow$ keempat
+model menskor tiap \emph{flow}, lalu perturbasi \emph{functional-preserving}
+(adaptive white-box) diterapkan pada fitur nyata tersebut.
 
 \paragraph{Rancangan PoC.} Dua rekaman dibangkitkan pada infrastruktur identik,
 mengikuti \emph{timeline} tujuh menit (benign $\rightarrow$ SSH brute-force
