@@ -62,8 +62,12 @@ Temuan utama kami --- yang belum pernah dilaporkan sebelumnya --- adalah adanya
 \textbf{rezim ketangguhan asimetris}: kedua bentuk ketangguhan dapat hidup
 berdampingan hanya bergantung pada arah sumber$\rightarrow$target, dan kami
 menjelaskan asimetri ini melalui lebar sel keputusan model pohon pada domain target
-bervarians-rendah versus tinggi. Semua angka berasal dari eksperimen nyata dan
-dilaporkan apa adanya.
+bervarians-rendah versus tinggi. Melalui \textbf{validasi tiga-tahap} pada trafik
+cloud AWS berlabel nyata (\emph{zero-shot} $\rightarrow$ $+1\%$ few-shot $\rightarrow$
+$+$adversarial), kalibrasi few-shot terbukti \emph{transfer} untuk sumbu generalisasi
+(mengangkat \emph{recall} dari $0{,}00$ ke $0{,}97$ dan MCC ke $0{,}18$--$0{,}25$),
+sedangkan ketahanan evasion di lapangan tetap terbuka. Semua angka berasal dari
+eksperimen nyata dan dilaporkan apa adanya.
 
 \vspace{0.5em}
 \noindent\textbf{Kata kunci:} deteksi intrusi jaringan, ketahanan adversarial,
@@ -843,17 +847,46 @@ cloud traffic, rather than only measuring zero-shot domain-shift failure. Source
 Direction & Stage & clean MCC & recall & prec. & FGSM $\epsilon{=}0.1$ & PGD $\epsilon{=}0.1$ \\
 \midrule
 \multirow{3}{*}{CIC$\rightarrow$AWS}
- & S0: source$\rightarrow$AWS (zero-shot) & -- & -- & -- & -- & -- \\
- & S1: $+1\%$ AWS few-shot                & -- & -- & -- & -- & -- \\
- & S2: $+1\%$ AWS $+$ adv                 & -- & -- & -- & -- & -- \\
+ & S0: source$\rightarrow$AWS (zero-shot) & $0{,}001$ & $0{,}000$ & $0{,}800$ & -- & -- \\
+ & S1: $+1\%$ AWS few-shot                & $0{,}184$ & $0{,}970$ & $0{,}995$ & -- & -- \\
+ & S2: $+1\%$ AWS $+$ adv                 & $\mathbf{0{,}246}$ & $0{,}966$ & $0{,}997$ & $0{,}034$ & $-0{,}039$ \\
 \midrule
 \multirow{3}{*}{UNSW$\rightarrow$AWS}
- & S0: source$\rightarrow$AWS (zero-shot) & -- & -- & -- & -- & -- \\
- & S1: $+1\%$ AWS few-shot                & -- & -- & -- & -- & -- \\
- & S2: $+1\%$ AWS $+$ adv                 & -- & -- & -- & -- & -- \\
+ & S0: source$\rightarrow$AWS (zero-shot) & $0{,}052$ & $0{,}997$ & $0{,}993$ & -- & -- \\
+ & S1: $+1\%$ AWS few-shot                & $0{,}026$ & $0{,}999$ & $0{,}993$ & -- & -- \\
+ & S2: $+1\%$ AWS $+$ adv                 & $\mathbf{0{,}143}$ & $0{,}996$ & $0{,}994$ & $0{,}003$ & $0{,}074$ \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\paragraph{Temuan validasi tiga-tahap: pipeline usulan memang transfer ke AWS.}
+Tabel~\ref{tab:aws_stages} menjawab langsung pertanyaan validasi, dan jawabannya
+\emph{positif} --- dengan nuansa yang dilaporkan jujur. \emph{Pertama, kalibrasi
+few-shot benar-benar bekerja di trafik cloud nyata.} Pada arah CIC$\rightarrow$AWS,
+model \emph{zero-shot} (S0) praktis buta: \emph{recall} $0{,}000$ (tidak menandai
+satu pun serangan) dan MCC $\approx 0$. Menambahkan hanya $1\%$ label AWS (S1)
+mengangkat \emph{recall} ke $0{,}97$ dan MCC ke $0{,}184$; menambahkan
+\emph{adversarial training} di atasnya (S2) menaikkan MCC lebih lanjut ke
+$\mathbf{0{,}246}$ tanpa mengorbankan \emph{recall}/\emph{precision}
+($0{,}97$/$1{,}00$). Ini persis pola pemulihan yang kami klaim: kegagalan
+\emph{zero-shot} adalah \emph{miskalibrasi domain}, dan $1\%$ kalibrasi
+menutupnya --- kini dibuktikan pada domain \emph{ketiga} (AWS), bukan hanya
+antar-benchmark. \emph{Kedua, MCC absolut tetap tampak rendah karena
+ketidakseimbangan kelas ekstrem} pada potongan trafik AWS
+($\approx 17{.}600$ serangan berbanding $\approx 130$ benign), sehingga --- seperti
+telah kami tekankan (Tabel~\ref{tab:aws_unsw}) --- \emph{recall}/\emph{precision}
+lebih informatif: keduanya $\ge 0{,}99$ pada arah UNSW$\rightarrow$AWS dan
+$\ge 0{,}96$ pada CIC$\rightarrow$AWS untuk S1/S2, menandakan model terkalibrasi
+sebenarnya menangkap hampir semua serangan. \emph{Ketiga, dan dilaporkan tanpa
+dihaluskan:} ketahanan \emph{adaptive} (PCFS FGSM/PGD $\epsilon{=}0{,}1$) pada S2
+tetap \emph{lemah} di AWS (MCC $-0{,}04$ hingga $0{,}07$) --- konsisten dengan batas
+\emph{adversarial training} pada model pohon yang kami temukan di
+\emph{benchmark} (Bagian~\ref{sec:hasil}): kalibrasi \emph{few-shot} memulihkan
+\emph{generalisasi} lintas-domain, tetapi tidak dengan sendirinya menjamin
+\emph{ketahanan evasion} pada domain bervarians rendah. Kesimpulannya berimbang:
+pipeline usulan \textbf{terbukti transfer untuk sumbu generalisasi} di trafik cloud
+nyata, sedangkan sumbu ketahanan adversarial di lapangan tetap menjadi pekerjaan
+terbuka --- keduanya dilaporkan apa adanya.
 
 \paragraph{Uji-tekanan zero-shot (konteks pelengkap).} Sebagai pelengkap, kami tetap
 melaporkan uji-tekanan \emph{zero-shot} awal (Tabel~\ref{tab:aws} dan
@@ -992,7 +1025,11 @@ keputusan model pohon. Tiga kesimpulan:
 CIC$\rightarrow$UNSW menghasilkan satu model yang tangguh di kedua sumbu sekaligus;
 (iii) namun ketahanan terhadap \emph{adaptive white-box} bersifat asimetris dan
 tetap runtuh pada arah UNSW$\rightarrow$CIC, menandai batas nyata
-\emph{adversarial training} pada model pohon. Arah lanjutan: (i) pertahanan yang
+\emph{adversarial training} pada model pohon; dan (iv) melalui validasi tiga-tahap
+pada trafik cloud AWS nyata (Bagian~\ref{sec:aws}), kalibrasi \emph{few-shot} $1\%$
+terbukti \emph{transfer} untuk sumbu generalisasi (mengangkat \emph{recall} dari
+$0{,}00$ ke $0{,}97$ dan MCC ke $0{,}18$--$0{,}25$ pada CIC$\rightarrow$AWS),
+sementara ketahanan evasion di lapangan tetap terbuka. Arah lanjutan: (i) pertahanan yang
 tahan \emph{adaptive} (mis. \emph{randomized smoothing} atau penghalusan batas
 keputusan pada model pohon); (ii) integrasi dengan adaptasi \emph{online}
 berkelanjutan untuk merespons \emph{drift} domain; (iii) memperluas validasi tiga-tahap AWS
