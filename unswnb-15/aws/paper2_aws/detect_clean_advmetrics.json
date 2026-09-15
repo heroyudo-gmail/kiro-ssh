@@ -1,0 +1,14 @@
+{
+  "generated": "2026-09-15T05:42:00Z",
+  "pcap": "detect_clean.pcap",
+  "arah": "CIC_to_UNSW",
+  "features": ["duration","fwd_pkts","bwd_pkts","fwd_bytes","bwd_bytes","fwd_mean","bwd_mean","src_load","dst_load"],
+  "eps_eval": [0.05, 0.1, 0.2],
+  "ground_truth": {"n_flow": 4789, "attack": 4167, "benign": 622},
+  "rows": [
+    {"pcap": "detect_clean.pcap", "arah": "CIC_to_UNSW", "model": "baseline", "n_flow": 4789, "clean_mcc": -0.0225, "clean_recall": 0.0002, "clean_precision": 0.5, "fgsm_functional_mcc_eps0.05": -0.138, "fgsm_functional_mcc_eps0.1": -0.1425, "fgsm_functional_mcc_eps0.2": -0.072},
+    {"pcap": "detect_clean.pcap", "arah": "CIC_to_UNSW", "model": "fewshot", "n_flow": 4789, "clean_mcc": -0.0676, "clean_recall": 0.0022, "clean_precision": 0.5, "fgsm_functional_mcc_eps0.05": -0.6358, "fgsm_functional_mcc_eps0.1": -0.616, "fgsm_functional_mcc_eps0.2": -0.6273},
+    {"pcap": "detect_clean.pcap", "arah": "CIC_to_UNSW", "model": "adv", "n_flow": 4789, "clean_mcc": -0.0225, "clean_recall": 0.0002, "clean_precision": 0.5, "fgsm_functional_mcc_eps0.05": -0.04, "fgsm_functional_mcc_eps0.1": 0.0082, "fgsm_functional_mcc_eps0.2": -0.1184},
+    {"pcap": "detect_clean.pcap", "arah": "CIC_to_UNSW", "model": "fewshot_adv", "n_flow": 4789, "clean_mcc": 0.0, "clean_recall": 0.0, "clean_precision": 0.0, "fgsm_functional_mcc_eps0.05": -0.3713, "fgsm_functional_mcc_eps0.1": -0.2995, "fgsm_functional_mcc_eps0.2": -0.3615}
+  ]
+}

@@ -251,6 +251,10 @@ ransomware/aws/results-windows/aes_key.bin
 !unswnb-15/adaptive_whitebox.json
 !unswnb-15/model_efficiency.json
 
+# Pengecualian: hasil PoC AWS Paper 2 (adversarial) — kecil, untuk reproduksibilitas
+!unswnb-15/aws/paper2_aws/detect_clean_advmetrics.json
+!unswnb-15/aws/paper2_aws/detect_evasion_advmetrics.json
+
 # Pengecualian: hasil eksperimen ransomware JSON (kecil, untuk reproduksibilitas paper)
 # Ditempatkan SETELAH *.json agar tidak ter-override.
 !ransomware/aws/results/attack_encrypt_hold.json
