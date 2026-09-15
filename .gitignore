@@ -226,6 +226,8 @@ __marimo__/
 # Pengecualian: CSV hasil eksperimen ransomware (kecil, untuk reproduksibilitas paper)
 !ransomware/aws/results/*.csv
 !ransomware/aws/results-windows/*.csv
+# Pengecualian: CSV artefak reviewer paper2 adversarial (kecil, reproduksibilitas)
+!unswnb-15/paper2_reviewer_out/*.csv
 
 # JANGAN PERNAH commit kunci enkripsi
 *.bin
