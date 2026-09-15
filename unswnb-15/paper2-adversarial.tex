@@ -385,19 +385,21 @@ few-shot+adv & $\phantom{-}0{,}000$ & $\phantom{-}0{,}000$ & $-0{,}300$ \\
 \begin{table}[h]
 \centering
 \caption{PoC validasi AWS (arah UNSW$\rightarrow$CIC): MCC empat varian pada trafik
-nyata yang sama. Berbeda dari model sumber-CIC yang cenderung memprediksi seragam
-(\emph{recall}$\approx 0$), model sumber-UNSW aktif menandai flow; angka \emph{recall}
-disertakan untuk konteks (lihat pembahasan). Ground-truth identik dengan Tabel~\ref{tab:aws}.}
+nyata yang sama, plus \emph{recall}/\emph{precision} pada trafik \emph{clean} sebagai
+konteks. Berbeda dari model sumber-CIC yang memprediksi seragam (\emph{recall}$\approx
+0$), model sumber-UNSW aktif menandai flow --- terutama \emph{few-shot$+$adv} yang
+menangkap $95{,}4\%$ serangan. MCC rendah di sini terutama artefak ketidakseimbangan
+kelas (lihat pembahasan). Ground-truth identik dengan Tabel~\ref{tab:aws}.}
 \label{tab:aws_unsw}
 \small
-\begin{tabular}{lccc}
+\begin{tabular}{lccccc}
 \toprule
-Varian model & clean (AWS) & evasion network-level & $+$FGSM functional ($\epsilon=0.1$) \\
+Varian model & clean (AWS) & evasion & $+$FGSM ($\epsilon{=}0.1$) & recall (clean) & prec. (clean) \\
 \midrule
-baseline     & $-0{,}401$ & $-0{,}011$ & $-0{,}655$ \\
-few-shot     & $-0{,}392$ & $-0{,}003$ & $-0{,}641$ \\
-adv          & $-0{,}494$ & $-0{,}122$ & $-0{,}912$ \\
-few-shot+adv & $-0{,}013$ & $-0{,}090$ & $-0{,}852$ \\
+baseline     & $-0{,}401$ & $-0{,}011$ & $-0{,}655$ & $0{,}064$ & $0{,}492$ \\
+few-shot     & $-0{,}392$ & $-0{,}003$ & $-0{,}641$ & $0{,}059$ & $0{,}485$ \\
+adv          & $-0{,}494$ & $-0{,}122$ & $-0{,}912$ & $0{,}028$ & $0{,}303$ \\
+few-shot+adv & $-0{,}013$ & $-0{,}090$ & $-0{,}852$ & $\mathbf{0{,}954}$ & $\mathbf{0{,}869}$ \\
 \bottomrule
 \end{tabular}
 \end{table}
