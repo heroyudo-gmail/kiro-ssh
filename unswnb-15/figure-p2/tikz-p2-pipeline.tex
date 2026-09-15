@@ -1,4 +1,4 @@
-% TikZ-only (input-able) - arsitektur pipeline Paper 2.
+% TikZ-only (input-able) - Paper 2 pipeline architecture.
 % Requires: \usepackage{tikz}\usetikzlibrary{arrows.meta,positioning,fit,backgrounds}
 \begin{tikzpicture}[
   font=\footnotesize, >={Stealth[length=2.6mm]},
@@ -9,24 +9,24 @@
   a/.style={->, line width=1pt, draw=black!65},
 ]
 % Baris atas: pembentukan data + model
-\node[data] (sfm) {9 fitur SFM\\(CIC $\&$ UNSW)};
-\node[data, right=7mm of sfm] (mix) {Gabung data\\source $+$ $1\%$\\target (few-shot)};
-\node[proc, right=7mm of mix] (fgsm) {Bangkitkan\\perturbasi FGSM\\\emph{functional-}\\\emph{preserving}};
+\node[data] (sfm) {9 SFM features\\(CIC $\&$ UNSW)};
+\node[data, right=7mm of sfm] (mix) {Merge data\\source $+$ $1\%$\\target (few-shot)};
+\node[proc, right=7mm of mix] (fgsm) {Generate\\FGSM perturbation\\\emph{functional-}\\\emph{preserving}};
 \node[train, right=7mm of fgsm] (advtr) {\emph{Adversarial}\\\emph{training}\\(few-shot$+$adv)\\XGBoost};
 \draw[a] (sfm) -- (mix);
 \draw[a] (mix) -- (fgsm);
 \draw[a] (fgsm) -- (advtr);
 % z-score no-leakage note
 \node[font=\scriptsize\itshape, below=1mm of mix, text width=26mm, align=center]
-  {z-score fit train-only\\(tanpa kebocoran)};
+  {z-score fit train-only\\(no leakage)};
 
-% Baris bawah: evaluasi multi-threat
+% Bottom row: multi-threat evaluation
 \node[eval, below=14mm of advtr, text width=30mm] (evalm)
-  {\textbf{Evaluasi multi-ancaman}\\clean $\cdot$ unconstrained\\functional-preserving\\\emph{adaptive white-box}};
+  {\textbf{Multi-threat evaluation}\\clean $\cdot$ unconstrained\\functional-preserving\\\emph{adaptive white-box}};
 \draw[a] (advtr) -- (evalm);
-% dua arah + dua sumbu metrik
+% two directions + two metric axes
 \node[b, fill=black!4, below=8mm of sfm, text width=52mm, align=left] (out)
-  {\textbf{Keluaran (MCC):} 2 arah (CIC$\to$UNSW, UNSW$\to$CIC)\\
-   $\times$ 2 sumbu: generalisasi lintas-jaringan $\&$ ketahanan evasion};
+  {\textbf{Output (MCC):} 2 directions (CIC$\to$UNSW, UNSW$\to$CIC)\\
+   $\times$ 2 axes: cross-network generalization $\&$ evasion robustness};
 \draw[a] (evalm.west) -- ++(-1.0,0) |- (out.east);
 \end{tikzpicture}

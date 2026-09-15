@@ -142,12 +142,12 @@ dari sembilan fitur SFM, penggabungan data (sumber $+$ $1\%$ label target
 \begin{figure}[h]
 \centering
 \resizebox{0.95\linewidth}{!}{\input{figure-p2/tikz-p2-pipeline.tex}}
-\caption{Arsitektur pipeline Paper 2. Sembilan fitur SFM $\rightarrow$ gabungan
-data (sumber $+$ $1\%$ target few-shot, z-score fit train-only tanpa kebocoran)
-$\rightarrow$ pembangkitan perturbasi FGSM \emph{functional-preserving}
-$\rightarrow$ \emph{adversarial training} (few-shot$+$adv) pada XGBoost
-$\rightarrow$ evaluasi multi-ancaman (clean, unconstrained, functional-preserving,
-adaptive white-box) pada dua arah dan dua sumbu ketangguhan.}
+\caption{Paper 2 pipeline architecture. Nine SFM features $\rightarrow$ data merge
+(source $+$ $1\%$ few-shot target, z-score fit train-only without leakage)
+$\rightarrow$ \emph{functional-preserving} FGSM perturbation generation
+$\rightarrow$ \emph{adversarial training} (few-shot$+$adv) on XGBoost
+$\rightarrow$ multi-threat evaluation (clean, unconstrained, functional-preserving,
+adaptive white-box) across two directions and two robustness axes.}
 \label{fig:pipeline}
 \end{figure}
 
@@ -227,22 +227,22 @@ mean konsisten, monotonik \emph{add-only})
 % ----- Tabel utama (diisi dari paper2_eval_results.json, notebook 12) -----
 \begin{table}[h]
 \centering
-\caption{MCC empat varian pada dua dimensi: generalisasi lintas-jaringan (kolom
-\emph{clean target}) dan ketahanan \emph{adaptive functional-preserving evasion}
-($\epsilon=0.1$). Kolom terakhir mengukur MCC saat model diserang evasion yang
-sekaligus \emph{adaptive white-box} (saliency dihitung dari model yang diserang itu
-sendiri --- penyerang tahu pertahanan), \emph{functional-preserving} (perturbasi
-dibatasi ke \emph{flow} yang valid protokol dan dapat dikirim), dan berkekuatan
-$\epsilon=0.1$ (pergeseran $\approx 0.1$ simpangan baku per fitur di ruang z-score);
-inilah skenario terberat sekaligus paling realistis. Kolom \emph{clean source}/%
-\emph{clean target} adalah MCC tanpa serangan di jaringan sumber/target. Angka dari
-eksperimen (notebook 12). Nilai lebih tinggi lebih baik; MCC $\le 0$ = setara/lebih
-buruk dari tebakan acak.}
+\caption{MCC of four variants on two dimensions: cross-network generalization
+(\emph{clean target} column) and robustness to \emph{adaptive functional-preserving
+evasion} ($\epsilon=0.1$). The last column reports MCC when the model is attacked by
+an evasion that is simultaneously \emph{adaptive white-box} (saliency computed from
+the attacked model itself --- the attacker knows the defense),
+\emph{functional-preserving} (perturbation restricted to protocol-valid, deliverable
+\emph{flows}), and of strength $\epsilon=0.1$ (a shift of $\approx 0.1$ standard
+deviations per feature in z-score space); this is the hardest yet most realistic
+scenario. The \emph{clean (source)}/\emph{clean (target)} columns are MCC without
+attack on the source/target network. Values from experiments (notebook 12). Higher
+is better; MCC $\le 0$ = equal to/worse than random guessing.}
 \label{tab:p2main}
 \small
 \begin{tabular}{llccc}
 \toprule
-Arah & Varian & clean (source) & clean (target) & adaptive evasion ($\epsilon=0.1$) \\
+Direction & Variant & clean (source) & clean (target) & adaptive evasion ($\epsilon=0.1$) \\
 \midrule
 \multirow{4}{*}{CIC$\rightarrow$UNSW}
  & baseline     & $0{,}913$ & $-0{,}074$ & $0{,}370$ \\
@@ -262,18 +262,18 @@ Arah & Varian & clean (source) & clean (target) & adaptive evasion ($\epsilon=0.
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.8\linewidth]{figure-p2/paper2_CIC_to_UNSW.png}
-\caption{CIC$\rightarrow$UNSW: perbandingan generalisasi (clean cross-network) vs
-ketahanan \emph{adaptive functional evasion} ($\epsilon=0.1$) untuk keempat varian.}
+\caption{CIC$\rightarrow$UNSW: comparison of generalization (clean cross-network) vs
+robustness to \emph{adaptive functional evasion} ($\epsilon=0.1$) for the four variants.}
 \label{fig:p2c2u}
 \end{figure}
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.8\linewidth]{figure-p2/paper2_UNSW_to_CIC.png}
-\caption{UNSW$\rightarrow$CIC: perbandingan generalisasi vs ketahanan
-\emph{adaptive functional evasion} ($\epsilon=0.1$). \emph{Few-shot} menjaga
-generalisasi ($0{,}897$) tetapi ketahanan \emph{adaptive} tetap runtuh untuk semua
-varian \textbf{pada arah ini} --- temuan asimetri yang dilaporkan apa adanya.}
+\caption{UNSW$\rightarrow$CIC: comparison of generalization vs robustness to
+\emph{adaptive functional evasion} ($\epsilon=0.1$). \emph{Few-shot} preserves
+generalization ($0{,}897$) but \emph{adaptive} robustness still collapses for all
+variants \textbf{in this direction} --- an asymmetry finding reported as-is.}
 \label{fig:p2u2c}
 \end{figure}
 
@@ -362,17 +362,17 @@ FGSM \emph{functional-preserving} (adaptive) pada fitur yang diekstrak
 
 \begin{table}[h]
 \centering
-\caption{PoC validasi AWS (arah CIC$\rightarrow$UNSW): MCC empat varian pada trafik
-nyata --- \emph{clean} (4789 flow; 4167 serangan, 622 benign), \emph{evasion
-network-level} (3099 flow; 3041 serangan, 58 benign), dan tambahan FGSM
-\emph{functional-preserving} ($\epsilon=0.1$) pada fitur nyata. Infra \& skrip:
-\texttt{adv-vpc.yaml}, \texttt{adv-2ec2.yaml}, \texttt{atk2.sh},
+\caption{AWS validation PoC (CIC$\rightarrow$UNSW direction): MCC of four variants on
+real traffic --- \emph{clean} (4789 flows; 4167 attack, 622 benign),
+\emph{network-level evasion} (3099 flows; 3041 attack, 58 benign), and an additional
+\emph{functional-preserving} FGSM ($\epsilon=0.1$) on the real features. Infra \&
+scripts: \texttt{adv-vpc.yaml}, \texttt{adv-2ec2.yaml}, \texttt{atk2.sh},
 \texttt{adv-extract-infer.py}; region \texttt{ap-southeast-1}.}
 \label{tab:aws}
 \small
 \begin{tabular}{lccc}
 \toprule
-Varian model & clean (AWS) & evasion network-level & $+$FGSM functional ($\epsilon=0.1$) \\
+Model variant & clean (AWS) & network-level evasion & $+$functional FGSM ($\epsilon=0.1$) \\
 \midrule
 baseline     & $-0{,}022$ & $-0{,}061$ & $-0{,}143$ \\
 few-shot     & $-0{,}068$ & $-0{,}160$ & $-0{,}616$ \\
@@ -384,17 +384,17 @@ few-shot+adv & $\phantom{-}0{,}000$ & $\phantom{-}0{,}000$ & $-0{,}300$ \\
 
 \begin{table}[h]
 \centering
-\caption{PoC validasi AWS (arah UNSW$\rightarrow$CIC): MCC empat varian pada trafik
-nyata yang sama, plus \emph{recall}/\emph{precision} pada trafik \emph{clean} sebagai
-konteks. Berbeda dari model sumber-CIC yang memprediksi seragam (\emph{recall}$\approx
-0$), model sumber-UNSW aktif menandai flow --- terutama \emph{few-shot$+$adv} yang
-menangkap $95{,}4\%$ serangan. MCC rendah di sini terutama artefak ketidakseimbangan
-kelas (lihat pembahasan). Ground-truth identik dengan Tabel~\ref{tab:aws}.}
+\caption{AWS validation PoC (UNSW$\rightarrow$CIC direction): MCC of four variants on
+the same real traffic, plus \emph{recall}/\emph{precision} on \emph{clean} traffic
+for context. Unlike the CIC-source model that predicts uniformly (\emph{recall}$\approx
+0$), the UNSW-source model actively flags flows --- especially \emph{few-shot$+$adv}
+which catches $95{,}4\%$ of attacks. The low MCC here is mainly an artifact of class
+imbalance (see discussion). Ground-truth identical to Table~\ref{tab:aws}.}
 \label{tab:aws_unsw}
 \small
 \begin{tabular}{lccccc}
 \toprule
-Varian model & clean (AWS) & evasion & $+$FGSM ($\epsilon{=}0.1$) & recall (clean) & prec. (clean) \\
+Model variant & clean (AWS) & evasion & $+$FGSM ($\epsilon{=}0.1$) & recall (clean) & prec. (clean) \\
 \midrule
 baseline     & $-0{,}401$ & $-0{,}011$ & $-0{,}655$ & $0{,}064$ & $0{,}492$ \\
 few-shot     & $-0{,}392$ & $-0{,}003$ & $-0{,}641$ & $0{,}059$ & $0{,}485$ \\
