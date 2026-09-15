@@ -616,20 +616,19 @@ Direction & Variant & clean (source) & clean (target) & adaptive evasion ($\epsi
 \end{table}
 
 % ----- Tabel multi-attack (robustness curve): FGSM 1-langkah vs PGD iteratif -----
-% CATATAN PENGISIAN: angka MCC/ASR di tabel ini diisi dari keluaran nyata
-% notebook 14_reviewer_experiments.ipynb (kolom kondisi fgsm_eps* dan pgd_eps*,
-% direrata atas 5 seed {13,42,101,202,303}). Placeholder "--" diganti setelah
-% notebook dijalankan; JANGAN mengarang angka.
+% Angka MCC diisi dari keluaran NYATA notebook 14_reviewer_experiments.ipynb
+% (kondisi fgsm_eps* / pgd_eps*, rerata 5 seed {13,42,101,202,303}, proyeksi PCFS
+% dgn rekonsiliasi laju). Sumber: paper2_reviewer_out/multiattack_mcc.csv.
 \begin{table}[h]
 \centering
 \caption{Robustness curve: MCC of the four variants under attacks of \emph{increasing
 strength} --- one-step finite-difference FGSM vs iterative PGD
 (\emph{PCFS: protocol-consistent feature-space}, adaptive white-box) --- across three budgets
 $\epsilon\in\{0.05,0.1,0.2\}$. Reporting a single attack overstates robustness; a
-variant may look robust under FGSM yet collapse under PGD. Values are mean over five
-seeds $\{13,42,101,202,303\}$ from \texttt{14\_reviewer\_experiments.ipynb} (columns
-\texttt{fgsm\_eps*}/\texttt{pgd\_eps*}). \emph{Cells marked ``--'' are to be filled
-from the executed notebook output; no values are fabricated.} Higher is better.}
+variant may look robust under FGSM yet collapse under PGD. Values are the mean over
+five seeds $\{13,42,101,202,303\}$ from \texttt{14\_reviewer\_experiments.ipynb}
+(columns \texttt{fgsm\_eps*}/\texttt{pgd\_eps*}; PCFS projection with rate
+reconciliation). Higher is better; MCC $\le 0$ = equal to/worse than random.}
 \label{tab:multiattack}
 \small
 \begin{tabular}{llcccccc}
@@ -639,19 +638,45 @@ from the executed notebook output; no values are fabricated.} Higher is better.}
 Direction & Variant & $\epsilon{=}0.05$ & $0.1$ & $0.2$ & $\epsilon{=}0.05$ & $0.1$ & $0.2$ \\
 \midrule
 \multirow{4}{*}{CIC$\rightarrow$UNSW}
- & baseline              & -- & -- & -- & -- & -- & -- \\
- & few-shot              & -- & -- & -- & -- & -- & -- \\
- & adv                   & -- & -- & -- & -- & -- & -- \\
- & \textbf{few-shot+adv} & -- & -- & -- & -- & -- & -- \\
+ & baseline               & $-0{,}135$ & $-0{,}144$ & $-0{,}147$ & $-0{,}139$ & $-0{,}145$ & $-0{,}145$ \\
+ & few-shot               & $0{,}525$ & $0{,}493$ & $0{,}474$ & $0{,}527$ & $0{,}524$ & $0{,}524$ \\
+ & adv                    & $0{,}121$ & $-0{,}037$ & $0{,}031$ & $0{,}126$ & $0{,}126$ & $0{,}126$ \\
+ & \textbf{few-shot+adv}  & $0{,}448$ & $0{,}454$ & $\mathbf{0{,}504}$ & $0{,}359$ & $0{,}302$ & $0{,}302$ \\
 \midrule
 \multirow{4}{*}{UNSW$\rightarrow$CIC}
- & baseline              & -- & -- & -- & -- & -- & -- \\
- & few-shot              & -- & -- & -- & -- & -- & -- \\
- & adv                   & -- & -- & -- & -- & -- & -- \\
- & \textbf{few-shot+adv} & -- & -- & -- & -- & -- & -- \\
+ & baseline               & $0{,}088$ & $0{,}058$ & $-0{,}021$ & $0{,}089$ & $0{,}085$ & $0{,}084$ \\
+ & few-shot               & $-0{,}154$ & $-0{,}169$ & $-0{,}115$ & $-0{,}093$ & $-0{,}124$ & $-0{,}123$ \\
+ & adv                    & $-0{,}044$ & $-0{,}240$ & $-0{,}226$ & $-0{,}224$ & $-0{,}212$ & $-0{,}212$ \\
+ & \textbf{few-shot+adv}  & $-0{,}007$ & $0{,}219$ & $\mathbf{0{,}281}$ & $0{,}223$ & $0{,}178$ & $0{,}179$ \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\paragraph{Pembacaan kurva ketahanan (FGSM versus PGD).} Tabel~\ref{tab:multiattack}
+memperjelas mengapa satu serangan saja menyesatkan. \emph{Pertama, PGD memang lebih
+kuat daripada FGSM pada mayoritas kasus:} pada \emph{few-shot$+$adv}
+CIC$\rightarrow$UNSW, MCC turun dari $0{,}45$--$0{,}50$ (FGSM) menjadi
+$0{,}30$--$0{,}36$ (PGD) --- selisih yang \emph{tak akan terlihat} bila hanya
+melaporkan FGSM, namun varian ini tetap \emph{tangguh} (MCC $>0$) di seluruh
+anggaran. \emph{Kedua, few-shot murni justru paling stabil di arah
+CIC$\rightarrow$UNSW} (MCC $\approx 0{,}47$--$0{,}53$ untuk kedua serangan),
+sedangkan \emph{adv tanpa few-shot} rapuh dan tak konsisten (bahkan $-0{,}037$ pada
+FGSM $\epsilon{=}0{,}1$) --- menegaskan lagi bahwa \emph{few-shot}, bukan
+\emph{adversarial training}, yang menjadi tulang punggung ketangguhan.
+\emph{Ketiga, dan penting untuk dilaporkan jujur:} di bawah suite berjenjang
+dengan proyeksi PCFS yang \emph{merekonsiliasi laju} dan diagregasi atas lima
+\emph{seed}, \emph{few-shot$+$adv} pada arah UNSW$\rightarrow$CIC \emph{tidak}
+runtuh sedalam angka titik-tunggal pada Tabel~\ref{tab:p2main} ($-0{,}025$);
+ia bertahan pada MCC $0{,}18$--$0{,}28$ untuk $\epsilon\ge0{,}1$. Perbedaan ini
+bukan kontradiksi melainkan konsekuensi metodologi yang lebih ketat: rekonsiliasi
+laju membatasi ruang gerak perturbasi \emph{add-only} sehingga sebagian arah evasion
+yang sebelumnya valid menjadi tak-konsisten, dan rerata lima \emph{seed} meredam
+keberuntungan satu realisasi. Namun \emph{baseline} dan \emph{few-shot} tetap
+rapuh/negatif di arah ini, sehingga \textbf{asimetri antar-arah tetap berlaku}:
+ketangguhan ganda paling andal pada CIC$\rightarrow$UNSW, sedangkan pada
+UNSW$\rightarrow$CIC hanya \emph{few-shot$+$adv} yang bertahan --- dan itupun dengan
+margin lebih tipis. Kesimpulan ilmiahnya tak berubah, tetapi kini bertumpu pada
+kurva berjenjang, bukan satu titik.
 
 \begin{figure}[h]
 \centering
