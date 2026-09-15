@@ -1,0 +1,32 @@
+% TikZ-only (input-able) - arsitektur pipeline Paper 2.
+% Requires: \usepackage{tikz}\usetikzlibrary{arrows.meta,positioning,fit,backgrounds}
+\begin{tikzpicture}[
+  font=\footnotesize, >={Stealth[length=2.6mm]},
+  b/.style={rounded corners=2pt, draw=black!70, line width=0.7pt, align=center,
+            inner sep=4pt, minimum height=12mm, text width=24mm},
+  data/.style={b, fill=blue!8}, proc/.style={b, fill=orange!12},
+  train/.style={b, fill=green!12}, eval/.style={b, fill=red!8},
+  a/.style={->, line width=1pt, draw=black!65},
+]
+% Baris atas: pembentukan data + model
+\node[data] (sfm) {9 fitur SFM\\(CIC $\&$ UNSW)};
+\node[data, right=7mm of sfm] (mix) {Gabung data\\source $+$ $1\%$\\target (few-shot)};
+\node[proc, right=7mm of mix] (fgsm) {Bangkitkan\\perturbasi FGSM\\\emph{functional-}\\\emph{preserving}};
+\node[train, right=7mm of fgsm] (advtr) {\emph{Adversarial}\\\emph{training}\\(few-shot$+$adv)\\XGBoost};
+\draw[a] (sfm) -- (mix);
+\draw[a] (mix) -- (fgsm);
+\draw[a] (fgsm) -- (advtr);
+% z-score no-leakage note
+\node[font=\scriptsize\itshape, below=1mm of mix, text width=26mm, align=center]
+  {z-score fit train-only\\(tanpa kebocoran)};
+
+% Baris bawah: evaluasi multi-threat
+\node[eval, below=14mm of advtr, text width=30mm] (evalm)
+  {\textbf{Evaluasi multi-ancaman}\\clean $\cdot$ unconstrained\\functional-preserving\\\emph{adaptive white-box}};
+\draw[a] (advtr) -- (evalm);
+% dua arah + dua sumbu metrik
+\node[b, fill=black!4, below=8mm of sfm, text width=52mm, align=left] (out)
+  {\textbf{Keluaran (MCC):} 2 arah (CIC$\to$UNSW, UNSW$\to$CIC)\\
+   $\times$ 2 sumbu: generalisasi lintas-jaringan $\&$ ketahanan evasion};
+\draw[a] (evalm.west) -- ++(-1.0,0) |- (out.east);
+\end{tikzpicture}
