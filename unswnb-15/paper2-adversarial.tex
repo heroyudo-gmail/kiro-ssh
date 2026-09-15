@@ -730,6 +730,54 @@ UNSW$\rightarrow$CIC hanya \emph{few-shot$+$adv} yang bertahan --- dan itupun de
 margin lebih tipis. Kesimpulan ilmiahnya tak berubah, tetapi kini bertumpu pada
 kurva berjenjang, bukan satu titik.
 
+\paragraph{Signifikansi statistik (lima \emph{seed}, selang kepercayaan $95\%$).}
+Agar perbedaan antar-varian tidak disalahartikan sebagai efek acak \emph{seed},
+Tabel~\ref{tab:significance} melaporkan MCC sebagai rerata $\pm$ simpangan baku
+beserta selang kepercayaan $95\%$ atas lima \emph{seed} untuk perbandingan kunci
+\emph{few-shot} versus \emph{few-shot$+$adv}, dan kami nyatakan signifikansi melalui
+\emph{tumpang-tindih} selang kepercayaan (CI yang tidak beririsan menandakan beda
+yang bermakna pada $\alpha=0{,}05$). Tiga simpulan --- dan kami laporkan jujur
+termasuk yang \emph{tidak} signifikan. \emph{(i) Pada generalisasi (clean), selisih
+few-shot$\rightarrow$few-shot$+$adv tidak signifikan:} CIC$\rightarrow$UNSW
+$0{,}650\,[0{,}630;0{,}671]$ versus $0{,}662\,[0{,}647;0{,}677]$ (CI beririsan),
+dan UNSW$\rightarrow$CIC $0{,}899$ versus $0{,}898$ (praktis identik). Jadi
+\emph{adversarial training tidak memperbaiki generalisasi} --- ia hanya
+\emph{mempertahankannya}, dan kami tidak mengklaim lebih. \emph{(ii) Pada ketahanan
+di arah UNSW$\rightarrow$CIC, perbaikan few-shot$+$adv signifikan:} di bawah FGSM
+$\epsilon{=}0{,}1$, \emph{few-shot} $-0{,}169\,[-0{,}209;-0{,}129]$ versus
+\emph{few-shot$+$adv} $0{,}219\,[0{,}082;0{,}357]$ --- CI \textbf{tidak beririsan},
+sehingga \emph{adversarial training benar-benar menaikkan ketahanan} di arah ini.
+\emph{(iii) Pada ketahanan di arah CIC$\rightarrow$UNSW, perbedaannya tidak
+konklusif:} varians PGD \emph{few-shot$+$adv} besar ($\pm0{,}145$) sehingga CI
+beririsan dengan \emph{few-shot} --- kami tidak mengklaim keunggulan di sini.
+Ringkasnya, satu-satunya klaim keunggulan \emph{few-shot$+$adv} yang \emph{signifikan
+secara statistik} adalah ketahanan FGSM pada UNSW$\rightarrow$CIC; klaim lainnya
+adalah \emph{paritas} (tidak lebih buruk), dan itulah yang kami nyatakan.
+
+\begin{table}[h]
+\centering
+\caption{Statistical significance of the key comparison \emph{few-shot} vs
+\emph{few-shot$+$adv}: MCC as mean $\pm$ std with $95\%$ confidence interval (CI)
+over five seeds. Significance is read from CI overlap (non-overlapping CIs $\Rightarrow$
+difference significant at $\alpha{=}0.05$). ``sig?'' marks whether the two variants'
+CIs are disjoint. Source: \texttt{reviewer\_agg.csv}.}
+\label{tab:significance}
+\small
+\begin{tabular}{llccc}
+\toprule
+Direction & Condition & few-shot (MCC, 95\% CI) & few-shot$+$adv (MCC, 95\% CI) & sig? \\
+\midrule
+\multirow{2}{*}{CIC$\rightarrow$UNSW}
+ & clean            & $0{,}650\,[0{,}630;0{,}671]$ & $0{,}662\,[0{,}647;0{,}677]$ & no \\
+ & FGSM $\epsilon{=}0.1$ & $0{,}493\,[0{,}408;0{,}579]$ & $0{,}454\,[0{,}145;0{,}763]$ & no \\
+\midrule
+\multirow{2}{*}{UNSW$\rightarrow$CIC}
+ & clean            & $0{,}899\,[0{,}894;0{,}904]$ & $0{,}898\,[0{,}893;0{,}904]$ & no \\
+ & FGSM $\epsilon{=}0.1$ & $-0{,}169\,[-0{,}209;-0{,}129]$ & $\mathbf{0{,}219\,[0{,}082;0{,}357]}$ & \textbf{yes} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.8\linewidth]{figure-p2/paper2_CIC_to_UNSW.png}
