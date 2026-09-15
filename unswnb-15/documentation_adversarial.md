@@ -4,6 +4,11 @@
 > BACA FILE INI DULU sebelum bekerja. Berisi: ringkasan riset, peta notebook↔tabel,
 > status revisi reviewer, daftar tugas tersisa, dan keputusan kunci.
 > **Untuk operasi AWS (deploy/serangan/inferensi):** lihat `aws/adv-runbook.md`.
+>
+> **PETA MEMORI (2 file per paper).** Ini **Paper 2** (adversarial, lanjutan Paper 1).
+> Pasangan Paper 2: file ini + `aws/adv-runbook.md`. **Paper 1** (SFM + few-shot, sumbu
+> generalisasi) ada di `documentation.md` + `aws/runbook.md`. Sumber kebenaran detail
+> tetap notebook (`notebooks/`) + `git log`; dua file .md ini adalah pintu masuknya.
 
 ---
 

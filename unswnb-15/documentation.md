@@ -2,6 +2,13 @@
 
 ## Cross-Network Robust NIDS via Semantic Feature Mapping & Adaptive Adversarial Ensemble
 
+> **PETA MEMORI (baca ini dulu).** Ini dokumentasi **Paper 1** (SFM + few-shot, sumbu
+> generalisasi lintas-jaringan). Pasangannya: `aws/runbook.md` (operasi AWS Paper 1).
+> **Paper 2** (ketahanan adversarial, lanjutan Paper 1) didokumentasikan terpisah di
+> `documentation_adversarial.md` + `aws/adv-runbook.md`. Tiap paper = 2 file pengingat
+> (dokumentasi "apa & mengapa" + runbook "bagaimana di AWS"); sumber kebenaran detail
+> tetap notebook + `git log`.
+
 > **Status dokumen:** Perencanaan (roadmap). Sebagian besar item di sini adalah *rencana kerja*, bukan hasil yang sudah terbukti. Item yang sudah/berlanjut dari penelitian sebelumnya ditandai eksplisit. Prinsip kerja: **semua angka & klaim harus jujur terhadap eksperimen nyata — tidak boleh dikarang.**
 
 ---
