@@ -362,21 +362,22 @@ FGSM \emph{functional-preserving} (adaptive) pada fitur yang diekstrak
 
 \begin{table}[h]
 \centering
-\caption{PoC validasi AWS: MCC empat varian pada trafik nyata --- \emph{clean},
-\emph{evasion network-level}, dan tambahan FGSM \emph{functional-preserving}
-($\epsilon=0.1$). \textbf{Angka diisi setelah eksekusi} (skrip \& infra tersedia:
-\texttt{adv-vpc.yaml}, \texttt{adv-2ec2.yaml}, \texttt{adv-attack-scenario.sh},
-\texttt{adv-extract-infer.py}).}
+\caption{PoC validasi AWS (arah CIC$\rightarrow$UNSW): MCC empat varian pada trafik
+nyata --- \emph{clean} (4789 flow; 4167 serangan, 622 benign), \emph{evasion
+network-level} (3099 flow; 3041 serangan, 58 benign), dan tambahan FGSM
+\emph{functional-preserving} ($\epsilon=0.1$) pada fitur nyata. Infra \& skrip:
+\texttt{adv-vpc.yaml}, \texttt{adv-2ec2.yaml}, \texttt{atk2.sh},
+\texttt{adv-extract-infer.py}; region \texttt{ap-southeast-1}.}
 \label{tab:aws}
 \small
 \begin{tabular}{lccc}
 \toprule
 Varian model & clean (AWS) & evasion network-level & $+$FGSM functional ($\epsilon=0.1$) \\
 \midrule
-baseline     & \emph{TBD} & \emph{TBD} & \emph{TBD} \\
-few-shot     & \emph{TBD} & \emph{TBD} & \emph{TBD} \\
-adv          & \emph{TBD} & \emph{TBD} & \emph{TBD} \\
-few-shot+adv & \emph{TBD} & \emph{TBD} & \emph{TBD} \\
+baseline     & $-0{,}022$ & $-0{,}061$ & $-0{,}143$ \\
+few-shot     & $-0{,}068$ & $-0{,}160$ & $-0{,}616$ \\
+adv          & $-0{,}022$ & $-0{,}025$ & $+0{,}008$ \\
+few-shot+adv & $\phantom{-}0{,}000$ & $\phantom{-}0{,}000$ & $-0{,}300$ \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -384,10 +385,25 @@ few-shot+adv & \emph{TBD} & \emph{TBD} & \emph{TBD} \\
 \noindent PoC ini menutup celah antara Paper 1 (yang divalidasi hingga trafik AWS
 nyata) dan Paper 2 (yang berpangkal pada \emph{benchmark}): ia menguji apakah
 skema pertahanan \emph{few-shot$+$adv} tetap bekerja di lapangan, bukan hanya pada
-dataset. Sesuai prinsip kejujuran data, angka akan dilaporkan apa adanya; bila
-model tetap runtuh pada trafik AWS (konsisten dengan temuan \emph{zero-shot} Paper
-1 sebelum kalibrasi), itu adalah temuan yang sah dan memperkuat perlunya kalibrasi
-domain sebelum penggelaran.
+dataset. Hasilnya dilaporkan apa adanya. \textbf{Temuan utama:} keempat varian
+model yang di-\emph{deploy} \emph{zero-shot} (dilatih pada CIC, diuji langsung pada
+trafik AWS tanpa kalibrasi ulang) runtuh menjadi MCC $\approx 0$ pada trafik
+\emph{clean} maupun \emph{evasion network-level} --- konsisten persis dengan temuan
+\emph{zero-shot} Paper 1 sebelum kalibrasi \emph{few-shot} domain. Karena performa
+dasar sudah kolaps, \emph{evasion network-level} hanya menggeser MCC dalam rentang
+sempit di sekitar nol (mis. \emph{baseline} $-0{,}022 \rightarrow -0{,}061$),
+sehingga efek serangan jaringan tidak dapat dipisahkan dari derau pada model yang
+belum terkalibrasi. Sebaliknya, FGSM \emph{functional-preserving} ($\epsilon=0.1$)
+pada ruang fitur nyata tetap menurunkan MCC lebih jauh untuk sebagian besar varian
+(mis. \emph{few-shot} hingga $-0{,}616$), memperlihatkan bahwa evasion
+\emph{feature-space} bekerja bahkan di atas model yang sudah lemah. Menariknya,
+varian \emph{adv} adalah satu-satunya yang bertahan terhadap FGSM di AWS
+($+0{,}008$), selaras dengan peran \emph{adversarial training} pada \emph{benchmark}.
+\textbf{Implikasi:} PoC ini menegaskan bahwa \emph{adversarial training} saja tidak
+cukup untuk penggelaran lintas-jaringan; kalibrasi \emph{few-shot} pada domain AWS
+(sebagaimana terbukti di Paper 1) adalah prasyarat sebelum ketahanan adversarial
+dapat dinilai secara bermakna di lapangan. Hasil lengkap tersimpan di
+\texttt{detect\_clean\_advmetrics.json} dan \texttt{detect\_evasion\_advmetrics.json}.
 
 % ============================================================
 \section{Kesimpulan dan Kerja Mendatang}
