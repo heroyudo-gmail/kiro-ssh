@@ -778,6 +778,65 @@ Direction & Condition & few-shot (MCC, 95\% CI) & few-shot$+$adv (MCC, 95\% CI) 
 \end{tabular}
 \end{table}
 
+\subsection{Comparison Against Alternative Defense Baselines}
+\label{sec:baselines}
+Ablasi empat varian pelatihan (Tabel~\ref{tab:p2main}) menguji \emph{strategi
+pelatihan}, tetapi belum membandingkan pertahanan kami dengan \emph{strategi
+pertahanan adversarial alternatif}. Untuk itu kami menambahkan --- semuanya
+dibangun \textbf{di atas few-shot} agar generalisasi lintas-jaringan terjaga, dan
+diuji pada sumbu ketahanan yang sama (PCFS FGSM/PGD $\epsilon{=}0{,}1$, lima
+\emph{seed}) --- empat pembanding: \emph{(i)} pendekatan kami, \emph{few-shot$+$adv}
+berbasis FGSM; \emph{(ii)} \textbf{PGD-based adversarial training} (\emph{PGD-AT}),
+serangan pelatihan iteratif yang lebih kuat, sebagaimana lazim pada karya NIDS
+adversarial mutakhir; \emph{(iii)} \textbf{Gaussian noise augmentation}, sebuah
+\emph{robust baseline non-adversarial}; dan \emph{(iv)} \textbf{randomized
+smoothing}~\cite{cohen2019smoothing}, pertahanan bersertifikat saat inferensi
+(prediksi mayoritas atas $N{=}20$ salinan berderau $\sigma{=}0{,}1$) yang tak
+bergantung pada kemulusan gradien. Tabel~\ref{tab:defense_baselines} merangkum
+hasilnya.
+
+% ----- Tabel pembanding pertahanan (diisi dari nb16) -----
+% CATATAN: angka diisi dari keluaran NYATA 16_defense_baselines.ipynb
+% (paper2_reviewer_out/defense_baselines_agg.csv, rerata 5 seed). JANGAN mengarang.
+\begin{table}[h]
+\centering
+\caption{Comparison against alternative defense baselines, all built \emph{on top of}
+few-shot calibration and evaluated on the same robustness axis (mean MCC over five
+seeds). Columns: clean cross-network MCC, and MCC under \emph{adaptive PCFS} FGSM/PGD
+($\epsilon{=}0.1$). Baselines: PGD-based adversarial training (PGD-AT), Gaussian
+noise augmentation, and randomized smoothing~\cite{cohen2019smoothing}. Source:
+\texttt{defense\_baselines\_agg.csv}.}
+\label{tab:defense_baselines}
+\small
+\begin{tabular}{llccc}
+\toprule
+Direction & Defense & clean MCC & FGSM $\epsilon{=}0.1$ & PGD $\epsilon{=}0.1$ \\
+\midrule
+\multirow{5}{*}{CIC$\rightarrow$UNSW}
+ & few-shot (no evasion defense)          & -- & -- & -- \\
+ & \textbf{few-shot+adv (FGSM, ours)}     & -- & -- & -- \\
+ & few-shot+adv (PGD-AT)                  & -- & -- & -- \\
+ & few-shot+Gaussian-aug                  & -- & -- & -- \\
+ & few-shot+rand-smoothing                & -- & -- & -- \\
+\midrule
+\multirow{5}{*}{UNSW$\rightarrow$CIC}
+ & few-shot (no evasion defense)          & -- & -- & -- \\
+ & \textbf{few-shot+adv (FGSM, ours)}     & -- & -- & -- \\
+ & few-shot+adv (PGD-AT)                  & -- & -- & -- \\
+ & few-shot+Gaussian-aug                  & -- & -- & -- \\
+ & few-shot+rand-smoothing                & -- & -- & -- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent Perbandingan ini memosisikan pertahanan kami di antara alternatif yang
+serius alih-alih berdiri sendiri: \emph{PGD-AT} menguji apakah serangan-pelatihan
+yang lebih kuat memberi ketahanan lebih baik; \emph{Gaussian augmentation} menguji
+apakah sekadar perturbasi acak sudah cukup; dan \emph{randomized smoothing} menguji
+pertahanan yang secara teoretis tak bergantung gradien. Interpretasi kuantitatif
+mengikuti begitu angka lima-\emph{seed} terisi (artefak
+\texttt{defense\_baselines\_agg.csv}).
+
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.8\linewidth]{figure-p2/paper2_CIC_to_UNSW.png}
