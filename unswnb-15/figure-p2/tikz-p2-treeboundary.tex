@@ -1,0 +1,46 @@
+% TikZ-only (input-able) - conceptual 2D sketch: piecewise step boundary vs
+% functional-preserving perturbation, wide vs narrow decision cells.
+% Requires: \usepackage{tikz}\usetikzlibrary{arrows.meta,patterns}
+\begin{tikzpicture}[
+  font=\footnotesize, >={Stealth[length=2.4mm]},
+  ax/.style={->, line width=0.7pt, draw=black!60},
+  bnd/.style={line width=1.1pt, draw=black!75},
+  pv/.style={->, line width=1.1pt, draw=red!75!black},
+  atk/.style={circle, fill=red!70!black, inner sep=1.3pt},
+  ben/.style={circle, fill=blue!55, inner sep=1.3pt},
+]
+% ---------------- Panel A: wide cells (target UNSW) : perturbation tak cukup ----
+\begin{scope}
+  \draw[ax] (0,0) -- (4.2,0) node[right]{$f_1$};
+  \draw[ax] (0,0) -- (0,3.4) node[above]{$f_2$};
+  % step boundary (wide staircase)
+  \draw[bnd] (0.3,2.6) -- (1.8,2.6) -- (1.8,1.4) -- (3.2,1.4) -- (3.2,0.4) -- (4.0,0.4);
+  \node[align=center] at (1.0,3.05) {\scriptsize benign region};
+  \node[align=center] at (3.3,2.4) {\scriptsize attack region};
+  % attack point far from boundary; perturbation add-only (up-right) too short
+  \node[atk] (a) at (2.6,2.1) {};
+  \draw[pv] (a) -- ++(0.55,0.0);  % add-only shift (limited eps)
+  \node[red!75!black] at (3.35,2.05) {\scriptsize $\epsilon$};
+  \node[align=center, text width=40mm] at (2.1,-0.7)
+    {\textbf{(a) Wide cells} (target UNSW, high variance):\\
+     valid $\epsilon$-shift stays inside attack cell $\Rightarrow$ still detected.};
+\end{scope}
+% ---------------- Panel B: narrow cells (target CIC) : perturbation cukup -------
+\begin{scope}[xshift=6.2cm]
+  \draw[ax] (0,0) -- (4.2,0) node[right]{$f_1$};
+  \draw[ax] (0,0) -- (0,3.4) node[above]{$f_2$};
+  % step boundary (tight staircase, thin cells)
+  \draw[bnd] (0.3,2.4) -- (1.0,2.4) -- (1.0,1.9) -- (1.7,1.9) -- (1.7,1.4)
+             -- (2.4,1.4) -- (2.4,0.9) -- (3.1,0.9) -- (3.1,0.4) -- (4.0,0.4);
+  \node[align=center] at (0.9,3.0) {\scriptsize benign};
+  \node[align=center] at (3.3,2.4) {\scriptsize attack};
+  % attack point near a thin boundary; same eps crosses it
+  \node[atk] (b) at (1.9,1.7) {};
+  \draw[pv] (b) -- ++(0.55,0.0);  % same add-only shift crosses boundary
+  \node[red!75!black] at (2.65,1.65) {\scriptsize $\epsilon$};
+  \node[ben] at (2.3,1.75) {}; % now lands in benign side
+  \node[align=center, text width=40mm] at (2.1,-0.7)
+    {\textbf{(b) Narrow cells} (target CIC, low variance):\\
+     same valid $\epsilon$-shift crosses the thin cell $\Rightarrow$ evasion succeeds.};
+\end{scope}
+\end{tikzpicture}
