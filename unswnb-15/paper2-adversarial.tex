@@ -64,16 +64,27 @@ lintas-jaringan, pemetaan fitur semantik, \emph{few-shot}, XGBoost.
 \end{abstract}
 
 % ============================================================
-\section{Pendahuluan}
+\section{Introduction}
 \label{sec:intro}
-NIDS berbasis pembelajaran mesin kerap mencapai akurasi tinggi \emph{in-domain}
-namun rapuh pada dua sumbu berbeda. \emph{Pertama}, \textbf{perpindahan jaringan}:
-model yang unggul pada satu dataset runtuh pada dataset lain akibat
-\emph{distribution shift} --- persoalan yang ditangani karya SFM $+$
-few-shot~\cite{martono2024sfm}. \emph{Kedua}, \textbf{serangan evasion adversarial}:
-penyerang memodifikasi trafik serangan secukupnya agar lolos deteksi. Kedua sumbu
-ini sering dipelajari terpisah, padahal penyebaran nyata menuntut ketangguhan pada
-keduanya secara bersamaan.
+Sistem deteksi intrusi jaringan (NIDS) berbasis pembelajaran mesin telah menjadi
+tulang punggung pertahanan siber modern~\cite{cremer,torres,sarker}, dengan beragam
+survei mendokumentasikan teknik mulai dari klasifikasi dangkal hingga
+\emph{deep learning}~\cite{khraisat,buczak,bhuyan,liulang,mahdavifar}. Kemajuan ini
+ditopang oleh serangkaian dataset publik --- KDD~\cite{kdd}, UNSW-NB15~\cite{moustafa2015,unsweval},
+CSE-CIC-IDS2018~\cite{sharafaldin2018}, CIC-DDoS2019~\cite{cicddos}, serta dataset
+IoT terkini~\cite{botiot,toniot,ciciot,ring}. Meski demikian, detektor semacam ini
+kerap mencapai akurasi tinggi \emph{in-domain} namun rapuh pada dua sumbu berbeda.
+
+\emph{Pertama}, \textbf{perpindahan jaringan}: model yang unggul pada satu dataset
+runtuh pada dataset lain akibat \emph{distribution shift}, sebuah keterbatasan yang
+dikuatkan oleh temuan tentang cacat dan ketidakkonsistenan
+dataset~\cite{engelen,rosay,lanvin,liu,catillo,layeghy} maupun studi generalisasi
+lintas-dataset~\cite{dhooge,verkerken,cantone}. Persoalan ini ditangani oleh karya
+SFM $+$ few-shot~\cite{martono2024sfm}. \emph{Kedua}, \textbf{serangan evasion
+adversarial}: penyerang memodifikasi trafik serangan secukupnya agar lolos
+deteksi~\cite{biggio2013,goodfellow2015}. Kedua sumbu ini sering dipelajari
+terpisah, padahal penyebaran nyata menuntut ketangguhan pada keduanya secara
+bersamaan.
 
 Makalah ini mengangkat pertanyaan riset:
 \begin{quote}
@@ -102,7 +113,7 @@ model tunggal XGBoost pada sembilan fitur SFM, \emph{z-score} per-dataset, metri
 utama MCC.
 
 % ============================================================
-\section{Latar Belakang dan Karya Terkait}
+\section{Background and Related Work}
 \label{sec:related}
 \paragraph{Generalisasi lintas-jaringan via Semantic Feature Mapping.} Detektor
 berbasis pembelajaran mesin yang dilatih pada satu dataset lazim runtuh pada dataset
@@ -120,28 +131,53 @@ melatih ulang dari nol. Makalah ini mengadopsi kerangka sembilan fitur dan kalib
 few-shot tersebut sebagai fondasi, lalu menambahkan dimensi ketahanan adversarial
 yang belum ditangani.
 
-\paragraph{Serangan evasion pada NIDS.} Serangan \emph{evasion} pada pengklasifikasi
-diformalkan oleh Biggio \emph{et al.}~\cite{biggio2013} dan dipopulerkan pada ranah
-citra melalui \emph{Fast Gradient Sign Method} (FGSM)~\cite{goodfellow2015}. Pada
-NIDS, banyak studi membangkitkan perturbasi berbasis gradien atau
-GAN~\cite{lin2022idsgan} pada fitur alir \emph{tanpa} memperhatikan validitas
-protokol, sehingga menghasilkan \emph{flow} yang tak dapat dikirim di jaringan
-nyata dan \emph{melebih-lebihkan} ancaman. Beberapa karya terbaru menekankan
-perlunya kendala realisme~\cite{apruzzese2023,merzouk2022} agar serangan tetap
-merepresentasikan trafik yang benar-benar dapat dikirim. Kami mengadopsi
-\emph{functional-preserving constraints} dalam semangat ini.
+\paragraph{Model pembelajaran mesin untuk NIDS.} Beragam keluarga model telah
+diterapkan pada deteksi intrusi, dari ansambel pohon seperti
+XGBoost~\cite{xgboost,husain,zhou} hingga jaringan
+\emph{deep}~\cite{shone,wu,duan}. Untuk skenario terdistribusi/heterogen,
+pendekatan \emph{federated learning} juga banyak diusulkan~\cite{popoola,bertoli,agrawal,nidsfgpa}.
+Konsisten dengan karya SFM~\cite{martono2024sfm}, kami memilih satu XGBoost ringan
+karena efisien, mudah digelar, dan cukup ekspresif pada sembilan fitur alir --- namun
+justru \emph{sifat berbasis-pohonnya} yang menjadi pusat analisis ketahanan
+adversarial kami (Bagian~\ref{sec:hasil}).
+
+\paragraph{Generalisasi lintas-domain dan few-shot.} Menutup celah antar-domain
+adalah persoalan klasik \emph{domain adaptation}, baik secara teoretis (batas galat
+lintas-domain~\cite{bendavid}) maupun praktis (penyelarasan statistik orde-kedua
+seperti CORAL~\cite{coral}). Standarisasi himpunan fitur~\cite{sarhan,sarhannf} dan
+kalibrasi \emph{few-shot}~\cite{fewshot} adalah dua jalur yang menjanjikan; kerangka
+SFM~\cite{martono2024sfm} menggabungkan keduanya. Jarak distribusi kami ukur dengan
+transportasi optimal (Wasserstein~\cite{wasserstein}).
+
+\paragraph{Serangan evasion pada NIDS.} Kerentanan model terhadap contoh adversarial
+pertama kali disorot pada jaringan \emph{deep}~\cite{szegedy2014} dan diformalkan
+untuk pengklasifikasi umum oleh Biggio \emph{et al.}~\cite{biggio2013}, lalu
+dipopulerkan melalui FGSM~\cite{goodfellow2015} dan serangan optimasi yang lebih
+kuat~\cite{carlini2017}. Pada NIDS, banyak studi membangkitkan perturbasi berbasis
+gradien atau GAN~\cite{lin2022idsgan,alhajjar2021,sheatsley2022} pada fitur alir
+\emph{tanpa} memperhatikan validitas protokol, sehingga menghasilkan \emph{flow}
+yang tak dapat dikirim di jaringan nyata dan \emph{melebih-lebihkan} ancaman.
+Beberapa karya menekankan perlunya kendala realisme~\cite{apruzzese2023,merzouk2022}
+agar serangan tetap merepresentasikan trafik yang benar-benar dapat dikirim; kami
+mengadopsi \emph{functional-preserving constraints} dalam semangat ini.
 
 \paragraph{Adversarial training dan keterbatasannya.} \emph{Adversarial
 training}~\cite{goodfellow2015,madry2018} menambahkan sampel perturbasi ke data
 latih untuk memperkuat batas keputusan. Namun Athalye \emph{et
 al.}~\cite{athalye2018} menunjukkan banyak pertahanan hanya \emph{menyamarkan
 gradien} (\emph{obfuscated gradients}) dan runtuh di bawah serangan
-\emph{adaptive white-box} yang menyesuaikan diri terhadap pertahanan. Karena itu
-kami menguji rezim \emph{adaptive white-box} secara eksplisit dan melaporkan
-hasilnya apa adanya, termasuk saat pertahanan gagal.
+\emph{adaptive white-box} yang menyesuaikan diri terhadap pertahanan. Untuk model
+berbasis pohon secara khusus, serangan dan pengerasan telah dipelajari melalui
+evasi ansambel pohon~\cite{kantchelian2016} dan pohon keputusan
+\emph{robust}~\cite{chen2019robusttrees}, sementara pertahanan bersertifikat seperti
+\emph{randomized smoothing}~\cite{cohen2019smoothing} menawarkan jaminan yang tak
+bergantung pada kemulusan gradien. Serangan \emph{transfer}~\cite{papernot2016transfer}
+dan \emph{score-based black-box}~\cite{ilyas2018blackbox} menandai spektrum
+pengetahuan penyerang. Karena itu kami menguji rezim \emph{adaptive white-box}
+secara eksplisit dan melaporkan hasilnya apa adanya, termasuk saat pertahanan gagal.
 
 % ============================================================
-\section{Metodologi}
+\section{Methodology}
 \label{sec:metode}
 
 Gambar~\ref{fig:pipeline} memvisualkan arsitektur pipeline secara menyeluruh:
@@ -161,18 +197,20 @@ adaptive white-box) across two directions and two robustness axes.}
 \label{fig:pipeline}
 \end{figure}
 
-\subsection{Fitur, Data, dan Model}
+\subsection{Features, Data, and Model}
 Kami memakai sembilan fitur SFM (\texttt{duration, fwd\_pkts, bwd\_pkts,
 fwd\_bytes, bwd\_bytes, fwd\_mean, bwd\_mean, src\_load, dst\_load}) hasil pemetaan
 CSE-CIC-IDS2018 $\leftrightarrow$ UNSW-NB15, dengan \emph{StandardScaler} (z-score)
 di-\emph{fit} \textbf{hanya pada data latih} lalu diterapkan (\emph{transform}) ke
-data uji (tanpa kebocoran). Model: satu \texttt{XGBoost}~\cite{chen2016xgboost} biner
+data uji (tanpa kebocoran). Model: satu \texttt{XGBoost}~\cite{xgboost} biner
 (\texttt{max\_depth}=8, \texttt{lr}=0.1, \texttt{n\_estimators}=200,
 \texttt{subsample}/\texttt{colsample}=0.8), konsisten dengan kerangka
 SFM~\cite{martono2024sfm}. Dataset:
 CSE-CIC-IDS2018~\cite{sharafaldin2018} dan UNSW-NB15~\cite{moustafa2015}.
+Implementasi memakai \emph{scikit-learn}~\cite{sklearn}; pemisahan latih/uji
+mengikuti praktik baku~\cite{kohavi}.
 
-\subsection{Empat Varian Pelatihan}
+\subsection{Four Training Variants}
 Notasi \emph{A}$\rightarrow$\emph{B} berarti model \textbf{dilatih pada dataset
 sumber \emph{A}} lalu \textbf{diuji pada dataset target \emph{B}} (konvensi baku
 \emph{domain adaptation}, sumber$\rightarrow$target). Jadi CIC$\rightarrow$UNSW =
@@ -190,7 +228,7 @@ UNSW$\rightarrow$CIC):
   \emph{adversarial training} di atasnya.
 \end{enumerate}
 
-\subsection{Pembangkitan Adversarial}
+\subsection{Adversarial Generation}
 \label{sec:saliency}
 XGBoost adalah ansambel pohon --- fungsi keputusannya \emph{konstan-per-bagian}
 (\emph{piecewise constant}) sehingga tak-terdiferensiasi: gradien analitik bernilai
@@ -228,7 +266,7 @@ verifikasi robust-tree~\cite{chen2019robusttrees}) merupakan arah pelengkap;
 memakainya hanya akan \emph{memperkuat} temuan keruntuhan kami, bukan membaliknya.
 
 % ============================================================
-\section{Model Ancaman dan Batasan Fungsional}
+\section{Threat Model and Functional Constraints}
 \label{sec:ancaman}
 
 Sebuah serangan \emph{evasion} dicirikan oleh \emph{dua properti yang saling bebas},
@@ -293,8 +331,9 @@ mean konsisten, monotonik \emph{add-only})
 \end{algorithm}
 
 \paragraph{Metrik.} Metrik utama kami adalah \emph{Matthews Correlation Coefficient}
-(MCC), yang tahan terhadap ketidakseimbangan kelas karena memperhitungkan keempat
-sel matriks konfusi secara simetris:
+(MCC)~\cite{matthews}, yang tahan terhadap ketidakseimbangan kelas karena
+memperhitungkan keempat sel matriks konfusi secara simetris dan, karenanya, lebih
+informatif daripada akurasi/F1 pada data tak-seimbang~\cite{chicco}:
 \begin{equation}
 \mathrm{MCC} = \frac{\mathrm{TP}\cdot\mathrm{TN} - \mathrm{FP}\cdot\mathrm{FN}}
 {\sqrt{(\mathrm{TP}{+}\mathrm{FP})(\mathrm{TP}{+}\mathrm{FN})
@@ -307,7 +346,7 @@ dengan ketidakseimbangan kelas ekstrem MCC dapat rendah meskipun \emph{recall}
 tinggi (Bagian~\ref{sec:aws}).
 
 % ============================================================
-\section{Hasil dan Pembahasan}
+\section{Results and Discussion}
 \label{sec:hasil}
 
 % ----- Tabel utama (diisi dari paper2_eval_results.json, notebook 12) -----
@@ -438,7 +477,7 @@ succeeds --- explaining the asymmetric collapse on UNSW$\rightarrow$CIC.}
 \end{figure}
 
 % ============================================================
-\section{Validasi pada Trafik AWS Nyata (Proof-of-Concept)}
+\section{Validation on Real AWS Traffic (Proof-of-Concept)}
 \label{sec:aws}
 Untuk menjawab pertanyaan apakah serangan \emph{functional-preserving evasion}
 benar-benar dapat memperdaya NIDS di luar simulasi \emph{benchmark}, kami
@@ -555,7 +594,7 @@ tersimpan di \texttt{detect\_\{clean,evasion\}\_\{CIC\_to\_UNSW,UNSW\_to\_CIC\}}
 (direktori \texttt{unswnb-15/aws/paper2\_aws/}).
 
 % ============================================================
-\section{Kesimpulan dan Kerja Mendatang}
+\section{Conclusion and Future Work}
 \label{sec:conclusion}
 Makalah ini memperluas pipeline SFM $+$ few-shot dengan dimensi ketahanan
 adversarial pada satu XGBoost ringan, dan mengevaluasinya secara jujur di bawah
@@ -576,9 +615,184 @@ berkelanjutan untuk merespons \emph{drift} domain; (iii) memperluas validasi AWS
 % ============================================================
 \begin{thebibliography}{99}
 
+% --- Surveys & context: ML for cybersecurity / IDS ---
+\bibitem{cremer} F.~Cremer, B.~Sheehan, M.~Fortmann, A.~N.~Kia, M.~Mullins,
+F.~Murphy, S.~Materne, Cyber risk and cybersecurity: A systematic review of data
+availability, \emph{Geneva Papers Risk Insurance --- Issues Pract.} 47~(3) (2022)
+698--736.
+
+\bibitem{torres} J.~M.~Torres, C.~I.~Comesa\~na, P.~J.~Garc\'ia-Nieto, Machine
+learning techniques applied to cybersecurity, \emph{Int.\ J.\ Mach.\ Learn.\
+Cybern.} 10~(10) (2019) 2823--2836.
+
+\bibitem{sarker} I.~H.~Sarker, A.~S.~M.~Kayes, S.~Badsha, H.~Alqahtani, P.~Watters,
+A.~Ng, Cybersecurity data science: An overview from machine learning perspective,
+\emph{J.\ Big Data} 7~(1) (2020) 1--29.
+
+\bibitem{khraisat} A.~Khraisat, I.~Gondal, P.~Vamplew, J.~Kamruzzaman, Survey of
+intrusion detection systems: Techniques, datasets and challenges,
+\emph{Cybersecurity} 2~(1) (2019) 1--22.
+
+\bibitem{buczak} A.~L.~Buczak, E.~Guven, A survey of data mining and machine
+learning methods for cyber security intrusion detection, \emph{IEEE Commun.\
+Surveys Tuts.} 18~(2) (2016) 1153--1176.
+
+\bibitem{bhuyan} M.~H.~Bhuyan, D.~K.~Bhattacharyya, J.~K.~Kalita, Network anomaly
+detection: Methods, systems and tools, \emph{IEEE Commun.\ Surveys Tuts.} 16~(1)
+(2014) 303--336.
+
+% --- Datasets ---
+\bibitem{kdd} M.~Tavallaee, E.~Bagheri, W.~Lu, A.~A.~Ghorbani, A detailed analysis
+of the KDD Cup 99 data set, dalam: \emph{IEEE CISDA}, 2009, hlm. 1--6.
+
+\bibitem{moustafa2015} N.~Moustafa, J.~Slay, UNSW-NB15: A comprehensive data set for
+network intrusion detection systems, dalam: \emph{MilCIS}, 2015, hlm. 1--6.
+
+\bibitem{unsweval} N.~Moustafa, J.~Slay, The evaluation of network anomaly detection
+systems: Statistical analysis of the UNSW-NB15 data set and the comparison with the
+KDD99 data set, \emph{Inf.\ Secur.\ J.} 25~(1--3) (2016) 18--31.
+
+\bibitem{sharafaldin2018} I.~Sharafaldin, A.~H.~Lashkari, A.~A.~Ghorbani, Toward
+generating a new intrusion detection dataset and intrusion traffic characterization,
+dalam: \emph{ICISSP}, 2018, hlm. 108--116.
+
+\bibitem{cicddos} I.~Sharafaldin, A.~H.~Lashkari, S.~Hakak, A.~A.~Ghorbani,
+Developing realistic distributed denial of service (DDoS) attack dataset and
+taxonomy, dalam: \emph{ICCST}, 2019, hlm. 1--8.
+
+\bibitem{botiot} N.~Koroniotis, N.~Moustafa, E.~Sitnikova, B.~Turnbull, Towards the
+development of realistic botnet dataset for IoT networks, \emph{IEEE Access} 7
+(2019) 94529--94541.
+
+\bibitem{toniot} A.~Alsaedi, N.~Moustafa, Z.~Tari, A.~N.~Mahmood, A.~Anwar,
+TON\_IoT telemetry dataset, \emph{IEEE Access} 8 (2020) 165130--165150.
+
+\bibitem{ciciot} E.~C.~P.~Neto, S.~Dadkhah, R.~Ferreira, A.~Zohourian, R.~Lu,
+A.~A.~Ghorbani, CICIoT2023: A real-time dataset and benchmark for large-scale
+attacks in IoT environment, \emph{Sensors} 23~(13) (2023) art.~5941.
+
+\bibitem{ring} M.~Ring, S.~Wunderlich, D.~Scheuring, D.~Landes, A.~Hotho, A survey
+of network-based intrusion detection data sets, \emph{Comput.\ Secur.} 86 (2019)
+147--167.
+
+% --- Dataset quality / benchmark critique ---
+\bibitem{engelen} G.~Engelen, V.~Rimmer, W.~Joosen, Troubleshooting an intrusion
+detection dataset: The CICIDS2017 case study, dalam: \emph{IEEE SPW}, 2021, hlm.
+7--12.
+
+\bibitem{rosay} A.~Rosay, E.~Cheval, F.~Carlier, P.~Leroux, Network intrusion
+detection: A comprehensive analysis of CIC-IDS2017, dalam: \emph{ICISSP}, 2022,
+hlm. 25--36.
+
+\bibitem{lanvin} M.~Lanvin, P.-F.~Gimenez, Y.~Han, F.~Majorczyk, L.~M\'e, \'E.~Totel,
+Errors in the CICIDS2017 dataset and the significant differences in detection
+performances it makes, dalam: \emph{CRiSIS}, 2022, hlm. 18--33.
+
+\bibitem{liu} L.~Liu, G.~Engelen, T.~Lynar, D.~Essam, W.~Joosen, Error prevalence in
+NIDS datasets: A case study on CIC-IDS-2017 and CSE-CIC-IDS-2018, dalam: \emph{IEEE
+CNS}, 2022, hlm. 254--262.
+
+\bibitem{catillo} M.~Catillo, A.~Pecchia, U.~Villano, Machine learning on public
+intrusion datasets: Academic hype or concrete advances in NIDS?, dalam:
+\emph{IEEE/IFIP DSN-S}, 2023, hlm. 132--136.
+
+\bibitem{layeghy} S.~Layeghy, M.~Gallagher, M.~Portmann, Benchmarking the benchmark
+--- Comparing synthetic and real-world network IDS datasets, \emph{J.\ Inf.\ Secur.\
+Appl.} 80 (2024) art.~103689.
+
+% --- Standard feature sets / cross-dataset generalization ---
+\bibitem{sarhan} M.~Sarhan, S.~Layeghy, M.~Portmann, Towards a standard feature set
+for network intrusion detection system datasets, \emph{Mobile Netw.\ Appl.} 27~(1)
+(2022) 357--370.
+
+\bibitem{sarhannf} M.~Sarhan, S.~Layeghy, N.~Moustafa, M.~Portmann, NetFlow datasets
+for machine learning-based network intrusion detection systems, dalam: \emph{Big
+Data Technologies and Applications}, Springer, 2022.
+
+\bibitem{cantone} M.~Cantone, C.~Marrocco, A.~Bria, Machine learning in network
+intrusion detection: A cross-dataset generalization study, \emph{IEEE Access} 12
+(2024) 144491--144509.
+
+\bibitem{dhooge} L.~D'Hooge, T.~Wauters, B.~Volckaert, F.~De~Turck, Inter-dataset
+generalization strength of supervised machine learning methods for intrusion
+detection, \emph{J.\ Inf.\ Secur.\ Appl.} 54 (2020) art.~102564.
+
+\bibitem{verkerken} M.~Verkerken, L.~D'Hooge, T.~Wauters, B.~Volckaert, F.~De~Turck,
+Towards model generalization for intrusion detection: Unsupervised machine learning
+techniques, \emph{J.\ Netw.\ Syst.\ Manage.} 30~(1) (2022) 1--25.
+
+% --- Federated / heterogeneous IDS ---
+\bibitem{popoola} S.~I.~Popoola, G.~Gui, B.~Adebisi, M.~Hammoudeh, H.~Gacanin,
+Federated deep learning for collaborative intrusion detection in heterogeneous
+networks, dalam: \emph{IEEE VTC-Fall}, 2021, hlm. 1--6.
+
+\bibitem{bertoli} G.~de~Carvalho~Bertoli, L.~A.~Pereira~Jr., O.~Saotome,
+A.~L.~dos~Santos, Generalizing intrusion detection for heterogeneous networks: A
+stacked-unsupervised federated learning approach, \emph{Comput.\ Secur.} 127 (2023)
+art.~103106.
+
+\bibitem{agrawal} S.~Agrawal, S.~Sarkar, O.~Aouedi, G.~Yenduri, K.~Piamrat,
+M.~Alazab, S.~Bhattacharya, P.~K.~R.~Maddikunta, T.~R.~Gadekallu, Federated learning
+for intrusion detection system: Concepts, challenges and future directions,
+\emph{Comput.\ Commun.} 195 (2022) 346--361.
+
+\bibitem{nidsfgpa} J.~Wang, K.~Yang, M.~Li, NIDS-FGPA: A federated learning network
+intrusion detection algorithm based on secure aggregation of gradient similarity
+models, \emph{PLoS ONE} 19~(10) (2024) art.~e0308639.
+
+% --- ML / DL models for IDS ---
+\bibitem{xgboost} T.~Chen, C.~Guestrin, XGBoost: A scalable tree boosting system,
+dalam: \emph{ACM SIGKDD}, 2016, hlm. 785--794.
+
+\bibitem{husain} A.~Husain, A.~Salem, C.~Jim, G.~Dimitoglou, Development of an
+efficient network intrusion detection model using XGBoost on the UNSW-NB15 dataset,
+dalam: \emph{IEEE ISSPIT}, 2019, hlm. 1--7.
+
+\bibitem{zhou} Y.~Zhou, G.~Cheng, S.~Jiang, M.~Dai, Building an efficient intrusion
+detection system based on feature selection and ensemble classifier, \emph{Comput.\
+Netw.} 174 (2020) art.~107247.
+
+\bibitem{shone} N.~Shone, T.~N.~Ngoc, V.~D.~Phai, Q.~Shi, A deep learning approach to
+network intrusion detection, \emph{IEEE Trans.\ Emerg.\ Topics Comput.\ Intell.}
+2~(1) (2018) 41--50.
+
+\bibitem{liulang} H.~Liu, B.~Lang, Machine learning and deep learning methods for
+intrusion detection systems: A survey, \emph{Appl.\ Sci.} 9~(20) (2019) art.~4396.
+
+\bibitem{mahdavifar} S.~Mahdavifar, A.~A.~Ghorbani, Application of deep learning to
+cybersecurity: A survey, \emph{Neurocomputing} 347 (2019) 149--176.
+
+\bibitem{wu} Z.~Wu, H.~Zhang, P.~Wang, Z.~Sun, RTIDS: A robust transformer-based
+approach for intrusion detection system, \emph{IEEE Access} 10 (2022) 64375--64387.
+
+\bibitem{duan} G.~Duan, H.~Lv, H.~Wang, G.~Feng, Application of a dynamic line graph
+neural network for intrusion detection with semisupervised learning, \emph{IEEE
+Trans.\ Inf.\ Forensics Security} 18 (2023) 699--714.
+
+% --- Domain adaptation / few-shot / theory ---
+\bibitem{coral} B.~Sun, J.~Feng, K.~Saenko, Return of frustratingly easy domain
+adaptation, dalam: \emph{AAAI}, 2016, hlm. 2058--2065.
+
+\bibitem{bendavid} S.~Ben-David, J.~Blitzer, K.~Crammer, A.~Kulesza, F.~Pereira,
+J.~W.~Vaughan, A theory of learning from different domains, \emph{Mach.\ Learn.}
+79~(1--2) (2010) 151--175.
+
+\bibitem{fewshot} C.~Xu, Y.~Zhan, G.~Chen, Z.~Wang, S.~Liu, W.~Hu, Elevated few-shot
+network intrusion detection via self-attention mechanisms and iterative refinement,
+\emph{PLoS ONE} 20~(1) (2025) art.~e0317713.
+
+\bibitem{martono2024sfm} H.~Y.~Martono, I.~Syarif, F.~A.~Saputra, Cross-network
+generalization of network intrusion detection via semantic feature mapping and
+few-shot calibration, \emph{J.\ Inf.\ Secur.\ Appl.} (in press/under review), 2024.
+
+% --- Adversarial ML (core of this paper) ---
 \bibitem{biggio2013} B.~Biggio, I.~Corona, D.~Maiorca, B.~Nelson, N.~\v{S}rndi\'c,
 P.~Laskov, G.~Giacinto, F.~Roli, Evasion attacks against machine learning at test
 time, dalam: \emph{ECML PKDD}, 2013, hlm. 387--402.
+
+\bibitem{szegedy2014} C.~Szegedy, W.~Zaremba, I.~Sutskever, J.~Bruna, D.~Erhan,
+I.~Goodfellow, R.~Fergus, Intriguing properties of neural networks, dalam:
+\emph{ICLR}, 2014.
 
 \bibitem{goodfellow2015} I.~J.~Goodfellow, J.~Shlens, C.~Szegedy, Explaining and
 harnessing adversarial examples, dalam: \emph{ICLR}, 2015.
@@ -586,10 +800,26 @@ harnessing adversarial examples, dalam: \emph{ICLR}, 2015.
 \bibitem{madry2018} A.~Madry, A.~Makelov, L.~Schmidt, D.~Tsipras, A.~Vladu, Towards
 deep learning models resistant to adversarial attacks, dalam: \emph{ICLR}, 2018.
 
+\bibitem{carlini2017} N.~Carlini, D.~Wagner, Towards evaluating the robustness of
+neural networks, dalam: \emph{IEEE S\&P}, 2017, hlm. 39--57.
+
 \bibitem{athalye2018} A.~Athalye, N.~Carlini, D.~Wagner, Obfuscated gradients give
 a false sense of security: Circumventing defenses to adversarial examples, dalam:
 \emph{ICML}, 2018, hlm. 274--283.
 
+\bibitem{papernot2016transfer} N.~Papernot, P.~McDaniel, I.~Goodfellow,
+Transferability in machine learning: from phenomena to black-box attacks using
+adversarial samples, \emph{arXiv:1605.07277}, 2016.
+
+\bibitem{ilyas2018blackbox} A.~Ilyas, L.~Engstrom, A.~Athalye, J.~Lin, Black-box
+adversarial attacks with limited queries and information, dalam: \emph{ICML}, 2018,
+hlm. 2137--2146.
+
+\bibitem{cohen2019smoothing} J.~Cohen, E.~Rosenfeld, J.~Z.~Kolter, Certified
+adversarial robustness via randomized smoothing, dalam: \emph{ICML}, 2019, hlm.
+1310--1320.
+
+% --- Adversarial ML specific to NIDS ---
 \bibitem{lin2022idsgan} Z.~Lin, Y.~Shi, Z.~Xue, IDSGAN: Generative adversarial
 networks for attack generation against intrusion detection, dalam: \emph{PAKDD},
 2022, hlm. 79--91.
@@ -603,33 +833,43 @@ detection systems, \emph{ACM Digital Threats: Research and Practice} 3~(3) (2022
 Investigating the practicality of adversarial evasion attacks on network intrusion
 detection, \emph{Annals of Telecommunications} 77 (2022) 763--775.
 
-\bibitem{chen2016xgboost} T.~Chen, C.~Guestrin, XGBoost: A scalable tree boosting
-system, dalam: \emph{ACM SIGKDD}, 2016, hlm. 785--794.
+\bibitem{alhajjar2021} E.~Alhajjar, P.~Maxwell, N.~Bastian, Adversarial machine
+learning in network intrusion detection systems, \emph{Expert Syst.\ Appl.} 186
+(2021) art.~115782.
 
-\bibitem{sharafaldin2018} I.~Sharafaldin, A.~H.~Lashkari, A.~A.~Ghorbani, Toward
-generating a new intrusion detection dataset and intrusion traffic characterization,
-dalam: \emph{ICISSP}, 2018, hlm. 108--116.
+\bibitem{sheatsley2022} R.~Sheatsley, N.~Papernot, M.~Weisman, G.~Verma,
+P.~McDaniel, Adversarial examples for network intrusion detection systems,
+\emph{J.\ Comput.\ Secur.} 30~(5) (2022) 727--752.
 
-\bibitem{moustafa2015} N.~Moustafa, J.~Slay, UNSW-NB15: A comprehensive data set for
-network intrusion detection systems, dalam: \emph{MilCIS}, 2015, hlm. 1--6.
+\bibitem{chen2019robusttrees} H.~Chen, H.~Zhang, D.~Boning, C.-J.~Hsieh, Robust
+decision trees against adversarial examples, dalam: \emph{ICML}, 2019, hlm.
+1122--1131.
 
-\bibitem{martono2024sfm} H.~Y.~Martono, I.~Syarif, F.~A.~Saputra, Cross-network
-generalization of network intrusion detection via semantic feature mapping and
-few-shot calibration, \emph{Journal of Information Security and Applications} (in
-press/under review), 2024.
+\bibitem{kantchelian2016} A.~Kantchelian, J.~D.~Tygar, A.~D.~Joseph, Evasion and
+hardening of tree ensemble classifiers, dalam: \emph{ICML}, 2016, hlm. 2387--2396.
 
 \bibitem{lundberg2020treeshap} S.~M.~Lundberg, G.~Erion, H.~Chen, A.~DeGrave,
 J.~M.~Prutkin, B.~Nair, R.~Katz, J.~Himmelfarb, N.~Bansal, S.-I.~Lee, From local
 explanations to global understanding with explainable AI for trees, \emph{Nature
 Machine Intelligence} 2~(1) (2020) 56--67.
 
-\bibitem{chen2019robusttrees} H.~Chen, H.~Zhang, D.~Boning, C.-J.~Hsieh, Robust
-decision trees against adversarial examples, dalam: \emph{ICML}, 2019, hlm.
-1122--1131.
+% --- Tools & metrics ---
+\bibitem{wasserstein} C.~Villani, \emph{Optimal Transport: Old and New}, Springer,
+2009.
 
-\bibitem{ilyas2018blackbox} A.~Ilyas, L.~Engstrom, A.~Athalye, J.~Lin, Black-box
-adversarial attacks with limited queries and information, dalam: \emph{ICML}, 2018,
-hlm. 2137--2146.
+\bibitem{sklearn} F.~Pedregosa et al., Scikit-learn: Machine learning in Python,
+\emph{J.\ Mach.\ Learn.\ Res.} 12 (2011) 2825--2830.
+
+\bibitem{kohavi} R.~Kohavi, A study of cross-validation and bootstrap for accuracy
+estimation and model selection, dalam: \emph{IJCAI}, 1995, hlm. 1137--1143.
+
+\bibitem{matthews} B.~W.~Matthews, Comparison of the predicted and observed
+secondary structure of T4 phage lysozyme, \emph{Biochim.\ Biophys.\ Acta} 405~(2)
+(1975) 442--451.
+
+\bibitem{chicco} D.~Chicco, G.~Jurman, The advantages of the Matthews correlation
+coefficient (MCC) over F1 score and accuracy in binary classification evaluation,
+\emph{BMC Genomics} 21~(1) (2020) 6.
 
 \end{thebibliography}
 
