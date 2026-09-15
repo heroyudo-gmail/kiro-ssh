@@ -12,6 +12,14 @@
 > `adv-far-ec2` & `adv-far-vpc` = DELETE_COMPLETE; tidak ada biaya berjalan).
 > Untuk mengulang: ikuti bagian **JALUR CEPAT** di bawah.
 
+> **CATATAN LANJUTAN (validasi 3-tahap few-shot AWS):** trafik AWS berlabel dari
+> eksperimen di atas (`aws_labeled/detect_{clean,volumetric}_flows.csv`) DIPAKAI ULANG
+> secara OFFLINE oleh notebook `15_aws_fewshot_calibration.ipynb` untuk menjawab reviewer
+> #6 — TIDAK perlu deploy infra AWS lagi. nb15 melatih model benchmark, lalu uji 3-tahap
+> pada AWS labeled: S0 zero-shot → S1 +1% AWS few-shot → S2 +adv. Hasil `aws_stages_agg.csv`
+> → Tabel `tab:aws_stages`. Lihat Bagian 7 di bawah. **Dokumentasi induk seluruh percobaan
+> Paper 2 ada di `unswnb-15/documentation_adversarial.md`.**
+
 ---
 
 ## PELAJARAN dari eksekusi pertama (WAJIB dibaca — pakai pola Paper 1, jangan coba yang baru)
@@ -303,3 +311,50 @@ aws cloudformation wait stack-delete-complete --stack-name adv-far-vpc --region 
 - **Kejujuran**: laporkan MCC apa adanya. Bila model runtuh di trafik AWS (spt temuan Paper 1
   zero-shot), itu temuan valid — bukan kegagalan eksperimen.
 - **Biaya**: dua t3.medium + NAT. Hapus infra segera setelah hasil ter-upload.
+
+---
+
+## 7. Validasi tiga-tahap few-shot AWS (OFFLINE — tanpa deploy infra)
+
+> Menjawab reviewer #6: membuktikan pipeline USULAN (source + 1% target + adversarial
+> training) benar-benar transfer ke trafik cloud nyata, bukan sekadar zero-shot failure.
+> **Tidak butuh EC2/VPC** — memakai ulang CSV berlabel yang sudah ada.
+
+**Input (sudah ada, ter-track git):**
+- `unswnb-15/notebooks/aws_labeled/detect_clean_flows.csv` (434 flow: 333 atk / 101 benign)
+- `unswnb-15/notebooks/aws_labeled/detect_volumetric_flows.csv` (17.319: 17.287 atk / 32 benign)
+- Gabungan = 17.753 flow (17.620 atk / 133 benign). 9 fitur SFM + kolom `ground_truth`.
+
+**Notebook:** `15_aws_fewshot_calibration.ipynb` (jalankan di SageMaker, self-contained).
+Tiga tahap × 2 arah (CIC→AWS, UNSW→AWS) × 5 seed:
+- **S0 zero-shot:** model sumber → eval AWS-test (reproduksi domain-shift failure).
+- **S1 +1% AWS few-shot:** sumber + 1% label AWS-train → eval AWS-test clean.
+- **S2 +1% AWS + adv:** S1 + adversarial training → eval clean + adversarial (PCFS FGSM/PGD).
+- Leakage: 1% few-shot HANYA dari AWS-train (stratified split disjoint per seed); scaler
+  fit sumber saja.
+
+**Output:** `paper2_reviewer_out/aws_stages_agg.csv` + `aws_stages_rows.tex`, upload ke
+`s3://.../unsw-far/paper2_reviewer/`. Isi ke `tab:aws_stages`.
+
+**Hasil referensi (sanity-check):** CIC→AWS MCC clean S0 0,001 → S1 0,184 → S2 0,246
+(recall 0,000 → 0,97); UNSW→AWS S0 0,052 → S1 0,026 → S2 0,143 (recall ~0,99).
+Ketahanan adversarial S2 di AWS TETAP LEMAH (−0,04..0,07) — few-shot transfer utk
+generalisasi, bukan evasion. MCC rendah = trade-off sensitivitas-spesifisitas (imbalance
+17.620:133), BUKAN artefak metrik.
+
+---
+
+## 8. Notebook reviewer lain yang OFFLINE (tanpa infra AWS)
+
+Selain nb15, tiga notebook ini juga jalan di SageMaker (bukan EC2) dan output-nya
+diunggah ke S3 `unsw-far/paper2_reviewer/`. Ambil hasil pakai pola download di
+`documentation_adversarial.md` Bagian 9 (redirect ke file, baca dgn read tool):
+
+- `14_reviewer_experiments.ipynb` → reviewer_agg, multiattack, significance,
+  perturbation_metrics, dataset_stats. **SUDAH dijalankan** (hasil masuk paper).
+- `16_defense_baselines.ipynb` → defense_baselines_agg.csv (PGD-AT/Gaussian/rand-smoothing).
+  **⏳ tab:defense_baselines masih placeholder.**
+- `17_decision_cell.ipynb` → decision_cell.csv (kappa/w/d_boundary/crossing-prob).
+  **⏳ tab:decisioncell masih placeholder.**
+
+> Untuk status lengkap & keputusan riset: `unswnb-15/documentation_adversarial.md`.
