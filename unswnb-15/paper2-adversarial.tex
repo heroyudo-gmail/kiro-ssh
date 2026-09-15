@@ -347,17 +347,18 @@ only and applied unchanged to test. AWS counts are exact
 \toprule
 Dataset & \#total & attack & benign & \#feat. & split protocol \\
 \midrule
-CSE-CIC-IDS2018~\cite{sharafaldin2018} & --$^{\dagger}$ & imbalanced & imbalanced & $9$ & random, stratified $70/30$, seed-fixed \\
+CSE-CIC-IDS2018~\cite{sharafaldin2018} & $1{,}623{,}261$ & $274{,}808$ & $1{,}348{,}453$ & $9$ & random, stratified $70/30$, seed-fixed \\
 UNSW-NB15~\cite{moustafa2015}          & $257{,}673$ & $164{,}673$ & $93{,}000$ & $9$ & official train/test files ($175{,}341/82{,}332$) \\
 AWS (real, self-labelled)              & $17{,}753$ & $17{,}620$ & $133$ & $9$ & stratified train/test per seed \\
 \bottomrule
 \end{tabular}
 
 \vspace{0.3em}
-\noindent{\footnotesize $^{\dagger}$ CSE-CIC-IDS2018 exact post-preprocessing count
-is recorded in the reproducible artefact (\texttt{cleaned\_100.pkl}); its test
-partition is class-imbalanced and used only as source (never few-shot-calibrated in
-the cross-network experiments where it is the source).}
+\noindent{\footnotesize CSE-CIC-IDS2018 counts are after preprocessing
+(\texttt{cleaned\_100.pkl}); attack:benign $\approx 1{:}4.9$ (class-imbalanced). It
+is used as source in the cross-network experiments (never few-shot-calibrated when it
+is the source). UNSW counts are official release sizes; AWS counts are exact
+(\texttt{aws\_labeled/*.csv}).}
 \end{table}
 
 \paragraph{Detail praproses (untuk reproduktibilitas).} \emph{(1) Label mapping:}
@@ -821,47 +822,58 @@ Agar perbedaan antar-varian tidak disalahartikan sebagai efek acak \emph{seed},
 Tabel~\ref{tab:significance} melaporkan MCC sebagai rerata $\pm$ simpangan baku
 beserta selang kepercayaan $95\%$ atas lima \emph{seed} untuk perbandingan kunci
 \emph{few-shot} versus \emph{few-shot$+$adv}, dan kami nyatakan signifikansi melalui
-\emph{tumpang-tindih} selang kepercayaan (CI yang tidak beririsan menandakan beda
-yang bermakna pada $\alpha=0{,}05$). Tiga simpulan --- dan kami laporkan jujur
-termasuk yang \emph{tidak} signifikan. \emph{(i) Pada generalisasi (clean), selisih
-few-shot$\rightarrow$few-shot$+$adv tidak signifikan:} CIC$\rightarrow$UNSW
-$0{,}650\,[0{,}630;0{,}671]$ versus $0{,}662\,[0{,}647;0{,}677]$ (CI beririsan),
-dan UNSW$\rightarrow$CIC $0{,}899$ versus $0{,}898$ (praktis identik). Jadi
-\emph{adversarial training tidak memperbaiki generalisasi} --- ia hanya
-\emph{mempertahankannya}, dan kami tidak mengklaim lebih. \emph{(ii) Pada ketahanan
-di arah UNSW$\rightarrow$CIC, perbaikan few-shot$+$adv signifikan:} di bawah FGSM
-$\epsilon{=}0{,}1$, \emph{few-shot} $-0{,}169\,[-0{,}209;-0{,}129]$ versus
-\emph{few-shot$+$adv} $0{,}219\,[0{,}082;0{,}357]$ --- CI \textbf{tidak beririsan},
-sehingga \emph{adversarial training benar-benar menaikkan ketahanan} di arah ini.
-\emph{(iii) Pada ketahanan di arah CIC$\rightarrow$UNSW, perbedaannya tidak
-konklusif:} varians PGD \emph{few-shot$+$adv} besar ($\pm0{,}145$) sehingga CI
-beririsan dengan \emph{few-shot} --- kami tidak mengklaim keunggulan di sini.
-Ringkasnya, satu-satunya klaim keunggulan \emph{few-shot$+$adv} yang \emph{signifikan
-secara statistik} adalah ketahanan FGSM pada UNSW$\rightarrow$CIC; klaim lainnya
-adalah \emph{paritas} (tidak lebih buruk), dan itulah yang kami nyatakan.
+\emph{uji-$t$ berpasangan} atas lima \emph{seed} (didampingi Wilcoxon signed-rank);
+$p<0{,}05$ menandai beda yang bermakna. Empat simpulan --- dilaporkan jujur,
+termasuk arah yang \emph{merugikan}. \emph{(i) Pada generalisasi (clean), selisih
+tidak signifikan:} CIC$\rightarrow$UNSW $0{,}650$ versus $0{,}662$ ($p{=}0{,}24$) dan
+UNSW$\rightarrow$CIC $0{,}899$ versus $0{,}898$ ($p{=}0{,}45$). Jadi
+\emph{adversarial training tidak memperbaiki generalisasi} --- hanya
+\emph{mempertahankannya}. \emph{(ii) Pada arah UNSW$\rightarrow$CIC, perbaikan
+few-shot$+$adv signifikan di kedua serangan:} FGSM $-0{,}169\rightarrow0{,}219$
+($p{=}0{,}003$) dan PGD $-0{,}124\rightarrow0{,}178$ ($p{=}0{,}033$) --- di sini
+\emph{adversarial training benar-benar dan bermakna menaikkan ketahanan}.
+\emph{(iii) Namun pada arah CIC$\rightarrow$UNSW di bawah PGD, few-shot$+$adv justru
+\textbf{lebih buruk} secara signifikan:} $0{,}524\rightarrow0{,}302$ ($p{=}0{,}012$).
+Kami laporkan ini apa adanya: menambahkan \emph{adversarial training} berbasis-FGSM
+dapat \emph{menurunkan} ketahanan terhadap serangan iteratif yang lebih kuat pada
+domain target bervarians-tinggi --- gejala \emph{robust overfitting} ke arah serangan
+satu-langkah. \emph{(iv)} Di bawah FGSM CIC$\rightarrow$UNSW selisihnya tidak
+signifikan ($p{=}0{,}74$). Ringkasnya, keunggulan \emph{few-shot$+$adv} yang
+signifikan hanya pada arah UNSW$\rightarrow$CIC; pada CIC$\rightarrow$UNSW ia
+\emph{paritas} untuk generalisasi tetapi dapat \emph{tertinggal} di bawah PGD ---
+sebuah trade-off terarah yang memperkuat tesis asimetri kami, bukan melemahkannya.
 
 \begin{table}[h]
 \centering
 \caption{Statistical significance of the key comparison \emph{few-shot} vs
-\emph{few-shot$+$adv}: MCC as mean $\pm$ std with $95\%$ confidence interval (CI)
-over five seeds. Significance is read from CI overlap (non-overlapping CIs $\Rightarrow$
-difference significant at $\alpha{=}0.05$). ``sig?'' marks whether the two variants'
-CIs are disjoint. Source: \texttt{reviewer\_agg.csv}.}
+\emph{few-shot$+$adv} (MCC, mean $\pm$ std over five seeds), tested with a paired
+$t$-test on per-seed pairs (Wilcoxon signed-rank agrees in sign). Positive $\Delta$
+favours few-shot$+$adv. Note the \emph{directional} result: adversarial training
+helps significantly on UNSW$\rightarrow$CIC but \emph{hurts} significantly under PGD
+on CIC$\rightarrow$UNSW. Source: \texttt{significance\_fewshot\_vs\_adv.csv}.}
 \label{tab:significance}
 \small
-\begin{tabular}{llccc}
+\begin{tabular}{llcccc}
 \toprule
-Direction & Condition & few-shot (MCC, 95\% CI) & few-shot$+$adv (MCC, 95\% CI) & sig? \\
+Direction & Condition & few-shot & few-shot$+$adv & $\Delta$ (adv$-$fs) & paired $t$ $p$ \\
 \midrule
-\multirow{2}{*}{CIC$\rightarrow$UNSW}
- & clean            & $0{,}650\,[0{,}630;0{,}671]$ & $0{,}662\,[0{,}647;0{,}677]$ & no \\
- & FGSM $\epsilon{=}0.1$ & $0{,}493\,[0{,}408;0{,}579]$ & $0{,}454\,[0{,}145;0{,}763]$ & no \\
+\multirow{3}{*}{CIC$\rightarrow$UNSW}
+ & clean            & $0{,}650\,{\pm}0{,}016$ & $0{,}662\,{\pm}0{,}012$ & $+0{,}011$ & $0{,}241$ \\
+ & FGSM $\epsilon{=}0.1$ & $0{,}493\,{\pm}0{,}069$ & $0{,}454\,{\pm}0{,}249$ & $-0{,}039$ & $0{,}735$ \\
+ & PGD $\epsilon{=}0.1$  & $0{,}524\,{\pm}0{,}049$ & $0{,}302\,{\pm}0{,}145$ & $-0{,}222$ & $\mathbf{0{,}012}^{\ast}$ \\
 \midrule
-\multirow{2}{*}{UNSW$\rightarrow$CIC}
- & clean            & $0{,}899\,[0{,}894;0{,}904]$ & $0{,}898\,[0{,}893;0{,}904]$ & no \\
- & FGSM $\epsilon{=}0.1$ & $-0{,}169\,[-0{,}209;-0{,}129]$ & $\mathbf{0{,}219\,[0{,}082;0{,}357]}$ & \textbf{yes} \\
+\multirow{3}{*}{UNSW$\rightarrow$CIC}
+ & clean            & $0{,}899\,{\pm}0{,}004$ & $0{,}898\,{\pm}0{,}004$ & $-0{,}001$ & $0{,}446$ \\
+ & FGSM $\epsilon{=}0.1$ & $-0{,}169\,{\pm}0{,}032$ & $\mathbf{0{,}219\,{\pm}0{,}111}$ & $+0{,}389$ & $\mathbf{0{,}003}^{\ast}$ \\
+ & PGD $\epsilon{=}0.1$  & $-0{,}124\,{\pm}0{,}129$ & $\mathbf{0{,}178\,{\pm}0{,}233}$ & $+0{,}302$ & $\mathbf{0{,}033}^{\ast}$ \\
 \bottomrule
 \end{tabular}
+
+\vspace{0.3em}
+\noindent{\footnotesize MCC as mean $\pm$ std over five seeds; $\Delta$ is the paired
+mean difference (few-shot$+$adv minus few-shot); the last column is the paired
+$t$-test $p$-value. $^{\ast}$ significant at $\alpha{=}0.05$ (Wilcoxon signed-rank
+agrees in sign for all three). Source: \texttt{significance\_fewshot\_vs\_adv.csv}.}
 \end{table}
 
 \subsection{Security Metrics Beyond MCC: Attack Success Rate}
@@ -916,9 +928,22 @@ terukur: \emph{few-shot$+$adv} menurunkan ASR dari $0{,}985$ ke $0{,}872$ (FGSM)
 dari $0{,}938$ ke $0{,}738$ (PGD) pada arah tersulit itu --- perbaikan keamanan yang
 konkret meski MCC absolut masih rendah. Kami mencatat bahwa ASR pada arah
 UNSW$\rightarrow$CIC tetap tinggi ($\ge0{,}74$), sehingga pertahanan penuh di arah
-ini masih terbuka; metrik perturbasi tambahan (magnitudo $\ell_\infty$, jumlah fitur
-termodifikasi, dan \emph{valid-flow rate} pasca-proyeksi PCFS) kami sertakan sebagai
-artefak reproduktif dan arah pelaporan lanjutan.
+ini masih terbuka.
+
+\paragraph{Metrik perturbasi \& validitas.} Melengkapi ASR, kami mengukur karakter
+serangan FGSM $\epsilon{=}0{,}1$ (artefak \texttt{perturbation\_metrics.csv}).
+Serangan bersifat \emph{sparse}: rata-rata hanya $\approx 2{,}6$--$5{,}4$ dari
+sembilan fitur yang termodifikasi per \emph{flow}. Proyeksi PCFS menjaga validitas
+ruang-fitur pada tingkat tinggi --- \emph{valid-flow rate} $1{,}0$ untuk target UNSW
+dan $\approx0{,}79$--$0{,}81$ untuk target CIC (sisa $\approx0{,}19$--$0{,}21$
+dipangkas oleh batasan add-only/integralitas, bukan diloloskan). \emph{False
+positive rate} bersih menegaskan trade-off yang sama seperti pada AWS: FPR pada
+target UNSW rendah ($\approx0{,}33$ dengan \emph{balanced accuracy} $0{,}81$) versus
+target CIC yang jauh lebih ketat (FPR $\approx0{,}015$, \emph{balanced accuracy}
+$0{,}95$). Magnitudo $\ell_\infty$/$\ell_2$ mentah kami sertakan pada artefak namun
+tidak dilaporkan sebagai angka tunggal karena skala fitur laju yang tak-ternormalisasi
+di ruang asli membuatnya tak sebanding antar-fitur; interpretasi yang tepat adalah
+melalui \emph{jumlah fitur termodifikasi} dan \emph{valid-flow rate} di atas.
 
 \subsection{Comparison Against Alternative Defense Baselines}
 \label{sec:baselines}
