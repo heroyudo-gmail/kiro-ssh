@@ -778,6 +778,62 @@ Direction & Condition & few-shot (MCC, 95\% CI) & few-shot$+$adv (MCC, 95\% CI) 
 \end{tabular}
 \end{table}
 
+\subsection{Security Metrics Beyond MCC: Attack Success Rate}
+\label{sec:advmetrics}
+MCC merangkum kualitas detektor tetapi \emph{tidak} langsung menjawab pertanyaan
+keamanan inti: \emph{berapa banyak \emph{flow} serangan yang semula terdeteksi
+berhasil lolos setelah perturbasi?} Karena itu, di samping MCC, kami melaporkan
+\textbf{Attack Success Rate} (ASR) --- fraksi \emph{flow} serangan yang terdeteksi
+pada kondisi \emph{clean} lalu berubah menjadi benign setelah serangan --- beserta
+\emph{recall} (TPR), \emph{precision}, dan F1 (Tabel~\ref{tab:advmetrics}, rerata
+lima \emph{seed}). ASR inilah metrik keamanan yang paling relevan: ASR $=1$ berarti
+seluruh serangan yang tadinya tertangkap kini lolos, ASR $=0$ berarti pertahanan
+menahan semuanya.
+
+\begin{table}[h]
+\centering
+\caption{Security metrics under \emph{adaptive PCFS} attacks ($\epsilon{=}0.1$), mean
+over five seeds: Attack Success Rate (ASR; lower is better), recall/TPR, precision,
+F1, alongside MCC. ASR exposes what MCC hides --- e.g.\ a moderate MCC drop can
+coincide with either negligible or near-total evasion. Source:
+\texttt{reviewer\_agg.csv}.}
+\label{tab:advmetrics}
+\small
+\begin{tabular}{lllccccc}
+\toprule
+Direction & Variant & Attack & MCC & ASR$\downarrow$ & recall & prec. & F1 \\
+\midrule
+\multirow{4}{*}{CIC$\rightarrow$UNSW}
+ & few-shot     & FGSM & $0{,}493$ & $\mathbf{0{,}020}$ & $0{,}960$ & $0{,}685$ & $0{,}799$ \\
+ & few-shot     & PGD  & $0{,}524$ & $\mathbf{0{,}017}$ & $0{,}959$ & $0{,}699$ & $0{,}808$ \\
+ & few-shot+adv & FGSM & $0{,}454$ & $0{,}158$ & $0{,}826$ & $0{,}700$ & $0{,}747$ \\
+ & few-shot+adv & PGD  & $0{,}302$ & $0{,}055$ & $0{,}922$ & $0{,}620$ & $0{,}740$ \\
+\midrule
+\multirow{4}{*}{UNSW$\rightarrow$CIC}
+ & few-shot     & FGSM & $-0{,}169$ & $0{,}985$ & $0{,}013$ & $0{,}016$ & $0{,}014$ \\
+ & few-shot     & PGD  & $-0{,}124$ & $0{,}938$ & $0{,}058$ & $0{,}085$ & $0{,}063$ \\
+ & few-shot+adv & FGSM & $0{,}219$ & $\mathbf{0{,}872}$ & $0{,}125$ & $0{,}640$ & $0{,}199$ \\
+ & few-shot+adv & PGD  & $0{,}178$ & $\mathbf{0{,}738}$ & $0{,}240$ & $0{,}351$ & $0{,}261$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent\textbf{ASR mengungkap apa yang MCC sembunyikan.} Pada
+CIC$\rightarrow$UNSW, \emph{few-shot} tampak ``turun'' pada MCC di bawah serangan
+($0{,}65\rightarrow0{,}49$) namun \textbf{ASR-nya hanya $0{,}02$}: praktis tidak ada
+serangan yang lolos ($recall$ tetap $0{,}96$) --- penurunan MCC hampir seluruhnya
+berasal dari sedikit \emph{false positive} tambahan, bukan evasion. Sebaliknya, pada
+UNSW$\rightarrow$CIC \emph{few-shot} mengalami \textbf{ASR $0{,}985$} di bawah FGSM:
+hampir semua serangan lolos ($recall\rightarrow0{,}01$) --- keruntuhan nyata yang
+tak terbaca dari MCC saja. Di sinilah \emph{adversarial training} memberi nilai
+terukur: \emph{few-shot$+$adv} menurunkan ASR dari $0{,}985$ ke $0{,}872$ (FGSM) dan
+dari $0{,}938$ ke $0{,}738$ (PGD) pada arah tersulit itu --- perbaikan keamanan yang
+konkret meski MCC absolut masih rendah. Kami mencatat bahwa ASR pada arah
+UNSW$\rightarrow$CIC tetap tinggi ($\ge0{,}74$), sehingga pertahanan penuh di arah
+ini masih terbuka; metrik perturbasi tambahan (magnitudo $\ell_\infty$, jumlah fitur
+termodifikasi, dan \emph{valid-flow rate} pasca-proyeksi PCFS) kami sertakan sebagai
+artefak reproduktif dan arah pelaporan lanjutan.
+
 \subsection{Comparison Against Alternative Defense Baselines}
 \label{sec:baselines}
 Ablasi empat varian pelatihan (Tabel~\ref{tab:p2main}) menguji \emph{strategi
