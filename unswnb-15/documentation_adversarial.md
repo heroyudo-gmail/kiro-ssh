@@ -139,12 +139,26 @@ Belum pernah muncul dari reviewer: #2, #4, #15, #16.
 
 ## 8. TUGAS TERSISA (yang menunggu / belum selesai)
 
-1. **Isi `tab:defense_baselines`** dari `defense_baselines_agg.csv` (nb16). PLACEHOLDER `--`.
-2. **Isi `tab:decisioncell`** dari `decision_cell.csv` (nb17) + verifikasi prediksi
-   `d_boundary^CIC < UNSW`, `w^CIC < UNSW`, `kappa^CIC < UNSW`. Kalau TIDAK terkonfirmasi,
-   revisi narasi jujur (jangan paksakan).
+> **KEPUTUSAN (per sesi terakhir):** nb16 & nb17 **DITUNDA**. nb16 terlalu lama (>3 jam,
+> macet di seed ke-4 karena fitur load meledak di ruang asli). Dijalankan **hanya jika
+> reviewer benar-benar meminta** saat submit. Paper sudah kuat tanpa dua tabel ini;
+> `tab:defense_baselines` & `tab:decisioncell` tetap PLACEHOLDER `--` untuk sekarang.
+
+1. **[DITUNDA] Isi `tab:defense_baselines`** dari `defense_baselines_agg.csv` (nb16).
+   nb16 SUDAH dioptimasi (siap dijalankan cepat bila diperlukan): `N_SMOOTH` 20→10,
+   `NEVAL=8000` (subsample test utk eval adversarial), `DUR_MIN`/`LOAD_CAP` clip laju
+   (anti-ledak/hang), guard nan_to_num di saliency & project_functional, + logging per
+   pertahanan. Placeholder `--` di paper.
+2. **[DITUNDA] Isi `tab:decisioncell`** dari `decision_cell.csv` (nb17, ringan, cepat)
+   + verifikasi prediksi `d_boundary^CIC < UNSW`, `w^CIC < UNSW`, `kappa^CIC < UNSW`.
+   Kalau TIDAK terkonfirmasi, revisi narasi jujur (jangan paksakan).
 3. **Polishing prioritas C:** abstract (padatkan, cerminkan angka final), reference
-   formatting, nomenclature/notasi. Kerjakan PALING AKHIR.
+   formatting, nomenclature/notasi. Kerjakan PALING AKHIR (sebelum submit).
+4. **Compile final di Overleaf** + cek tak ada error, tabel muat, gambar tampil.
+
+**Roadmap Paper 3 (belum mulai):** update/retraining model di lingkungan online testing
+(AWS) — adaptasi berkelanjutan terhadap drift; sudah dijanjikan sbg future work Paper 2.
+Nanti bikin pasangan file `documentation_online.md` + runbook (pola sama Paper 1 & 2).
 
 ## 9. CARA AMBIL HASIL DARI S3 (TERBUKTI JALAN — jangan muter-muter)
 
