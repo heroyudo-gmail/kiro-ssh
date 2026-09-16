@@ -15,8 +15,9 @@
 ## 1. Identitas paper
 
 - **File utama:** `unswnb-15/paper2-adversarial.tex`
-- **Judul (setelah revisi #18):** *When Cross-Network Generalization Meets Adversarial
-  Evasion: A Study of Few-Shot-Calibrated XGBoost NIDS under Protocol-Consistent Attacks*
+- **Judul:** *Adversarial Robustness of Cross-Network Intrusion Detection via Semantic
+  Mapping and Few-Shot XGBoost* (dikembalikan ke judul awal atas keputusan penulis;
+  reviewer #18 sempat mengusulkan judul research-question-driven, tapi TIDAK dipakai).
 - **Penulis:** Hero Yudo Martono, Iwan Syarif, Ferry Astika Saputra
 - **Bahasa:** isi Indonesia; istilah teknis, judul, caption, highlights Inggris.
 - **Bibliografi:** `thebibliography` manual (bukan .bib). Compile: **pdfLaTeX** di Overleaf,
