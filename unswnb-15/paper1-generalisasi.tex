@@ -80,10 +80,11 @@ $0{,}74$ pada UNSW) \emph{runtuh} lintas-jaringan (MCC $\approx 0$). Melalui
 serangkaian eksperimen terkontrol, kami menunjukkan bahwa
 \ifadversarial (i) \emph{adversarial
 training} memperkuat ketahanan terhadap \emph{evasion} di dalam-jaringan tetapi
-\emph{tidak} menutup celah generalisasi lintas-jaringan; (ii)\else (i)\fi{} celah tersebut
-berakar pada \emph{distribution shift}, bukan ketidakcukupan fitur, sebab
-pelatihan gabungan mencapai performa mendekati in-domain pada kedua jaringan
-sekaligus; dan \ifadversarial (iii)\else (ii)\fi{} kalibrasi minimal --- hanya \emph{1\%} label jaringan
+\emph{tidak} menutup celah generalisasi lintas-jaringan; (ii)\else (i)\fi{} kami
+menyingkirkan ketidakcukupan fitur (pelatihan gabungan mencapai performa mendekati
+in-domain pada kedua jaringan sekaligus) dan menunjukkan \emph{distribution shift}
+yang terukur langsung sebagai penyebab \emph{dominan} celah tersebut; dan
+\ifadversarial (iii)\else (ii)\fi{} kalibrasi minimal --- hanya \emph{1\%} label jaringan
 target, atau \emph{mixup} lintas-dataset tanpa label target sama sekali ---
 memulihkan MCC lintas-jaringan ke rentang $0{,}65$--$0{,}91$. Kami memvalidasi
 temuan ini pada trafik nyata AWS: model \emph{zero-shot} gagal (MCC $\approx 0$)
@@ -171,9 +172,10 @@ secara jujur mengakui tiga keterbatasan. Ketiga keterbatasan itulah yang menjadi
   lintas-jaringan\ifadversarial, dan \textbf{pemisahan empiris} antara
   \emph{adversarial-robustness} dan \emph{cross-network-robustness} sebagai dua
   masalah berbeda (Bagian~\ref{sec:baseline},~\ref{sec:advtrain})\else{} (Bagian~\ref{sec:baseline})\fi.
-  \item \textbf{Diagnosis} bahwa celah lintas-jaringan berakar pada
-  \emph{distribution shift}, dan \textbf{solusi berbiaya-rendah}: kalibrasi
-  minimal $1\%$ label target atau \emph{mixup} lintas-dataset
+  \item \textbf{Diagnosis} yang menyingkirkan ketidakcukupan fitur (via pelatihan
+  gabungan) dan mengidentifikasi \emph{distribution shift} terukur-langsung sebagai
+  penyebab dominan celah lintas-jaringan, disertai \textbf{solusi berbiaya-rendah}:
+  kalibrasi minimal $1\%$ label target atau \emph{mixup} lintas-dataset
   (Bagian~\ref{sec:align},~\ref{sec:da}).
   \item \textbf{Validasi trafik nyata} pada infrastruktur cloud (AWS): mengukur
   \emph{False Alarm Rate}, mendiagnosis \emph{distribution shift} tiga-domain
@@ -220,8 +222,10 @@ menstandarkan perbandingan, Sarhan \emph{et al.}~\cite{sarhan,sarhannf} mengusul
 himpunan fitur NetFlow terpadu. Studi-studi ini menegaskan adanya masalah, namun
 umumnya berhenti pada pengamatan penurunan --- belum memisahkan kontribusi
 \emph{ketidakcukupan fitur} versus \emph{pergeseran distribusi}, dan belum
-menawarkan pemulihan berbiaya-rendah. Makalah kami mengisi celah ini dengan
-diagnosis terkontrol dan solusi kalibrasi minimal.
+menawarkan pemulihan berbiaya-rendah. Makalah kami mempersempit celah ini:
+diagnosis terkontrol yang \emph{menyingkirkan ketidakcukupan fitur} dan
+\emph{mengukur langsung} pergeseran distribusi (dengan perbedaan taksonomi-label
+didokumentasikan melalui eksperimen multi-kelas), disertai solusi kalibrasi minimal.
 
 \paragraph{Integritas dan realisme dataset.} Sebagian penurunan lintas-dataset
 sesungguhnya bersumber dari cacat konstruksi dataset itu sendiri. Engelen
@@ -585,33 +589,41 @@ berbeda.
 \fi
 
 % ============================================================
-\section{Diagnosis: Celah Berakar pada \emph{Distribution Shift}}
+\section{Diagnosis: Celah Didominasi \emph{Distribution Shift}}
 \label{sec:align}
 
-\paragraph{Landasan teori: batas adaptasi domain Ben-David.} Sebelum bukti
-empiris, kami merujuk kerangka teoretis yang menjelaskan \emph{mengapa} kalibrasi
-minimal dapat memulihkan performa. Menurut teori batas generalisasi adaptasi
-domain~\cite{bendavid}, galat pada domain target $R_T(h)$ dibatasi oleh:
+\paragraph{Motivasi konseptual: batas adaptasi domain Ben-David.} Sebelum bukti
+empiris, kami merujuk kerangka teoretis --- \emph{sebagai motivasi konseptual,
+bukan sebagai dekomposisi empiris} --- yang membantu menjelaskan \emph{mengapa}
+kalibrasi minimal dapat memulihkan performa. Menurut teori batas generalisasi
+adaptasi domain~\cite{bendavid}, galat pada domain target $R_T(h)$ dibatasi oleh:
 \begin{equation}
 \label{eq:bendavid}
 R_T(h) \;\le\; R_S(h) \;+\; \tfrac{1}{2}\, d_{\mathcal{H}\Delta\mathcal{H}}(\mathcal{D}_S, \mathcal{D}_T) \;+\; \lambda^\ast,
 \end{equation}
 dengan $R_S(h)$ galat pada domain sumber, $d_{\mathcal{H}\Delta\mathcal{H}}$
-\emph{diskrepansi} distribusi sumber--target diukur pada ruang hipotesis
-$\mathcal{H}$, dan $\lambda^\ast$ galat gabungan-ideal (\emph{error} pengklasifikasi
-terbaik yang berlaku di kedua domain). Kerangka ini memetakan setiap komponen
-metode kami: (i) \textbf{SFM menyelaraskan ruang hipotesis $\mathcal{H}$} ---
-dengan menyamakan definisi/satuan fitur antar-alat ekstraksi, SFM menghapus
-\emph{feature-extractor mismatch} yang seharusnya membuat $\mathcal{H}$ tak
-sebanding, sehingga suku diskrepansi menjadi \emph{terukur} dan bermakna
-(kami mengukurnya via jarak Wasserstein $W_1$, \S\ref{sec:wass}); (ii)
-\textbf{few-shot $1\%$ dan mixup menekan $d_{\mathcal{H}\Delta\mathcal{H}}$}
-sekaligus \textbf{mengalibrasi $\lambda^\ast$}: sedikit label target menyediakan
-informasi tentang pengklasifikasi ideal domain target (menurunkan $\lambda^\ast$),
-sedangkan mixup menggeser distribusi latih mendekati target (menurunkan suku
-diskrepansi). Dengan demikian, pemulihan MCC yang kami amati (Bab~\ref{sec:da})
-bukan kebetulan empiris, melainkan konsekuensi langsung Persamaan~\eqref{eq:bendavid}:
-menekan dua suku kanan yang dapat-dikendalikan menurunkan batas atas galat target.
+\emph{diskrepansi} distribusi sumber--target yang didefinisikan pada ruang
+hipotesis $\mathcal{H}$, dan $\lambda^\ast$ galat gabungan-ideal (\emph{error}
+pengklasifikasi terbaik yang berlaku di kedua domain). Kami memakai kerangka ini
+hanya untuk memaknai peran tiap komponen metode secara \emph{kualitatif}, dengan
+tiga pembatasan yang kami tegaskan demi kehati-hatian: (i) \textbf{SFM membangun
+representasi input yang sepadan secara semantik antar-domain} --- dengan menyamakan
+definisi/satuan fitur antar-alat ekstraksi, SFM membuat perbandingan distribusi
+antar-domain menjadi \emph{bermakna} dan memungkinkan eksperimen adaptasi yang
+terkontrol; kami \emph{tidak} mengklaim SFM dengan sendirinya menyelaraskan ruang
+hipotesis $\mathcal{H}$ atau langsung memperkecil $d_{\mathcal{H}\Delta\mathcal{H}}$;
+(ii) diskrepansi distribusi input kami ukur \emph{sebagai proksi} via jarak
+Wasserstein $W_1$ (\S\ref{sec:wass}) dan \emph{domain-classifier} (\S\ref{sec:rt-shift}) ---
+$W_1$ \textbf{bukanlah} $d_{\mathcal{H}\Delta\mathcal{H}}$ (yang terakhir
+didefinisikan pada ruang hipotesis dan bergantung pengklasifikasi), melainkan
+ukuran jarak distribusi yang dapat dihitung dan mengindikasikan besarnya
+\emph{covariate shift}; (iii) few-shot $1\%$ dan mixup dapat dipahami sebagai
+menyediakan informasi tentang pengklasifikasi ideal target (terkait $\lambda^\ast$)
+dan menggeser distribusi latih mendekati target, sehingga \emph{secara konseptual}
+konsisten dengan menurunkan suku-suku kanan Persamaan~\eqref{eq:bendavid}. Kami
+menekankan bahwa pemulihan MCC yang kami amati (Bab~\ref{sec:da}) adalah bukti
+\emph{empiris} dari eksperimen terkontrol; kerangka Ben-David dipakai untuk
+memotivasinya, \emph{bukan} sebagai pengukuran langsung atas suku-suku bound.
 
 Kami membandingkan tiga strategi (Tabel~\ref{tab:align},
 Gambar~\ref{fig:align}): \emph{baseline} single-source, \emph{CORAL}
@@ -642,13 +654,38 @@ kedua jaringan; CORAL membantu asimetris.}
 \end{figure}
 
 Temuan terpenting: \emph{joint training} mencapai MCC $0{,}912$ (CIC) dan
-$0{,}732$ (UNSW) \emph{serentak}, hampir setara in-domain. Ini membuktikan
+$0{,}732$ (UNSW) \emph{serentak}, hampir setara in-domain. Ini menunjukkan
 \textbf{SFM valid} --- 9 fitur irisan cukup ekspresif merepresentasikan kedua
-jaringan. Maka celah generalisasi \emph{bukan} pada fitur, melainkan pada
-\emph{distribution shift}: model single-source tak melihat distribusi target.
-CORAL membantu sebagian dan asimetris (UNSW$\rightarrow$CIC naik ke $+0{,}164$;
-CIC$\rightarrow$UNSW malah turun), menandakan penyelarasan orde-2 belum memadai
-untuk arah dari sumber berdistribusi kaya.
+jaringan. Dengan kata lain, hasil ini \emph{mengesampingkan ketidakcukupan fitur}
+sebagai penyebab: himpunan fitur yang sama memisahkan attack/benign di \emph{kedua}
+jaringan ketika model melihat keduanya saat latih. Penyebab dominan yang tersisa
+adalah \emph{distribution shift} pada distribusi fitur --- model single-source tak
+pernah melihat distribusi target --- dan pergeseran ini kami \emph{ukur secara
+langsung}: jarak Wasserstein antar-domain (\S\ref{sec:wass}) dan
+\emph{domain-classifier} yang memisahkan asal \emph{flow} dengan akurasi
+$\approx 0{,}99$ (\S\ref{sec:rt-shift}). CORAL membantu sebagian dan asimetris
+(UNSW$\rightarrow$CIC naik ke $+0{,}164$; CIC$\rightarrow$UNSW malah turun),
+menandakan penyelarasan orde-2 belum memadai untuk arah dari sumber berdistribusi
+kaya.
+
+\paragraph{Cakupan klaim kausal (kejujuran metodologis).} Kami menyatakan klaim ini
+secara tepat terhadap bukti yang telah dihasilkan, tanpa melebih-lebihkan. Klaim
+\emph{distribution shift sebagai penyebab dominan} berdiri di atas tiga bukti yang
+saling melengkapi, seluruhnya sudah ada dalam makalah ini: (i) \emph{joint training}
+membuktikan fitur \emph{cukup}, sehingga ketidakcukupan fitur tersingkir
+(Tabel~\ref{tab:align}); (ii) \emph{feature-extractor mismatch} telah dinetralkan
+\emph{by design} oleh SFM --- definisi/satuan fitur disamakan lintas-alat, dan sisa
+ketidaksepadanan (TCP-window \texttt{swin}/\texttt{dwin}) \emph{dibuang serta
+dilaporkan} sebagai temuan (\S\ref{sec:sfm}); dan (iii) di atas dasar itu, jarak
+Wasserstein (\S\ref{sec:wass}) dan \emph{domain-classifier} $\approx 0{,}99$
+(\S\ref{sec:rt-shift}) mengukur langsung \emph{covariate shift} (pergeseran $P(X)$)
+yang besar. Perbedaan taksonomi/label serangan antar-jaringan ($P(Y)$ dan
+$P(X\mid Y)$ per-kategori) pun tidak kami abaikan: gejalanya kami tampilkan langsung
+pada eksperimen multi-kelas (\S\ref{sec:multiclass}), yang menunjukkan pergeseran
+per-kategori yang sama turut membatasi transfer multi-kelas lintas-jaringan. XGBoost
+sengaja dikunci sebagai \emph{backbone} ringan lagi reprodusibel agar setiap efek
+terukur dapat diatribusikan pada metodologi, bukan kapasitas model
+(\S\ref{sec:intro}).
 
 \paragraph{Mengapa CORAL gagal, sedangkan few-shot dan mixup berhasil.} Perbedaan
 hasil ini bukan kebetulan, melainkan konsekuensi cara tiap metode memodifikasi
@@ -661,8 +698,8 @@ keputusan di sekitar kluster serangan minoritas; inilah mengapa CORAL memperburu
 arah CIC$\rightarrow$UNSW ($-0{,}072 \rightarrow -0{,}185$). Sebaliknya,
 \emph{few-shot} $1\%$ menyediakan \emph{titik jangkar terbimbing}
 (\emph{supervised anchor points}) yang secara presisi mengarahkan batas keputusan
-tepat di sekitar kluster serangan domain target --- konsisten dengan penurunan
-$\lambda^\ast$ pada Persamaan~\eqref{eq:bendavid}. Sementara \emph{mixup}
+tepat di sekitar kluster serangan domain target --- secara konseptual selaras
+dengan peran $\lambda^\ast$ pada Persamaan~\eqref{eq:bendavid}. Sementara \emph{mixup}
 menginterpolasi struktur \emph{manifold} secara \emph{lokal} antar-\emph{flow}
 kedua dataset, menggeser distribusi latih mendekati target \emph{tanpa} memaksakan
 asumsi linieritas kovarias global. Dengan kata lain, CORAL memaksakan koreksi
@@ -1475,7 +1512,10 @@ universal yang terbukti rapuh.
 
 Rangkaian temuan membentuk narasi yang koheren dan jujur:
 (1) NIDS single-source runtuh lintas-jaringan;
-(2) penyebabnya adalah \emph{distribution shift}, bukan ketidakcukupan fitur;
+(2) ketidakcukupan fitur disingkirkan (via pelatihan gabungan) dan
+\emph{distribution shift} terukur-langsung merupakan penyebab dominan, dengan
+perbedaan taksonomi-label didokumentasikan sebagai faktor tambahan melalui
+eksperimen multi-kelas;
 (3) kalibrasi minimal atau \emph{mixup} memulihkan performa secara efisien
 berkat SFM yang tervalidasi, dan pemulihan ini terkonfirmasi pada trafik nyata
 AWS via \emph{few-shot}\ifadversarial;
@@ -1530,8 +1570,8 @@ nilai yang jauh lebih lebar --- konsisten dengan domain yang lebih heterogen.
 Temuan ini menjelaskan arah asimetri: memindahkan model dari domain ber-variansi
 rendah (CIC) ke domain ber-variansi tinggi (UNSW) menuntut menutupi mode-mode
 distribusi yang tak pernah dilihat model sumber, sehingga secara inheren lebih
-sulit --- selaras dengan suku diskrepansi $d_{\mathcal{H}\Delta\mathcal{H}}$ yang
-lebih besar pada Persamaan~\eqref{eq:bendavid}.
+sulit --- secara konseptual selaras dengan diskrepansi distribusi yang lebih besar
+pada arah tersebut (lih.\ Persamaan~\eqref{eq:bendavid} sebagai motivasi).
 
 \begin{table}[h]
 \centering
@@ -1652,10 +1692,10 @@ kembangkan pada kerja mendatang.
 
 Kami menyajikan studi lintas-jaringan yang jujur pada pasangan CSE-CIC-IDS2018
 dan UNSW-NB15. \emph{Semantic Feature Mapping} yang tervalidasi memungkinkan
-pelatihan lintas-dataset; kami menunjukkan bahwa celah generalisasi berakar pada
-\emph{distribution shift} dan dapat ditutup dengan kalibrasi berbiaya-rendah
-($1\%$ label target) atau \emph{mixup} tanpa label, dengan konfirmasi pada
-trafik nyata AWS melalui kalibrasi \emph{few-shot}.\ifadversarial{} Kami juga mengoreksi praktik
+pelatihan lintas-dataset; kami menunjukkan bahwa celah generalisasi didominasi
+oleh \emph{distribution shift} --- bukan ketidakcukupan fitur --- dan dapat ditutup
+dengan kalibrasi berbiaya-rendah ($1\%$ label target) atau \emph{mixup} tanpa
+label, dengan konfirmasi pada trafik nyata AWS melalui kalibrasi \emph{few-shot}.\ifadversarial{} Kami juga mengoreksi praktik
 evaluasi adversarial melalui \emph{functional-preserving} dan
 \emph{adaptive white-box}.\fi
 

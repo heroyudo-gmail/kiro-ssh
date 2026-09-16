@@ -1,0 +1,846 @@
+6. Tetapi threshold SFM sekarang terlalu heuristik
+
+Anda menggunakan aturan:
+
+same order of magnitude → aligned
+1–3 orders → scale mismatch
+
+3 orders → different feature
+
+Reviewer bisa bertanya:
+
+Why 1–3 orders? Why not 2? Why not 4?
+
+Saat ini threshold tersebut terlihat seperti:
+
+author-defined heuristic
+
+bukan metodologi yang universally justified.
+
+Saya sarankan Anda melakukan satu dari dua hal.
+Opsi A — paling aman
+
+Nyatakan secara eksplisit bahwa threshold tersebut adalah:
+
+screening heuristic
+
+bukan statistical test.
+
+Kemudian tambahkan:
+
+sensitivity analysis
+
+misalnya:
+
+Threshold	Number retained	MCC cross-domain
+1 order	...	...
+2 orders	...	...
+3 orders	...	...
+
+Kalau hasil relatif stabil, SFM Anda jauh lebih kuat.
+
+Opsi B — lebih kuat
+
+Bangun mapping menggunakan:
+
+semantic definition,
+unit compatibility,
+monotonic relationship,
+distribution similarity,
+statistical test/effect size.
+
+Dengan demikian keputusan mapping tidak tergantung satu threshold arbitrer.
+
+7. Masalah terbesar kedua: Mixup "label-free"
+
+Ini harus diperiksa sangat serius.
+
+Paper mengatakan:
+
+"cross-dataset mixup with no target labels"
+
+tetapi persamaan mixup Anda menggunakan:
+
+$$ \tilde y = \lambda y_S + (1-\lambda)y_T $$
+
+yang berarti Anda membutuhkan \(y_T\).
+
+Ini kontradiksi metodologis.
+
+Kemudian paper mengatakan:
+
+"target parent's label is only needed to form y˜"
+
+tetapi tetap menyebut variant tersebut label-free.
+
+Sebagai reviewer saya akan langsung bertanya:
+
+How can the target sample label be used to construct the synthetic label if the method is label-free?
+
+Ini harus diperbaiki.
+
+Kalau target sample memang unlabeled, Anda tidak boleh menggunakan \(y_T\).
+
+Anda mempunyai beberapa pilihan.
+
+Pilihan 1 — pseudo-label
+
+Gunakan:
+
+$$ \hat y_T = f_S(x_T) $$
+
+kemudian mixup:
+
+$$ \tilde y = \lambda y_S+(1-\lambda)\hat y_T $$
+
+Tetapi harus disebut:
+
+pseudo-label-based unsupervised mixup
+
+dan perlu eksperimen sensitivity terhadap pseudo-label noise.
+
+Pilihan 2 — unlabeled target hanya untuk feature interpolation
+
+Tetapi kemudian bagaimana menentukan label synthetic sample harus dijelaskan secara mathematically sound.
+
+Pilihan 3
+
+Kalau sebenarnya Anda memang menggunakan ground-truth target labels:
+
+hapus istilah "label-free".
+
+Ini jauh lebih baik daripada reviewer menemukan contradiction.
+
+8. Eksperimen AWS adalah nilai jual terbesar — sekaligus titik paling rentan
+
+Saya suka bagian AWS.
+
+Anda tidak hanya mengatakan:
+
+"tested on real traffic"
+
+tetapi benar-benar membuat pipeline:
+
+tcpdump → NFStream → 9 SFM features → XGBoost
+
+Kemudian ada:
+
+22,644 benign flows
+
+dengan:
+
+94 false alarms
+
+dan:
+
+FAR = 0.42%
+
+Ini sangat membantu paper.
+
+Tetapi kemudian attack experiment hanya mempunyai:
+
+7,049 attack + 53 benign
+
+pada test set.
+
+Anda sendiri sudah cukup jujur mengakui bahwa 53 benign terlalu sedikit untuk membuat klaim FAR yang kuat.
+
+Saya setuju.
+
+Tetapi saya akan meminta Anda memperkuat ini sebelum submission.
+
+Minimal:
+
+tambahkan confidence intervals untuk MCC, bukan hanya point estimate.
+
+Lebih bagus lagi:
+
+bootstrap 95% CI,
+repeated splits,
+multiple attack runs,
+beberapa hari/time windows,
+lebih banyak benign traffic.
+9. Ada masalah temporal leakage yang harus Anda address
+
+Ini penting.
+
+AWS labels dibuat berdasarkan:
+
+benign → SSH brute-force → Slowloris → SYN flood → benign
+
+kemudian random stratified split 60/40.
+
+Sebagai reviewer saya akan bertanya:
+
+Could flows from the same attack episode appear in both train and test?
+
+Karena jika jawabannya iya, maka test set tidak benar-benar:
+
+unseen attack episode
+
+tetapi hanya:
+
+unseen flows from the same attack episode.
+
+Itu berbeda.
+
+Saya sangat menyarankan:
+
+Jangan hanya random stratified split.
+
+Tambahkan:
+
+temporal/episode-based split
+
+Contoh:
+
+Train
+
+attack episode 1
+benign period 1
+
+Test
+
+attack episode 2
+benign period 2
+
+Dengan begitu Anda bisa mengatakan:
+
+the test contains temporally separated attack episodes not observed during adaptation.
+
+Ini akan meningkatkan kredibilitas AWS experiment secara signifikan.
+
+10. Saya juga ingin Anda memperbaiki klaim "1%"
+
+Sekarang paper menyebut:
+
+"only 1% target labels"
+
+dan:
+
+"minimal calibration"
+
+Secara praktis ini menarik.
+
+Tetapi 1% dari UNSW:
+
+1,753 flows
+
+Itu bukan benar-benar "few-shot" dalam pengertian machine learning klasik.
+
+Saya tidak akan melarang istilah tersebut, tetapi lebih aman menggunakan:
+
+low-label adaptation
+
+atau:
+
+1% target-label calibration
+
+daripada berulang kali mengatakan:
+
+few-shot learning
+
+Karena reviewer ML bisa memperdebatkan terminologi.
+
+11. Hasil CORAL sangat menarik — tetapi analisisnya terlalu spekulatif
+
+Anda mendapatkan:
+
+Strategy	CIC→UNSW	UNSW→CIC
+baseline	-0.072	-0.061
+CORAL	-0.185	0.164
+joint	0.732	0.912
+
+Ini justru hasil yang menarik.
+
+Tetapi kemudian paper mengatakan bahwa CORAL gagal karena:
+
+global covariance alignment damages the minority attack cluster
+
+dan:
+
+few-shot steers the decision boundary around the attack cluster.
+
+Masalahnya:
+
+Anda belum benar-benar mengukur decision boundary shift tersebut.
+
+Jadi ini saat ini lebih merupakan post-hoc explanation.
+
+Saya akan ubah bahasanya menjadi:
+
+"A plausible explanation is..."
+
+bukan:
+
+"This is why..."
+
+Kalau ingin mempertahankan causal explanation, tambahkan:
+
+class-conditional covariance,
+before/after feature distribution,
+attack-vs-benign centroid shift,
+decision-region analysis.
+12. Table 6 perlu diperiksa ulang
+
+Ini salah satu hal yang langsung menarik perhatian saya:
+
+CIC→UNSW:
+
+W1 = 208,757
+
+sedangkan:
+
+208,436
+
+dan:
+
+200,120
+
+sementara intra-target:
+
+0.031.
+
+Anda memang menjelaskan bahwa duration mendominasi.
+
+Tetapi angka sebesar ini akan membuat reviewer bertanya:
+
+Why is mean W1 so dominated by one feature?
+
+Saya sarankan jangan hanya memberi mean.
+
+Tambahkan:
+
+median W1 across features
+
+dan:
+
+per-feature W1
+
+misalnya:
+
+Feature	Baseline	1% FS	Mixup
+duration	...	...	...
+fwd_pkts	...	...	...
+...	...	...	...
+
+Dengan begitu reviewer bisa melihat bahwa hasil bukan artefak satu feature.
+
+13. Claim "proves" terlalu sering
+
+Ini masalah gaya ilmiah yang menurut saya perlu diperbaiki secara menyeluruh.
+
+Contoh:
+
+"This proves SFM is valid"
+
+dan:
+
+"quantitatively proving the UNSW distribution is far more spread out"
+
+dan:
+
+"This is the root residual shift"
+
+Sebagai reviewer saya akan meminta:
+
+ganti "prove" menjadi:
+demonstrates
+provides evidence that
+supports the hypothesis that
+is consistent with
+suggests
+
+Karena hampir semua eksperimen Anda bersifat empirical observational, bukan formal proof.
+
+14. Novelty paper ini sebenarnya cukup bagus — tetapi harus diposisikan ulang
+
+Ini sangat penting.
+
+JISA sudah memiliki paper tentang inter-dataset generalization. Misalnya paper D'Hooge et al. menunjukkan bahwa supervised IDS dapat mengalami penurunan besar ketika diuji pada dataset lain.
+
+JISA juga sudah menerbitkan paper Layeghy et al. yang secara langsung menunjukkan perbedaan distribusi synthetic dan real-world NIDS datasets.
+
+Jadi Anda tidak boleh menjual novelty sebagai:
+
+"We show that NIDS does not generalize across datasets."
+
+Itu sudah established.
+
+Novelty Anda harus menjadi:
+
+A controlled, deployment-oriented methodology that jointly addresses cross-extractor semantic incompatibility, diagnoses cross-network distribution shift, and evaluates low-label adaptation from synthetic benchmarks to real cloud traffic.
+
+Ini jauh lebih kuat.
+
+Dengan kata lain:
+
+Paper lama:
+
+"Cross-dataset generalization fails."
+
+Paper Anda:
+
+"Here is how to construct a comparable feature space, diagnose why the failure occurs, and repair it at low labeling cost—and we test the recipe on real cloud traffic."
+
+Itulah positioning yang saya rekomendasikan.
+
+15. Saya ingin contribution statement Anda diubah
+
+Saat ini kontribusi Anda sudah bagus tetapi masih agak terlalu banyak.
+
+Saya akan menyederhanakannya menjadi 3 kontribusi utama.
+
+Contribution 1 — Semantic interoperability
+
+A statistically audited semantic feature mapping procedure that identifies comparable flow-level features across heterogeneous extraction tools and explicitly rejects apparently equivalent features whose numerical semantics are incompatible.
+
+Contribution 2 — Diagnosis and adaptation
+
+A controlled cross-domain experimental framework that separates representation compatibility from distribution shift and quantifies the effectiveness of low-label target calibration and cross-domain augmentation.
+
+Contribution 3 — Real-world validation
+
+An end-to-end validation on real AWS traffic demonstrating the failure of zero-shot transfer and the recovery achievable through limited target-domain calibration.
+
+Ini lebih tajam.
+
+16. Saya akan meminta tambahan baseline
+
+Ini mungkin major revision paling penting secara eksperimen.
+
+Saat ini XGBoost sengaja dibuat fixed untuk controlled comparison. Saya memahami alasannya.
+
+Tetapi reviewer JISA bisa bertanya:
+
+"How do we know the observed adaptation benefit is not specific to XGBoost?"
+
+Anda tidak perlu membuat 20 model.
+
+Cukup tambahkan 2–3 baseline:
+
+Baseline A
+
+Random Forest / LightGBM
+
+Baseline B
+
+Logistic Regression
+
+Baseline C
+
+satu domain adaptation baseline yang lebih modern.
+
+Misalnya:
+
+CORAL — sudah ada
+MMD
+DANN/Deep CORAL, kalau feasible
+
+Tidak perlu semuanya.
+
+Yang saya rekomendasikan:
+
+XGBoost + Random Forest + Logistic Regression + CORAL
+
+sudah cukup untuk menunjukkan bahwa phenomenon tidak spesifik XGBoost.
+
+17. Tetapi jangan kehilangan pesan "edge"
+
+Paper Anda memasukkan:
+
+2.9 MB model
+≈439 µs/flow
+≈2,276 flows/s/core
+
+Ini bagus.
+
+Tetapi klaim:
+
+8–16 cores → 18,000–35,000 flows/s
+
+adalah extrapolation, bukan measurement.
+
+Saya sarankan:
+
+❌ jangan:
+
+"scales near-linearly"
+
+kecuali benar-benar diukur.
+
+Ganti:
+
+"Because flow-level scoring is independently parallelizable, multi-core scaling is expected to be approximately linear under sufficient system resources; this extrapolation was not directly benchmarked in the present study."
+
+Itu reviewer-proof.
+
+18. AWS experiment perlu dibuat lebih reproducible
+
+Saat ini:
+
+AWS
+
+masih terlalu umum.
+
+Untuk paper JISA, saya ingin minimal:
+
+EC2 instance type
+CPU
+RAM
+OS
+kernel
+Python version
+NFStream version
+XGBoost version
+tcpdump version
+attack source architecture
+attacker-to-target topology
+network interface
+attack duration
+attack rate
+number of repetitions
+
+Anda sudah memberikan sebagian informasi, tetapi belum sebagai formal experimental configuration table.
+
+Tambahkan:
+
+Table X. AWS experimental configuration
+
+Ini akan sangat membantu.
+
+19. Data availability harus diperkuat
+
+Saat ini Anda mengatakan:
+
+code and derived artifacts available from corresponding author upon reasonable request.
+
+Untuk paper yang sangat menekankan:
+
+"reproducible experiments"
+
+saya akan lebih nyaman kalau:
+
+GitHub/Zenodo repository
+
+tersedia.
+
+Minimal:
+
+SFM mapping table
+preprocessing code
+experiment configuration
+random seeds
+result CSV
+plotting scripts
+AWS feature extraction script
+model configuration
+
+Tidak harus membuka AWS raw traffic kalau memang tidak bisa.
+
+Tetapi code untuk mereproduksi benchmark experiment sebaiknya tersedia.
+
+20. Ada satu hal yang menurut saya justru sangat bagus
+
+Saya ingin mempertahankan bagian ini:
+
+Anda secara eksplisit melaporkan negative result CORAL.
+
+CORAL bahkan membuat CIC→UNSW:
+
+−0.072 → −0.185
+
+Jangan disembunyikan.
+
+Justru ini membuat paper lebih kredibel.
+
+Saya bahkan akan membuat subsection:
+
+Why simple distribution alignment is insufficient
+
+dan menjadikan CORAL sebagai scientific finding, bukan sekadar baseline yang gagal.
+
+21. Multi-class: jangan dipaksakan dalam paper ini
+
+Menurut saya keputusan Anda untuk binary classification masih dapat diterima.
+
+Karena CIC dan UNSW memiliki taxonomy berbeda.
+
+Paper Anda sudah menjelaskan bahwa multi-class cross-dataset mapping tidak straightforward.
+
+Saya setuju.
+
+Tetapi jangan terlalu banyak membahas multi-class sebagai sesuatu yang "akan" dilakukan.
+
+Cukup:
+
+"The present study deliberately focuses on binary detection because attack taxonomies are not directly aligned across datasets."
+
+Kemudian limitation.
+
+Selesai.
+
+22. Judul paper sudah bagus, tetapi bisa dibuat lebih tajam
+
+Saat ini:
+
+Cross-Dataset Generalization of ML-based Network Intrusion Detection via Semantic Feature Mapping and Few-Shot Adaptation, Validated on Real Cloud Traffic
+
+Saya suka.
+
+Tetapi saya lebih menyukai versi:
+
+Cross-Network Generalization of Machine-Learning-Based Network Intrusion Detection via Semantic Feature Mapping and Low-Label Adaptation
+
+Kemudian AWS disebut di abstract, bukan title.
+
+Atau:
+
+From Benchmark to Cloud: Cross-Network Generalization of Machine-Learning-Based Intrusion Detection via Semantic Feature Mapping and Low-Label Adaptation
+
+Versi kedua lebih memorable.
+
+23. Abstract perlu sedikit direvisi secara scientific positioning
+
+Abstract Anda sekarang sebenarnya sudah cukup kuat. Ia menyampaikan:
+
+problem,
+SFM,
+feature mismatch,
+cross-domain failure,
+adaptation,
+AWS.
+
+Tetapi terlalu banyak klaim.
+
+Saya akan membuat abstract lebih "JISA-style":
+
+Problem → gap → method → key quantitative result → practical implication.
+
+Dan mengurangi kalimat defensif seperti:
+
+"not another off-the-shelf classifier"
+
+atau:
+
+"honest"
+
+atau:
+
+"real, reproducible experiments"
+
+Karena paper sebaiknya menunjukkan kejujuran metodologis, bukan terus mengatakan bahwa paper tersebut honest.
+
+24. "Data-honesty principle" sebaiknya dihapus
+
+Saya memahami maksudnya.
+
+Tetapi kalimat:
+
+"Data-honesty principle"
+
+cukup tidak lazim dalam paper ilmiah.
+
+Reviewer bisa merasa paper terlalu defensif.
+
+Ganti dengan:
+
+Experimental transparency
+
+atau masukkan ke:
+
+Reproducibility and limitations.
+
+25. Struktur paper yang saya rekomendasikan
+
+Saya akan mempertahankan sebagian besar struktur Anda tetapi mengubah narrative:
+
+1. Introduction
+
+Problem → existing evidence → missing diagnosis → research questions → contributions.
+
+2. Related Work
+
+2.1 Cross-network NIDS generalization
+2.2 Feature interoperability / flow extraction
+2.3 Domain adaptation
+2.4 Real-world NIDS validation
+
+3. Research Framework
+
+Ini baru.
+
+Gambarkan:
+
+Source datasets
+      ↓
+Semantic Feature Audit
+      ↓
+Comparable Feature Space
+      ↓
+Zero-shot Cross-network Test
+      ↓
+Diagnosis
+ ┌────┴────┐
+Feature    Distribution
+mismatch   shift
+              ↓
+      Low-label adaptation
+      / mixup / CORAL
+              ↓
+       Real AWS validation
+4. Dataset and SFM
+5. Experimental Design
+6. Cross-network Generalization Results
+7. Distribution Shift Diagnosis
+8. Adaptation Results
+9. Real AWS Validation
+10. Discussion
+11. Limitations
+12. Conclusion
+
+Ini akan jauh lebih mudah dibaca reviewer.
+
+26. Research questions harus ditambahkan
+
+Ini menurut saya wajib.
+
+Misalnya:
+
+RQ1
+
+Can semantically equivalent flow features extracted by heterogeneous tools be identified reliably for cross-network NIDS?
+
+RQ2
+
+To what extent does a single-source NIDS generalize to an unseen network after semantic feature alignment?
+
+RQ3
+
+Is the observed cross-network degradation primarily associated with feature insufficiency or domain distribution shift?
+
+RQ4
+
+How much target-domain labeling is required to recover useful detection performance?
+
+RQ5
+
+Does the adaptation strategy transfer from benchmark datasets to real cloud traffic?
+
+Kemudian setiap section menjawab RQ.
+
+Ini akan membuat paper Anda terasa jauh lebih "research paper" dan bukan kumpulan eksperimen.
+
+27. Penilaian saya saat ini
+
+Saya berikan skor ala pre-review:
+
+Aspek	Nilai
+JISA scope	9/10
+Problem significance	9/10
+Practical relevance	9/10
+Novelty	7.5/10
+SFM idea	8.5/10
+Experimental richness	8.5/10
+Real-world validation	8/10
+Theoretical rigor	6/10
+Statistical rigor	6.5/10
+Reproducibility	6.5/10
+Writing/positioning	7/10
+Current acceptance readiness	6.5–7/10
+Setelah revisi yang saya rekomendasikan:
+
+Potensi: 8–9/10.
+
+Jadi menurut saya paper ini layak diperjuangkan untuk JISA.
+
+28. Urutan revisi yang saya rekomendasikan
+
+Jangan mulai dari grammar.
+
+Saya justru menyarankan kita melakukan ini secara bertahap:
+
+🔴 PRIORITAS 1 — Wajib
+
+Perbaiki theoretical claim
+
+Ben-David:
+
+SFM ≠ alignment of H
+W1 ≠ \(d_{H\Delta H}\)
+
+Jadikan Ben-David sebagai conceptual framework.
+
+🔴 PRIORITAS 2 — Wajib
+
+Perbaiki klaim label-free mixup.
+
+Ini menurut saya paling berbahaya secara metodologi.
+
+Kita harus menentukan apakah:
+
+target labels digunakan
+
+atau:
+
+pseudo-labels digunakan.
+
+🔴 PRIORITAS 3 — Wajib
+
+Perkuat AWS validation.
+
+Tambahkan:
+
+temporal/episode split,
+repeated runs,
+confidence interval,
+attack repetitions,
+experimental configuration.
+🔴 PRIORITAS 4 — Sangat disarankan
+
+Tambahkan 2–3 classifier baselines.
+
+Tujuannya bukan memenangkan benchmark.
+
+Tujuannya:
+
+menunjukkan bahwa phenomenon/adaptation effect bukan artifact XGBoost.
+
+🟠 PRIORITAS 5
+
+Perkuat SFM:
+
+sensitivity analysis,
+justification threshold,
+per-feature evidence,
+formal mapping criteria.
+🟠 PRIORITAS 6
+
+Perbaiki klaim:
+
+"prove" → "support/demonstrate"
+"few-shot" → "low-label adaptation" bila perlu
+"near-linear scaling" → measured vs extrapolated
+"root cause" → "evidence indicates"
+🟡 PRIORITAS 7
+
+Perbaiki presentation:
+
+RQ
+contribution statement
+framework figure
+experimental configuration table
+cleaner abstract
+remove "honest/data-honesty" language
+improve discussion.
+29. Kesimpulan reviewer saya
+
+Kalau saya menulis confidential comments to the editor, kira-kira penilaian saya:
+
+The manuscript addresses a highly relevant problem for practical network intrusion detection: the lack of cross-network generalization of ML-based NIDS. Its combination of semantic feature auditing, controlled cross-dataset evaluation, low-label adaptation, and real AWS traffic validation provides potentially valuable practical and methodological contributions. The experimental scope is substantial and the negative results are transparently reported. However, several central claims currently exceed the supporting evidence, particularly the interpretation of the Ben-David domain-adaptation bound, the equivalence between Wasserstein distance and HΔH divergence, and the characterization of the proposed mixup procedure as label-free. The real-traffic evaluation also requires stronger controls against temporal/episode leakage and more robust uncertainty analysis. I therefore recommend major revision rather than rejection. If these methodological and positioning issues are addressed rigorously, the manuscript could become a strong contribution to JISA.
+
+Dan saya cukup optimistis terhadap paper ini karena problem-nya memang berada tepat di area yang sudah dianggap penting oleh JISA: generalization, adaptability, heterogeneous networks, dan realistic NIDS evaluation. JISA sendiri telah menerbitkan studi yang menyoroti kegagalan inter-dataset generalization dan gap antara synthetic benchmark dengan real-world traffic.
+
+Yang paling penting: saya tidak menyarankan Anda mengganti penelitian ini dengan model yang lebih rumit. Justru kekuatan paper Anda adalah diagnosis + semantic interoperability + low-cost adaptation + real traffic. Kita perlu memperkuat scientific proof dan positioning-nya, bukan membuatnya menjadi paper deep-learning lain.
+
+Kalau target akhirnya benar-benar accept JISA, saya sarankan tahap berikutnya kita kerjakan "JISA Revision Plan v1", yaitu saya akan bedah paper baris demi baris/section demi section dan menentukan mana yang harus diubah, mana yang dipertahankan, mana yang harus ditambah eksperimennya, sampai menghasilkan daftar pekerjaan konkret sebelum versi English final.

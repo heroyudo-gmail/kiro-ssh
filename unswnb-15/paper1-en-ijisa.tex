@@ -16,13 +16,10 @@
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning,fit,backgrounds}
 \graphicspath{{figure-q1/}}
-\usepackage{lineno}
 
 \journal{Journal of Information Security and Applications}
 
 \begin{document}
-
-\linenumbers
 
 \begin{frontmatter}
 
@@ -74,9 +71,12 @@ fabricate an equivalence. A single XGBoost model is used only as a
 contribution. We find that a single XGBoost model
 excelling in-domain (MCC $0.91$ on CIC; $0.74$ on UNSW) \emph{collapses}
 cross-network (MCC $\approx 0$). Through controlled experiments we show that
-(i) the gap is rooted in \emph{distribution shift} rather than feature
-insufficiency --- joint training reaches near in-domain performance on both
-networks simultaneously; and (ii) minimal calibration --- only $1\%$ of
+(i) the gap is \emph{not} due to feature insufficiency --- joint training reaches
+near in-domain performance on both networks simultaneously --- but is instead
+dominated by a directly measured \emph{distribution shift} (large inter-domain
+Wasserstein distance and a $\approx 0.99$ domain-classifier accuracy), with
+label-taxonomy differences documented as an additional contributing factor via a
+multi-class experiment; and (ii) minimal calibration --- only $1\%$ of
 target-network labels, or cross-dataset \emph{mixup} without any target labels ---
 recovers cross-network MCC to the $0.65$--$0.91$ range. We validate these findings
 on real AWS cloud traffic: zero-shot deployment fails (MCC $\approx 0$) but
@@ -128,9 +128,11 @@ systematically measured the cross-dataset drop: the average Matthews Correlation
 Coefficient (MCC) plummets from $0.946$ (within-dataset) to only $0.294$
 (cross-dataset) --- effectively random guessing. These studies
 \citep{cantone,layeghy,dhooge,verkerken} confirm the problem, but generally stop
-at \emph{observing} the drop: they rarely isolate the \emph{cause} (feature
-insufficiency versus distribution shift) or offer a low-cost, controlled-validated
-solution.
+at \emph{observing} the drop: they rarely disentangle feature insufficiency from
+distribution shift, nor offer a low-cost, controlled-validated solution. We take a
+step toward this by ruling out feature insufficiency and directly measuring the
+distribution shift, and by documenting label-taxonomy differences through a
+multi-class experiment.
 
 This paper is a direct continuation of our prior NIDS work on CSE-CIC-IDS2018
 (XGBoost \citep{xgboost} feature reduction plus real-traffic AWS validation), which
@@ -150,10 +152,11 @@ honestly acknowledged its limitations. Two of these limitations form the
   features (Section~\ref{sec:sfm}).
   \item \textbf{Quantitative evidence} that single-source NIDS collapse
   cross-network (Section~\ref{sec:baseline}).
-  \item A \textbf{diagnosis} that the cross-network gap is rooted in
-  \emph{distribution shift}, together with \textbf{low-cost solutions}: minimal
-  $1\%$ target-label calibration, or cross-dataset \emph{mixup}
-  (Sections~\ref{sec:align},~\ref{sec:da}).
+  \item A \textbf{diagnosis} that rules out feature insufficiency (via joint
+  training) and identifies a directly measured \emph{distribution shift} as the
+  dominant driver of the cross-network gap, together with \textbf{low-cost
+  solutions}: minimal $1\%$ target-label calibration, or cross-dataset
+  \emph{mixup} (Sections~\ref{sec:align},~\ref{sec:da}).
   \item \textbf{Real-traffic validation} on cloud infrastructure (AWS): measuring
   False Alarm Rate, quantitatively diagnosing three-domain \emph{distribution
   shift}, and restoring detection via \emph{few-shot} calibration
@@ -167,8 +170,9 @@ honestly acknowledged its limitations. Two of these limitations form the
 \paragraph{Positioning and novelty.} We stress that this work is \emph{not} the
 routine application of an existing classifier to a standard dataset. The novelty
 lies in the methodology --- a statistically validated cross-tool feature mapping,
-a controlled diagnosis separating feature insufficiency from distribution shift
-(grounded in the Ben-David bound), and an end-to-end validation on real cloud
+a controlled diagnosis that rules out feature insufficiency and isolates a
+directly measured distribution shift as the dominant cause (conceptually
+motivated by the Ben-David bound), and an end-to-end validation on real cloud
 traffic including False Alarm Rate, a quantified three-domain distribution shift,
 and few-shot repair. XGBoost is deliberately fixed as a lightweight, reproducible
 backbone precisely so that any measured effect is attributable to the methodology
@@ -205,8 +209,10 @@ over-correlation that harms generalization. To standardize comparison,
 \citet{sarhan,sarhannf} proposed a unified NetFlow feature set. These works confirm
 the problem but stop at observing the drop --- without separating the contribution
 of \emph{feature insufficiency} versus \emph{distribution shift}, and without
-offering low-cost recovery. Our paper fills this gap with a controlled diagnosis
-and a minimal-calibration solution.
+offering low-cost recovery. Our paper narrows this gap: a controlled diagnosis that
+rules out feature insufficiency and directly measures the distribution shift (with
+label-taxonomy differences documented through a multi-class experiment), plus a
+minimal-calibration solution.
 
 \paragraph{Dataset integrity and realism.} Part of the cross-dataset drop stems
 from flaws in dataset construction itself. \citet{engelen} reconstructed
@@ -519,47 +525,57 @@ Table~\ref{tab:baseline} and Figure~\ref{fig:gap} show MCC $\approx 0$ (random
 guessing) to negative cross-network. This is empirical evidence of gap \#1.
 
 % ============================================================
-\section{Diagnosis: The Gap Is Rooted in Distribution Shift}
+\section{Diagnosis: The Gap Is Dominated by Distribution Shift}
 \label{sec:align}
 
-\paragraph{Theoretical grounding: the Ben-David domain-adaptation bound.} Before
-the empirical evidence, we invoke a theoretical framework that explains \emph{why}
-minimal calibration can recover performance. By the theory of domain-adaptation
-generalization bounds \citep{bendavid}, the target-domain error $R_T(h)$ is
-bounded by:
+\paragraph{Conceptual motivation: the Ben-David domain-adaptation bound.} Before
+the empirical evidence, we invoke a theoretical framework --- \emph{as a conceptual
+motivation, not as an empirical decomposition of the bound} --- that helps explain
+\emph{why} minimal calibration can recover performance. By the theory of
+domain-adaptation generalization bounds \citep{bendavid}, the target-domain error
+$R_T(h)$ is bounded by:
 \begin{equation}
 \label{eq:bendavid}
 R_T(h) \;\le\; R_S(h) \;+\; \tfrac{1}{2}\, d_{\mathcal{H}\Delta\mathcal{H}}(\mathcal{D}_S, \mathcal{D}_T) \;+\; \lambda^\ast,
 \end{equation}
 where $R_S(h)$ is the source-domain error, $d_{\mathcal{H}\Delta\mathcal{H}}$ is
-the source--target distribution \emph{discrepancy} measured on the hypothesis
+the source--target distribution \emph{discrepancy} defined on the hypothesis
 space $\mathcal{H}$, and $\lambda^\ast$ is the ideal-joint error (the error of the
-best classifier valid on both domains). This framework maps every component of our
-method: (i) \textbf{SFM aligns the hypothesis space $\mathcal{H}$} --- by equating
-feature definitions/units across extraction tools, SFM removes the
-\emph{feature-extractor mismatch} that would otherwise make $\mathcal{H}$
-incomparable, so the discrepancy term becomes \emph{measurable} and meaningful (we
-measure it via Wasserstein distance $W_1$, Section~\ref{sec:wass}); (ii)
-\textbf{$1\%$ few-shot and mixup suppress $d_{\mathcal{H}\Delta\mathcal{H}}$} while
-also \textbf{calibrating $\lambda^\ast$}: a few target labels provide information
-about the target-domain ideal classifier (lowering $\lambda^\ast$), while mixup
-shifts the training distribution toward the target (lowering the discrepancy
-term). Thus the MCC recovery we observe (Section~\ref{sec:da}) is not an empirical
-coincidence but a direct consequence of Eq.~\eqref{eq:bendavid}: suppressing the
-two controllable right-hand terms lowers the target-error upper bound.
-Figure~\ref{fig:bendavid} visualizes the two bound components and how each of our
-mechanisms acts on them.
+best classifier valid on both domains). We use this framework only to interpret
+the \emph{qualitative} role of each component of our method, with three
+qualifications we state explicitly to avoid overstating the theory: (i)
+\textbf{SFM establishes a semantically comparable input representation across
+domains} --- by equating feature definitions/units across extraction tools, SFM
+makes cross-domain distribution comparison \emph{meaningful} and enables controlled
+adaptation experiments; we do \emph{not} claim that SFM by itself aligns the
+hypothesis space $\mathcal{H}$ or directly reduces $d_{\mathcal{H}\Delta\mathcal{H}}$;
+(ii) we measure the input-distribution discrepancy only \emph{as a proxy}, via the
+Wasserstein distance $W_1$ (Section~\ref{sec:wass}) and a domain classifier
+(Section~\ref{sec:rt-shift}) --- $W_1$ is \textbf{not} equivalent to
+$d_{\mathcal{H}\Delta\mathcal{H}}$ (the latter is defined over the hypothesis space
+and is classifier-dependent), but a computable distributional distance that
+indicates the magnitude of \emph{covariate shift}; (iii) $1\%$ few-shot and mixup
+can be understood as providing information about the target ideal classifier
+(related to $\lambda^\ast$) and shifting the training distribution toward the
+target, and are thus \emph{conceptually} consistent with lowering the
+right-hand terms of Eq.~\eqref{eq:bendavid}. We stress that the MCC recovery we
+observe (Section~\ref{sec:da}) is \emph{empirical} evidence from controlled
+experiments; the Ben-David framework motivates it rather than serving as a direct
+measurement of the bound's terms. Figure~\ref{fig:bendavid} illustrates these
+components schematically.
 
 \begin{figure}[h]
 \centering
 \resizebox{0.9\linewidth}{!}{\input{tikz-bendavid.tex}}
-\caption{Geometric view of the Ben--David bound. The source ($\mathcal{D}_S$) and
-target ($\mathcal{D}_T$) feature distributions are separated by the discrepancy
-$d_{\mathcal{H}\Delta\mathcal{H}}$; $\lambda^\ast$ is the ideal joint error. SFM
-makes the hypothesis space comparable (so $d_{\mathcal{H}\Delta\mathcal{H}}$ is
-measurable via $W_1$); cross-dataset mixup shifts training toward the target
-(lowering $d_{\mathcal{H}\Delta\mathcal{H}}$); and $1\%$ few-shot anchors the
-target ideal classifier (lowering $\lambda^\ast$).}
+\caption{Schematic (conceptual-motivation) view of the Ben--David bound. The source
+($\mathcal{D}_S$) and target ($\mathcal{D}_T$) feature distributions are separated
+by a discrepancy $d_{\mathcal{H}\Delta\mathcal{H}}$; $\lambda^\ast$ is the ideal
+joint error. SFM provides a semantically comparable input representation (enabling
+us to measure input-distribution distance via $W_1$ as a proxy --- $W_1$ is not
+equal to $d_{\mathcal{H}\Delta\mathcal{H}}$); cross-dataset mixup shifts training
+toward the target; and $1\%$ few-shot anchors the target ideal classifier
+(conceptually related to $\lambda^\ast$). The figure is illustrative and does not
+represent a direct empirical measurement of the bound's terms.}
 \label{fig:bendavid}
 \end{figure}
 
@@ -592,13 +608,39 @@ networks; CORAL helps asymmetrically.}
 \end{figure}
 
 The key finding: \emph{joint training} reaches MCC $0.912$ (CIC) and $0.732$
-(UNSW) \emph{simultaneously}, nearly in-domain. This proves \textbf{SFM is valid}
---- 9 intersection features are expressive enough to represent both networks.
-Hence the generalization gap is \emph{not} about features but about
-\emph{distribution shift}: a single-source model never sees the target
-distribution. CORAL helps partially and asymmetrically (UNSW$\rightarrow$CIC rises
-to $+0.164$; CIC$\rightarrow$UNSW even drops), indicating that second-order
-alignment is insufficient for the direction from a richer-distribution source.
+(UNSW) \emph{simultaneously}, nearly in-domain. This demonstrates that \textbf{SFM
+is valid} --- 9 intersection features are expressive enough to represent both
+networks. In
+other words, this result \emph{rules out feature insufficiency} as the cause: the
+same feature set separates attack/benign in \emph{both} networks once the model
+sees both at training time. The remaining dominant cause is a \emph{distribution
+shift} in the feature distributions --- a single-source model never sees the
+target distribution --- and we \emph{measure this shift directly}: the
+inter-domain Wasserstein distance (Section~\ref{sec:wass}) and a
+\emph{domain classifier} that separates flow origin with $\approx 0.99$ accuracy
+(Section~\ref{sec:rt-shift}). CORAL helps partially and asymmetrically
+(UNSW$\rightarrow$CIC rises to $+0.164$; CIC$\rightarrow$UNSW even drops),
+indicating that second-order alignment is insufficient for the direction from a
+richer-distribution source.
+
+\paragraph{Scope of the causal claim.} We state this claim precisely against the
+evidence already produced, without over-reaching. The claim that
+\emph{distribution shift is the dominant cause} rests on three complementary pieces
+of evidence, all present in this paper: (i) \emph{joint training} proves the
+features are \emph{sufficient}, ruling out feature insufficiency
+(Table~\ref{tab:align}); (ii) the \emph{feature-extractor mismatch} is neutralized
+\emph{by design} through SFM --- feature definitions/units are equated across tools,
+and the residual mismatch (TCP-window \texttt{swin}/\texttt{dwin}) is \emph{dropped
+and reported} as a finding (Section~\ref{sec:sfm}); and (iii) on that basis, the
+Wasserstein distance (Section~\ref{sec:wass}) and the $\approx 0.99$ domain
+classifier (Section~\ref{sec:rt-shift}) directly measure a large \emph{covariate
+shift} ($P(X)$). We do not ignore label/attack-taxonomy differences across networks
+($P(Y)$ and per-category $P(X\mid Y)$) either: their symptoms are shown directly in
+the multi-class experiment (Section~\ref{sec:multiclass}), where the same
+per-category shift also limits multi-class cross-network transfer. XGBoost is
+deliberately fixed as a lightweight, reproducible backbone so that any measured
+effect is attributable to the methodology rather than to model capacity
+(Section~\ref{sec:intro}).
 
 \paragraph{Why CORAL fails while few-shot and mixup succeed.} This difference is
 no accident but a consequence of how each method modifies the distribution.
@@ -610,7 +652,7 @@ data mass uniformly --- dominated by the majority benign class --- thereby
 cluster; this is why CORAL worsens the CIC$\rightarrow$UNSW direction ($-0.072
 \rightarrow -0.185$). In contrast, $1\%$ \emph{few-shot} provides \emph{supervised
 anchor points} that precisely steer the decision boundary right around the target
-attack cluster --- consistent with lowering $\lambda^\ast$ in
+attack cluster --- conceptually aligned with the role of $\lambda^\ast$ in
 Eq.~\eqref{eq:bendavid}. Meanwhile \emph{mixup} interpolates the manifold
 \emph{locally} between flows of the two datasets, shifting the training
 distribution toward the target \emph{without} imposing a global linear-covariance
@@ -1083,7 +1125,9 @@ adaptation recipe rather than a universal-model claim that provably fails.
 \label{sec:discussion}
 
 The findings form a coherent, honest narrative: (1) single-source NIDS collapse
-cross-network; (2) the cause is distribution shift, not feature insufficiency;
+cross-network; (2) feature insufficiency is ruled out (joint training) and a
+directly measured distribution shift is the dominant cause, with label-taxonomy
+differences documented as an additional contributing factor (multi-class experiment);
 (3) minimal calibration or mixup recovers performance efficiently thanks to a
 validated SFM, and this recovery is confirmed on real AWS traffic via few-shot.
 
@@ -1120,8 +1164,9 @@ UNSW), indicating the difference is not in bin-occupancy \emph{evenness} but in 
 far wider \emph{range} of values --- consistent with a more heterogeneous domain.
 This explains the asymmetry direction: moving from a low-variance domain (CIC) to a
 high-variance one (UNSW) requires covering distribution modes the source never
-saw, and is thus inherently harder --- consistent with a larger
-$d_{\mathcal{H}\Delta\mathcal{H}}$ term in Eq.~\eqref{eq:bendavid}.
+saw, and is thus inherently harder --- conceptually consistent with a larger
+distributional discrepancy in that direction (cf.\ Eq.~\eqref{eq:bendavid} as
+motivation).
 
 \begin{table}[h]
 \centering
@@ -1243,7 +1288,8 @@ rigorous multi-class cross-network deployment, which we develop in future work.
 
 We presented an honest cross-network study on the CSE-CIC-IDS2018 and UNSW-NB15
 pair. A validated Semantic Feature Mapping enables cross-dataset training; we show
-that the generalization gap is rooted in distribution shift and can be closed with
+that the generalization gap is not caused by feature insufficiency but is dominated
+by a directly measured distribution shift, and can be closed with
 low-cost calibration ($1\%$ target labels) or label-free mixup, confirmed on real
 AWS traffic via few-shot calibration. A recommended operational configuration is a
 UNSW-source model plus $\sim$$10\%$ target-domain labels, which nearly matches a

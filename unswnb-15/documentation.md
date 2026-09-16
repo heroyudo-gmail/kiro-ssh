@@ -726,3 +726,81 @@ Catatan koreksi: versi awal §18.3 menyebut fix "duration dalam detik" — itu *
 deployment** (karena scaler di-fit pada CIC-µs, bukan UNSW-detik). Versi ini adalah yang benar:
 **duration = mikrodetik**. Gate D1-b (|z|≤6) & sanity S0-c (orde `duration` vs `scaler_mean`)
 di `aws/runbook.md` menjadi jaring pengaman bila masih ada mismatch tersisa saat ramp.
+
+---
+
+## 19. Revisi Promotor: Pembatasan Klaim Kausal *Distribution Shift* (SELESAI — Jalur A)
+
+Promotor mengangkat **satu isu fundamental** yang dinilai paling berbahaya untuk
+*acceptance*: klaim *"the generalization gap is rooted in distribution shift rather
+than feature insufficiency"* belum sepenuhnya membuktikan **pemisahan kausal**
+(*causal separation*) antar lima faktor yang mungkin berkontribusi pada celah:
+
+1. feature insufficiency (ketidakcukupan fitur),
+2. feature-extractor mismatch,
+3. covariate / distribution shift,
+4. label / attack-taxonomy shift,
+5. classifier limitation.
+
+**Argumen promotor (valid secara logika):** *joint training* HANYA membuktikan
+**feature sufficiency** (9 fitur cukup ekspresif saat model melihat kedua domain).
+Itu bukti perlu tetapi **belum cukup** untuk menyimpulkan *distribution shift*
+sebagai penyebab, karena empat faktor lain belum dieliminasi secara terkontrol.
+
+### 19.1 Status bukti nyata per faktor (hanya notebook Paper 1: `01`–`10`, `20`–`25`, `30`)
+
+| Faktor | Bukti nyata yang ADA | Terisolasi? |
+|---|---|---|
+| 1. Feature insufficiency | Joint training MCC $0{,}912$ (CIC) / $0{,}732$ (UNSW) ≈ in-domain (`05` → `cross_network_alignment.json`) | **Ya — tersingkir** |
+| 2. Feature-extractor mismatch | Studi kasus `swin`/`dwin` + audit satuan (`02` → `mapping_validation.json`); dinetralkan *by-design* via SFM | Dinetralkan, tak dikuantifikasi |
+| 3. Covariate/distribution shift | Wasserstein $W_1$ (`10` → `wasserstein_shift.json`) + domain-classifier $\approx 0{,}99$ (`21` → `shift_out/`) | **Ya — terukur** (marginal $P(X)$) |
+| 4. Label/attack-taxonomy shift | Per-kategori $W_1$ (`23`), transfer multiclass kelas-bersama kolaps (`24`) | Tidak — gejala ditunjukkan, kontribusi tak dipisah |
+| 5. Classifier limitation | Hanya XGBoost sebagai detektor di seluruh Paper 1 (RandomForest di `21` hanya sebagai *domain-classifier*) | Tidak — tak ada pembanding |
+
+> **Catatan pembatas ruang lingkup:** notebook `11`–`17` adalah **Paper 2**
+> (adversarial) — TIDAK relevan untuk isu ini dan tidak boleh dicampur. Lihat
+> `documentation_adversarial.md` §5.
+
+### 19.2 Keputusan: Jalur A — Reframe Klaim (tanpa eksperimen baru)
+
+Dipilih **reframe murni penulisan** (bukan menambah eksperimen), menurunkan klaim
+dari **kausal-tunggal** menjadi **kausal-dominan + pengakuan jujur** faktor yang
+belum diisolasi. Ini menjaga prinsip kejujuran data dan justru sejalan dengan
+kekuatan naratif paper (integritas ilmiah).
+
+Rumusan baru yang dipakai di kedua naskah:
+
+- **Yang dibuktikan:** (a) fitur *cukup* (joint training menyingkirkan feature
+  insufficiency); (b) ada *covariate shift* besar yang **diukur langsung** (jarak
+  Wasserstein + domain-classifier $\approx 0{,}99$). → *distribution shift* sebagai
+  penyebab **dominan**.
+- **Yang diakui belum diisolasi:** perbedaan taksonomi/label serangan ($P(Y)$ &
+  $P(X\mid Y)$ per-kategori) dan kemungkinan *classifier ceiling* (XGBoost sengaja
+  dikunci sebagai *backbone* demi keterbandingan, bukan diuji lintas-keluarga model).
+  Dekomposisi kausal penuh ditinggalkan sebagai *future work*.
+
+### 19.3 Perubahan konkret di naskah (SELESAI)
+
+Diedit konsisten di **`paper1-generalisasi.tex`** (ID) dan **`paper1-en-ijisa.tex`** (EN):
+
+- **Abstract:** "rooted in distribution shift rather than feature insufficiency" →
+  "*not due to feature insufficiency … but dominated by a directly measured
+  distribution shift … while label-taxonomy differences and classifier choice remain
+  additional, not-yet-isolated factors*".
+- **Kontribusi/novelty:** "controlled diagnosis separating …" → "*controlled
+  diagnosis that rules out feature insufficiency and isolates a directly measured
+  distribution shift as the dominant cause … a full causal decomposition … remains
+  open*".
+- **Diagnosis (`sec:align`):** ditambah paragraf **"Cakupan klaim kausal / Scope of
+  the causal claim (methodological honesty)"** yang membatasi klaim secara eksplisit.
+- **Related work & Conclusion:** disesuaikan agar konsisten (dominan + faktor
+  tambahan belum dipisah).
+- Judul bagian tetap *"…Rooted in Distribution Shift"* (punchy) karena tubuh
+  bagian sudah membatasi maknanya menjadi *penyebab dominan*.
+
+**Status: SELESAI.** Tidak ada angka baru; seluruh angka tetap dari eksperimen nyata
+yang sudah ada. Bila reviewer/promotor kelak menuntut bukti isolasi lebih kuat,
+opsi Jalur B (belum dikerjakan) adalah notebook baru Paper 1 (mis.
+`26_causal_separation.ipynb`): (i) replikasi kolaps→pulih pada detektor non-XGBoost
+(RandomForest/MLP/LogReg) untuk menutup faktor #5, dan (ii) dekomposisi covariate vs
+label shift pada kelas bersama untuk menutup faktor #4.

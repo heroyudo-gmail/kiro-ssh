@@ -1,0 +1,172 @@
+\documentclass[11pt,a4paper]{article}
+
+% ============================================================
+% PAPER 3 (draft/kerangka) — Bahasa Indonesia
+% Self-Calibrating NIDS: Streaming Concept-Drift Detection +
+%   Autonomous Few-Shot Adaptation untuk Trafik Cloud.
+% Kelanjutan langsung Paper 1 (SFM + few-shot OFFLINE):
+%   Paper 1 = adaptasi one-shot sebelum deploy.
+%   Paper 3 = adaptasi ONLINE/continuous saat runtime (closed-loop).
+% CATATAN: seluruh angka WAJIB dari eksperimen nyata; placeholder ditandai [hasil].
+% ============================================================
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[bahasa]{babel}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath,amssymb}
+\usepackage{siunitx}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{caption}
+\usepackage{multirow}
+\geometry{margin=2.5cm}
+\hypersetup{colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue}
+
+\title{\textbf{NIDS yang Mengalibrasi-Diri: Deteksi \emph{Concept Drift}
+Streaming dan Adaptasi \emph{Few-Shot} Otonom untuk Trafik Cloud}}
+% English working title: "Self-Calibrating NIDS: Streaming Concept-Drift
+% Detection and Autonomous Few-Shot Adaptation for Cloud Traffic".
+
+\author{Hero Yudo Martono, \quad Iwan Syarif, \quad Ferry Astika Saputra \\
+\textit{Departemen Teknik Informatika, Politeknik Elektronika Negeri Surabaya}}
+\date{Draft kerja --- \today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\textbf{[KERANGKA — diisi setelah eksperimen.]} NIDS berbasis ML yang dikalibrasi
+lintas-jaringan (mis. via \emph{Semantic Feature Mapping} dan \emph{few-shot},
+\cite{paper1}) melakukan kalibrasi \emph{offline} sekali sebelum penyebaran. Namun
+trafik cloud nyata mengalami \emph{concept drift} dinamis (pola siang/malam,
+musiman), sehingga model statis lambat-laun menurun. Makalah ini mengusulkan
+kerangka \emph{closed-loop}: detektor \emph{drift} \emph{streaming} berbasis
+jendela-geser jarak Wasserstein ($W_1$) dan CUSUM pada aliran \emph{flow}
+NFStream, yang memicu pembaruan \emph{micro-few-shot} otomatis dengan anggaran
+label minimal (\emph{active learning}), disertai \emph{guardrail} anti-peracunan
+untuk mencegah adaptasi keliru saat serangan berlangsung. [Ringkasan hasil
+menyusul.]
+
+\vspace{0.5em}
+\noindent\textbf{Kata kunci:} NIDS, \emph{concept drift}, jarak Wasserstein,
+\emph{online domain adaptation}, \emph{few-shot}, \emph{active learning}, cloud.
+\end{abstract}
+
+% ============================================================
+\section{Pendahuluan}
+\label{sec:intro}
+\textbf{[Kerangka.]} Motivasi: kalibrasi \emph{offline} Paper~1~\cite{paper1}
+tervalidasi memulihkan deteksi pada trafik AWS, tetapi \emph{one-shot}. Celah:
+adaptasi berkelanjutan terhadap \emph{concept drift} runtime belum ditangani.
+
+\paragraph{Gap yang ditutup.}
+\begin{enumerate}
+  \item \textbf{Drift tak-terdeteksi.} Model statis tidak tahu kapan
+  distribusinya sudah bergeser jauh dari data latih.
+  \item \textbf{Adaptasi manual/mahal.} Kalibrasi ulang biasanya butuh intervensi
+  dan pelabelan besar.
+  \item \textbf{Risiko adaptasi keliru.} Update saat serangan dapat
+  ``mengajari'' model menerima serangan sebagai normal (\emph{poisoning}).
+\end{enumerate}
+
+\paragraph{Kontribusi (rencana).}
+\begin{itemize}
+  \item \textbf{Detektor \emph{drift} streaming} berbasis jendela-geser $W_1$ per
+  fitur SFM $+$ CUSUM untuk drift lambat-kumulatif (\S\ref{sec:detector}).
+  \item \textbf{Pemicu cerdas} yang membedakan \emph{benign drift} (mis.
+  siang/malam) dari \emph{attack surge}, sehingga update hanya pada drift jinak
+  (\S\ref{sec:trigger}).
+  \item \textbf{Pembaruan \emph{micro-few-shot} otonom} dengan \emph{active
+  learning} (label hanya untuk sampel paling informatif) $+$ \emph{guardrail}
+  anti-\emph{poisoning} (\S\ref{sec:update}).
+  \item \textbf{Evaluasi runtime multi-hari} di AWS: MCC terjaga seiring waktu
+  vs baseline statis yang menurun (\S\ref{sec:eval}).
+\end{itemize}
+
+% ============================================================
+\section{Karya Terkait}
+\label{sec:related}
+\textbf{[Kerangka.]} (i) \emph{Concept drift} pada \emph{data stream} (ADWIN,
+DDM, Page-Hinkley); (ii) deteksi \emph{drift} berbasis jarak distribusi
+($W_1$/MMD); (iii) \emph{online}/\emph{continual} learning pada NIDS;
+(iv) \emph{active learning} untuk NIDS berlabel-terbatas; (v) posisi kami:
+menutup \emph{loop} deteksi$\rightarrow$adaptasi dengan biaya label minimal dan
+guardrail keamanan, di atas fondasi SFM$+$few-shot Paper~1.
+
+% ============================================================
+\section{Metode}
+\label{sec:method}
+
+\subsection{Detektor Drift Streaming ($W_1$ + CUSUM)}
+\label{sec:detector}
+\textbf{[Kerangka + persamaan.]} Untuk tiap fitur SFM $j$, hitung $W_1$ antara
+distribusi jendela-geser terkini $\mathcal{W}_t$ (ukuran $w$) dan distribusi
+acuan latih $\mathcal{D}_{\text{ref}}$:
+\begin{equation}
+\label{eq:driftscore}
+S_t \;=\; \frac{1}{d}\sum_{j=1}^{d} W_1\!\big(\mathcal{W}_t^{(j)}, \mathcal{D}_{\text{ref}}^{(j)}\big).
+\end{equation}
+CUSUM mengakumulasi deviasi $S_t$ terhadap garis dasar untuk menangkap drift
+lambat; alarm dipicu bila statistik kumulatif melewati ambang $h$. (Detail
+kalibrasi $w$, $h$, dan garis dasar menyusul dari eksperimen notebook \texttt{30\_}.)
+
+\subsection{Pemicu Cerdas: Benign Drift vs Attack Surge}
+\label{sec:trigger}
+\textbf{[Kerangka.]} Aturan pembeda (hipotesis, akan divalidasi): \emph{benign
+drift} = pergeseran perlahan pada fitur temporal/laju \emph{tanpa} lonjakan laju
+alarm; \emph{attack surge} = pergeseran mendadak berbarengan lonjakan alarm.
+Hanya \emph{benign drift} yang memicu adaptasi; \emph{attack surge} memicu
+mitigasi, bukan pembaruan model.
+
+\subsection{Pembaruan Micro-Few-Shot Otonom + Guardrail}
+\label{sec:update}
+\textbf{[Kerangka.]} Saat pemicu jinak aktif: (i) \emph{active learning} memilih
+$k$ sampel paling tak-pasti (dekat batas keputusan) untuk dilabeli (anggaran
+kecil); (ii) model diperbarui \emph{inkremental} (few-shot) memakai resep Paper~1;
+(iii) \emph{guardrail}: model kandidat divalidasi pada \emph{holdout} tepercaya
+sebelum dipromosikan, mencegah \emph{poisoning}.
+
+% ============================================================
+\section{Eksperimen dan Hasil}
+\label{sec:eval}
+\textbf{[Kerangka — angka menyusul dari notebook \texttt{30\_}++ dan AWS multi-hari.]}
+\begin{itemize}
+  \item \textbf{PoC deteksi drift (offline, murah):} simulasikan \emph{stream}
+  berurutan CIC$\rightarrow$UNS$\rightarrow$AWS; tunjukkan $S_t$ (Persamaan~\ref{eq:driftscore})
+  melonjak di titik transisi domain. (Notebook \texttt{30\_drift\_detector\_poc}.)
+  \item \textbf{Simulasi closed-loop:} bandingkan MCC model statis vs
+  auto-adaptif sepanjang \emph{stream}.
+  \item \textbf{Validasi AWS multi-hari:} capture berkelanjutan (mis. 3--7 hari),
+  ukur MCC/FAR seiring waktu; buktikan auto-adapt menahan penurunan.
+\end{itemize}
+
+% ============================================================
+\section{Diskusi \& Keterbatasan}
+\label{sec:discussion}
+\textbf{[Kerangka.]} Bahas: biaya label \emph{active learning}, risiko
+\emph{poisoning} dan efektivitas guardrail, stabilitas \emph{loop} (hindari
+osilasi update), serta batas generalisasi ke topologi lain.
+
+% ============================================================
+\section{Kesimpulan}
+\label{sec:conclusion}
+\textbf{[Kerangka.]} Ringkas kontribusi closed-loop dan hasil utama setelah
+eksperimen selesai.
+
+% ============================================================
+\begin{thebibliography}{9}
+\bibitem{paper1} H.~Y.~Martono, I.~Syarif, and F.~A.~Saputra, ``Generalisasi
+Cross-Dataset pada NIDS Menggunakan Semantic Feature Mapping dan Few-Shot
+Adaptation dengan Validasi Trafik Cloud Nyata,'' \emph{naskah kerja} (Paper~1),
+2026.
+\bibitem{layeghy} S.~Layeghy, M.~Gallagher, and M.~Portmann, ``Benchmarking the
+benchmark --- Comparing synthetic and real-world network IDS datasets,''
+\emph{J. Inf. Secur. Appl.}, vol.~80, art.~103689, 2024.
+\bibitem{bendavid} S.~Ben-David \emph{et al.}, ``A theory of learning from
+different domains,'' \emph{Mach. Learn.}, vol.~79, pp.~151--175, 2010.
+% TODO: tambah rujukan concept drift (ADWIN, DDM, Page-Hinkley), MMD, active learning.
+\end{thebibliography}
+
+\end{document}
