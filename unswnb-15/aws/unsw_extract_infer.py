@@ -28,6 +28,12 @@ CANON = ["duration", "fwd_pkts", "bwd_pkts", "fwd_bytes", "bwd_bytes",
 GT = [(0, 1, "benign"), (1, 3, "attack"), (3, 5, "attack"),
       (5, 6, "attack"), (6, 7, "benign")]
 
+# Timeline KATEGORI serangan (menit) — memungkinkan evaluasi MULTI-CLASS di AWS.
+# Sesuai attack_scenario.sh varian `clean`: SSH brute (1-3) -> Slowloris (3-5) -> SYN flood (5-6).
+# Kategori dipetakan ke label CIC yang beririsan (BruteForce/DoS/DDoS/Benign).
+GT_CAT = [(0, 1, "Benign"), (1, 3, "BruteForce"), (3, 5, "DoS"),
+          (5, 6, "DDoS"), (6, 7, "Benign")]
+
 
 def extract9(pcap):
     from nfstream import NFStreamer
@@ -87,6 +93,15 @@ def gt_label(elapsed_sec):
     return "benign"
 
 
+def gt_category(elapsed_sec):
+    """Label KATEGORI dari timeline (untuk multi-class AWS). Butuh elapsed dari first_seen pcap."""
+    m = elapsed_sec / 60.0
+    for a, z, lab in GT_CAT:
+        if a <= m < z:
+            return lab
+    return "Benign"
+
+
 def main():
     if len(sys.argv) < 3:
         print("Usage: unsw_extract_infer.py <far|detect> <pcap>"); sys.exit(1)
@@ -120,6 +135,11 @@ def main():
                                      precision_score, recall_score, accuracy_score)
         y_true = np.array([1 if gt_label(e) == "attack" else 0 for e in elapsed])
         res["ground_truth"] = y_true
+        # Kolom tambahan untuk MULTI-CLASS: waktu relatif tiap flow + kategori dari timeline.
+        # `elapsed_sec` dihitung dari bidirectional_first_seen_ms (waktu MULAI flow), sehingga
+        # pemetaan ke fase serangan akurat — beda dari urutan baris CSV yang bisa menyesatkan.
+        res["elapsed_sec"] = np.round(np.asarray(elapsed, float), 3)
+        res["gt_category"] = [gt_category(e) for e in elapsed]
         res.to_csv(os.path.join(RESULTS_DIR, f"{base}_flows.csv"), index=False)
         m = dict(mode="detect", pcap=os.path.basename(pcap), n_flow=n,
                  mcc=round(float(matthews_corrcoef(y_true, pred)), 4),

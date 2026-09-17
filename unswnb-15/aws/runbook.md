@@ -549,3 +549,97 @@ perintah panjang (kosmetik). Trik andal: tulis output ke file lalu baca file, at
 perintah pendek `describe-stacks ... --output text`. AWS CLI di lokal pakai user IAM `hero`
 (akun 232032302717) — punya izin CloudFormation/EC2/SSM. Terminal SageMaker TIDAK punya
 izin itu (execution role hanya S3/SageMaker) -> jalankan CloudFormation dari lokal.
+
+---
+
+## 10. RE-RUN Fase 2 untuk MULTI-CLASS (panduan lengkap, ~7 menit sesi)
+
+> **Tujuan:** menghasilkan **`multiclass_aws_results.json`** yang berisi angka (bukan `zero_shot:null`),
+> sehingga Bagian §8b notebook `20_rangkuman.ipynb` tampil penuh (confusion matrix 4-kelas AWS).
+> **Kunci:** skrip `unsw_extract_infer.py` versi ter-update menyimpan kolom **`gt_category`** +
+> **`elapsed_sec`** (dari `first_seen`), sehingga kategori (Benign/BruteForce/DoS/DDoS) akurat —
+> BUKAN ditebak dari urutan baris CSV.
+
+### 10.0 Prasyarat (SUDAH beres bila skrip sudah di-upload)
+- [x] `unsw_extract_infer.py` ter-update **sudah di S3** `unsw-far/scripts/` (dikonfirmasi).
+      Verifikasi isi: `grep -n "gt_category" unsw_extract_infer.py` harus muncul (juga `dur_feat_us`).
+- Timeline serangan varian `clean` (dari `attack_scenario.sh`, dipakai `GT_CAT`):
+  `0-1 Benign | 1-3 BruteForce(SSH) | 3-5 DoS(Slowloris) | 5-6 DDoS(SYN flood) | 6-7 Benign`.
+
+### 10.1 Deploy ulang (dari LOKAL, region ap-southeast-1)
+```bash
+aws cloudformation create-stack --stack-name unsw-far-vpc \
+  --template-body file://unsw-vpc.yaml --capabilities CAPABILITY_NAMED_IAM --region ap-southeast-1
+aws cloudformation wait stack-create-complete --stack-name unsw-far-vpc --region ap-southeast-1
+aws cloudformation create-stack --stack-name unsw-far-ec2 \
+  --template-body file://unsw-2ec2.yaml --capabilities CAPABILITY_NAMED_IAM --region ap-southeast-1
+aws cloudformation wait stack-create-complete --stack-name unsw-far-ec2 --region ap-southeast-1
+aws cloudformation describe-stacks --stack-name unsw-far-ec2 --region ap-southeast-1 \
+  --query "Stacks[0].Outputs" --output table
+```
+Catat: `AttackerId`, `TargetAnalyzerId`, `AttackerPrivateIp`, `TargetAnalyzerPrivateIp`.
+Tunggu SSM online (~2 menit): `aws ssm describe-instance-information --region ap-southeast-1 --query "InstanceInformationList[].{Id:InstanceId,Ping:PingStatus}" --output table`.
+
+### 10.2 Siapkan Target+Analyzer (via SSM) — WAJIB CLI v2
+```bash
+# 1) Pasang AWS CLI v2 (CLI v1 bawaan AL2023 RUSAK: ModuleNotFoundError dateutil)
+sudo dnf install -y unzip
+curl -s 'https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip' -o /tmp/awscliv2.zip
+cd /tmp && unzip -oq awscliv2.zip && sudo ./aws/install --update
+hash -r; aws --version   # harus aws-cli/2.x
+# 2) Tarik skrip+model — PATH LITERAL (jangan $S3_BUCKET di dalam array commands SSM)
+sudo /usr/local/bin/aws s3 cp s3://ssh-detection-features-232032302717/unsw-far/scripts/ /opt/unsw/scripts/ --recursive
+sudo /usr/local/bin/aws s3 cp s3://ssh-detection-features-232032302717/unsw-far/models/  /opt/unsw/models/  --recursive
+chmod +x /opt/unsw/scripts/*.sh
+grep -n "gt_category" /opt/unsw/scripts/unsw_extract_infer.py   # HARUS muncul (versi ter-update)
+grep -n "dur_feat_us" /opt/unsw/scripts/unsw_extract_infer.py   # HARUS muncul (satuan us)
+```
+
+### 10.3 Jalankan Fase 2 (deteksi, ~7 menit)
+```bash
+# Di TARGET+ANALYZER: mulai capture (pcap ke folder yg terbukti writable, cek bug tcpdump)
+cd /opt/unsw/scripts && sudo ./capture_target.sh detect clean
+#   -> VERIFIKASI ~20 dtk: `ls -la /opt/unsw/captures` ukuran > 0 & log 'listening on ens5'
+#      (BUKAN 'Permission denied'). Bila 0: tulis ke /opt/unsw/captures/ langsung / chmod 1777.
+
+# Di ATTACKER: jalankan skenario terjadwal (pakai TargetAnalyzerPrivateIp)
+cd /opt/unsw/scripts && ./attack_scenario.sh <TARGET_PRIVATE_IP> clean
+```
+Setelah ~7 menit selesai, hentikan capture (Ctrl-C di Target).
+
+### 10.4 Proses -> CSV ber-`gt_category` (auto-upload S3)
+```bash
+export S3_BUCKET=ssh-detection-features-232032302717
+python3 /opt/unsw/scripts/unsw_extract_infer.py detect /opt/unsw/captures/detect_clean.pcap
+# VERIFIKASI kolom baru ada:
+head -1 /opt/unsw/results/detect_clean_flows.csv   # harus memuat: ...,ground_truth,elapsed_sec,gt_category
+# distribusi kategori (harus ada Benign/BruteForce/DoS/DDoS, bukan cuma 0/1):
+python3 -c "import pandas as pd; d=pd.read_csv('/opt/unsw/results/detect_clean_flows.csv'); print(d['gt_category'].value_counts())"
+```
+
+### 10.5 Hitung multi-class (di SageMaker) + rerun rangkuman
+```bash
+# Di SageMaker: unduh CSV baru dari S3 lalu jalankan notebook 25
+aws s3 cp s3://ssh-detection-features-232032302717/unsw-far/results/detect_clean_flows.csv unswnb-15/notebooks/
+# Run All 25_multiclass_aws.ipynb  -> multiclass_aws_out/multiclass_aws_results.json (zero_shot TERISI)
+# Unduh hasil ke folder induk agar dibaca notebook 20:
+aws s3 cp s3://ssh-detection-features-232032302717/unsw-far/multiclass_aws/multiclass_aws_results.json unswnb-15/
+# Run All 20_rangkuman.ipynb -> Bagian 8b kini tampil confusion matrix 4-kelas AWS.
+```
+
+### 10.6 Teardown (biaya nol)
+```bash
+aws cloudformation delete-stack --stack-name unsw-far-ec2 --region ap-southeast-1
+aws cloudformation wait stack-delete-complete --stack-name unsw-far-ec2 --region ap-southeast-1
+aws cloudformation delete-stack --stack-name unsw-far-vpc --region ap-southeast-1
+aws cloudformation wait stack-delete-complete --stack-name unsw-far-vpc --region ap-southeast-1
+aws ec2 describe-addresses --region ap-southeast-1   # cek EIP nyangkut
+```
+
+### 10.7 Ekspektasi hasil (jujur)
+- Zero-shot multi-class AWS **kemungkinan rendah** (recall per-kelas kecil) karena *distribution shift*
+  yang sama seperti biner — ini **hasil yang benar & jujur**, bukan kegagalan.
+- Yang dilaporkan: **confusion matrix 4-kelas** (serangan X salah jadi Y) + **kurva few-shot** (nb 25
+  punya bagian few-shot: tambah k% label AWS -> lihat pemulihan per-kategori).
+- Bila `25` tetap memberi `zero_shot:null`: cek `detect_clean_flows.csv` benar punya kolom
+  `gt_category` (berarti skrip lama masih terpakai -> ulangi 10.2 pull skrip).
