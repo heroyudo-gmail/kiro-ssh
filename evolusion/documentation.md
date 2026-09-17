@@ -293,12 +293,25 @@ setelah Run All di SageMaker + dataset tersedia). Peta lengkap di `notebooks/REA
 | `02_openset_scorer.ipynb` | T3 | **DIBUAT** (belum dirun) | Skor open-set **Mahalanobis (utama)** vs **confidence**; uji pemisahan **known (test) vs held-out**; **AUROC known-vs-unknown** + kalibrasi τ (p99 jarak known) | `openset_results.json` (AUROC maha/conf, τ, TPR/FPR), `openset_summary.csv`, `openset_<DS>.png` (hist + ROC) → `openset/` |
 | `03_novelty_clustering.ipynb` | T3b | **DIBUAT** (belum dirun) | **HDBSCAN** pada flow held-out yang **lolos gerbang open-set** (dist>τ); cek **n_cluster ≈ M** (jumlah jenis baru); ukur **homogeneity & ARI** vs ground-truth | `novelty_results.json` (n_cluster, homogeneity, ARI, komposisi), `novelty_summary.csv`, `novelty_<DS>.png` (PCA 2D), **`cluster_profile_<DS>.csv`** (profil statistik cluster → bekal LLM) → `novelty/` |
 | `04_drift_detector.ipynb` | T2 | **DIBUAT** (belum dirun) | Formalkan **$W_1$ jendela-geser + CUSUM** (dari PoC `30_`); stream CIC→UNSW(→AWS); **delay deteksi** + **sensitivitas W**; alarm drift = sinyal kelas baru mungkin muncul | `drift_results.json` (mu0, thr, alarm, delay, sensitivitas), `drift_sensitivity.csv`, `drift_stream_W1000.png` → `drift/` |
+| `05_labeling_oracle_llm.ipynb` | T4 | **DIBUAT** (belum dirun) | Labeli cluster: **oracle mayoritas** (utama) + **LLM auto-name** dari `cluster_profile` (fallback rule-based bila tanpa API); ukur **akurasi LLM vs oracle** | `labeling_results.json` (namer, akurasi vs oracle), `labeling_<DS>.csv` (cluster→oracle_label/name/match) → `labeling/` |
 
 **Alur data antar-notebook:** `01` memproduksi `deploy_meta_mc_<DS>.json` (mu + inv_cov per-kelas)
 → **`02` & `03` wajib memakainya** untuk skor Mahalanobis. Keduanya auto-unduh artefak `01`
 dari S3 bila tak ada lokal. Flow held-out yang skornya **di atas τ** = *unknown* → `03`
 meng-cluster-nya jadi kandidat kelas baru → `cluster_profile_<DS>.csv` jadi input pelabelan
 (oracle + LLM) di `05` (belum dibuat).
+
+**Prasyarat runtime (dipenuhi saat eksekusi di SageMaker, BUKAN di repo):**
+- **Dataset CIC:** `CICDDoS2018/data/file_100.csv` — sudah ada di repo. ✔
+- **Dataset UNSW:** `unswnb-15/data/UNSW_NB15_*set.csv` — di-`.gitignore` (siapkan di SageMaker/S3,
+  sama seperti Paper 1). Notebook pilih file **berdasarkan jumlah record** (~175k = latih).
+- **Artefak antar-notebook:** `02`/`03`/`05` auto-unduh output `01`/`03` dari S3
+  (`evolusion/known_base/`, `evolusion/novelty/`) bila tak ada lokal.
+- **Library:** tiap notebook auto-`pip install` (xgboost, scikit-learn, scipy, **hdbscan**, boto3, dll).
+- **LLM (nb 05, opsional):** set `USE_LLM=1` + akses **Bedrock** (`LLM_MODEL`). Jika nonaktif/gagal
+  → otomatis **fallback rule-based** (notebook tetap jalan tanpa LLM).
+- **S3 bucket:** env `S3_BUCKET` (default `ssh-detection-features-232032302717`), `AWS_REGION`.
+- **Catatan:** artefak `.json` hasil notebook di repo perlu `git add -f` (aturan `.gitignore` memblok `*.json`).
 
 **Keputusan penting yang HARUS konsisten lintas-notebook:**
 - **`HELDOUT`** (kelas yang disembunyikan = "serangan baru") diset di SEL 1 tiap notebook.
@@ -319,7 +332,7 @@ meng-cluster-nya jadi kandidat kelas baru → `cluster_profile_<DS>.csv` jadi in
 | T2 | Detektor drift streaming ($W_1$ + CUSUM); kalibrasi $w$, $h$, garis dasar | **KODE DIBUAT** (`04_drift_detector.ipynb`, lanjutan PoC `30_` §1b) — belum dirun di SageMaker |
 | T3 | Open-set scorer: Mahalanobis (utama) + confidence (pembanding); kalibrasi $\tau$; ukur AUROC known-vs-unknown | **KODE DIBUAT** (`02_openset_scorer.ipynb`) — belum dirun di SageMaker |
 | T3b | Novelty clustering (HDBSCAN); uji "≈ M cluster" pada held-out; ukur homogeneity/ARI | **KODE DIBUAT** (`03_novelty_clustering.ipynb`) — belum dirun di SageMaker |
-| T4 | Pelabelan: oracle terjadwal + LLM auto-name dari profil statistik; ukur akurasi LLM vs oracle | Belum |
+| T4 | Pelabelan: oracle terjadwal + LLM auto-name dari profil statistik; ukur akurasi LLM vs oracle | **KODE DIBUAT** (`05_labeling_oracle_llm.ipynb`) — belum dirun di SageMaker |
 | T5 | Class-incremental update + replay memory; ablation dengan vs tanpa memory (forgetting) | Belum |
 | T6 | Guardrail promosi (recall lama tetap & baru naik); uji skenario poisoning/rollback | Belum |
 | T7 | **Skenario A** (held-out dalam dataset) end-to-end offline | Belum |
