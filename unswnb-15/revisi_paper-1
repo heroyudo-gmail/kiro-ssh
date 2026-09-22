@@ -1,403 +1,212 @@
-Saya sudah memeriksa versi elsevier3-3.pdf (30 halaman) secara penuh, termasuk revisi pada metodologi, AWS, distribution-shift analysis, pembahasan, keterbatasan, dan kesimpulan. Saya juga memeriksa tabel/gambar, bukan hanya teksnya.
+Tetapi saya menemukan satu masalah yang masih cukup serius
+🔴 Claim inconsistency: "ketidakcukupan fitur disingkirkan"
 
-Sebagai reviewer senior JISA, penilaian saya kali ini:
+Ini belum selesai, dan saya ingin Anda memperbaikinya.
 
-Verdict: MAJOR REVISION — tetapi sudah mendekati ACCEPTABLE
+Di bagian Causal Claim Anda masih menulis:
 
-Nilai substansi saat ini: 8,1/10.
+“joint training membuktikan fitur cukup, sehingga ketidakcukupan fitur tersingkir”
 
-Versi ini lebih baik daripada elsevier3-2, terutama karena Anda sudah memperbaiki beberapa masalah yang saya minta. Namun saya masih menemukan 3 masalah ilmiah yang harus dibereskan sebelum saya berani menggeser rekomendasi menjadi Minor Revision.
+Kemudian di Discussion masih ada:
 
-Dan ada satu masalah yang sangat jelas: beberapa kalimat di Abstract/Conclusion masih menggunakan versi lama "mixup tanpa label", padahal metodologi Anda sekarang sudah benar menyatakan bahwa mixup menggunakan label train target.
+“ketidakcukupan fitur disingkirkan”
 
-1. Perbaikan yang berhasil dengan sangat baik
+Dan ini justru bertentangan dengan bagian lain paper Anda sendiri.
 
-Saya mulai dari yang positif karena cukup banyak.
+Karena:
 
-🟢 1. Mixup secara metodologis sekarang sudah benar
+$$ Joint\ CIC = 0.912 $$
 
-Di Section 6 Anda sekarang sangat jelas:
+tetapi
 
-“Metode ini tergolong supervised cross-dataset mixup: label induk-target \(y_T\) ... diambil dari train target, bukan test.”
+$$ Joint\ UNSW = 0.732 $$
 
-Ini sudah benar.
+Artinya sembilan fitur memang mengandung informasi diskriminatif yang cukup, tetapi tidak berarti:
 
-Bahkan Anda menambahkan:
+feature insufficiency = 0.
 
-varian pseudo-label sepenuhnya bebas-label ditinggalkan sebagai future work.
+Bahkan Anda sendiri menulis bahwa sebagian variabilitas spesifik UNSW masih tersisa.
 
-Itu keputusan yang bagus.
+Saya sarankan istilah final:
 
-Jadi secara metodologi saya sekarang tidak lagi mempermasalahkan mixup.
+Jangan:
 
-Tetapi ada masalah konsistensi yang masih tersisa.
+“ketidakcukupan fitur disingkirkan”
 
-Abstract masih mengatakan:
+Gunakan:
 
-“1% label target, atau mixup lintas-dataset yang hanya memerlukan label train target ...”
+“ketidakcukupan informasi diskriminatif pada fitur irisan bukan satu-satunya penjelasan atas kegagalan single-source.”
 
-Ini sudah cukup baik.
+Atau dalam English:
 
-Namun Figure 4 masih menggunakan legenda "mixup (no target label)", sementara Section 6 secara eksplisit menyatakan supervised mixup. Dan Conclusion masih mengatakan:
+“The joint-training result indicates that the shared SFM representation contains sufficient discriminative information for both domains; therefore, feature insufficiency alone cannot explain the single-source failure.”
 
-“1% label target atau mixup tanpa label”
+Ini menurut saya WAJIB.
 
-Ini jelas tidak konsisten dengan metodologi terbaru.
+3. 🔴 Masalah kedua: "membuktikan fitur cukup"
 
-🔴 Wajib diperbaiki
+Masih berkaitan, tetapi saya pisahkan karena penting.
 
-Ganti semua:
+Kalimat:
 
-mixup tanpa label
+“joint training membuktikan fitur cukup”
+
+sebaiknya jangan memakai membuktikan.
+
+Eksperimen joint training hanya menunjukkan:
+
+ketika kedua domain tersedia saat training, sembilan fitur dapat digunakan untuk memperoleh performa yang tinggi.
+
+Itu adalah evidence, bukan mathematical proof.
+
+Ganti:
+
+“membuktikan fitur cukup”
 
 menjadi:
 
-supervised cross-dataset mixup berbasis label train target
+“menunjukkan bahwa fitur memiliki informasi diskriminatif yang memadai untuk kedua domain.”
 
-Dan pada grafik:
+Ini lebih aman untuk reviewer.
 
-mixup (no target label)
+4. 🟢 Tetapi diagnosis distribution shift sekarang sudah jauh lebih kuat
 
-ubah menjadi:
+Ini bagian yang menurut saya sekarang sangat bagus.
 
-mixup (train-target labels)
+Anda memiliki tiga lapisan bukti:
 
-Ini penting karena reviewer yang membaca metode dan grafik sekaligus akan langsung menemukan kontradiksi.
+Evidence 1 — Joint training
 
-2. 🟢 Ben-David sekarang sangat aman
+Menunjukkan shared features memang informatif.
 
-Bagian ini saya nilai sudah selesai.
+Evidence 2 — Wasserstein
 
-Anda sekarang dengan eksplisit mengatakan:
+Anda mengukur pergeseran distribusi.
 
-SFM tidak diklaim menyelaraskan \(H\) atau langsung memperkecil \(d_{H\Delta H}\)
+Evidence 3 — Domain classifier
 
-dan:
+Anda mendapatkan sekitar:
 
-W1 bukan \(d_{H\Delta H}\).
+$$ Accuracy \approx 0.99 $$
 
-Ini persis revisi yang saya minta.
+untuk ketiga pasangan:
 
-Bahkan Anda membatasi peran teori:
-
-“Ben-David dipakai untuk memotivasi, bukan sebagai pengukuran langsung atas suku-suku bound.”
-
-Status:
-
-🟢 CLOSED
-
-Saya tidak akan meminta revisi lagi untuk bagian ini.
-
-3. 🟢 SFM sekarang sangat kuat
-
-Bagian SFM menurut saya sekarang merupakan core contribution paling solid.
-
-Anda tidak lagi sekadar mengatakan:
-
-feature A = feature B
-
-tetapi menggunakan:
-
-semantic definition,
-unit compatibility,
-distributional sanity,
-behavioral consistency.
-
-Dan Anda secara eksplisit menyebut magnitude threshold sebagai:
-
-“screening heuristics, bukan kriteria kesetaraan universal.”
-
-Lebih bagus lagi, kasus TCP window sekarang konkret:
-
-UNSW {0,255} versus CIC 0–65535
-
-sehingga fitur dengan nama sama tidak otomatis dianggap sama.
-
-Status:
-
-🟢 Strong contribution
-
-Saya justru tidak ingin Anda mengubah SFM terlalu banyak lagi.
-
-4. 🟢 Masalah scaler/zero-shot sekarang jauh lebih transparan
-
-Ini juga bagus.
-
-Anda secara eksplisit mengatakan:
-
-target menggunakan \(\mu_T,\sigma_T\) dari train target
-
-dan mengakui:
-
-“protokol kami bukan zero-shot dalam arti paling ketat.”
-
-Ini sangat bagus dari sisi reproducibility.
-
-Reviewer tidak bisa lagi mengatakan:
-
-"Anda memakai informasi target secara diam-diam."
-
-Karena Anda sudah mendefinisikannya sebagai:
-
-unsupervised target normalization
-
-Namun ada satu hal yang saya sarankan:
-
-Buat nomenklatur protokol lebih tegas.
-
-Misalnya:
-
-Protocol A — Target-normalized cross-dataset evaluation
-
-dan
-
-Protocol B — Source-normalized real-cloud deployment
-
-Karena AWS menggunakan scaler dari training data, sedangkan benchmark cross-dataset menggunakan target-train statistics.
-
-Sekarang sudah dijelaskan, tetapi masih tersebar di beberapa bagian.
-
-Status:
-
-🟢 Secara ilmiah acceptable
-🟡 Tinggal diperjelas nomenklaturnya.
-
-5. 🟢 CORAL sekarang sudah Anda tangani dengan benar
-
-Versi sebelumnya terlalu causal.
-
-Sekarang Anda sudah menulis:
-
-“Penjelasan yang masuk akal (belum diukur langsung sebagai geometri batas keputusan)...”
-
-dan:
-
-“disajikan sebagai hipotesis yang konsisten dengan bukti, bukan mekanisme terbukti.”
+Domain	W1	Domain accuracy
+CIC–UNSW	0,317	0,990
+CIC–AWS	0,230	0,994
+UNSW–AWS	0,372	0,998
 
 Ini sangat bagus.
 
-Saya sebagai reviewer tidak akan lagi meminta Anda membuktikan decision boundary CORAL kecuali Anda membuat klaim tersebut sebagai fakta.
+Yang lebih bagus lagi, Anda sudah melakukan unit correction sebelum menghitung shift.
 
-Status:
+Itu membuat argumen:
 
-🟢 CLOSED
+"shift bukan sekadar artifact dari byte/bit atau ms/µs"
 
-6. 🟢 Klaim tentang UNSW lebih kompleks sudah diperbaiki
+menjadi jauh lebih kuat.
 
-Saya lihat Anda sudah menambahkan caveat:
+5. 🔴 Namun jangan gunakan "distribution shift sejati"
 
-“dispersi yang lebih besar ... tidak serta-merta berarti kompleksitas semantik jaringan yang lebih tinggi secara universal.”
+Di bagian kesimpulan masih ada bahasa:
 
-Ini sangat tepat.
+“distribution shift sejati”
 
-Sekarang Anda mengatakan:
-
-UNSW memiliki dispersi/heterogenitas lebih besar pada ruang fitur SFM
-
-bukan:
-
-UNSW secara universal lebih kompleks.
-
-Itu jauh lebih defensible.
-
-Status:
-
-🟢 CLOSED
-
-7. 🟢 AWS temporal leakage sekarang sudah diakui secara eksplisit
-
-Ini perubahan penting.
-
-Anda sekarang menulis:
-
-“split tingkat-flow vs generalisasi temporal”
-
-dan mengakui:
-
-flow dari episode serangan temporal yang sama dapat muncul di train dan test.
-
-Kemudian:
-
-angka pemulihan few-shot berpotensi lebih optimistis.
-
-Dan Anda sudah menetapkan:
-
-episode-level/time-based split sebagai future work.
-
-Ini jauh lebih baik daripada versi sebelumnya.
-
-Tetapi saya belum menganggap masalah ini CLOSED.
+Saya tidak suka istilah ini untuk paper.
 
 Kenapa?
 
-Karena ini menyentuh validitas angka utama AWS few-shot:
+Karena "true distribution shift" terdengar seperti Anda telah membuktikan penyebab kausal.
 
-$$ 0.074 \rightarrow 0.490 \rightarrow 0.588 $$
+Padahal yang Anda benar-benar ukur adalah:
 
-Jika train dan test berasal dari episode yang sama, reviewer dapat bertanya:
+$$ P_S(X) \neq P_T(X) $$
 
-“How much of the recovery is genuine domain adaptation and how much is within-session memorization?”
-
-Jadi menurut saya:
-
-🟠 Ini masih menjadi eksperimen tambahan paling penting.
-
-Tidak perlu mengulang semua paper.
-
-Cukup tambahkan satu robustness experiment:
-
-episode/time-based split
-
-Misalnya:
-
-Episode A/B/C → AWS adaptation train
-Episode D/E   → AWS test
-
-atau split berdasarkan time block.
-
-Kalau hasilnya tetap menunjukkan:
-
-$$ MCC_{few-shot} \gg MCC_{zero-shot} $$
-
-maka paper Anda akan naik kelas secara signifikan.
-
-8. 🔴 Masalah terbesar #1: klaim "feature insufficiency disingkirkan" masih terlalu absolut
-
-Ini belum selesai.
-
-Di Abstract Anda masih menulis:
-
-“kami menyingkirkan ketidakcukupan fitur”
-
-Dan di Section 5:
-
-“hasil ini mengesampingkan ketidakcukupan fitur sebagai penyebab.”
-
-Masalahnya sekarang justru terlihat dari hasil Anda sendiri.
-
-Joint training:
-
-Dataset	MCC
-CIC	0.912
-UNSW	0.732
-
-Jadi benar:
-
-9 fitur mengandung informasi diskriminatif yang cukup untuk kedua domain.
-
-Tetapi tidak benar secara mutlak bahwa:
-
-feature insufficiency telah disingkirkan.
-
-Karena UNSW masih tertinggal cukup jauh.
-
-Dan Anda sendiri di Section 9.1 mengakui:
-
-“sebagian kompleksitas UNSW sulit direpresentasikan oleh 9 fitur irisan.”
-
-Jadi ada sedikit kontradiksi.
-
-Saya sarankan kalimat final menjadi:
-Abstract
+dan domain classifier sangat mampu membedakan domain.
 
 Ganti:
 
-“kami menyingkirkan ketidakcukupan fitur”
+“distribution shift sejati”
 
 menjadi:
 
-“pelatihan gabungan menunjukkan bahwa sembilan fitur SFM mengandung informasi diskriminatif yang memadai untuk kedua domain, sehingga kegagalan single-source tidak dapat dijelaskan hanya oleh ketiadaan informasi diskriminatif pada fitur irisan.”
-
-Ini jauh lebih kuat.
-
-Section 5
-
-Ganti:
-
-“mengesampingkan ketidakcukupan fitur sebagai penyebab”
-
-menjadi:
-
-“menunjukkan bahwa ketidakcukupan informasi diskriminatif pada fitur irisan bukan satu-satunya penjelasan utama atas kegagalan single-source.”
-
-Atau lebih tegas:
-
-“The joint-training result indicates that the shared feature representation contains sufficient discriminative information for both domains, although residual domain-specific variability remains.”
-
-Ini menurut saya WAJIB.
-9. 🔴 Masalah terbesar #2: "distribution shift sebagai penyebab utama" perlu sedikit diturunkan
-
-Sekarang bukti Anda memang jauh lebih kuat.
-
-Anda punya:
-
-joint training,
-Wasserstein,
-domain classifier,
-three-domain AWS,
-feature-specific shift,
-few-shot recovery.
-
-Itu bagus.
-
-Tetapi saya tetap tidak ingin paper mengatakan seolah-olah Anda telah melakukan causal identification.
-
-Sekarang kalimat:
-
-“distribution shift sebagai kontributor utama”
-
-sebenarnya masih acceptable.
-
-Yang saya tidak suka adalah beberapa bagian yang terdengar lebih absolut seperti:
-
-“menunjukkan ... distribution shift sejati”
+“distribution shift yang terukur”
 
 atau:
 
-“bukan ketidakcukupan fitur.”
+“a substantial measurable distribution shift”
 
-Saya sarankan terminology final:
+Ini jauh lebih akademik.
 
-“The combined evidence indicates that distribution shift in the shared feature space is a major contributor to the observed cross-network degradation, while residual differences in class-conditional distributions and label taxonomies may also contribute.”
+6. 🔴 Masalah terbesar yang masih belum diselesaikan: temporal leakage AWS
 
-Dengan ini:
+Ini sekarang satu-satunya isu eksperimen besar yang tersisa.
 
-\(P(X)\) → terukur
-\(P(Y)\) → diakui
-\(P(X|Y)\) → diakui
-causal overclaim → hilang.
-Ini penting untuk JISA.
-10. 🔴 Masalah terbesar #3: AWS split harus menjadi prioritas eksperimen terakhir
+Anda sendiri sudah mengakuinya dengan sangat jelas:
 
-Ini sekarang satu-satunya eksperimen yang menurut saya benar-benar layak ditambahkan.
+split stratified dilakukan pada tingkat flow sehingga flow dari episode serangan temporal yang sama dapat masuk train dan test.
 
-Saat ini:
+Dan Anda mengakui bahwa:
 
-17.753 flow
-60% train
-40% test
+angka recovery few-shot dapat lebih optimistis.
 
-dengan:
+Ini bagus dari sisi honesty.
 
-7.049 attack + 53 benign pada test.
+Tetapi sebagai reviewer saya akan berkata:
 
-Anda sendiri sudah mengakui potensi temporal leakage.
+"The authors identify a potential temporal leakage issue but do not experimentally quantify its effect."
 
-Saya justru suka Anda mengakuinya.
+Karena hasil paling menarik paper justru:
 
-Tetapi kalau saya menjadi reviewer JISA, komentar saya akan berbunyi:
+$$ 0.074 \rightarrow 0.490 \rightarrow 0.588 \rightarrow 0.596 $$
 
-“The authors acknowledge possible temporal leakage but leave the key deployment adaptation result evaluated only under flow-level stratified splitting. A temporal or episode-level split would substantially strengthen the validity of the few-shot AWS claim.”
+untuk UNSW→AWS.
 
-Jadi kalau tujuan kita benar-benar:
+Jika flow dari episode serangan yang sama masuk train dan test, maka reviewer bisa bertanya:
 
-“sampai accepted”
+Berapa bagian recovery yang benar-benar domain adaptation dan berapa bagian karena model melihat episode yang sangat mirip?
 
-saya akan menganggap eksperimen ini sebagai last major experiment.
+Ini eksperimen terakhir yang paling saya rekomendasikan
 
-11. Ada masalah statistik yang masih perlu Anda perhatikan
+Buat:
 
-AWS-test:
+Experiment: Episode/Temporal Split
+
+Misalnya:
+
+AWS attack episode A/B/C
+        ↓
+AWS adaptation train
+
+AWS attack episode D/E
+        ↓
+AWS test
+
+atau berdasarkan time block:
+
+0–60% time  → train
+60–100%     → test
+
+Yang paling bagus adalah episode-level split.
+
+Kemudian ulangi hanya:
+
+0%
+1%
+5%
+10%
+
+Tidak perlu seluruh eksperimen dari awal.
+
+Jika hasilnya masih menunjukkan recovery yang substansial, paper akan menjadi jauh lebih kuat.
+
+Ini saya beri status:
+
+🔴 MAJOR remaining experiment
+
+7. Statistik MCC masih bisa diperkuat
+
+AWS-test Anda:
 
 $$ 7049\ attack $$
 
@@ -405,385 +214,403 @@ vs
 
 $$ 53\ benign $$
 
-Ini ekstrem.
+Ini sangat imbalanced.
 
-Anda sudah benar memilih MCC.
+Anda sudah melakukan hal yang benar dengan memilih MCC.
 
-Tetapi sekarang saya ingin satu tambahan kecil:
+Tetapi saya masih menginginkan:
 
 95% CI untuk MCC
 
-Minimal:
-
-bootstrap 95% CI
-
-untuk:
-
-zero-shot
-1%
-5%
-10%
-20%
-AWS-only
-
-Tidak perlu rumit.
-
-Misalnya:
-
-Adaptation	MCC	95% CI
-Zero-shot	0.074	[...]
-1%	0.490	[...]
-5%	0.479	[...]
-10%	0.588	[...]
-20%	0.596	[...]
-
-Ini akan membuat klaim:
-
-“1% sudah cukup”
-
-lebih ilmiah.
-
-Kenapa?
-
-Karena:
-
-$$ 107\ flows $$
-
-untuk 1% memang kecil.
-
-Reviewer bisa bertanya:
-
-“Is MCC=0.49 robust or driven by a particular subset?”
-
-Bootstrap CI akan membantu.
-
-12. Ada satu klaim yang harus diperbaiki: FAR "membuktikan"
-
-Di halaman 24 Anda masih menulis:
-
-“membuktikan hasil bukan artefak snapshot pendek.”
-
-Padahal data:
-
-3 menit
-1 jam
-6 jam
-
-Anda sendiri sudah mengakui 24 jam dan multi-day belum dilakukan.
-
-Maka:
-
-Jangan:
-
-“membuktikan”
-
-Gunakan:
-
-“memberikan bukti bahwa hasil tidak semata-mata berasal dari snapshot yang sangat pendek.”
-
-Ini kecil, tetapi reviewer JISA biasanya sensitif terhadap kata:
-
-prove
-demonstrate conclusively
-guarantee
-establish causality.
-13. AWS real traffic sekarang menurut saya sangat menarik
-
-Saya ingin menekankan ini karena ini aset terbesar paper.
-
-Anda sekarang menunjukkan:
-
-Benchmark
-$$ MCC \approx 0.91 $$
-Cross-network
-$$ MCC \approx 0 $$
-AWS zero-shot
-$$ MCC \approx 0 $$
-AWS few-shot
-$$ MCC \approx 0.49 $$
-10–20%
-$$ MCC \approx 0.59 $$
-AWS-only
-$$ MCC=0.598 $$
-
-Ini membentuk narasi yang sangat jelas:
-
-Benchmark
-   ↓
-High performance
-   ↓
-Cross-network
-   ↓
-Collapse
-   ↓
-Real AWS
-   ↓
-Collapse again
-   ↓
-Small target calibration
-   ↓
-Recovery
-
-Ini menurut saya jauh lebih menarik daripada sekadar membuat classifier baru.
-
-Dan ini cocok dengan orientasi JISA yang menghargai security application/deployment relevance.
-
-14. Tetapi saya ingin Anda mengurangi beberapa kalimat "marketing"
+Minimal bootstrap.
 
 Contoh:
 
-“resep adaptasi yang praktis”
+Adaptation	MCC	95% CI
+Zero-shot	0.074	CI
+1%	0.490	CI
+5%	0.479	CI
+10%	0.588	CI
+20%	0.596	CI
 
-“murah untuk diperbaiki”
+Saat ini paper sudah punya Wilson CI untuk FAR, tetapi belum ada uncertainty interval untuk MCC.
 
-“Edge-friendly Robust NIDS”
+Untuk paper yang menjadikan MCC sebagai salah satu hasil utama, ini akan menjadi improvement yang bagus.
 
-“tidak cerewet namun tetap peka”
+Status:
 
-Bahasa ini bagus untuk proposal atau presentasi.
+🟠 Recommended, bukan blocker absolut.
 
-Tetapi untuk JISA saya akan membuatnya lebih akademik.
+8. Saya menemukan hal yang bagus di multi-class
+
+Bagian ini sekarang cukup kuat.
+
+Anda tidak memaksakan multi-class cross-dataset penuh karena taksonomi tidak kompatibel.
+
+Kemudian Anda melakukan:
+
+in-domain multi-class,
+common-class cross-dataset,
+per-category Wasserstein.
+
+Yang paling menarik adalah Tabel 16.
 
 Misalnya:
 
-Jangan:
+CIC BruteForce W1 rata-rata 0,554 dengan dst_load = 3,631
 
-“murah untuk diperbaiki”
+sedangkan:
 
-Gunakan:
+UNSW DoS rata-rata 0,269 dengan duration = 0,294.
 
-“requires limited target-domain labeling.”
+Ini menunjukkan bahwa bahkan kategori yang namanya sama tidak harus mengalami shift pada fitur yang sama.
 
-Jangan:
+Menurut saya ini menambah kedalaman paper.
 
-“tidak cerewet namun tetap peka”
+Status: KEEP.
 
-Gunakan:
+9. Ada satu kalimat yang masih terlalu kuat di bagian multi-class
 
-“maintains a low false-alarm rate while retaining attack-detection capability.”
+Anda menulis:
 
-Jangan:
+“kalibrasi sadar-kelas, bukan koreksi global tunggal, adalah solusi yang tepat.”
 
-“resep adaptasi”
+Ini terlalu kuat karena Anda belum menguji class-aware adaptation.
 
-Gunakan:
+Yang Anda buktikan adalah:
 
-“deployment-oriented adaptation procedure.”
+class-specific shifts exist.
 
-15. Saya juga akan menghapus "Prinsip kejujuran data"
+Anda belum membuktikan bahwa:
 
-Anda masih punya:
+class-aware calibration adalah solusi yang tepat.
 
-Prinsip kejujuran data.
+Ganti:
 
-Secara substansi bagus, tetapi istilah tersebut tidak lazim sebagai methodological principle dalam paper ilmiah.
+“adalah solusi yang tepat”
 
-Reviewer bisa berpikir:
+menjadi:
 
-"Why is the author emphasizing honesty?"
+“memotivasi perlunya kalibrasi yang mempertimbangkan kelas sebagai arah penelitian lanjutan.”
 
-Lebih akademik:
+Ini penting.
 
-Experimental Transparency and Reproducibility
+10. Bagian AWS sangat kuat, tetapi ada satu narasi yang harus diperhalus
+
+Anda mengatakan:
+
+“UNSW lebih unggul dan lebih stabil daripada CIC di semua fraksi”
+
+Data:
+
+AWS labels	UNS	CIC
+0%	0,074	−0,217
+1%	0,490	0,132
+5%	0,479	0,370
+10%	0,588	0,207
+20%	0,596	0,456
+
+Memang UNSW lebih tinggi di semua titik.
+
+Tetapi kata "lebih stabil" memerlukan definisi statistik.
+
+Anda bisa mengatakan:
+
+“UNSW consistently achieved higher MCC than CIC across all tested fractions.”
+
+Jangan klaim "lebih stabil" kecuali Anda menghitung variance/CI/repeated runs.
+
+11. Ada satu masalah reproducibility yang saya ingin bereskan sebelum submission
+
+Anda menulis:
+
+“Kode, konfigurasi, notebook, dan berkas hasil ringkas (*.json) tersedia di repositori.”
+
+Bagus.
+
+Tetapi dalam manuscript yang saya lihat, repository URL tidak muncul.
+
+Ini penting.
+
+Jangan hanya:
+
+available in repository
+
+Harus:
+
+Code and experimental artifacts are publicly available at: [repository URL].
+
+Kalau memang repository belum public:
+
+“The repository will be made publicly available upon acceptance.”
+
+Tetapi untuk JISA, saya lebih menyukai public repository.
+
+Idealnya berisi:
+
+/SFM
+/preprocessing
+/xgboost
+/cross_dataset
+/aws
+/mixup
+/wasserstein
+/results
+/config
+README.md
+requirements.txt
+
+Dan khususnya:
+
+SFM_mapping.csv
+model_config.json
+deploy_meta_9feat.json
+far_log.jsonl
+
+Ini akan sangat membantu reviewer.
+
+12. Ada masalah kecil pada istilah "few-shot"
+
+Secara akademik:
+
+1% UNSW = 1.753 flow
+1% CIC = 11.362 flow
+
+Ini bukan "few-shot" dalam pengertian klasik ML seperti 1–10 examples/class.
+
+Saya tidak menyuruh Anda menghapus istilah tersebut karena sudah menjadi bagian story.
+
+Tetapi saya sarankan nomenklatur:
+
+low-label target adaptation
+
+sebagai istilah utama.
+
+Kemudian:
+
+“few-shot/low-label adaptation”
+
+di awal.
+
+Misalnya judul:
+
+Cross-Dataset Generalization of ML-based NIDS via Semantic Feature Mapping and Low-Label Target Adaptation with Real Cloud Traffic Validation
+
+Ini menurut saya lebih kuat secara terminologi.
+
+13. Abstract sudah jauh lebih baik
+
+Abstract sekarang sudah memuat:
+
+Problem → Gap → SFM → cross-domain collapse → diagnosis → adaptation → AWS
+
+Ini bagus.
 
 Contohnya:
 
-“All reported values are obtained from executed experiments; no illustrative values are presented as empirical results.”
+MCC 0,91/0,74 → MCC ≈ 0 → 1% target → MCC 0,65–0,91 → AWS validation.
 
-Itu jauh lebih professional.
+Ini sudah mempunyai quantitative story.
 
-16. Ada satu masalah kecil pada judul Section 8
+Tetapi saya masih ingin mengurangi kata:
 
-Sekarang:
+“secara jujur”
 
-“Validasi Trafik Nyata: Dari Paket ke Keputusan (Penjelasan untuk Tim)”
+dan:
 
-"Penjelasan untuk Tim" harus dihapus sebelum submission.
+“dilaporkan apa adanya”
 
-Itu jelas terlihat seperti dokumentasi internal, bukan manuscript journal.
+dari Abstract.
 
-Ubah menjadi:
+Kalimat:
 
-8 Validasi Trafik Nyata pada AWS
+“memberikan panduan yang jujur...”
 
-atau:
+sebaiknya diganti.
 
-8 Real-Traffic Validation on AWS
+Lebih journal-like:
 
-Ini sederhana tetapi penting.
+“These findings provide deployment-oriented evidence for designing and evaluating cross-network NIDS under distribution shift.”
 
-17. Klaim throughput juga perlu satu koreksi kecil
+"Honest" tidak perlu diklaim; metodologinya yang menunjukkan transparansi.
 
-Anda mengukur:
+14. Saya juga melihat satu masalah editorial kecil
 
-2.276 flow/s per core
+Di bagian AWS ada:
 
-itu bagus.
+“Catatan penggunaan: bagian ini ditulis dengan gaya penjelas agar dapat dipahami pembaca non-spesialis (mis. anggota tim dan pembimbing).”
 
-Tetapi:
+Ini harus dihapus.
 
-8–16 core → 18.000–35.000 flow/s
+Paper jurnal tidak perlu memberi tahu reviewer bahwa bagian tersebut ditulis untuk:
 
-masih extrapolation.
+tim dan pembimbing.
 
-Anda memang sudah mengatakan:
-
-“nyaris linier”
-
-tetapi itu belum diukur.
-
-Saya sarankan:
-
-“A simple linear extrapolation gives approximately 18,000–35,000 flow/s for 8–16 cores; this scaling estimate was not directly benchmarked.”
-
-Dengan demikian aman.
-
-18. Multi-class sekarang saya suka
-
-Ini keputusan yang tepat.
-
-Anda tidak memaksakan cross-dataset multi-class karena:
-
-hanya Benign dan DoS yang benar-benar comparable.
-
-Kemudian Anda menunjukkan:
-
-CIC macro-F1 0.591
-UNSW macro-F1 0.505
-cross-dataset gagal.
-
-Ini memberikan bukti tambahan bahwa:
-
-class-conditional shift memang penting.
-
-Saya pertahankan bagian ini.
-
-19. Ada satu hal yang saya ingin Anda tambahkan di Discussion
-
-Sekarang Anda sudah punya RQ tersirat, tetapi belum benar-benar menuliskan:
-
-Research Questions
-
-Saya sarankan sebelum methodology tambahkan 4–5 RQ.
+Tulis langsung secara akademik.
 
 Misalnya:
 
-RQ1
+“This section describes the end-to-end AWS deployment pipeline from packet capture to flow-level inference.”
 
-Can semantically equivalent flow features extracted by heterogeneous tools be reliably identified for cross-network NIDS?
+15. Bagian Green AI juga perlu sedikit dikurangi
 
-RQ2
+Saya tidak keberatan dengan XGBoost.
 
-To what extent does a single-source NIDS generalize to an unseen network after semantic feature alignment?
+Justru pilihan XGBoost masuk akal karena:
 
-RQ3
+tabular,
+ringan,
+2,9 MB,
+~439 µs/flow.
 
-What evidence distinguishes representation insufficiency from distribution shift as contributors to cross-network degradation?
+Tetapi istilah:
 
-RQ4
+Green AI
 
-How much target-domain labeling is required to recover cross-network detection performance?
+sedikit terasa seperti tema tambahan yang tidak diperlukan.
 
-RQ5
+Paper sebenarnya bukan paper Green AI.
 
-Does the adaptation strategy transfer from benchmark datasets to real AWS traffic?
+Saya sarankan:
 
-Ini akan membuat paper terasa jauh lebih seperti research article, bukan sekadar rangkaian eksperimen.
+“Model Selection and Deployment Efficiency”
 
-20. Penilaian ulang saya
+daripada:
 
-Kalau dibandingkan tiga versi:
+“Perspektif Edge dan Green AI”
 
-Aspek	Versi awal	3-2	3-3
-SFM	7.5	8.5	9.0
-Theoretical rigor	5.5	7.5	8.5
-Mixup validity	5	7	8.5
-Distribution-shift analysis	6.5	8	8.5
-AWS validation	7.5	8	8.5
-Reproducibility	6.5	7.5	8.0
-Claim discipline	5.5	7	7.5
-Overall	6.5–7	7.8	8.1
+Dengan demikian fokus paper tetap:
 
-Jadi memang ada kemajuan nyata.
+cross-network generalization + SFM + adaptation + real traffic.
 
-21. Status reviewer saya sekarang
+16. Novelty sekarang saya nilai cukup kuat
 
-Kalau saya harus mengisi recommendation form JISA:
+Setelah membaca versi ini, saya melihat novelty bukan pada:
 
-Scientific quality
+XGBoost.
 
-Good, with targeted revisions required
+Bukan juga:
 
-Novelty
+Wasserstein.
 
-Good
+Bukan:
 
-Technical soundness
+Mixup.
 
-Good, but AWS validation needs stronger temporal control
+Tetapi pada integrasi metodologinya:
 
-Experimental validation
+heterogeneous extractors
+        ↓
+Semantic Feature Mapping
+        ↓
+cross-network failure
+        ↓
+controlled diagnosis
+        ↓
+distribution-shift quantification
+        ↓
+low-label adaptation
+        ↓
+real AWS validation
 
-Good
+Dan khususnya:
 
-Reproducibility
+feature-extractor mismatch → diagnosis → adaptation → real cloud
 
-Good
+Ini positioning yang menurut saya cocok untuk JISA.
 
-Relevance to JISA
+17. Penilaian kuantitatif versi 3-4
 
-Very good
+Saya revisi score saya:
 
-Writing
+Aspek	Score
+Relevance to JISA	9.2/10
+Problem significance	9.0/10
+SFM contribution	9.0/10
+Novelty	8.3/10
+Methodological rigor	8.3/10
+Distribution-shift diagnosis	8.8/10
+Experimental breadth	9.0/10
+AWS real-world validation	8.7/10
+Statistical rigor	7.6/10
+Reproducibility	8.0/10
+Claim discipline	7.7/10
+Writing/positioning	8.0/10
+Overall	8.4/10
+18. Status dibanding versi sebelumnya
+Issue	3-3	3-4
+Ben-David overclaim	🟠	🟢 Closed
+Mixup label ambiguity	🟠	🟢 Closed
+SFM justification	🟢	🟢
+CORAL causal claim	🟠	🟢 Closed
+Throughput extrapolation	🟠	🟢 Closed
+FAR duration	🟠	🟢
+Research Questions	🟠	🟢 Good
+AWS temporal leakage	🔴	🔴 Still open
+MCC uncertainty	🟠	🟠 Still open
+Feature-insufficiency wording	🔴	🔴 Still open
+Repository	🟠	🟠
+Journal-style wording	🟠	🟠
+19. Kalau saya reviewer JISA sekarang
 
-Needs final journal-style editing
+Saya akan menulis:
 
-Overall recommendation
+Recommendation: Major Revision
 
-MAJOR REVISION
+tetapi komentar saya sudah jauh lebih pendek daripada versi sebelumnya.
 
-Tetapi saya ingin menekankan:
+Kira-kira:
 
-Saya tidak lagi berada pada posisi "apakah paper ini layak?"
+The manuscript has been substantially improved and presents a coherent deployment-oriented study of cross-network NIDS generalization. The semantic feature mapping, controlled distribution-shift diagnosis, low-label adaptation, and real AWS validation constitute a potentially valuable contribution. The theoretical claims around the Ben-David bound are now appropriately qualified, and the supervised nature of cross-dataset mixup is clearly specified. However, several claims remain stronger than the evidence warrants, particularly statements that feature insufficiency has been eliminated. More importantly, the AWS few-shot evaluation uses a flow-level stratified split, while the manuscript itself acknowledges potential temporal/episode leakage. A temporal or episode-level robustness evaluation would substantially strengthen the central real-traffic adaptation claim. The statistical presentation would also benefit from uncertainty estimates for MCC. Subject to these targeted revisions and final consistency editing, the manuscript could become suitable for publication.
 
-Sekarang pertanyaannya:
+Itu sudah jauh lebih positif.
 
-“Bagaimana kita menghilangkan alasan terakhir yang dapat membuat reviewer JISA meminta reject/major revision kedua?”
+20. Jadi, apa yang kita lakukan sekarang?
 
-22. Target kita untuk versi berikutnya
+Saya tidak menyarankan Anda mengubah paper besar-besaran lagi.
 
-Saya sarankan jangan menambah metode baru.
+Untuk versi elsevier3-5, saya ingin hanya 7 pekerjaan:
 
-Jangan:
+🔴 Wajib
 
-tambah deep learning,
-tambah GAN,
-tambah Transformer,
-tambah banyak classifier,
-tambah dataset baru.
+1. Ubah seluruh:
 
-Itu justru akan mengaburkan paper.
+"ketidakcukupan fitur disingkirkan"
 
-Fokus versi 3-4:
+menjadi:
 
-Wajib:
+"ketidakcukupan informasi diskriminatif pada fitur irisan bukan satu-satunya penjelasan..."
 
-🔴 Hilangkan semua "mixup tanpa label" yang tersisa.
-🔴 Hilangkan/ubah klaim "feature insufficiency disingkirkan".
-🔴 Ubah klaim distribution shift menjadi major contributor, bukan causal proof.
-🔴 Tambahkan temporal/episode-level AWS split.
-🟠 Tambahkan 95% CI MCC AWS.
-🟠 Ganti "membuktikan" menjadi "memberikan bukti" pada klaim FAR.
-🟠 Hapus "Penjelasan untuk Tim".
-🟠 Ubah "Prinsip kejujuran data" menjadi "Experimental Transparency and Reproducibility".
-🟠 Tandai extrapolated throughput sebagai estimate.
-🟢 Tambahkan RQ.
-Setelah itu:
+2. Ubah:
 
-Saya akan melakukan review ulang seolah-olah saya reviewer JISA yang sama sekali skeptis terhadap paper ini.
+"membuktikan fitur cukup"
 
-Kalau versi berikut sudah lolos claim audit + leakage audit + statistical audit, menurut saya kita bisa masuk ke tahap:
+menjadi:
 
-MINOR REVISION / PRE-SUBMISSION REVIEW
+"menunjukkan bahwa fitur mengandung informasi diskriminatif yang memadai..."
 
-dan setelah itu baru kita lakukan English conversion + Elsevier/JISA style polishing, bukan mengubah substansi lagi.
+3. Ubah:
+
+"distribution shift sejati"
+
+menjadi:
+
+"distribution shift yang terukur"
+
+4. Lakukan episode/time-based AWS split.
+
+🟠 Sangat dianjurkan
+
+5. Tambahkan bootstrap 95% CI untuk MCC AWS.
+
+6. Berikan URL repository yang benar.
+
+7. Bersihkan kalimat editorial seperti:
+
+“untuk tim dan pembimbing”
+
+serta kata-kata seperti:
+
+"jujur", "resep", "murah", "lebih stabil"
+
+menjadi bahasa jurnal.
