@@ -51,7 +51,7 @@ Engineering, Politeknik Elektronika Negeri Surabaya (PENS)},
 \begin{abstract}
 Machine-learning-based network intrusion detection systems (NIDS) attain
 near-perfect accuracy when trained and tested on the same network, yet their
-ability to generalize across networks is rarely evaluated honestly. The
+ability to generalize across networks is rarely evaluated systematically. The
 contribution of this paper is \emph{not} another off-the-shelf classifier on a
 benchmark, but a \emph{methodology} for diagnosing and repairing cross-network
 generalization, together with its validation on real cloud traffic. This paper
@@ -71,22 +71,25 @@ fabricate an equivalence. A single XGBoost model is used only as a
 contribution. We find that a single XGBoost model
 excelling in-domain (MCC $0.91$ on CIC; $0.74$ on UNSW) \emph{collapses}
 cross-network (MCC $\approx 0$). Through controlled experiments we show that
-(i) the gap is \emph{not} due to feature insufficiency --- joint training reaches
-near in-domain performance on both networks simultaneously --- but is instead
-dominated by a directly measured \emph{distribution shift} (large inter-domain
-Wasserstein distance and a $\approx 0.99$ domain-classifier accuracy), with
-label-taxonomy differences documented as an additional contributing factor via a
-multi-class experiment; and (ii) minimal calibration --- only $1\%$ of
-target-network labels, or cross-dataset \emph{mixup} without any target labels ---
-recovers cross-network MCC to the $0.65$--$0.91$ range. We validate these findings
-on real AWS cloud traffic: zero-shot deployment fails (MCC $\approx 0$) but
-few-shot calibration with a small amount of domain labels restores detection. As a
-complementary extension, we also classify attack \emph{categories} (multi-class) on
-the same nine features, and show that the same per-category shift that hurts binary
-transfer also limits multi-class cross-network transfer. All
-numbers are drawn from real, reproducible experiments and reported as-is,
-providing an honest guide for designing and evaluating NIDS that are robust in the
-real world.
+(i) joint training shows that the nine SFM features carry \emph{sufficient
+discriminative information} for both domains --- so the single-source failure
+cannot be explained by a lack of discriminative information in the shared feature
+space alone --- while the combined evidence identifies a directly measured
+\emph{distribution shift} (large inter-domain Wasserstein distance and a
+$\approx 0.99$ domain-classifier accuracy) as the \emph{major contributor}, with
+class-conditional and label-taxonomy differences documented as additional factors
+via a multi-class experiment; and (ii) minimal calibration --- only $1\%$ of
+target-network labels, or supervised cross-dataset \emph{mixup} that uses only
+target \emph{train} labels --- recovers cross-network MCC to the $0.65$--$0.91$
+range. We validate these findings on real AWS cloud traffic: zero-shot deployment
+fails (MCC $\approx 0$) but few-shot calibration with a small amount of domain
+labels restores detection, although a stricter episode-level split shows that the
+magnitude of the field benefit depends on the attack episode and the evaluation
+protocol. As a complementary extension, we also classify attack \emph{categories}
+(multi-class) on the same nine features, and show that the same per-category shift
+that hurts binary transfer also limits multi-class cross-network transfer. All
+numbers are drawn from real, reproducible experiments, providing deployment-oriented
+evidence for designing and evaluating cross-network NIDS under distribution shift.
 \end{abstract}
 
 \begin{keyword}
@@ -136,7 +139,7 @@ multi-class experiment.
 
 This paper is a direct continuation of our prior NIDS work on CSE-CIC-IDS2018
 (XGBoost \citep{xgboost} feature reduction plus real-traffic AWS validation), which
-honestly acknowledged its limitations. Two of these limitations form the
+explicitly acknowledged its limitations. Two of these limitations form the
 \textbf{core gaps} of this paper:
 \begin{enumerate}
   \item \textbf{Cross-network generalization failure.} Models collapse when facing
@@ -152,11 +155,13 @@ honestly acknowledged its limitations. Two of these limitations form the
   features (Section~\ref{sec:sfm}).
   \item \textbf{Quantitative evidence} that single-source NIDS collapse
   cross-network (Section~\ref{sec:baseline}).
-  \item A \textbf{diagnosis} that rules out feature insufficiency (via joint
-  training) and identifies a directly measured \emph{distribution shift} as the
-  dominant driver of the cross-network gap, together with \textbf{low-cost
-  solutions}: minimal $1\%$ target-label calibration, or cross-dataset
-  \emph{mixup} (Sections~\ref{sec:align},~\ref{sec:da}).
+  \item A \textbf{diagnosis} showing --- via joint training --- that the shared
+  features carry sufficient discriminative information for both domains (so feature
+  insufficiency is not the sole explanation), and identifying a directly measured
+  \emph{distribution shift} as the \emph{major contributor} to the cross-network gap
+  (with class-conditional/taxonomy differences acknowledged as additional factors),
+  together with \textbf{low-cost solutions}: minimal $1\%$ target-label calibration,
+  or cross-dataset \emph{mixup} (Sections~\ref{sec:align},~\ref{sec:da}).
   \item \textbf{Real-traffic validation} on cloud infrastructure (AWS): measuring
   False Alarm Rate, quantitatively diagnosing three-domain \emph{distribution
   shift}, and restoring detection via \emph{few-shot} calibration
@@ -170,8 +175,9 @@ honestly acknowledged its limitations. Two of these limitations form the
 \paragraph{Positioning and novelty.} We stress that this work is \emph{not} the
 routine application of an existing classifier to a standard dataset. The novelty
 lies in the methodology --- a statistically validated cross-tool feature mapping,
-a controlled diagnosis that rules out feature insufficiency and isolates a
-directly measured distribution shift as the dominant cause (conceptually
+a controlled diagnosis that shows the shared features are sufficiently informative
+(so feature insufficiency is not the sole explanation) and isolates a directly
+measured distribution shift as the major contributor (conceptually
 motivated by the Ben-David bound), and an end-to-end validation on real cloud
 traffic including False Alarm Rate, a quantified three-domain distribution shift,
 and few-shot repair. XGBoost is deliberately fixed as a lightweight, reproducible
@@ -180,9 +186,19 @@ rather than to model capacity; the security contribution is the transferable
 recipe for making a single-source NIDS work on a previously unseen network at
 minimal labeling cost.
 
-\paragraph{Data-honesty principle.} Every number in this paper comes from real,
-reproducible experiments; no illustrative figures are disguised as results,
-including negative and non-monotone outcomes reported as-is.
+\paragraph{Research questions.} This paper addresses five research questions.
+\textbf{RQ1:} can semantically equivalent flow features extracted by heterogeneous
+tools be reliably identified for cross-network NIDS? \textbf{RQ2:} to what extent
+does a single-source NIDS generalize to an unseen network after semantic feature
+alignment? \textbf{RQ3:} what evidence distinguishes representation insufficiency
+from distribution shift as contributors to cross-network degradation? \textbf{RQ4:}
+how much target-domain labeling is required to recover cross-network detection
+performance? \textbf{RQ5:} does the adaptation strategy transfer from benchmark
+datasets to real AWS traffic?
+
+\paragraph{Experimental transparency and reproducibility.} All reported values are
+obtained from executed experiments; no illustrative values are presented as
+empirical results, and negative or non-monotone outcomes are reported as observed.
 
 % ============================================================
 \section{Related Work}
@@ -275,7 +291,7 @@ We use a deliberately \emph{cross-source} pair:
   $175{,}341$ records (used as training data) and $82{,}332$ records (test data).
 \end{itemize}
 This difference in extraction tools and traffic sources is not a weakness but a
-prerequisite for honestly testing the core gaps.
+prerequisite for realistically testing the core gaps.
 
 \paragraph{Multi-class attack composition.} Although the detection task in this
 paper is binary, both datasets retain their original attack taxonomy (CIC labels
@@ -431,13 +447,13 @@ $z$-scored with statistics fitted \emph{only} on their training partitions
 \label{fig:unscaling}
 \end{figure}
 
-\subsection{Single XGBoost Choice: Edge and Green-AI Perspective}
+\subsection{Model Selection and Deployment Efficiency}
 \label{sec:edge}
 We deliberately keep a \textbf{single XGBoost model} rather than a heavy ensemble
 or complex deep learning. Besides preserving comparability with prior work and
 isolating the contributing variable (SFM and cross-network adaptation, not model
-capacity), this choice aligns with \textbf{edge deployment} needs and
-\textbf{Green-AI} principles. On real edge devices --- smart routers, IoT
+capacity), this choice aligns with \textbf{edge deployment} needs and low
+computational footprint. On real edge devices --- smart routers, IoT
 gateways, or inline sensors --- multi-algorithm ensembles or large deep networks
 are unrealistic due to high memory, CPU, and energy consumption, and inference
 latency that may exceed the flow arrival rate. In contrast, a single XGBoost with
@@ -464,8 +480,8 @@ Inference throughput (1 vCPU, incremental) & $\approx 2{,}276$ flows/s \\
 (single-thread XGBoost, batch$=1$; median $434\ \mu$s, std $23\ \mu$s over
 $\sim$2000 flows). The $2.9$ MB model (200 trees, depth 8) is compact enough for
 edge devices, and $>2{,}000$ flows/s per core suffices for many network monitoring
-points --- supporting the \emph{edge-friendly} claim. We report numbers as-is:
-latency in the hundreds of microseconds (not tens), and we avoid reporting batch
+points, supporting suitability for resource-constrained edge deployment. We report
+latency in the hundreds of microseconds (not tens), and avoid reporting batch
 throughput that could mislead via vectorization gains.
 
 \paragraph{Deployment context and scalability.} The $\approx 2{,}276$ flows/s on a
@@ -611,23 +627,26 @@ The key finding: \emph{joint training} reaches MCC $0.912$ (CIC) and $0.732$
 (UNSW) \emph{simultaneously}, nearly in-domain. This demonstrates that \textbf{SFM
 is valid} --- 9 intersection features are expressive enough to represent both
 networks. In
-other words, this result \emph{rules out feature insufficiency} as the cause: the
-same feature set separates attack/benign in \emph{both} networks once the model
-sees both at training time. The remaining dominant cause is a \emph{distribution
-shift} in the feature distributions --- a single-source model never sees the
-target distribution --- and we \emph{measure this shift directly}: the
-inter-domain Wasserstein distance (Section~\ref{sec:wass}) and a
+other words, this result shows that \emph{a lack of discriminative information in
+the shared feature space is not the sole explanation} for the single-source
+failure: the same feature set separates attack/benign in \emph{both} networks once
+the model sees both at training time, although some domain-specific variability
+remains (e.g., UNSW $0.732$ vs.\ CIC $0.912$). The remaining major contributor is a
+\emph{distribution shift} in the feature distributions --- a single-source model
+never sees the target distribution --- and we \emph{measure this shift directly}:
+the inter-domain Wasserstein distance (Section~\ref{sec:wass}) and a
 \emph{domain classifier} that separates flow origin with $\approx 0.99$ accuracy
 (Section~\ref{sec:rt-shift}). CORAL helps partially and asymmetrically
 (UNSW$\rightarrow$CIC rises to $+0.164$; CIC$\rightarrow$UNSW even drops),
 indicating that second-order alignment is insufficient for the direction from a
-richer-distribution source.
+more dispersed source.
 
 \paragraph{Scope of the causal claim.} We state this claim precisely against the
 evidence already produced, without over-reaching. The claim that
-\emph{distribution shift is the dominant cause} rests on three complementary pieces
-of evidence, all present in this paper: (i) \emph{joint training} proves the
-features are \emph{sufficient}, ruling out feature insufficiency
+\emph{distribution shift is the major contributor} rests on three complementary
+pieces of evidence, all present in this paper: (i) \emph{joint training} shows the
+shared features carry \emph{sufficient} discriminative information for both domains,
+so feature insufficiency is not the sole explanation
 (Table~\ref{tab:align}); (ii) the \emph{feature-extractor mismatch} is neutralized
 \emph{by design} through SFM --- feature definitions/units are equated across tools,
 and the residual mismatch (TCP-window \texttt{swin}/\texttt{dwin}) is \emph{dropped
@@ -688,10 +707,15 @@ applied over the nine standardized features; the soft label $\tilde{y}\in[0,1]$ 
 used directly as the XGBoost regression-to-probability target. Crucially, the two
 parents are sampled from \emph{different datasets} (one source, one target),
 so each synthetic flow is an interpolation \emph{across the domain gap} --- this is
-what shifts the training distribution toward the target without requiring any
-target \emph{labels} (the target parent's label is only needed to form
-$\tilde{y}$; in the label-free variant we mix within matched
-predicted-class strata). Algorithm~\ref{alg:mixup} summarizes the procedure.
+what shifts the training distribution toward the target. This method is a
+\emph{supervised cross-dataset mixup}: the target parent's label $y_T$ (taken from
+the target \emph{train} split, not the test split) is used to form the soft label
+$\tilde{y}$. Mixup therefore requires target \emph{train} labels just as few-shot
+does, so the two are fairly comparable; what is avoided is leakage into the target
+\emph{test} set. A fully label-free variant --- using a pseudo-label
+$\hat{y}_T = f_S(x_T)$ from the source model instead of $y_T$, together with a
+sensitivity analysis to pseudo-label error --- is left as future work.
+Algorithm~\ref{alg:mixup} summarizes the procedure.
 
 \begin{algorithm}[h]
 \caption{Cross-dataset mixup for tabular NIDS features}
@@ -724,7 +748,7 @@ $1\%$             & $0.648$  & $0.899$  \\
 $5\%$             & $0.662$  & $0.911$  \\
 $10\%$            & $0.681$  & $0.911$  \\
 \midrule
-Mixup (no target labels) & $0.680$ & $0.798$ \\
+Mixup (target \emph{train} labels) & $0.680$ & $0.798$ \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -791,8 +815,8 @@ consistent with mixup interpolating directly between flows of both datasets
 (shifting global feature statistics), whereas few-shot injects a few target
 samples that help the decision boundary more than the overall feature spread. Two
 transparency notes. First, the absolute $W_1$ scale on CIC$\rightarrow$UNSW is
-dominated by \texttt{duration}; we report the full mean as-is and disclose this
-dominance honestly rather than trimming features to make the number look better.
+dominated by \texttt{duration}; we report the full mean and disclose this
+dominance explicitly rather than trimming features to make the number look better.
 Second, the inter-domain distance stays far above the intra-target lower bound
 ($0.031$ and $0.005$), confirming --- in line with \citet{layeghy} --- that
 calibration narrows but does not fully close the gap; this is why a few target
@@ -817,7 +841,7 @@ weighted-F1, multi-class MCC, and balanced accuracy per dataset; Figure~\ref{fig
 shows the row-normalized confusion matrices (each cell = fraction of a true
 category predicted as each class). As expected under the steep per-category
 imbalance, high-volume categories (CIC DDoS/DoS; UNSW Generic/Exploits) are
-classified well, whereas minority categories are harder --- an honest reflection of
+classified well, whereas minority categories are harder --- a direct reflection of
 class support rather than a modeling failure.
 
 \begin{table}[h]
@@ -853,7 +877,7 @@ degrade sharply: CIC Infiltration reaches only $0.01$ recall and UNSW Analysis
 $0.00$, Shellcode $0.13$. This is why the aggregate weighted-F1 stays high
 ($0.94$ CIC, $0.83$ UNSW) while macro-F1 is much lower ($0.59$ and $0.51$): the
 macro average exposes the rare-class difficulty that the weighted average hides.
-We report both, honestly, rather than only the flattering number.
+We report both metrics rather than only the flattering number.
 
 \paragraph{Cross-dataset multi-class on shared categories.} A full cross-network
 multi-class study is limited by the differing taxonomies (only \emph{Benign} and
@@ -863,8 +887,8 @@ $0.40$ (UNSW$\rightarrow$CIC, MCC $-0.12$): the model essentially fails to trans
 the DoS category across networks (predicting almost everything as Benign),
 collapsing exactly as the binary case does. This confirms that the per-category
 distribution shift documented in Section~\ref{sec:conclusion} degrades multi-class
-transfer as well --- and that class-aware calibration, not a single global
-correction, is the right remedy.
+transfer as well, and \emph{motivates} class-aware calibration (rather than a single
+global correction) as a direction for future research.
 
 \paragraph{Scope on real AWS traffic.} The multi-class experiment above is
 conducted on the benchmark datasets, where each flow carries a reliable
@@ -914,22 +938,25 @@ ran Phase~1 with increasing durations (Table~\ref{tab:far}); each stage has a ga
 \centering
 \caption{FAR across observation durations (AWS deployment, benign traffic).
 Identical infrastructure; only capture duration differs. Filled from real
-execution logs (\texttt{far\_log.jsonl}).}
+execution logs (\texttt{far\_log.jsonl}). The $95\%$ confidence intervals use the
+Wilson score method for proportions.}
 \label{tab:far}
-\begin{tabular}{lrrr}
+\begin{tabular}{lrrrc}
 \toprule
-Observation duration & Benign flows & False alarms & FAR (\%) \\
+Observation duration & Benign flows & False alarms & FAR (\%) & $95\%$ CI (\%) \\
 \midrule
-S0 (smoke test, $\sim$3 min) & $203$    & $0$  & $0.0000$ \\
-D1 (1 hour)                  & $3687$   & $14$ & $0.3797$ \\
-D2 (6 hours)                 & $22{,}644$ & $94$ & $0.4152$ \\
+S0 (smoke test, $\sim$3 min) & $203$    & $0$  & $0.0000$ & $[0.00,\,1.86]$ \\
+D1 (1 hour)                  & $3687$   & $14$ & $0.3797$ & $[0.23,\,0.64]$ \\
+D2 (6 hours)                 & $22{,}644$ & $94$ & $0.4152$ & $[0.34,\,0.51]$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \noindent FAR stays \emph{low and stable} as observation duration grows (S0
 $0.00\%$ $\rightarrow$ D1 $0.38\%$ $\rightarrow$ D2 $0.42\%$ over $22{,}644$ benign
-flows), proving the result is not a short-snapshot artifact. FAR $<0.5\%$ also
+flows), providing evidence that the result does not stem from a very short snapshot
+(though it does not yet establish multi-day continuous operation). The Wilson $95\%$
+CIs overlap across durations and all lie below $0.7\%$. FAR $<0.5\%$ also
 rules out a unit/scale bug (which typically spikes FAR to $\approx 100\%$).
 Extending the observation window to multi-day continuous operation is part of our
 future real-traffic campaign (Section~\ref{sec:conclusion}).
@@ -1002,7 +1029,7 @@ separated in the 9-feature space, strong evidence of distribution shift
 independent of the detection model. Second, after unit correction, \emph{volume}
 features (\texttt{fwd\_pkts}, \texttt{bwd\_pkts}, \texttt{fwd\_bytes},
 \texttt{bwd\_bytes}, \texttt{duration}) align across all pairs ($W_1<0.1$),
-proving SFM successfully equates the volume representation; the residual shift
+showing SFM successfully equates the volume representation; the residual shift
 concentrates on \emph{rate} and \emph{packet-shape} features (\texttt{src\_load},
 \texttt{fwd\_mean}, \texttt{bwd\_mean}). Third, AWS-real stands out on
 \texttt{bwd\_mean} (median $351$ bytes vs CIC $66$, UNS $44$; $W_1\approx 1.16$ to
@@ -1027,7 +1054,7 @@ across machines). Explicit benign sub-phases at start and end provide the benign
 class. We stress that this timeline-based labeling is \emph{cheap precisely
 because} the experiment is controlled; in a real deployment --- where the attack
 time is unknown --- labeling requires other mechanisms (SOC analysts, companion
-IDS signatures, or active learning). We acknowledge this limitation honestly and
+IDS signatures, or active learning). We acknowledge this limitation explicitly and
 set it as future work (autonomous continuous calibration), not part of this
 paper's claims.
 
@@ -1075,10 +1102,11 @@ $-0.217$, predictions anti-correlated with truth), confirming that benchmark
 excellence does not transfer to real traffic. Second, few-shot calibration
 restores detection efficiently: only $1\%$ AWS labels ($107$ flows) jumps UNS$+$AWS
 MCC to $0.49$, and $10$--$20\%$ reaches $\sim 0.59$ --- on par with the fully
-trained AWS-only ($0.598$). Third, the UNS direction is stronger and more stable
-than CIC across all fractions, consistent with the domain-asymmetry analysis
-(Section~\ref{sec:asymmetry}): a more heterogeneous source (UNSW) is easier to
-calibrate to diverse real traffic.
+trained AWS-only ($0.598$). Third, the UNS direction consistently achieves higher
+MCC than CIC across all tested fractions, consistent with the domain-asymmetry
+analysis (Section~\ref{sec:asymmetry}); an evidence-consistent interpretation (not
+proven causally) is that a source with greater feature dispersion (UNSW) is easier
+to calibrate to diverse real traffic.
 
 \paragraph{Metric note: why MCC, not F1.} AWS-test is highly imbalanced: $7{,}049$
 attack vs only $53$ benign flows ($\approx 99.2\%$ attack). At this ratio, F1 stays
@@ -1117,45 +1145,112 @@ larger benign sample, which we note as future work.
 narrative: SFM aligns the feature space across environments
 (Section~\ref{sec:rt-shift}), and few-shot calibration absorbs the residual
 environment-specific shift at minimal label cost. This procedure can be
-\emph{repeated} at each new environment (SFM$+$few-shot), making it a practical
-adaptation recipe rather than a universal-model claim that provably fails.
+\emph{repeated} at each new environment (SFM$+$few-shot), making it a
+deployment-oriented adaptation procedure rather than a universal-model claim. The
+magnitude of the AWS few-shot benefit, however, must be qualified: under a stricter
+episode-level split (Section~\ref{sec:rt-robust}), the recovery is less universal
+than Table~\ref{tab:rt-fewshot} suggests, indicating that part of the gain is tied
+to test composition. The strongest evidence for low-cost adaptation remains the
+offline cross-network experiments (Section~\ref{sec:da}).
+
+\subsection{Robustness Analysis: Split Protocol and Confidence Intervals}
+\label{sec:rt-robust}
+
+The AWS few-shot recovery (Section~\ref{sec:rt-fewshot}) uses a stratified
+\emph{flow-level} split whose test set is attack-dominated. To test whether the
+recovery reflects genuine cross-episode adaptation --- rather than test composition
+--- we add two stricter robustness evaluations, each with bootstrap $95\%$
+confidence intervals ($1000$ resamples) for MCC.
+
+\paragraph{Episode-level split.} We split by attack \emph{episode type}: the model
+is calibrated on the \{\emph{BruteForce}, \emph{DoS}\} episodes plus half the benign
+traffic, then tested on the \emph{unseen} \emph{DDoS} episode plus the other half of
+the benign traffic ($204$ flows: $121$ DDoS, $83$ benign). No same-episode flow
+appears on both sides, removing within-episode memorization concerns. The result
+(Table~\ref{tab:rt-robust}) differs from the stratified pattern: the UNSW-source
+model is already \emph{zero-shot} strong on DDoS (MCC $0.579$, CI $[0.46,0.70]$,
+even exceeding the AWS-only reference $0.418$), and adding few-shot labels from other
+episodes does \emph{not} raise it further. The CIC-source model stays negative
+($-0.22$), consistent with the direction asymmetry observed throughout.
+
+\paragraph{Temporal split.} A time-based cut ($60\%$ earliest for calibration,
+$40\%$ latest for test) is uninformative in this session because the attack schedule
+concentrates all attacks in minutes $1$--$5$ and leaves the remainder almost purely
+benign; the resulting class-composition imbalance between blocks makes MCC hard to
+interpret. We report it as a design limitation rather than primary evidence.
+
+\begin{table}[h]
+\centering
+\caption{AWS evaluation robustness: episode-level split (calibrate on
+\emph{BruteForce}$+$\emph{DoS}, test on unseen \emph{DDoS}) with MCC and bootstrap
+$95\%$ confidence intervals.}
+\label{tab:rt-robust}
+\small
+\begin{tabular}{llcc}
+\toprule
+Source & Mode & MCC & $95\%$ CI \\
+\midrule
+UNSW & zero-shot        & $0.579$  & $[0.46,\,0.70]$ \\
+UNSW & few-shot $5\%$   & $0.523$  & $[0.40,\,0.64]$ \\
+UNSW & few-shot $20\%$  & $0.420$  & $[0.29,\,0.54]$ \\
+CIC  & zero-shot        & $-0.220$ & $[-0.34,\,-0.08]$ \\
+\midrule
+AWS-only & (upper reference) & $0.418$ & $[0.29,\,0.54]$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Interpretation.} Both stricter evaluations show that the sharp few-shot
+recovery under the stratified split \emph{partly depends on test composition}, and
+that cross-episode generalization behaves differently: for certain episodes (DDoS),
+the UNSW-source model is already adequate without calibration. This does \emph{not}
+invalidate the low-cost adaptation contribution --- whose strongest evidence is the
+offline cross-network experiments (Section~\ref{sec:da}: MCC $-0.07\to0.65$ and
+$-0.06\to0.90$ with $1\%$ labels) --- but it \emph{qualifies} the AWS claim: the
+field benefit of few-shot depends on episode characteristics and evaluation
+protocol. Episode-aware multi-session evaluation is left as future work.
 
 % ============================================================
 \section{Discussion}
 \label{sec:discussion}
 
-The findings form a coherent, honest narrative: (1) single-source NIDS collapse
-cross-network; (2) feature insufficiency is ruled out (joint training) and a
-directly measured distribution shift is the dominant cause, with label-taxonomy
-differences documented as an additional contributing factor (multi-class experiment);
+The findings form a coherent narrative: (1) single-source NIDS collapse
+cross-network; (2) a lack of discriminative information in the shared features is
+not the sole explanation (joint training) and a directly measured distribution
+shift is the major contributor, with label-taxonomy differences documented as
+additional factors (multi-class experiment);
 (3) minimal calibration or mixup recovers performance efficiently thanks to a
 validated SFM, and this recovery is confirmed on real AWS traffic via few-shot.
 
 \subsection{Analysis of Adaptation-Performance Asymmetry}
 \label{sec:asymmetry}
 A consistent pattern emerges across all adaptation experiments: the
-CIC$\rightarrow$UNSW direction always recovers a lower MCC ($\sim 0.65$--$0.70$
+CIC$\rightarrow$UNSW direction recovers a lower MCC ($\sim 0.65$--$0.70$
 few-shot; $-0.185$ CORAL) than UNSW$\rightarrow$CIC ($\sim 0.90$ few-shot;
-$+0.164$ CORAL). We analyze this asymmetry through \textbf{domain complexity}.
+$+0.164$ CORAL) at every tested point. We analyze this asymmetry through
+\textbf{domain dispersion/heterogeneity} in the SFM feature space.
 CSE-CIC-IDS2018 was generated on a relatively structured testbed, whereas
 UNSW-NB15 was generated by the IXIA PerfectStorm generator injecting more diverse
 attack variations (nine classes) with higher noise. Consequently, the UNSW-NB15
-distribution over the intersection feature space is ``wider'' and more
-heterogeneous. Moving a model from a \emph{simple} domain (CIC) to a \emph{complex}
-one (UNSW) is inherently harder: the source never saw the target's rich
-distribution modes. Conversely, moving from a complex domain (UNSW) to a more
-structured one (CIC) is easier because the target is a subset of behaviors
-partly already covered.
+distribution over the intersection feature space is more \emph{dispersed} and
+heterogeneous. A plausible, evidence-consistent interpretation (not a causal proof)
+is that moving a model from a low-dispersion domain (CIC) to a higher-dispersion one
+(UNSW) is inherently harder: the source never saw the target's wider distribution
+modes; conversely, moving from a higher-dispersion domain (UNSW) toward a more
+structured one (CIC) is easier because the target covers a narrower range of
+behaviors partly already seen.
 
-\paragraph{Quantitative evidence of domain complexity.} So that the claim ``UNSW
-is richer'' does not merely cite the IXIA generator spec, we measure it directly.
+\paragraph{Quantitative evidence of domain dispersion.} So that the asymmetry claim
+does not merely cite the IXIA generator spec, we measure it directly.
 For the 9 SFM features we compute the \emph{variance} in a joint z-score space (so
 scales are comparable across domains) and the Shannon \emph{entropy} of the
 histogram (log1p, 30 bins) in each dataset (Table~\ref{tab:complexity}, computed
 over $1.62$M CIC and $175{,}341$ UNSW flows). The result is clear: \textbf{the
 mean feature variance is $3.64$ for UNSW versus $0.68$ for CIC} --- about
-$5.3\times$ larger --- quantitatively proving that the UNSW distribution is far
-more \emph{spread out} over the intersection feature space. The variance increase
+$5.3\times$ larger --- showing that the UNSW distribution is far
+more \emph{spread out} (greater dispersion/heterogeneity) over the SFM feature
+space; this does not by itself imply universally higher semantic complexity, only
+greater spread in the observed representation. The variance increase
 concentrates on \emph{rate} and \emph{packet-size} features (\texttt{Flow Byts/s}
 $0.003\rightarrow 9.0$; \texttt{Bwd Pkts/s} $0.01\rightarrow 9.5$;
 \texttt{Fwd Pkt Len Mean} $0.45\rightarrow 5.23$), the very dimensions most varied
@@ -1170,9 +1265,10 @@ motivation).
 
 \begin{table}[h]
 \centering
-\caption{Domain-complexity quantification: variance (joint z-space) and Shannon
+\caption{Domain-dispersion quantification: variance (joint z-space) and Shannon
 entropy per SFM feature. UNSW variance is far higher (mean $3.64$ vs $0.68$),
-proving UNSW is the richer/more heterogeneous domain.}
+indicating greater dispersion/heterogeneity of UNSW in the SFM feature space (not a
+claim of universal semantic complexity).}
 \label{tab:complexity}
 \small
 \begin{tabular}{lrrrr}
@@ -1286,14 +1382,17 @@ rigorous multi-class cross-network deployment, which we develop in future work.
 \section{Conclusion and Future Work}
 \label{sec:conclusion}
 
-We presented an honest cross-network study on the CSE-CIC-IDS2018 and UNSW-NB15
-pair. A validated Semantic Feature Mapping enables cross-dataset training; we show
-that the generalization gap is not caused by feature insufficiency but is dominated
-by a directly measured distribution shift, and can be closed with
-low-cost calibration ($1\%$ target labels) or label-free mixup, confirmed on real
-AWS traffic via few-shot calibration. A recommended operational configuration is a
-UNSW-source model plus $\sim$$10\%$ target-domain labels, which nearly matches a
-model trained fully on the target.
+We presented a systematic cross-network study on the CSE-CIC-IDS2018 and UNSW-NB15
+pair. A validated Semantic Feature Mapping enables cross-dataset training; the
+combined evidence indicates that the generalization gap is primarily contributed by
+a directly measured distribution shift (rather than by a lack of discriminative
+information in the shared features), with class-conditional and label-taxonomy
+differences as additional factors, and can be closed with low-cost calibration
+($1\%$ target labels) or supervised cross-dataset mixup using target train labels,
+confirmed on real AWS traffic via few-shot calibration (with the magnitude of the
+benefit depending on the evaluation protocol; see Section~\ref{sec:rt-robust}). A
+recommended operational configuration is a UNSW-source model plus $\sim$$10\%$
+target-domain labels, which nearly matches a model trained fully on the target.
 
 \paragraph{Real-traffic (AWS) validation, in summary.} The cloud experiment
 delivers three consistent conclusions. First, under benign-only traffic the
@@ -1376,10 +1475,10 @@ reproducible analytical methods.
 This study uses two public benchmark datasets: CSE-CIC-IDS2018 (Canadian Institute
 for Cybersecurity) and UNSW-NB15 (UNSW Canberra), both available from their
 respective official providers. The real-traffic AWS validation flows were
-generated by the authors in a controlled environment. The code and derived
-artifacts (feature-mapping tables, extracted flow features, and analysis
-notebooks) that support the findings are available from the corresponding author
-upon reasonable request.
+generated by the authors in a controlled environment. The code, configuration,
+notebooks, and compact result artifacts (feature-mapping tables, extracted flow
+features, and analysis notebooks) that support the findings are publicly available
+at \url{https://github.com/heroyudo-gmail/kiro-ssh} (subfolder \texttt{unswnb-15/}).
 
 % ============================================================
 \begin{thebibliography}{99}
