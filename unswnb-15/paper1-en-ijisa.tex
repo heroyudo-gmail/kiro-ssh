@@ -277,7 +277,15 @@ flow features, tree ensembles remain strong and stable, while adversarial
 alignment is notoriously unstable to train and offers limited gains over simpler
 statistics-matching on this data type. We therefore treat deep DA as a
 complementary, heavier-weight alternative rather than a baseline for the
-edge-constrained regime studied here.
+edge-constrained regime studied here. In particular, domain-invariant NIDS such as
+the DI-NIDS line of work \citep{layeghy}, which learns invariant representations to
+close the synthetic-to-real gap, is conceptually the closest heavyweight
+counterpart to our lightweight recipe; a controlled head-to-head comparison
+(accuracy, label budget, and edge cost) against DI-NIDS and adversarial
+domain-adaptation baselines is an important direction that we leave to future work,
+since it requires a different (deep) training and evaluation stack than the
+reproducible XGBoost backbone deliberately fixed here. We make this scope
+limitation explicit rather than claim superiority we have not measured.
 
 % ============================================================
 \section{Data and Semantic Feature Mapping}
@@ -1349,7 +1357,12 @@ claim of universal semantic complexity).}
 (analyzed in Section~\ref{sec:asymmetry}). Using a single XGBoost is a deliberate
 design choice for edge efficiency (Section~\ref{sec:edge}), not merely a
 limitation; exploring robust ensembles is left as future work that must still
-respect deployment compute budgets.
+respect deployment compute budgets. We also do not provide a head-to-head
+experimental comparison against heavyweight domain-invariant baselines
+(e.g., DI-NIDS \citep{layeghy} and adversarial domain adaptation such as DANN);
+these require a different deep training/evaluation stack and are a priority for
+future work, so our claims are scoped to the lightweight, edge-oriented regime
+rather than to superiority over deep DA.
 
 \paragraph{From binary to multi-class adaptation.} Our evaluation is intentionally
 binary (attack vs.\ benign) to isolate the cross-network generalization variable
