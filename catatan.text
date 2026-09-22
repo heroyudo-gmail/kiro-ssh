@@ -1,14 +1,22 @@
 kita balik ke Paper 1, baca file unswnb-15/documentation.md dulu dan file unswnb-15/aws/runbook.md
 kompilasi latex via overleaf , manual saya lakukan 
 running notebook via sagemaker , manual saya lakukan 
-
+kamu bisa mengakses ke aws s3 saya karena sudah tahu credential nya 
 
 kita balik ke Paper 2, baca file unswnb-15/adv_documentation.md dulu dan file unswnb-15/aws/adv_runbook.md
 kompilasi latex via overleaf , manual saya lakukan 
 running notebook via sagemaker , manual saya lakukan 
-
+kamu bisa mengakses ke aws s3 saya karena sudah tahu credential nya 
 
 
 kita balik ke paper 3, baca file evolusion/documentation.md dan evolusion/aws/runbook.md
 kompilasi latex via overleaf , manual saya lakukan 
 running notebook via sagemaker , manual saya lakukan 
+kamu bisa mengakses ke aws s3 saya karena sudah tahu credential nya 
+
+
+
+1)Cross-Network Generalization of NIDS via Semantic Feature Mapping and Few-Shot Calibration
+2)When Cross-Network Generalization Meets Adversarial Evasion: A Study of Few-Shot-Calibrated XGBoost NIDS under Protocol-Consistent Attacks
+3)generate dynamic model for cross-network generalization of NIDS
+(1) cara mendeteksi drift, (2) cara memilih data memory, (3) cara update XGBoost yang paling tepat, dan (4) rumus validation gate.

@@ -69,9 +69,9 @@ def fig_fewshot_curve():
     ax.plot(fr, c2u, "o-", color="#c33", linewidth=2, markersize=7, label="CIC\u2192UNSW")
     ax.plot(fr, u2c, "s-", color="#26a", linewidth=2, markersize=7, label="UNSW\u2192CIC")
     ax.axhline(mix["cic2unsw"]["mcc"], color="#c33", linestyle=":", alpha=0.7,
-               label="CIC\u2192UNSW mixup (no target label)")
+               label="CIC\u2192UNSW mixup (train-target labels)")
     ax.axhline(mix["unsw2cic"]["mcc"], color="#26a", linestyle=":", alpha=0.7,
-               label="UNSW\u2192CIC mixup (no target label)")
+               label="UNSW\u2192CIC mixup (train-target labels)")
     ax.axhline(0, color="black", linewidth=0.8)
     ax.set_xlabel("Target labels used for calibration (%)")
     ax.set_ylabel("Cross-network MCC")
