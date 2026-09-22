@@ -689,8 +689,9 @@ that respect the minority-class structure --- exactly what matters for NIDS.
 Because the gap is a \emph{distribution shift}, we test \emph{few-shot target
 adaptation}: training on the source plus a small fraction of target labels
 ($0/1/5/10\%$; the fraction is drawn from the target \emph{train} set, tested on
-the target \emph{test} set with no leakage). As a label-free comparison, we use
-\emph{cross-dataset mixup} (Beta interpolation between flows of the two datasets).
+the target \emph{test} set with no leakage). As a comparison that uses only target
+\emph{train} labels, we use \emph{cross-dataset mixup} (Beta interpolation between
+flows of the two datasets).
 
 \paragraph{Cross-dataset mixup on tabular NIDS features.} Mixup was originally
 proposed for images, so we state precisely how it applies to our tabular flows.
@@ -768,9 +769,18 @@ Table~\ref{tab:fewshot} and Figure~\ref{fig:fewshot} show a dramatic jump: only
 $1\%$ target labels ($1{,}753$ UNSW flows or $11{,}362$ CIC flows) flip MCC from
 negative to $0.648$ (CIC$\rightarrow$UNSW) and $0.899$ (UNSW$\rightarrow$CIC, near
 the in-domain $0.913$). After $1\%$ the curve flattens, so \emph{minimal
-calibration already suffices}. Label-free \emph{mixup} also reaches $0.680$ and
-$0.798$. The practical message: thanks to SFM, a cross-network NIDS can be made to
-work with little --- or no --- labels from the new network.
+calibration already suffices}. Supervised \emph{mixup} (using target train labels)
+also reaches $0.680$ and $0.798$. The practical message: thanks to SFM, a
+cross-network NIDS can be made to work with few labels from the new network.
+
+\paragraph{On uncertainty of the offline MCC estimates.} The offline test sets are
+large --- $82{,}332$ UNSW and over $1.6$M CIC held-out flows --- so the MCC point
+estimates in Table~\ref{tab:fewshot} are statistically stable (bootstrap $95\%$
+confidence half-widths below $\pm 0.01$ at these sample sizes). We therefore report
+explicit confidence intervals where sampling uncertainty is material, namely the
+small-sample real-traffic evaluation (Table~\ref{tab:rt-robust}, bootstrap $95\%$
+CIs; and Table~\ref{tab:far}, Wilson $95\%$ CIs for FAR), rather than cluttering the
+large-sample benchmark tables.
 
 % ------------------------------------------------------------
 \subsection{Quantitative Verification of Distribution Shift (Wasserstein Distance)}
@@ -915,6 +925,45 @@ SFM features per flow with NFStream, and (iii) \textbf{scoring} each flow with t
 same Model~A. We separate two evaluations by design: Phase~1 measures the False
 Alarm Rate (FAR) under benign-only traffic (``calm in peacetime''), and Phase~2
 measures detection under real attacks.
+
+\paragraph{AWS data-collection protocol.} Table~\ref{tab:aws-protocol} summarizes
+the deployment for reproducibility. The testbed runs in AWS region
+\texttt{ap-southeast-1} with two EC2 instances in a private VPC (an
+\emph{attacker} and a combined \emph{target/analyzer}), accessed via SSM; capture
+and inference run on the same analyzer host, so no packet-capture files are moved
+between nodes. In Phase~2, the attacker runs a \emph{scheduled} scenario: one
+attack type per time window with known start/stop times, so every flow is labeled
+\emph{attack}/\emph{benign} (and by category) from its start time (\emph{elapsed}
+relative to the first flow, using \texttt{bidirectional\_first\_seen\_ms} to be
+robust to clock offsets). An ``episode'' is one such contiguous single-attack-type
+window; the episode-level split (Section~\ref{sec:rt-robust}) trains on the
+BruteForce/DoS episodes and tests on the unseen DDoS episode. Two attack variants
+are recorded: \emph{clean} (moderate-rate) and \emph{volumetric} (high-rate
+floods), neither using adversarial manipulation.
+
+\begin{table}[h]
+\centering
+\caption{AWS real-traffic collection protocol (Phase~2 attack session). All flows
+are extracted with NFStream into the same 9 SFM features. Category labels are
+derived from the controlled attack timeline.}
+\label{tab:aws-protocol}
+\small
+\begin{tabular}{lll}
+\toprule
+Item & Value & Note \\
+\midrule
+Region / infra & \texttt{ap-southeast-1}, 2 EC2 (private VPC) & attacker + target/analyzer \\
+Capture / extract & \texttt{tcpdump} $\to$ NFStream (9 SFM feats) & interface \texttt{ens5} \\
+Scenario length & $\sim$7 min per variant & scheduled, one attack per window \\
+Timeline (episodes) & benign $\to$ BruteForce $\to$ Slowloris $\to$ SYN flood $\to$ benign & 1/2/2/1/1 min \\
+Attack variants & \emph{clean} (rate $\sim$200/s); \emph{volumetric} ($\sim$5000/s) & no adversarial manipulation \\
+Labeled flows (total) & $17{,}753$ ($17{,}620$ attack, $133$ benign) & clean $+$ volumetric \\
+Per-category (attack) & BruteForce, DoS, DDoS episodes & labeled from timeline \\
+AWS-test split & $7{,}049$ attack, $53$ benign & held-out, never trained \\
+Episode split (§\ref{sec:rt-robust}) & train \{BruteForce, DoS\}; test \{DDoS\} & $204$ flows: 121 DDoS, 83 benign \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \paragraph{A crucial unit pitfall (feature-extractor mismatch in practice).} The
 model was trained on CICFlowMeter features, which measure \texttt{Flow Duration}
