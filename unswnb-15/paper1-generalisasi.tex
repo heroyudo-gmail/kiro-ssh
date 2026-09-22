@@ -726,8 +726,9 @@ lebih tersebar.
 secara tepat terhadap bukti yang telah dihasilkan, tanpa melebih-lebihkan. Klaim
 \emph{distribution shift sebagai kontributor utama} berdiri di atas tiga bukti yang
 saling melengkapi, seluruhnya sudah ada dalam makalah ini: (i) \emph{joint training}
-membuktikan fitur \emph{cukup}, sehingga ketidakcukupan fitur tersingkir
-(Tabel~\ref{tab:align}); (ii) \emph{feature-extractor mismatch} telah dinetralkan
+menunjukkan bahwa fitur irisan mengandung informasi diskriminatif yang \emph{memadai}
+untuk kedua domain, sehingga ketidakcukupan fitur bukan satu-satunya penjelasan atas
+kegagalan \emph{single-source} (Tabel~\ref{tab:align}); (ii) \emph{feature-extractor mismatch} telah dinetralkan
 \emph{by design} oleh SFM --- definisi/satuan fitur disamakan lintas-alat, dan sisa
 ketidaksepadanan (TCP-window \texttt{swin}/\texttt{dwin}) \emph{dibuang serta
 dilaporkan} sebagai temuan (\S\ref{sec:sfm}); dan (iii) di atas dasar itu, jarak
@@ -1183,11 +1184,8 @@ sebagai langkah lanjutan konkret (Bagian~\ref{sec:conclusion}).
 \section{Validasi Trafik Nyata pada AWS: Dari Paket ke Keputusan}
 \label{sec:realtraffic}
 
-\noindent\emph{Catatan penggunaan: bagian ini ditulis dengan gaya penjelas agar
-dapat dipahami pembaca non-spesialis (mis.\ anggota tim dan pembimbing). Isinya
-menjelaskan bagaimana model yang dibahas pada bagian-bagian sebelumnya diuji pada
-trafik jaringan nyata di AWS, mulai dari penangkapan paket hingga keputusan
-akhir. Seluruh prosedur bersifat dapat-direproduksi.}
+\noindent Bagian ini menjelaskan alur penyebaran AWS ujung-ke-ujung, dari penangkapan
+paket hingga inferensi tingkat-\emph{flow}. Seluruh prosedur bersifat dapat-direproduksi.
 
 \subsection{Gambaran Umum: Tiga Tahap Sederhana}
 Untuk menguji model pada trafik nyata, kami menjalankan tiga tahap berurutan pada
@@ -1556,7 +1554,7 @@ menegaskan bahwa keunggulan \emph{benchmark} tak mentransfer ke trafik nyata.
 \emph{Kedua}, kalibrasi \emph{few-shot} memulihkan deteksi secara efisien: hanya
 $1\%$ label AWS ($107$ alir) melompatkan MCC UNS$+$AWS ke $0{,}49$, dan $10$--$20\%$
 mencapai $\sim 0{,}59$ --- setara \emph{AWS-only} ($0{,}598$) yang dilatih penuh.
-\emph{Ketiga}, arah UNS lebih unggul dan lebih stabil daripada CIC di semua fraksi,
+\emph{Ketiga}, arah UNS secara konsisten mencapai MCC lebih tinggi daripada CIC di semua fraksi yang diuji,
 sejalan dengan analisis asimetri domain (\S\ref{sec:asymmetry}): \emph{source}
 yang lebih heterogen (UNSW) lebih mudah dikalibrasi ke trafik nyata yang beragam.
 
@@ -1655,7 +1653,8 @@ evaluasi. Evaluasi episode-\emph{aware} multi-sesi menjadi arah lanjutan.
 
 Rangkaian temuan membentuk narasi yang koheren dan jujur:
 (1) NIDS single-source runtuh lintas-jaringan;
-(2) ketidakcukupan fitur disingkirkan (via pelatihan gabungan) dan
+(2) ketidakcukupan informasi diskriminatif pada fitur irisan bukan satu-satunya
+penjelasan atas kegagalan \emph{single-source} (via pelatihan gabungan), dan
 \emph{distribution shift} terukur-langsung merupakan kontributor utama, dengan
 perbedaan taksonomi-label didokumentasikan sebagai faktor tambahan melalui
 eksperimen multi-kelas;
@@ -1860,7 +1859,7 @@ $0{,}38\%$ pada 1~jam $\rightarrow$ $0{,}42\%$ pada $22{.}644$ alir benign selam
 melonjakkan FAR ke $\approx 100\%$). \emph{Kedua}, \emph{keunggulan benchmark tidak
 mentransfer secara zero-shot}: model yang unggul di dataset publik gagal mendeteksi
 serangan AWS nyata (MCC $\approx 0$; $-0{,}22$ untuk sumber CIC), dan analisis
-tiga-domain mengaitkannya pada \emph{distribution shift} sejati (akurasi
+tiga-domain mengaitkannya pada \emph{distribution shift} yang terukur (akurasi
 domain-classifier $\approx 0{,}99$ antar CIC/UNSW/AWS), terkonsentrasi pada fitur
 laju (\texttt{src\_load}/\texttt{dst\_load}) dan ukuran paket balik
 (\texttt{bwd\_mean}) --- bukan pada kesalahan fitur atau satuan. \emph{Ketiga},
@@ -1984,7 +1983,8 @@ multi-hari (3--7 hari).}
 % ============================================================
 \section*{Ketersediaan Reproduksi}
 Kode, konfigurasi, \emph{notebook}, dan berkas hasil ringkas ($*.json$) tersedia
-di repositori. Dataset besar tidak disertakan (lisensi/ukuran) namun dapat
+publik di \url{https://github.com/heroyudo-gmail/kiro-ssh} (subfolder
+\texttt{unswnb-15/}). Dataset besar tidak disertakan (lisensi/ukuran) namun dapat
 diperoleh dari sumber resmi masing-masing.
 
 % Format referensi: gaya IEEE — inisial nama depan; judul dalam tanda kutip;
