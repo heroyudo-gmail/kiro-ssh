@@ -1586,7 +1586,68 @@ SFM menyelaraskan ruang fitur antar-lingkungan (\S\ref{sec:rt-shift}), dan kalib
 yang minim. Prosedur ini dapat \emph{diulang} pada setiap lingkungan baru
 (SFM$+$few-shot), menjadikannya prosedur adaptasi berorientasi-penyebaran
 (\emph{deployment-oriented adaptation procedure}), bukan klaim model universal yang
-terbukti rapuh.
+terbukti rapuh. Namun besaran manfaat \emph{few-shot} pada AWS perlu dikualifikasi:
+di bawah \emph{split} tingkat-episode yang lebih ketat (\S\ref{sec:rt-robust}),
+pemulihan tidak seuniversal Tabel~\ref{tab:rt-fewshot}, menandakan sebagian keuntungan
+terkait komposisi \emph{test}. Bukti terkuat untuk adaptasi berbiaya-rendah tetap pada
+eksperimen \emph{offline} lintas-jaringan (\S\ref{sec:da}).
+
+\subsection{Analisis Ketahanan: Protokol \emph{Split} dan Selang Kepercayaan}
+\label{sec:rt-robust}
+
+Klaim pemulihan \emph{few-shot} pada AWS (\S\ref{sec:rt-fewshot}) memakai \emph{split}
+tingkat-\emph{flow} berlapis, yang \emph{test}-nya didominasi serangan. Untuk menguji
+apakah pemulihan itu mencerminkan adaptasi lintas-episode yang sesungguhnya --- bukan
+sekadar komposisi \emph{test} --- kami menambah dua evaluasi ketahanan yang lebih ketat,
+disertai selang kepercayaan \emph{bootstrap} $95\%$ ($1000$ \emph{resample}) untuk MCC.
+
+\paragraph{\emph{Split} tingkat-episode.} Kami memisahkan berdasarkan \emph{jenis
+episode} serangan: model dikalibrasi pada episode \{\emph{BruteForce}, \emph{DoS}\}
+$+$ separuh trafik jinak, lalu diuji pada episode \emph{DDoS} yang \emph{tak pernah
+dilihat} $+$ separuh jinak sisanya ($204$ alir: $121$ DDoS, $83$ jinak). Tidak ada alir
+episode-yang-sama di kedua sisi, sehingga kekhawatiran \emph{memorization} dalam-episode
+tersingkir. Hasilnya (Tabel~\ref{tab:rt-robust}) berbeda dari pola \emph{split} berlapis:
+model sumber-UNSW sudah \emph{zero-shot} kuat pada DDoS (MCC $0{,}579$, CI $[0{,}46,0{,}70]$,
+bahkan melampaui acuan \emph{AWS-only} $0{,}418$), dan penambahan label \emph{few-shot}
+dari episode lain \emph{tidak} menaikkannya lebih jauh. Model sumber-CIC tetap negatif
+($-0{,}22$), konsisten dengan asimetri arah yang teramati sepanjang makalah.
+
+\paragraph{\emph{Split} temporal.} Pemotongan berbasis waktu ($60\%$ awal untuk kalibrasi,
+$40\%$ akhir untuk uji) kurang informatif pada sesi ini karena penjadwalan serangan
+memusatkan seluruh serangan pada menit $1$--$5$ dan menyisakan menit berikutnya nyaris
+sepenuhnya jinak; komposisi kelas yang timpang antar-blok menyulitkan interpretasi MCC.
+Kami melaporkannya sebagai keterbatasan desain, bukan bukti utama.
+
+\begin{table}[h]
+\centering
+\caption{Ketahanan evaluasi AWS: \emph{split} tingkat-episode (kalibrasi
+\emph{BruteForce}$+$\emph{DoS}, uji \emph{DDoS} tak-terlihat) dengan MCC dan selang
+kepercayaan \emph{bootstrap} $95\%$.}
+\label{tab:rt-robust}
+\small
+\begin{tabular}{llcc}
+\toprule
+Sumber & Mode & MCC & CI $95\%$ \\
+\midrule
+UNSW & \emph{zero-shot}        & $0{,}579$  & $[0{,}46,\,0{,}70]$ \\
+UNSW & \emph{few-shot} $5\%$   & $0{,}523$  & $[0{,}40,\,0{,}64]$ \\
+UNSW & \emph{few-shot} $20\%$  & $0{,}420$  & $[0{,}29,\,0{,}54]$ \\
+CIC  & \emph{zero-shot}        & $-0{,}220$ & $[-0{,}34,\,-0{,}08]$ \\
+\midrule
+AWS-only & (acuan atas)        & $0{,}418$  & $[0{,}29,\,0{,}54]$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Interpretasi jujur.} Kedua evaluasi ketat ini menunjukkan bahwa pemulihan
+\emph{few-shot} yang tajam pada \emph{split} berlapis \emph{sebagian bergantung pada
+komposisi \emph{test}}, dan generalisasi lintas-episode memiliki dinamika berbeda: untuk
+episode tertentu (DDoS), model sumber-UNSW sudah memadai tanpa kalibrasi. Temuan ini
+\emph{tidak} membatalkan kontribusi adaptasi berbiaya-rendah --- yang buktinya paling
+kuat pada eksperimen \emph{offline} lintas-jaringan (\S\ref{sec:da}: MCC $-0{,}07\to0{,}65$
+dan $-0{,}06\to0{,}90$ dengan $1\%$ label) --- melainkan \emph{mengkualifikasi} klaim AWS:
+manfaat \emph{few-shot} di lapangan bergantung karakteristik episode dan protokol
+evaluasi. Evaluasi episode-\emph{aware} multi-sesi menjadi arah lanjutan.
 
 % ============================================================
 \section{Diskusi}
@@ -1599,8 +1660,10 @@ Rangkaian temuan membentuk narasi yang koheren dan jujur:
 perbedaan taksonomi-label didokumentasikan sebagai faktor tambahan melalui
 eksperimen multi-kelas;
 (3) kalibrasi minimal atau \emph{mixup} memulihkan performa secara efisien
-berkat SFM yang tervalidasi, dan pemulihan ini terkonfirmasi pada trafik nyata
-AWS via \emph{few-shot}\ifadversarial;
+berkat SFM yang tervalidasi, dengan bukti terkuat pada eksperimen \emph{offline}
+lintas-jaringan; pemulihan ini juga terkonfirmasi pada trafik nyata AWS via
+\emph{few-shot}, meski besaran manfaatnya bergantung protokol evaluasi
+(\S\ref{sec:rt-robust})\ifadversarial;
 (4) evaluasi adversarial harus realistis (functional-preserving) dan
 menyeluruh (adaptive white-box), jika tidak akan melebih-lebihkan ketahanan\fi.
 
@@ -1783,7 +1846,8 @@ bersama (bukan ketiadaan informasi diskriminatif pada fitur irisan), sementara
 perbedaan distribusi kelas-kondisional dan taksonomi label turut berkontribusi;
 celah ini dapat ditutup dengan kalibrasi berbiaya-rendah ($1\%$ label target) atau
 \emph{supervised cross-dataset mixup} berbasis label \emph{train} target, dengan
-konfirmasi pada trafik nyata AWS melalui kalibrasi \emph{few-shot}.\ifadversarial{} Kami juga mengoreksi praktik
+konfirmasi pada trafik nyata AWS melalui kalibrasi \emph{few-shot} (besaran manfaatnya
+bergantung protokol evaluasi; lihat \S\ref{sec:rt-robust}).\ifadversarial{} Kami juga mengoreksi praktik
 evaluasi adversarial melalui \emph{functional-preserving} dan
 \emph{adaptive white-box}.\fi
 
@@ -1806,7 +1870,11 @@ $\sim 0{,}59$, setara model yang dilatih penuh pada AWS ($0{,}598$). Singkatnya,
 plus kalibrasi \emph{few-shot} bekerja pada trafik cloud nyata, dan resep ini dapat
 diulang di tiap lingkungan baru dengan biaya pelabelan minimal; kami memakai MCC
 sebagai metrik utama karena AWS-test $\approx 99\%$ serangan, di mana F1 akan
-menyesatkan (tampak tinggi).
+menyesatkan (tampak tinggi). \emph{Catatan ketahanan:} angka pemulihan ini memakai
+\emph{split} tingkat-\emph{flow}; di bawah \emph{split} tingkat-episode yang lebih ketat
+(\S\ref{sec:rt-robust}) pola pemulihan tidak seuniversal --- untuk episode \emph{DDoS},
+model sumber-UNSW bahkan sudah \emph{zero-shot} kuat (MCC $0{,}58$) --- sehingga besaran
+manfaat \emph{few-shot} di lapangan bergantung karakteristik episode dan protokol evaluasi.
 
 \paragraph{Desain skenario pengujian \emph{real-traffic}.} Agar pembaca memahami
 ragam percobaan, kami jelaskan asal-usul skenario. Skenario serangan pada fase
