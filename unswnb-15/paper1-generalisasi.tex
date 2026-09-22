@@ -66,7 +66,7 @@ Surabaya, Indonesia} \\
 \begin{abstract}
 Sistem deteksi intrusi jaringan (NIDS) berbasis pembelajaran mesin mencapai
 akurasi tinggi ketika dilatih dan diuji pada jaringan yang sama, namun
-kemampuannya untuk digeneralisasi lintas-jaringan jarang diuji secara jujur.
+kemampuannya untuk digeneralisasi lintas-jaringan jarang dievaluasi secara sistematis.
 Makalah ini menyelidiki \ifadversarial tiga\else dua\fi{} masalah yang saling berkaitan pada NIDS praktis:
 (1) ketidakmampuan generalisasi lintas-jaringan\ifadversarial, (2)\else{} dan (2)\fi{} ketidaksepadanan fitur
 antar-alat ekstraksi (\emph{feature-extractor mismatch})\ifadversarial, dan (3) kerentanan
@@ -100,8 +100,8 @@ sementara evaluasi \emph{adaptive white-box} mengungkap bahwa \emph{adversarial
 training} memberikan rasa aman yang keliru: pertahanan yang tampak kuat terhadap
 serangan transfer (MCC $0{,}99$) runtuh terhadap penyerang adaptif
 (MCC $0{,}25$--$0{,}43$). \fi Temuan-temuan ini, seluruhnya berbasis eksperimen
-nyata dan dilaporkan apa adanya, memberikan panduan yang jujur untuk merancang
-dan mengevaluasi NIDS yang tangguh di dunia nyata.
+nyata, memberikan bukti berorientasi-penyebaran untuk merancang
+dan mengevaluasi NIDS lintas-jaringan di bawah \emph{distribution shift}.
 
 \vspace{0.5em}
 \noindent\textbf{Kata kunci:} sistem deteksi intrusi jaringan, generalisasi
@@ -153,7 +153,7 @@ Makalah ini merupakan kelanjutan langsung dari penelitian NIDS sebelumnya pada
 CSE-CIC-IDS2018 (reduksi fitur XGBoost~\cite{xgboost} + \emph{adversarial
 training} berbasis \emph{saliency map}~\cite{saliency} + validasi
 \emph{real-traffic} AWS), yang
-secara jujur mengakui tiga keterbatasan. Ketiga keterbatasan itulah yang menjadi
+mengakui tiga keterbatasan secara eksplisit. Ketiga keterbatasan itulah yang menjadi
 \textbf{gap inti} makalah ini:
 \begin{enumerate}
   \item \textbf{Ketidakmampuan generalisasi lintas-jaringan.} Model kolaps saat
@@ -327,7 +327,7 @@ Kami memakai pasangan yang sengaja \emph{berbeda sumber}:
   berkas berdasarkan jumlah record, bukan nama.}
 \end{itemize}
 Perbedaan alat ekstraksi dan sumber trafik ini bukan kelemahan, melainkan justru
-prasyarat untuk menguji tiga gap inti secara jujur.
+prasyarat untuk menguji tiga gap inti secara realistis.
 
 \paragraph{Komposisi serangan multi-kelas.} Meski tugas deteksi pada makalah ini
 biner, kedua dataset tetap menyimpan taksonomi serangan aslinya (label CIC
@@ -454,7 +454,7 @@ $175{.}341$ record; median CIC pada nilai yang telah dikembalikan ke skala asli.
 \end{table*}
 
 \paragraph{Temuan kunci: TCP window mismatch.} Pemeriksaan nilai unik
-membuktikan \texttt{swin}/\texttt{dwin} pada UNSW bersifat praktis biner
+menunjukkan \texttt{swin}/\texttt{dwin} pada UNSW bersifat praktis biner
 ($\{0, 255\}$), sedangkan \texttt{Init Fwd/Bwd Win Byts} pada CIC kontinu
 ($0$--$65535$). Meski deskripsi resmi menyebut keduanya ``TCP window'', datanya
 tidak sepadan. Kami \emph{membuang} pasangan ini dan melaporkannya sebagai studi
@@ -722,7 +722,7 @@ $\approx 0{,}99$ (\S\ref{sec:rt-shift}). CORAL membantu sebagian dan asimetris
 menandakan penyelarasan orde-2 belum memadai untuk arah dari sumber berdistribusi
 lebih tersebar.
 
-\paragraph{Cakupan klaim kausal (kejujuran metodologis).} Kami menyatakan klaim ini
+\paragraph{Cakupan klaim kausal.} Kami menyatakan klaim ini
 secara tepat terhadap bukti yang telah dihasilkan, tanpa melebih-lebihkan. Klaim
 \emph{distribution shift sebagai kontributor utama} berdiri di atas tiga bukti yang
 saling melengkapi, seluruhnya sudah ada dalam makalah ini: (i) \emph{joint training}
@@ -940,7 +940,7 @@ UNSW-NB15 (dalam detik, berekor sangat panjang) berjarak $W_1 \approx
 membengkak dan menyamarkan reduksi pada delapan fitur lain; bila \texttt{duration}
 dikeluarkan, reduksi rata-rata \emph{mixup} arah ini menjadi $4{,}3\%$ (selaras
 dengan reduksi per-fitur pada Tabel~\ref{tab:wassfeat}). Kami memilih tetap
-melaporkan rata-rata penuh apa adanya dan mengungkap dominasi ini secara jujur,
+melaporkan rata-rata penuh dan mengungkap dominasi fitur ini secara eksplisit,
 bukan memangkas fitur agar angka tampak lebih baik. Kedua, jarak inter-domain
 tetap jauh di atas batas-bawah intra-target ($0{,}031$ dan $0{,}005$),
 menegaskan --- selaras temuan Layeghy \emph{et al.} bahwa jarak
@@ -1026,7 +1026,7 @@ Serangan tak-terbatas melebih-lebihkan ancaman.}
 
 Pada keempat model (Gambar~\ref{fig:fpe}), MCC \emph{functional} jauh di atas
 \emph{unconstrained} (mis. UNSW baseline $-0{,}134 \rightarrow +0{,}313$),
-membuktikan evaluasi tak-terbatas melebih-lebihkan ancaman. Namun MCC
+menunjukkan evaluasi tak-terbatas melebih-lebihkan ancaman. Namun MCC
 \emph{functional} tetap turun tajam dari kondisi bersih (CIC $0{,}912 \rightarrow
 0{,}127$), sehingga ancaman \emph{flow} valid tetap nyata.
 
@@ -1122,7 +1122,7 @@ Gambar~\ref{fig:mc-cm} menampilkan confusion matrix ternormalisasi-baris (tiap s
 = fraksi kategori sebenarnya yang diprediksi ke tiap kelas). Sesuai ketimpangan
 per-kategori yang tajam, kategori bervolume tinggi (CIC DDoS/DoS; UNSW
 Generic/Exploits) terklasifikasi baik, sedangkan kategori minoritas lebih sulit ---
-cerminan jujur dari dukungan kelas, bukan kegagalan model.
+cerminan langsung dari dukungan kelas, bukan kegagalan model.
 
 \begin{table}[h]
 \centering
@@ -1158,7 +1158,7 @@ tajam: CIC Infiltration hanya $0{,}01$ recall; UNSW Analysis $0{,}00$, Shellcode
 $0{,}13$. Inilah sebabnya weighted-F1 agregat tetap tinggi ($0{,}94$ CIC, $0{,}83$
 UNSW) sementara macro-F1 jauh lebih rendah ($0{,}59$ dan $0{,}51$): rata-rata makro
 menyingkap kesulitan kelas langka yang disembunyikan rata-rata terbobot. Kami
-melaporkan keduanya secara jujur.
+melaporkan kedua metrik tersebut.
 
 \paragraph{Multi-kelas lintas-dataset pada kelas sepadan.} Studi multi-kelas
 lintas-jaringan penuh terkendala taksonomi yang berbeda (hanya \emph{Benign} dan
@@ -1167,8 +1167,9 @@ kelas sepadan ini menghasilkan macro-F1 $=0{,}47$ (CIC$\rightarrow$UNSW, MCC
 $0{,}00$) dan $0{,}40$ (UNSW$\rightarrow$CIC, MCC $-0{,}12$): model gagal
 mentransfer kategori DoS lintas-jaringan (memprediksi hampir semuanya Benign),
 kolaps persis seperti kasus biner. Ini menegaskan bahwa pergeseran distribusi
-per-kategori menurunkan transfer multi-kelas sebagaimana kasus biner --- dan bahwa
-kalibrasi sadar-kelas, bukan koreksi global tunggal, adalah solusi yang tepat.
+per-kategori menurunkan transfer multi-kelas sebagaimana kasus biner, dan
+\emph{memotivasi} perlunya kalibrasi yang mempertimbangkan kelas (bukan koreksi
+global tunggal) sebagai arah penelitian lanjutan.
 
 \paragraph{Cakupan pada trafik AWS nyata.} Eksperimen multi-kelas di atas dilakukan
 pada dataset benchmark yang tiap alirnya berlabel kategori andal. Pada penyebaran
@@ -1464,7 +1465,7 @@ praktis terpisah total di ruang 9 fitur, bukti kuat \emph{distribution shift}
 yang independen dari model deteksi. \emph{Kedua}, setelah koreksi satuan, fitur
 \emph{volume} (\texttt{fwd\_pkts}, \texttt{bwd\_pkts}, \texttt{fwd\_bytes},
 \texttt{bwd\_bytes}, \texttt{duration}) selaras di semua pasangan ($W_1<0{,}1$),
-membuktikan SFM berhasil menyamakan representasi volume; \emph{shift} tersisa
+menunjukkan SFM berhasil menyamakan representasi volume; \emph{shift} tersisa
 terkonsentrasi pada fitur \emph{laju} dan \emph{bentuk paket}
 (\texttt{src\_load}, \texttt{fwd\_mean}, \texttt{bwd\_mean}). \emph{Ketiga},
 AWS-real menonjol pada \texttt{bwd\_mean} (median $351$ byte vs CIC $66$, UNS $44$;
@@ -1493,7 +1494,7 @@ kelas jinak. Perlu ditegaskan bahwa pelabelan berbasis-\emph{timeline} ini
 \emph{murah} justru karena eksperimen terkontrol; pada penyebaran nyata --- di
 mana waktu serangan tak diketahui --- pelabelan menuntut mekanisme lain (analis
 SOC, tanda-tangan IDS pendamping, atau \emph{active learning}). Keterbatasan ini
-kami akui secara jujur dan kami tetapkan sebagai arah lanjutan (kalibrasi
+kami akui secara eksplisit dan kami tetapkan sebagai arah lanjutan (kalibrasi
 berkelanjutan otonom), bukan bagian dari klaim makalah ini.
 
 Dari
@@ -1555,8 +1556,10 @@ menegaskan bahwa keunggulan \emph{benchmark} tak mentransfer ke trafik nyata.
 $1\%$ label AWS ($107$ alir) melompatkan MCC UNS$+$AWS ke $0{,}49$, dan $10$--$20\%$
 mencapai $\sim 0{,}59$ --- setara \emph{AWS-only} ($0{,}598$) yang dilatih penuh.
 \emph{Ketiga}, arah UNS secara konsisten mencapai MCC lebih tinggi daripada CIC di semua fraksi yang diuji,
-sejalan dengan analisis asimetri domain (\S\ref{sec:asymmetry}): \emph{source}
-yang lebih heterogen (UNSW) lebih mudah dikalibrasi ke trafik nyata yang beragam.
+sejalan dengan analisis asimetri domain (\S\ref{sec:asymmetry}). Interpretasi yang
+konsisten dengan bukti (namun belum kami buktikan secara kausal): \emph{source}
+dengan dispersi fitur lebih besar (UNSW) \emph{diduga} lebih mudah dikalibrasi ke
+trafik nyata yang beragam.
 
 \paragraph{Catatan metrik: mengapa MCC, bukan F1.} AWS-\emph{test} sangat
 tak-seimbang: $7{.}049$ alir serangan vs hanya $53$ alir jinak ($\approx 99{,}2\%$
@@ -1637,7 +1640,7 @@ AWS-only & (acuan atas)        & $0{,}418$  & $[0{,}29,\,0{,}54]$ \\
 \end{tabular}
 \end{table}
 
-\paragraph{Interpretasi jujur.} Kedua evaluasi ketat ini menunjukkan bahwa pemulihan
+\paragraph{Interpretasi.} Kedua evaluasi ketat ini menunjukkan bahwa pemulihan
 \emph{few-shot} yang tajam pada \emph{split} berlapis \emph{sebagian bergantung pada
 komposisi \emph{test}}, dan generalisasi lintas-episode memiliki dinamika berbeda: untuk
 episode tertentu (DDoS), model sumber-UNSW sudah memadai tanpa kalibrasi. Temuan ini
@@ -1651,7 +1654,7 @@ evaluasi. Evaluasi episode-\emph{aware} multi-sesi menjadi arah lanjutan.
 \section{Diskusi}
 \label{sec:discussion}
 
-Rangkaian temuan membentuk narasi yang koheren dan jujur:
+Rangkaian temuan membentuk narasi yang koheren:
 (1) NIDS single-source runtuh lintas-jaringan;
 (2) ketidakcukupan informasi diskriminatif pada fitur irisan bukan satu-satunya
 penjelasan atas kegagalan \emph{single-source} (via pelatihan gabungan), dan
@@ -1669,10 +1672,11 @@ menyeluruh (adaptive white-box), jika tidak akan melebih-lebihkan ketahanan\fi.
 \subsection{Analisis Asimetri Performa Adaptasi}
 \label{sec:asymmetry}
 Sebuah pola konsisten muncul di seluruh eksperimen adaptasi: arah
-CIC$\rightarrow$UNSW selalu memulihkan MCC lebih rendah
+CIC$\rightarrow$UNSW memulihkan MCC lebih rendah
 ($\sim 0{,}65$--$0{,}70$ pada few-shot; $-0{,}185$ pada CORAL) dibandingkan arah
-UNSW$\rightarrow$CIC ($\sim 0{,}90$ pada few-shot; $+0{,}164$ pada CORAL). Kami
-menganalisis asimetri ini dari sudut \textbf{kompleksitas domain}.
+UNSW$\rightarrow$CIC ($\sim 0{,}90$ pada few-shot; $+0{,}164$ pada CORAL) pada
+seluruh titik yang diuji. Kami menganalisis asimetri ini dari sudut
+\textbf{dispersi/heterogenitas domain} pada ruang fitur SFM.
 
 CSE-CIC-IDS2018 dibangkitkan pada infrastruktur \emph{testbed} yang relatif
 terstruktur, sedangkan UNSW-NB15 dibangkitkan dengan generator IXIA
@@ -1721,7 +1725,7 @@ lebih besar pada arah tersebut (lih.\ Persamaan~\eqref{eq:bendavid} sebagai moti
 
 \begin{table}[h]
 \centering
-\caption{Kuantifikasi kompleksitas domain: variansi (ruang $z$ gabungan) dan
+\caption{Kuantifikasi dispersi/heterogenitas domain: variansi (ruang $z$ gabungan) dan
 entropi Shannon per fitur SFM. Variansi UNSW jauh lebih tinggi (rata-rata
 $3{,}64$ vs $0{,}68$), menunjukkan dispersi/heterogenitas UNSW yang lebih besar
 pada ruang fitur SFM (bukan klaim kompleksitas semantik universal).}
@@ -1748,7 +1752,7 @@ pada ruang fitur SFM (bukan klaim kompleksitas semantik universal).}
 \end{tabular}
 \end{table}
 
-\paragraph{Keterbatasan.} \ifadversarial Kami melaporkan secara jujur bahwa pertahanan
+\paragraph{Keterbatasan.} \ifadversarial Kami melaporkan bahwa pertahanan
 \emph{adversarial training} kami belum tahan terhadap serangan adaptif; asimetri\else Asimetri\fi
 arah CIC$\rightarrow$UNSW ($\sim 0{,}65$--$0{,}70$) vs UNSW$\rightarrow$CIC
 ($\sim 0{,}91$) \ifadversarial juga \fi belum sepenuhnya teratasi (dianalisis pada
@@ -1837,7 +1841,7 @@ kembangkan pada kerja mendatang.
 \section{Kesimpulan dan Kerja Mendatang}
 \label{sec:conclusion}
 
-Kami menyajikan studi lintas-jaringan yang jujur pada pasangan CSE-CIC-IDS2018
+Kami menyajikan studi lintas-jaringan yang sistematis pada pasangan CSE-CIC-IDS2018
 dan UNSW-NB15. \emph{Semantic Feature Mapping} yang tervalidasi memungkinkan
 pelatihan lintas-dataset; bukti gabungan mengindikasikan bahwa celah generalisasi
 \emph{terutama dikontribusikan} oleh \emph{distribution shift} pada ruang fitur
@@ -1916,15 +1920,16 @@ untuk deteksi \emph{real-time} sekaligus pencatatan FAR.
 \centering
 \caption{Perbandingan FAR antar-durasi observasi (deployment AWS, trafik
 normal). Infrastruktur identik; hanya durasi capture berbeda. Angka berasal dari
-eksekusi nyata (\texttt{far\_log.jsonl}).}
+eksekusi nyata (\texttt{far\_log.jsonl}). Selang kepercayaan $95\%$ dihitung dengan
+metode \emph{Wilson score} untuk proporsi.}
 \label{tab:far}
-\begin{tabular}{lrrr}
+\begin{tabular}{lrrrc}
 \toprule
-Durasi observasi & Total \emph{flow} benign & \emph{False alarm} & FAR (\%) \\
+Durasi observasi & Total \emph{flow} benign & \emph{False alarm} & FAR (\%) & CI $95\%$ (\%) \\
 \midrule
-S0 (uji-asap, $\sim$3 menit) & $203$    & $0$  & $0{,}0000$ \\
-D1 (1 jam)                   & $3687$   & $14$ & $0{,}3797$ \\
-D2 (6 jam)                   & $22{.}644$ & $94$ & $0{,}4152$ \\
+S0 (uji-asap, $\sim$3 menit) & $203$    & $0$  & $0{,}0000$ & $[0{,}00,\,1{,}86]$ \\
+D1 (1 jam)                   & $3687$   & $14$ & $0{,}3797$ & $[0{,}23,\,0{,}64]$ \\
+D2 (6 jam)                   & $22{.}644$ & $94$ & $0{,}4152$ & $[0{,}34,\,0{,}51]$ \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1934,7 +1939,10 @@ D2 (6 jam)                   & $22{.}644$ & $94$ & $0{,}4152$ \\
 durasi observasi (S0 $0{,}00\%$ $\rightarrow$ D1 $0{,}38\%$ $\rightarrow$ D2
 $0{,}42\%$ pada $22{.}644$ alir benign), \emph{memberikan bukti} bahwa hasil tidak
 semata-mata berasal dari \emph{snapshot} yang sangat pendek (walau belum menegakkan
-klaim operasi kontinu berhari-hari). Nilai FAR $<0{,}5\%$ ini juga menepis dugaan \emph{bug}
+klaim operasi kontinu berhari-hari). Selang kepercayaan \emph{Wilson} $95\%$
+(Tabel~\ref{tab:far}) saling tumpang-tindih antar-durasi dan seluruhnya berada di
+bawah $0{,}7\%$, menegaskan stabilitas FAR pada durasi yang telah diukur. Nilai FAR
+$<0{,}5\%$ ini juga menepis dugaan \emph{bug}
 satuan/skala (yang khasnya melonjakkan FAR ke $\approx 100\%$). Perpanjangan
 jendela observasi ke operasi kontinu multi-hari menjadi bagian kampanye
 \emph{real-traffic} lanjutan kami (Bagian~\ref{sec:conclusion}).
