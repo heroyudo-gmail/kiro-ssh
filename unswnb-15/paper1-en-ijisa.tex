@@ -722,6 +722,34 @@ of adapting to a new network, so we refer to it as a low-label / few-shot budget
 rather than a fixed $k$ per class; the exact flow counts for each fraction are
 reported alongside every result.
 
+\paragraph{Few-shot calibration procedure.} Algorithm~\ref{alg:fewshot} states the
+procedure precisely. Given a labeled source set $\mathcal{S}$ and a target set split
+into $\mathcal{T}_{\text{train}}$ and a held-out $\mathcal{T}_{\text{test}}$, we draw
+a stratified fraction $k$ of $\mathcal{T}_{\text{train}}$ (preserving the
+benign/attack ratio), concatenate it with the full source, fit the $z$-score scaler
+\emph{only} on this augmented training pool, train XGBoost, and evaluate once on the
+fixed $\mathcal{T}_{\text{test}}$. The scaler and model never see
+$\mathcal{T}_{\text{test}}$, so there is no leakage; $k=0$ recovers the zero-shot
+baseline.
+
+\begin{algorithm}[h]
+\caption{Few-shot cross-network calibration}
+\label{alg:fewshot}
+\begin{algorithmic}[1]
+\Require labeled source $\mathcal{S}$; target train $\mathcal{T}_{\text{tr}}$,
+target test $\mathcal{T}_{\text{te}}$; label fraction $k$; seed $s$
+\State $\mathcal{A} \gets \textsc{StratifiedSample}(\mathcal{T}_{\text{tr}}, k, s)$
+\Comment{keep benign/attack ratio; $\mathcal{A}=\emptyset$ if $k=0$}
+\State $\mathcal{D} \gets \mathcal{S} \cup \mathcal{A}$
+\State $(\mu,\sigma) \gets \textsc{Fit}_{z}(\mathcal{D})$
+\Comment{scaler fitted on training pool only}
+\State $\hat{f} \gets \textsc{TrainXGB}\!\big(z_{\mu,\sigma}(\mathcal{D}),\,
+\texttt{scale\_pos\_weight}=\tfrac{n_-}{n_+}\big)$
+\State \Return $\textsc{MCC}\!\big(\hat{f},\, z_{\mu,\sigma}(\mathcal{T}_{\text{te}})\big)$
+\Comment{single held-out evaluation, no leakage}
+\end{algorithmic}
+\end{algorithm}
+
 \paragraph{Cross-dataset mixup on tabular NIDS features.} Mixup was originally
 proposed for images, so we state precisely how it applies to our tabular flows.
 All nine SFM features are \emph{continuous, $z$-scored} numeric quantities (no
