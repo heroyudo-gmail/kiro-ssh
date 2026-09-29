@@ -405,25 +405,19 @@ segelintir kategori bervolume tinggi, dengan ekor panjang jenis serangan minorit
 \label{sec:sfmmap}
 SFM memetakan fitur berfungsi-sama antar-dataset meski bernama kolom berbeda
 (mis. \texttt{Flow Duration}$\leftrightarrow$\texttt{dur}). Karena alat ekstraksi
-berbeda (CICFlowMeter vs Argus/Bro), setiap pasangan kandidat \emph{tidak}
-diterima berdasarkan kemiripan nama, melainkan \emph{divalidasi secara statistik}
-melalui tiga langkah: (i) mencocokkan definisi semantik fitur dari dokumentasi
-resmi kedua alat; (ii) mengembalikan fitur CIC ke skala asli
-($x_{\text{orig}} = x_{\text{scaled}}\cdot\sigma + \mu$, karena rilis CIC yang kami
-pakai sudah ter-\emph{z-score}); dan (iii) membandingkan statistik ringkas
-(median, persentil-99, maksimum) tiap pasangan untuk menilai kesetaraan
-\emph{orde skala}. Sebuah pasangan dinyatakan \emph{selaras} bila rasio median dan
-p99 antar-dataset berada dalam orde yang sama; \emph{scale-mismatch} bila berbeda
-$1$--$3$ orde (perlu konversi satuan); dan \emph{beda-fitur} bila $>3$ orde.
-Ambang ini adalah \emph{heuristik penyaring} (\emph{screening heuristics}), bukan
-kriteria kesetaraan universal; keputusan akhir tetap bersandar pada penalaran domain
-(definisi \emph{extractor}, satuan) serta pemeriksaan konsistensi perilaku antar-fitur
-(mis.\ $\mathtt{sload}\approx\mathtt{sbytes}/\mathtt{dur}$). Secara ringkas,
-kesepadanan diputuskan berjenjang: (L1) kesamaan \emph{definisi semantik}; (L2)
+berbeda (CICFlowMeter vs Argus/Bro), setiap pasangan kandidat \emph{tidak} diterima
+berdasarkan kemiripan nama, melainkan \emph{divalidasi} secara berjenjang: (L1)
+kesamaan \emph{definisi semantik} dari dokumentasi resmi kedua alat; (L2)
 \emph{kompatibilitas satuan} yang dapat dikonversi deterministik (byte vs bit,
-$\mu$s vs ms, paket/s vs byte/s); (L3) \emph{sanity distribusional} (median/p99/rentang
-setelah konversi); dan (L4) \emph{konsistensi perilaku} terhadap fitur lain. Ambang
-orde-magnitudo hanya melayani L3.
+$\mu$s vs ms, paket/s vs byte/s); (L3) \emph{sanity distribusional} --- setelah fitur
+CIC dikembalikan ke skala asli ($x_{\text{orig}} = x_{\text{scaled}}\cdot\sigma + \mu$),
+kami bandingkan statistik ringkas (median, p99, maksimum) untuk menilai kesetaraan
+\emph{orde skala}; dan (L4) \emph{konsistensi perilaku} antar-fitur
+(mis.\ $\mathtt{sload}\approx\mathtt{sbytes}/\mathtt{dur}$). Pada L3, pasangan
+dinyatakan \emph{selaras} bila rasio median dan p99 seorde, \emph{scale-mismatch} bila
+berbeda $1$--$3$ orde (perlu konversi satuan), dan \emph{beda-fitur} bila $>3$ orde.
+Ambang orde-magnitudo ini adalah \emph{heuristik penyaring} (hanya melayani L3), bukan
+kriteria universal; keputusan akhir tetap bersandar pada penalaran domain.
 
 Tabel~\ref{tab:sfm} merangkum hasil pemetaan. Sembilan pasangan lolos sebagai
 irisan kuat (Model~A), dua pasangan IAT dipertahankan sebagai tambahan opsional
@@ -522,17 +516,15 @@ informasi waktu-uji yang memengaruhi penskalaan maupun pemilihan model.
 \subsection{Pilihan Model Tunggal XGBoost: Perspektif \emph{Edge} dan \emph{Green AI}}
 \label{sec:edge}
 Kami sengaja mempertahankan \textbf{model tunggal XGBoost} alih-alih
-\emph{ensemble} berat atau \emph{deep learning} kompleks. Selain menjaga
-\emph{comparability} dengan penelitian sebelumnya dan mengisolasi variabel
-kontribusi (SFM dan adaptasi lintas-jaringan, bukan kapasitas model), pilihan ini
-selaras dengan kebutuhan \textbf{penyebaran di \emph{edge}} dan prinsip
-\textbf{\emph{Green AI}}. Pada perangkat \emph{edge} nyata --- \emph{smart router},
-\emph{IoT gateway}, atau sensor \emph{inline} --- model \emph{ensemble} multi-algoritma
-atau jaringan dalam berukuran besar tidak realistis karena konsumsi memori, CPU,
-dan energi yang tinggi, serta latensi inferensi yang dapat melampaui laju
-kedatangan \emph{flow}. Sebaliknya, XGBoost tunggal dengan $9$ fitur menghasilkan
-model biner ringan dan inferensi bertingkat-pohon yang cepat, sehingga sesuai untuk
-penyebaran pada perangkat \emph{edge} dengan sumber daya terbatas.
+\emph{ensemble} berat atau \emph{deep learning} kompleks. Pilihan ini menjaga
+\emph{comparability} dengan penelitian sebelumnya, mengisolasi variabel kontribusi
+(SFM dan adaptasi lintas-jaringan, bukan kapasitas model), dan selaras dengan
+kebutuhan \textbf{penyebaran \emph{edge}} serta prinsip \textbf{\emph{Green AI}}.
+Pada perangkat \emph{edge} nyata (\emph{smart router}, \emph{IoT gateway}, sensor
+\emph{inline}), \emph{ensemble} multi-algoritma atau jaringan dalam kurang realistis
+karena konsumsi memori/CPU/energi tinggi dan latensi yang dapat melampaui laju
+kedatangan \emph{flow}. XGBoost tunggal $9$ fitur menghasilkan model ringan dengan
+inferensi bertingkat-pohon yang cepat, sesuai untuk sumber daya terbatas.
 
 \begin{table}[h]
 \centering
@@ -552,12 +544,11 @@ Rata-rata latensi inferensi per \emph{flow} (batch$=1$) & $\approx 439\ \mu$s \\
 
 \noindent Angka pada Tabel~\ref{tab:efficiency} berasal dari pengukuran nyata
 (XGBoost \emph{single-thread}, batch$=1$; median $434\ \mu$s, std $23\ \mu$s atas
-$\sim$2000 \emph{flow}). Model $2{,}9$ MB (200 pohon, kedalaman 8) cukup ringkas
-untuk dimuat pada perangkat \emph{edge}, dan laju $>2\,000$ \emph{flow}/detik per
-satu inti memadai untuk banyak titik pemantauan jaringan --- mendukung kesesuaian
-penyebaran pada perangkat \emph{edge}. Kami melaporkan angka apa adanya: latensi berorde ratusan
-mikrodetik (bukan puluhan), dan menghindari pelaporan \emph{throughput} \emph{batch}
-yang dapat menyesatkan akibat optimasi vektorisasi.
+$\sim$2000 \emph{flow}). Model $2{,}9$ MB (200 pohon, kedalaman 8) ringkas untuk
+\emph{edge}, dan laju $>2\,000$ \emph{flow}/detik per inti memadai untuk banyak titik
+pemantauan. Kami melaporkan angka apa adanya: latensi berorde ratusan mikrodetik (bukan
+puluhan), dan menghindari \emph{throughput} \emph{batch} yang menyesatkan akibat
+optimasi vektorisasi.
 
 \paragraph{Konteks penyebaran dan skalabilitas.} Angka $\approx 2\,276$
 \emph{flow}/detik pada \emph{satu} inti sengaja ditujukan untuk skenario
@@ -589,7 +580,6 @@ Verifikasi label dilakukan: pada CIC \texttt{Benign}$=0$; konversi biner
 menghasilkan tepat $1{.}348{.}453$ normal dan $274{.}808$ attack, sehingga MCC
 negatif lintas-jaringan adalah fenomena nyata, bukan artefak label.
 
-
 \paragraph{Penanganan ketidakseimbangan kelas.} Data NIDS bersifat tak-seimbang
 secara inheren, dan rasionya berbeda antar-dataset (CIC $\approx 83\%$ benign;
 UNSW $\approx 55\%$ benign; AWS-\emph{test} $\approx 99\%$ serangan). Kami
@@ -608,6 +598,7 @@ protokol sampling}: kalibrasi \emph{few-shot} mengambil sampel secara
 label yang kecil. Kami \emph{tidak} memakai oversampling sintetik (mis.\ SMOTE) agar
 distribusi fitur yang diukur (Wasserstein, \S\ref{sec:wass}) tetap mencerminkan
 trafik asli, bukan artefak sampel buatan.
+
 \begin{table}[h]
 \centering
 \caption{Baseline lintas-dataset (MCC, Model A). Performa in-domain tinggi namun
@@ -800,14 +791,14 @@ menyesuaikan} batas keputusan terhadap contoh domain target --- secara konseptua
 selaras dengan peran $\lambda^\ast$ pada Persamaan~\eqref{eq:bendavid}. Sementara
 \emph{mixup} menginterpolasi struktur \emph{manifold} secara \emph{lokal}
 antar-\emph{flow} kedua dataset, menggeser distribusi latih mendekati target
-\emph{tanpa} memaksakan asumsi linieritas kovarians global. Dengan kata lain,
-\emph{diduga} CORAL memaksakan koreksi statistik-global yang salah-sasaran pada data
-non-linier tak-seimbang, sedangkan few-shot/mixup melakukan koreksi \emph{lokal} yang
-menghormati struktur kelas-minoritas --- persoalan yang justru krusial pada NIDS.
-Perlu ditegaskan: penjelasan mekanistik di atas bersifat \emph{interpretatif} ---
-kami belum mengukur langsung pergeseran batas keputusan, perpindahan kluster
-minoritas, maupun kovarians per-kelas sebelum/sesudah kalibrasi --- sehingga
-disajikan sebagai hipotesis yang konsisten dengan bukti, bukan mekanisme terbukti.
+\emph{tanpa} memaksakan asumsi linieritas kovarians global. Singkatnya, \emph{diduga}
+CORAL memaksakan koreksi statistik-global yang salah-sasaran pada data non-linier
+tak-seimbang, sedangkan few-shot/mixup mengoreksi secara \emph{lokal} dengan
+menghormati struktur kelas-minoritas --- krusial pada NIDS. Perlu ditegaskan,
+penjelasan mekanistik ini \emph{interpretatif}: kami belum mengukur langsung
+pergeseran batas keputusan maupun kovarians per-kelas sebelum/sesudah kalibrasi,
+sehingga disajikan sebagai hipotesis yang konsisten dengan bukti, bukan mekanisme
+terbukti.
 
 % ============================================================
 \section{Solusi Berbiaya-Rendah: Kalibrasi Minimal dan \emph{Mixup}}

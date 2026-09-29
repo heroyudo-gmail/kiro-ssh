@@ -821,7 +821,7 @@ referensi yang belum bisa diverifikasi TIDAK dikarang; angka yang belum ada dita
 | K1 | Label/judul gambar ke bahasa Inggris (Fig 8 & 9) | perbaikan gambar | **SELESAI** (masalah copy-paste Overleaf; label ID di gambar sudah tampil benar) |
 | K2 | Baseline domain-invariant (DI-NIDS/DANN) pada CIC↔UNSW | **eksperimen** | **DITUNDA** (butuh run; teks pengait sudah disiapkan di §related & §align) |
 | K3 | Perbarui related work (DI-NIDS, dll) | tulisan | **SELESAI** — paragraf baru "NIDS domain-invariant" + 4 bibitem terverifikasi |
-| K4 | CI/std untuk semua MCC + few-shot multi-seed | **eksperimen** | **DITUNDA** (perlu run multi-seed; CI bootstrap sudah ada di §ketahanan AWS & Wilson CI di FAR) |
+| K4 | CI/std untuk semua MCC + few-shot multi-seed | **eksperimen** | **NOTEBOOK SIAP** — `notebooks/19_multiseed_ci.ipynb` (5 seed; mean±std + CI95 t-interval untuk tab:baseline/align/fewshot; output `multiseed_ci.json`). Menunggu Run All di SageMaker. |
 | K5 | Deskripsi rinci pengumpulan trafik AWS | tulisan | **SELESAI** — tabel ringkas `tab:awscollect` (jenis serangan, jumlah flow, rasio kelas, definisi episode, pelabelan); periode kalender ditandai `[diisi]` |
 | K6 | Prosedur few-shot presisi & algoritmik | tulisan | **SELESAI** — blok `Algorithm` few-shot (stratified per-kelas, anti-bocor, seeded) |
 
@@ -834,12 +834,12 @@ referensi yang belum bisa diverifikasi TIDAK dikarang; angka yang belum ada dita
 | P3 | Jelaskan non-monoton kurva CIC+AWS few-shot (Fig 9) | tulisan | **SELESAI** — paragraf "Perilaku non-monoton kurva CIC+AWS" (titik awal negatif, benign langka, asimetri domain) |
 | P4 | Hubungan W1 & d_HΔH + keterbatasan W1 sebagai proxy | tulisan | **SELESAI** — paragraf hubungan bound Kantorovich–Rubinstein; W1 = proxy covariate-shift (perlu, bukan cukup) |
 | P5 | Strategi penanganan class imbalance | tulisan | **SELESAI** — paragraf 3-tingkat (MCC; scale_pos_weight; stratified sampling; tanpa SMOTE) |
-| P6 | Ablation jumlah fitur SFM | **eksperimen** | **DITUNDA** (perlu run MCC vs 3/5/7/9/11 fitur) |
+| P6 | Ablation jumlah fitur SFM | **eksperimen** | **NOTEBOOK SIAP** — `notebooks/18_feature_ablation.ipynb` (top-k {3,5,7,9} via importance joint; in-domain/joint/cross; output `feature_ablation.json`+PNG+S3). Menunggu Run All di SageMaker. |
 
 ### 20.3 Poin MINOR — status
 - **M1 Perpendek judul**: judul Paper 1 aktif sudah ringkas ("Pemetaan Fitur Semantik dan
   Kalibrasi Few-Shot untuk Deteksi Intrusi Lintas-Jaringan") — tidak diubah.
-- **M2 Padatkan §3–5**: **DITUNDA** (editing menyeluruh, dilakukan setelah poin eksperimen).
+- **M2 Padatkan §3–5**: **SELESAI** — buang redundansi tanpa menghilangkan angka/kualifikasi: §edge (frasa berulang), §sfmmap (gabung skema 3-langkah + L1–L4), §align (penutup CORAL).
 - **M3 Definisi "few-shot" (1% vs k-shot)**: **SELESAI** — paragraf "Definisi few-shot"
   menjelaskan pemakaian *percentage-shot* vs *k-shot* klasik.
 
@@ -859,7 +859,7 @@ Menunggu detail sitasi dari penulis, atau dibiarkan digantikan oleh DI-NIDS + 3 
 
 ### 20.5 Sisa pekerjaan (eksperimen — setelah tulisan)
 1. **DANN/DI-NIDS baseline** (K2): MLP + gradient reversal pada 9 fitur SFM, dua arah CIC↔UNSW, laporkan MCC.
-2. **Multi-seed + CI** (K4): ulang eksperimen offline (baseline/align/few-shot) dengan ≥5 seed; laporkan mean±std / CI pada tabel MCC utama.
-3. **Ablation jumlah fitur SFM** (P6): MCC vs {3,5,7,9,11} fitur.
+2. **Multi-seed + CI** (K4): notebook `19_multiseed_ci.ipynb` SIAP (5 seed) — tinggal Run All di SageMaker, lalu tulis mean±std/CI ke tabel MCC utama.
+3. **Ablation jumlah fitur SFM** (P6): notebook `18_feature_ablation.ipynb` SIAP — tinggal Run All di SageMaker, lalu tulis tabel+paragraf ke naskah.
 4. **Editing** (M2): padatkan §3–5.
 5. Isi periode kalender pengumpulan AWS pada `tab:awscollect`.
