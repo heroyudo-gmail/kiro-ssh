@@ -819,7 +819,7 @@ referensi yang belum bisa diverifikasi TIDAK dikarang; angka yang belum ada dita
 | # | Poin reviewer | Jenis | Status |
 |---|---|---|---|
 | K1 | Label/judul gambar ke bahasa Inggris (Fig 8 & 9) | perbaikan gambar | **SELESAI** (masalah copy-paste Overleaf; label ID di gambar sudah tampil benar) |
-| K2 | Baseline domain-invariant (DI-NIDS/DANN) pada CIC↔UNSW | **eksperimen** | **DITUNDA** (butuh run; teks pengait sudah disiapkan di §related & §align) |
+| K2 | Baseline domain-invariant (DI-NIDS/DANN) pada CIC↔UNSW | **eksperimen (berat, butuh PyTorch)** | **DITUNDA sadar** — review ini informal (bukan reviewer resmi jurnal); DANN menuntut dependency neural baru. Teks pengait sudah ada di §related & §align. Dikerjakan bila diminta reviewer resmi. |
 | K3 | Perbarui related work (DI-NIDS, dll) | tulisan | **SELESAI** — paragraf baru "NIDS domain-invariant" + 4 bibitem terverifikasi |
 | K4 | CI/std untuk semua MCC + few-shot multi-seed | **eksperimen** | **NOTEBOOK SIAP** — `notebooks/19_multiseed_ci.ipynb` (5 seed; mean±std + CI95 t-interval untuk tab:baseline/align/fewshot; output `multiseed_ci.json`). Menunggu Run All di SageMaker. |
 | K5 | Deskripsi rinci pengumpulan trafik AWS | tulisan | **SELESAI** — tabel ringkas `tab:awscollect` (jenis serangan, jumlah flow, rasio kelas, definisi episode, pelabelan); periode kalender ditandai `[diisi]` |
@@ -858,7 +858,7 @@ yang disebut reviewer — tidak ditemukan paper NIDS spesifik yang dapat dipasti
 Menunggu detail sitasi dari penulis, atau dibiarkan digantikan oleh DI-NIDS + 3 rujukan DA-NIDS di atas.
 
 ### 20.5 Sisa pekerjaan (eksperimen — setelah tulisan)
-1. **DANN/DI-NIDS baseline** (K2): MLP + gradient reversal pada 9 fitur SFM, dua arah CIC↔UNSW, laporkan MCC.
+1. **DANN/DI-NIDS baseline** (K2): DITUNDA (review informal; berat). Rencana file bila lanjut: `19_1_dann_baseline.ipynb` (PyTorch, GRL, 2 arah, multi-seed).
 2. **Multi-seed + CI** (K4): notebook `19_multiseed_ci.ipynb` SIAP (5 seed) — tinggal Run All di SageMaker, lalu tulis mean±std/CI ke tabel MCC utama.
 3. **Ablation jumlah fitur SFM** (P6): notebook `18_feature_ablation.ipynb` SIAP — tinggal Run All di SageMaker, lalu tulis tabel+paragraf ke naskah.
 4. **Editing** (M2): padatkan §3–5.
