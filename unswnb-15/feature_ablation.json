@@ -1,0 +1,92 @@
+{
+  "deskripsi": "Ablation jumlah fitur SFM (top-k dari importance model joint). MCC in-domain, joint, cross. Model A biner, z-score per dataset, XGBoost identik nb06, seed 42.",
+  "generated": "2026-09-29T02:26:47.084033Z",
+  "seed": 42,
+  "feature_ranking": [
+    "fwd_bytes",
+    "dst_load",
+    "duration",
+    "fwd_mean",
+    "fwd_pkts",
+    "bwd_pkts",
+    "bwd_mean",
+    "src_load",
+    "bwd_bytes"
+  ],
+  "subsets": [
+    3,
+    5,
+    7,
+    9
+  ],
+  "results": [
+    {
+      "k": 3,
+      "features": [
+        "fwd_bytes",
+        "dst_load",
+        "duration"
+      ],
+      "mcc_indomain_cic": 0.8997,
+      "mcc_indomain_unsw": 0.7018,
+      "mcc_joint_cic": 0.8992,
+      "mcc_joint_unsw": 0.6459,
+      "mcc_cross_cic2unsw": 0.377,
+      "mcc_cross_unsw2cic": 0.0654
+    },
+    {
+      "k": 5,
+      "features": [
+        "fwd_bytes",
+        "dst_load",
+        "duration",
+        "fwd_mean",
+        "fwd_pkts"
+      ],
+      "mcc_indomain_cic": 0.9118,
+      "mcc_indomain_unsw": 0.728,
+      "mcc_joint_cic": 0.9113,
+      "mcc_joint_unsw": 0.7192,
+      "mcc_cross_cic2unsw": -0.0089,
+      "mcc_cross_unsw2cic": -0.0573
+    },
+    {
+      "k": 7,
+      "features": [
+        "fwd_bytes",
+        "dst_load",
+        "duration",
+        "fwd_mean",
+        "fwd_pkts",
+        "bwd_pkts",
+        "bwd_mean"
+      ],
+      "mcc_indomain_cic": 0.9131,
+      "mcc_indomain_unsw": 0.739,
+      "mcc_joint_cic": 0.9129,
+      "mcc_joint_unsw": 0.7275,
+      "mcc_cross_cic2unsw": -0.0137,
+      "mcc_cross_unsw2cic": -0.0225
+    },
+    {
+      "k": 9,
+      "features": [
+        "fwd_bytes",
+        "dst_load",
+        "duration",
+        "fwd_mean",
+        "fwd_pkts",
+        "bwd_pkts",
+        "bwd_mean",
+        "src_load",
+        "bwd_bytes"
+      ],
+      "mcc_indomain_cic": 0.9133,
+      "mcc_indomain_unsw": 0.7441,
+      "mcc_joint_cic": 0.913,
+      "mcc_joint_unsw": 0.7311,
+      "mcc_cross_cic2unsw": -0.0318,
+      "mcc_cross_unsw2cic": -0.0311
+    }
+  ]
+}

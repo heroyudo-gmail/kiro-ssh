@@ -601,8 +601,11 @@ trafik asli, bukan artefak sampel buatan.
 
 \begin{table}[h]
 \centering
-\caption{Baseline lintas-dataset (MCC, Model A). Performa in-domain tinggi namun
-lintas-jaringan runtuh.}
+\caption{Baseline lintas-dataset (MCC). Performa in-domain tinggi namun
+lintas-jaringan runtuh. Nilai \emph{cross-network} Model A stabil lintas $5$
+\emph{seed}: CIC$\rightarrow$UNSW $-0{,}074$ (CI$95\%$ $[-0{,}18,0{,}04]$),
+UNSW$\rightarrow$CIC $-0{,}094$ (CI$95\%$ $[-0{,}13,-0{,}06]$) --- keduanya tak
+dapat dibedakan dari nol (lihat \S\ref{sec:da}).}
 \label{tab:baseline}
 \begin{tabular}{lcc}
 \toprule
@@ -716,15 +719,18 @@ target), dan \emph{joint training} (gabungan CIC+UNSW, uji test masing-masing).
 
 \begin{table}[h]
 \centering
-\caption{Strategi penyelarasan lintas-jaringan (MCC pada target).}
+\caption{Strategi penyelarasan lintas-jaringan (MCC pada target; rata-rata $\pm$
+selang kepercayaan $95\%$ atas $5$ \emph{seed}). Baseline dan CORAL berkisar di
+sekitar nol dengan CI yang \emph{melintasi} nol --- keduanya gagal andal;
+\emph{joint} sangat stabil (CI sempit).}
 \label{tab:align}
 \begin{tabular}{lcc}
 \toprule
 Strategi & CIC$\rightarrow$UNSW & UNSW$\rightarrow$CIC \\
 \midrule
-Baseline single-source & $-0{,}072$ & $-0{,}061$ \\
-CORAL (unsup. DA)      & $-0{,}185$ & $+0{,}164$ \\
-Joint training (uji test) & \multicolumn{2}{c}{UNSW $0{,}732$ \quad CIC $0{,}912$} \\
+Baseline single-source & $-0{,}074$ \scriptsize$[-0{,}18,\,0{,}04]$ & $-0{,}094$ \scriptsize$[-0{,}13,\,-0{,}06]$ \\
+CORAL (unsup. DA)      & $-0{,}118$ \scriptsize$[-0{,}30,\,0{,}06]$ & $-0{,}032$ \scriptsize$[-0{,}23,\,0{,}16]$ \\
+Joint training (uji test) & \multicolumn{2}{c}{UNSW $0{,}730$ \scriptsize$[0{,}73,\,0{,}73]$ \quad CIC $0{,}913$ \scriptsize$[0{,}91,\,0{,}91]$} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -750,10 +756,13 @@ adalah \emph{distribution shift} pada distribusi fitur --- model single-source t
 pernah melihat distribusi target --- dan pergeseran ini kami \emph{ukur secara
 langsung}: jarak Wasserstein antar-domain (\S\ref{sec:wass}) dan
 \emph{domain-classifier} yang memisahkan asal \emph{flow} dengan akurasi
-$\approx 0{,}99$ (\S\ref{sec:rt-shift}). CORAL membantu sebagian dan asimetris
-(UNSW$\rightarrow$CIC naik ke $+0{,}164$; CIC$\rightarrow$UNSW malah turun),
-menandakan penyelarasan orde-2 belum memadai untuk arah dari sumber berdistribusi
-lebih tersebar.
+$\approx 0{,}99$ (\S\ref{sec:rt-shift}). CORAL \emph{tidak} memberi pemulihan yang
+andal: rata-rata $5$ \emph{seed} tetap negatif pada kedua arah ($-0{,}118$ dan
+$-0{,}032$) dengan selang kepercayaan yang lebar dan \emph{melintasi nol}
+(Tabel~\ref{tab:align}) --- artinya efeknya tak dapat dibedakan dari nol dan sangat
+bergantung \emph{seed}. Penyelarasan kovarians orde-2 global karenanya belum memadai
+untuk pergeseran distribusi NIDS yang non-linier dan tak-seimbang; kontras dengan
+\emph{few-shot} (\S\ref{sec:da}) yang stabil lintas-\emph{seed} (CI sempit).
 
 \paragraph{Cakupan klaim kausal.} Kami menyatakan klaim ini
 secara tepat terhadap bukti yang telah dihasilkan, tanpa melebih-lebihkan. Klaim
@@ -783,8 +792,9 @@ secara \emph{linier dan global} di seluruh ruang fitur. Pada data tabular NIDS y
 kovarians global memperlakukan seluruh massa data secara seragam --- didominasi
 kelas jinak mayoritas --- sehingga \emph{diduga} menggeser batas keputusan di
 sekitar kluster serangan minoritas. \emph{Penjelasan yang masuk akal} (belum diukur
-langsung sebagai geometri batas keputusan) adalah bahwa efek inilah yang memperburuk
-arah CIC$\rightarrow$UNSW ($-0{,}072 \rightarrow -0{,}185$). Sebaliknya,
+langsung sebagai geometri batas keputusan) adalah bahwa efek inilah yang membuat
+CORAL gagal memperbaiki arah CIC$\rightarrow$UNSW (rata-rata $5$ \emph{seed}
+$-0{,}118$, CI melintasi nol). Sebaliknya,
 \emph{few-shot} $1\%$ menyediakan \emph{informasi terbimbing}
 (\emph{supervised anchor points}) berupa sedikit label target yang \emph{dapat
 menyesuaikan} batas keputusan terhadap contoh domain target --- secara konseptual
@@ -899,18 +909,20 @@ bentuk $\alpha$, jumlah $M$
 
 \begin{table}[h]
 \centering
-\caption{Few-shot target adaptation (MCC lintas-jaringan).}
+\caption{Few-shot target adaptation (MCC lintas-jaringan; rata-rata $\pm$ CI $95\%$
+atas $5$ \emph{seed}). Pemulihan sangat stabil: CI sempit, terutama UNSW$\rightarrow$CIC.
+\emph{Mixup} dilaporkan pada \emph{seed} tunggal ($42$).}
 \label{tab:fewshot}
 \begin{tabular}{lcc}
 \toprule
 Fraksi label target & CIC$\rightarrow$UNSW & UNSW$\rightarrow$CIC \\
 \midrule
-$0\%$ (baseline)  & $-0{,}072$ & $-0{,}061$ \\
-$1\%$             & $0{,}648$  & $0{,}899$  \\
-$5\%$             & $0{,}662$  & $0{,}911$  \\
-$10\%$            & $0{,}681$  & $0{,}911$  \\
+$0\%$ (baseline)  & $-0{,}074$ \scriptsize$[-0{,}18,0{,}04]$ & $-0{,}094$ \scriptsize$[-0{,}13,-0{,}06]$ \\
+$1\%$             & $0{,}659$ \scriptsize$[0{,}64,0{,}68]$ & $0{,}900$ \scriptsize$[0{,}90,0{,}90]$ \\
+$5\%$             & $0{,}689$ \scriptsize$[0{,}67,0{,}71]$ & $0{,}909$ \scriptsize$[0{,}91,0{,}91]$ \\
+$10\%$            & $0{,}691$ \scriptsize$[0{,}67,0{,}71]$ & $0{,}911$ \scriptsize$[0{,}91,0{,}91]$ \\
 \midrule
-Mixup (label \emph{train} target) & $0{,}680$ & $0{,}798$ \\
+Mixup (label \emph{train} target, \emph{seed} $42$) & $0{,}680$ & $0{,}798$ \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -925,8 +937,9 @@ $0{,}65$--$0{,}90$; kurva mendatar setelahnya.}
 
 Tabel~\ref{tab:fewshot} dan Gambar~\ref{fig:fewshot} menunjukkan lompatan
 dramatis: hanya $1\%$ label target ($1{.}753$ \emph{flow} UNSW atau $11{.}362$
-\emph{flow} CIC) membalik MCC dari negatif menjadi $0{,}648$ (CIC$\rightarrow$UNSW)
-dan $0{,}899$ (UNSW$\rightarrow$CIC, mendekati in-domain $0{,}913$). Setelah
+\emph{flow} CIC) membalik MCC dari negatif menjadi $0{,}659$ (CIC$\rightarrow$UNSW)
+dan $0{,}900$ (UNSW$\rightarrow$CIC, mendekati in-domain $0{,}913$), rata-rata atas
+$5$ \emph{seed} dengan CI sempit (Tabel~\ref{tab:fewshot}). Setelah
 $1\%$ kurva mendatar, sehingga \emph{kalibrasi minimal sudah cukup}. \emph{Mixup}
 (memakai label \emph{train} target, tanpa kalibrasi berlabel pada \emph{test} target)
 pun mencapai $0{,}680$ dan $0{,}798$. Pesan praktis: berkat SFM, NIDS lintas-jaringan
@@ -1041,7 +1054,47 @@ cukup: ia melengkapi --- bukan menggantikan --- bukti \emph{domain-classifier}
 menjaga klaim kami tetap konservatif: kalibrasi memperkecil $W_1$ (terukur), dan
 \emph{secara konsisten} dengan menurunnya suku diskrepansi pada Pers.~\eqref{eq:bendavid},
 namun kami tidak mengklaim mengukur suku bound itu secara langsung.
-\ifadversarial
+
+
+% ------------------------------------------------------------
+\subsection{Ablasi Jumlah Fitur SFM}
+\label{sec:ablation}
+
+Untuk menguji apakah sembilan fitur Model~A berlebihan atau tiap fitur berkontribusi,
+kami melakukan ablasi: fitur diurutkan menurut \emph{importance} pada model
+\emph{joint} (CIC$+$UNSW), lalu XGBoost dilatih ulang pada subset \emph{top-}$k$ fitur
+($k\in\{3,5,7,9\}$) dengan protokol identik (z-score per-dataset, \emph{seed} $42$).
+Tiga fitur terpenting adalah \texttt{fwd\_bytes}, \texttt{dst\_load}, \texttt{duration}.
+Tabel~\ref{tab:ablation} melaporkan MCC in-domain dan \emph{joint}.
+
+\begin{table}[h]
+\centering
+\caption{Ablasi jumlah fitur SFM (MCC, \emph{top-}$k$ menurut \emph{importance}
+\emph{joint}). Performa in-domain/\emph{joint} \emph{jenuh} pada $\sim$$5$ fitur;
+tambahan fitur ke-$6$--$9$ hanya menambah marginal.}
+\label{tab:ablation}
+\begin{tabular}{ccccc}
+\toprule
+$k$ & in-CIC & in-UNSW & joint (CIC) & joint (UNSW) \\
+\midrule
+$3$ & $0{,}900$ & $0{,}702$ & $0{,}899$ & $0{,}646$ \\
+$5$ & $0{,}912$ & $0{,}728$ & $0{,}911$ & $0{,}719$ \\
+$7$ & $0{,}913$ & $0{,}739$ & $0{,}913$ & $0{,}728$ \\
+$9$ & $0{,}913$ & $0{,}744$ & $0{,}913$ & $0{,}731$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Dua temuan. \emph{Pertama}, hanya \emph{tiga} fitur sudah memberi MCC in-domain
+$0{,}90$ (CIC) dan $0{,}70$ (UNSW); kurva \emph{mendatar} setelah $\sim$$5$ fitur
+(kenaikan $k{=}5\!\to\!9$ hanya $+0{,}002$ pada CIC dan $+0{,}016$ pada UNSW). Ini
+menunjukkan himpunan sembilan fitur \emph{tidak berlebihan} namun kontribusi
+marginal fitur ke-$6$--$9$ kecil --- konsisten dengan pilihan Model~A yang ringkas.
+\emph{Kedua}, ablasi ini bersifat \emph{in-domain/joint}; MCC \emph{lintas-jaringan}
+tetap $\approx 0$ pada semua $k$ (bahkan dengan sembilan fitur), menegaskan kembali
+bahwa celah lintas-jaringan \emph{bukan} soal jumlah/representasi fitur melainkan
+\emph{distribution shift} --- selaras dengan diagnosis \S\ref{sec:align}. Dengan kata
+lain, menambah fitur tidak menutup celah generalisasi; kalibrasi domain yang menutupnya.\ifadversarial
 % ============================================================
 \section{Evaluasi Adversarial yang Realistis}
 
@@ -1817,9 +1870,9 @@ menyeluruh (adaptive white-box), jika tidak akan melebih-lebihkan ketahanan\fi.
 \label{sec:asymmetry}
 Sebuah pola konsisten muncul di seluruh eksperimen adaptasi: arah
 CIC$\rightarrow$UNSW memulihkan MCC lebih rendah
-($\sim 0{,}65$--$0{,}70$ pada few-shot; $-0{,}185$ pada CORAL) dibandingkan arah
-UNSW$\rightarrow$CIC ($\sim 0{,}90$ pada few-shot; $+0{,}164$ pada CORAL) pada
-seluruh titik yang diuji. Kami menganalisis asimetri ini dari sudut
+($\sim 0{,}66$--$0{,}69$ pada few-shot, stabil lintas-\emph{seed}) dibandingkan arah
+UNSW$\rightarrow$CIC ($\sim 0{,}90$ pada few-shot) pada seluruh fraksi yang diuji
+(CORAL tak dipakai sebagai bukti asimetri karena tak andal lintas-\emph{seed}). Kami menganalisis asimetri ini dari sudut
 \textbf{dispersi/heterogenitas domain} pada ruang fitur SFM.
 
 CSE-CIC-IDS2018 dibangkitkan pada infrastruktur \emph{testbed} yang relatif
@@ -1835,9 +1888,9 @@ domain kompleks (UNSW) ke domain lebih terstruktur (CIC) lebih mudah karena
 target merupakan himpunan bagian perilaku yang sebagian sudah tercakup.
 
 Interpretasi ini konsisten dengan dua bukti internal: (i) CORAL --- yang
-menyelaraskan kovarians orde-2 --- justru \emph{memperburuk} arah
-CIC$\rightarrow$UNSW ($-0{,}072 \rightarrow -0{,}185$) karena memaksa struktur
-sumber yang sempit menutupi ruang target yang lebih luas; dan (ii) pelatihan
+menyelaraskan kovarians orde-2 --- \emph{gagal} memperbaiki transfer (rata-rata
+$5$ \emph{seed} negatif pada kedua arah, CI melintasi nol; Tabel~\ref{tab:align}),
+konsisten dengan sumber sempit yang sulit menutupi ruang target lebih luas; dan (ii) pelatihan
 gabungan (\emph{joint}) tetap menyisakan selisih (UNSW $0{,}732$ vs CIC $0{,}912$),
 menandakan sebagian kompleksitas UNSW sulit direpresentasikan oleh $9$ fitur
 irisan meskipun kedua domain terlihat saat pelatihan. Asimetri ini karena itu

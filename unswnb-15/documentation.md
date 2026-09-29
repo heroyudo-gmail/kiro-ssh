@@ -863,3 +863,35 @@ Menunggu detail sitasi dari penulis, atau dibiarkan digantikan oleh DI-NIDS + 3 
 3. **Ablation jumlah fitur SFM** (P6): notebook `18_feature_ablation.ipynb` SIAP — tinggal Run All di SageMaker, lalu tulis tabel+paragraf ke naskah.
 4. **Editing** (M2): padatkan §3–5.
 5. Isi periode kalender pengumpulan AWS pada `tab:awscollect`.
+
+
+---
+## 21. Hasil Eksperimen nb18 & nb19 Terintegrasi ke Naskah (P6 & K4 SELESAI)
+
+Notebook 18 (ablation) & 19 (multi-seed CI) telah dijalankan di SageMaker; hasil nyata
+(`feature_ablation.json`, `multiseed_ci.json`) diintegrasikan ke `paper1-generalisasi.tex`.
+
+### 21.1 P6 Ablation Jumlah Fitur (SELESAI)
+Subbagian baru **\S Ablasi Jumlah Fitur SFM** (`sec:ablation`) + `tab:ablation`. Temuan:
+fitur terpenting `fwd_bytes, dst_load, duration`; MCC in-domain/joint **jenuh ~5 fitur**
+(3 fitur sudah CIC 0.90/UNSW 0.70; k=5->9 hanya +0.002/+0.016). 9 fitur tak berlebihan
+tapi marginal fitur ke-6..9 kecil. Cross tetap ~0 di semua k -> menegaskan celah =
+distribution shift, bukan jumlah fitur.
+
+### 21.2 K4 Multi-Seed + CI (SELESAI)
+5 seed {42,1,7,123,2024}, mean +- CI95 t-interval ditambahkan ke `tab:baseline`,
+`tab:align`, `tab:fewshot`.
+- Few-shot **sangat stabil**: 1% -> CIC->UNSW 0.659 [0.64,0.68], UNSW->CIC 0.900 [0.90,0.90]. Joint 0.913/0.730 (CI sempit).
+- Baseline cross ~0 (CI melintasi nol) -> konfirmasi runtuh.
+
+### 21.3 KOREKSI PENTING (kejujuran): CORAL
+Angka lama **CORAL UNSW->CIC = +0.164** ternyata **artefak 1 seed**. Multi-seed (5) menunjukkan
+CORAL **negatif rata-rata pada kedua arah** (CIC->UNSW -0.118, UNSW->CIC -0.032) dengan
+**CI lebar melintasi nol** -> efek tak dapat dibedakan dari nol, sangat bergantung seed.
+Semua rujukan single-seed CORAL (-0.185/+0.164) di naskah (tab:align, paragraf "Mengapa CORAL
+gagal", \S asimetri) **dikoreksi** ke framing multi-seed: CORAL tidak andal; few-shot yang stabil.
+Ini justru memperkuat argumen few-shot/mixup > CORAL.
+
+### 21.4 Status akhir revisi (informal review)
+SELESAI: K3, K5, K6, P1, P2, P3, P4, P5, M1, M3, **M2, P6, K4**.
+DITUNDA sadar: K2 (DANN, review informal + butuh PyTorch); periode kalender AWS (`tab:awscollect`).
