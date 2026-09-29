@@ -804,3 +804,62 @@ opsi Jalur B (belum dikerjakan) adalah notebook baru Paper 1 (mis.
 `26_causal_separation.ipynb`): (i) replikasi kolaps→pulih pada detektor non-XGBoost
 (RandomForest/MLP/LogReg) untuk menutup faktor #5, dan (ii) dekomposisi covariate vs
 label shift pada kelas bersama untuk menutup faktor #4.
+
+
+---
+## 20. Revisi Mayor JISA (Putaran 3): Domain-Invariant Baseline, CI, Prosedur Few-Shot, dll
+
+Reviewer JISA memberi keputusan **Revisi Mayor** dengan daftar poin kritis, penting, dan
+minor. Bagian ini mencatat revisi yang **sudah dikerjakan (tulisan)** pada
+`paper1-generalisasi.tex` dan poin **eksperimen yang ditunda**. Prinsip kejujuran dipegang:
+referensi yang belum bisa diverifikasi TIDAK dikarang; angka yang belum ada ditandai eksplisit.
+
+### 20.1 Poin KRITIS — status
+
+| # | Poin reviewer | Jenis | Status |
+|---|---|---|---|
+| K1 | Label/judul gambar ke bahasa Inggris (Fig 8 & 9) | perbaikan gambar | **SELESAI** (masalah copy-paste Overleaf; label ID di gambar sudah tampil benar) |
+| K2 | Baseline domain-invariant (DI-NIDS/DANN) pada CIC↔UNSW | **eksperimen** | **DITUNDA** (butuh run; teks pengait sudah disiapkan di §related & §align) |
+| K3 | Perbarui related work (DI-NIDS, dll) | tulisan | **SELESAI** — paragraf baru "NIDS domain-invariant" + 4 bibitem terverifikasi |
+| K4 | CI/std untuk semua MCC + few-shot multi-seed | **eksperimen** | **DITUNDA** (perlu run multi-seed; CI bootstrap sudah ada di §ketahanan AWS & Wilson CI di FAR) |
+| K5 | Deskripsi rinci pengumpulan trafik AWS | tulisan | **SELESAI** — tabel ringkas `tab:awscollect` (jenis serangan, jumlah flow, rasio kelas, definisi episode, pelabelan); periode kalender ditandai `[diisi]` |
+| K6 | Prosedur few-shot presisi & algoritmik | tulisan | **SELESAI** — blok `Algorithm` few-shot (stratified per-kelas, anti-bocor, seeded) |
+
+### 20.2 Poin PENTING — status
+
+| # | Poin reviewer | Jenis | Status |
+|---|---|---|---|
+| P1 | Pernyataan ketersediaan kode + repo publik (SFM) | tulisan | **SELESAI** — bagian "Ketersediaan Kode dan Data" diperkuat (sebut implementasi SFM + ambang validasi) |
+| P2 | Pernyataan etika protokol AWS | tulisan | **SELESAI** — bagian "Pernyataan Etika" (VPC terisolasi, serangan hanya ke korban sendiri, tanpa data pengguna nyata) |
+| P3 | Jelaskan non-monoton kurva CIC+AWS few-shot (Fig 9) | tulisan | **SELESAI** — paragraf "Perilaku non-monoton kurva CIC+AWS" (titik awal negatif, benign langka, asimetri domain) |
+| P4 | Hubungan W1 & d_HΔH + keterbatasan W1 sebagai proxy | tulisan | **SELESAI** — paragraf hubungan bound Kantorovich–Rubinstein; W1 = proxy covariate-shift (perlu, bukan cukup) |
+| P5 | Strategi penanganan class imbalance | tulisan | **SELESAI** — paragraf 3-tingkat (MCC; scale_pos_weight; stratified sampling; tanpa SMOTE) |
+| P6 | Ablation jumlah fitur SFM | **eksperimen** | **DITUNDA** (perlu run MCC vs 3/5/7/9/11 fitur) |
+
+### 20.3 Poin MINOR — status
+- **M1 Perpendek judul**: judul Paper 1 aktif sudah ringkas ("Pemetaan Fitur Semantik dan
+  Kalibrasi Few-Shot untuk Deteksi Intrusi Lintas-Jaringan") — tidak diubah.
+- **M2 Padatkan §3–5**: **DITUNDA** (editing menyeluruh, dilakukan setelah poin eksperimen).
+- **M3 Definisi "few-shot" (1% vs k-shot)**: **SELESAI** — paragraf "Definisi few-shot"
+  menjelaskan pemakaian *percentage-shot* vs *k-shot* klasik.
+
+### 20.4 Referensi baru (terverifikasi via web, bukan karangan)
+Ditambahkan ke bibliografi `paper1-generalisasi.tex`:
+- `dinids` — Layeghy, Baktashmotlagh, Portmann, "DI-NIDS: Domain invariant network intrusion
+  detection system," *Knowledge-Based Systems*, vol. 273, art. 110626, 2023.
+- `digeneralis` — Layeghy & Portmann, "On generalisability of ML-based NIDS," arXiv:2205.04112, 2022.
+- `domconf` — Yang et al., "A network intrusion detection method based on domain confusion,"
+  *Electronics*, vol. 12, no. 5, art. 1255, 2023.
+- `classbal` — Wang et al., "A domain adaptation NIDS algorithm based on class-balanced
+  knowledge transfer and multi-structure domain alignment," *Cluster Computing*, 2026.
+
+**Belum diverifikasi (TIDAK dimasukkan agar tidak mengarang):** "MEFA" dan "Zhang et al. (2025)"
+yang disebut reviewer — tidak ditemukan paper NIDS spesifik yang dapat dipastikan lewat pencarian.
+Menunggu detail sitasi dari penulis, atau dibiarkan digantikan oleh DI-NIDS + 3 rujukan DA-NIDS di atas.
+
+### 20.5 Sisa pekerjaan (eksperimen — setelah tulisan)
+1. **DANN/DI-NIDS baseline** (K2): MLP + gradient reversal pada 9 fitur SFM, dua arah CIC↔UNSW, laporkan MCC.
+2. **Multi-seed + CI** (K4): ulang eksperimen offline (baseline/align/few-shot) dengan ≥5 seed; laporkan mean±std / CI pada tabel MCC utama.
+3. **Ablation jumlah fitur SFM** (P6): MCC vs {3,5,7,9,11} fitur.
+4. **Editing** (M2): padatkan §3–5.
+5. Isi periode kalender pengumpulan AWS pada `tab:awscollect`.

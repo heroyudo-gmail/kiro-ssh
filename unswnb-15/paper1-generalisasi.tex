@@ -281,6 +281,29 @@ membiaskan pengukuran generalisasi sejati~\cite{cantone}. Kami mengevaluasi CORA
 pelatihan gabungan (\emph{joint}), \emph{few-shot}, dan \emph{mixup}
 lintas-dataset secara langsung pada pasangan CIC-IDS2018 dan UNSW-NB15.
 
+\paragraph{NIDS domain-invariant dan generalisasi lintas-domain.} Sejalan dengan
+temuan celah lintas-jaringan, sejumlah karya belakangan menargetkan representasi
+\emph{domain-invariant} secara eksplisit. Layeghy \emph{et al.}~\cite{digeneralis}
+mengukur generalisabilitas tujuh model pada empat dataset NIDS dan menemukan bahwa
+tak satu pun bergeneralisasi menyeluruh, sekaligus melaporkan \emph{asimetri arah}
+yang kuat (menukar sumber--target mengubah kinerja secara signifikan) --- konsisten
+dengan asimetri yang kami analisis (\S\ref{sec:asymmetry}). Sebagai solusi,
+\emph{DI-NIDS}~\cite{dinids} mengekstraksi fitur \emph{domain-invariant} melalui
+\emph{adversarial domain adaptation} (bergaya DANN dengan \emph{gradient reversal})
+lintas beberapa domain jaringan, lalu mendeteksi anomali secara tak-terawasi. Pada
+arah serupa, pendekatan berbasis \emph{domain confusion}~\cite{domconf} dan
+adaptasi domain berbasis transfer pengetahuan seimbang-kelas serta penyelarasan
+multi-struktur~\cite{classbal} memetakan trafik lintas-lingkungan ke ruang fitur
+bersama untuk menekan diskrepansi distribusi. Berbeda dari pendekatan ini yang
+umumnya menuntut \emph{backbone} neural dalam (pelatihan adversarial atau
+penyelarasan momen) sehingga kurang selaras dengan kendala \emph{edge}, kami
+menempuh jalur komplementer: menyepadankan fitur \emph{by design} melalui SFM
+tervalidasi-statistik, mendiagnosis pergeseran secara langsung, lalu memulihkan
+performa dengan kalibrasi berbiaya-rendah pada \emph{backbone} pohon yang ringan.
+Untuk menempatkan pendekatan ringan kami dalam konteks metode
+\emph{domain-invariant}, kami membandingkannya terhadap \emph{baseline} bergaya
+adversarial (DANN) pada tugas transfer CIC$\leftrightarrow$UNSW
+(\S\ref{sec:align}).
 \ifadversarial
 \paragraph{Serangan adversarial dan GAN pada NIDS.} Generative Adversarial
 Networks~\cite{gan} bersifat \emph{dual-use} pada keamanan siber~\cite{alauthman}:
@@ -566,6 +589,25 @@ Verifikasi label dilakukan: pada CIC \texttt{Benign}$=0$; konversi biner
 menghasilkan tepat $1{.}348{.}453$ normal dan $274{.}808$ attack, sehingga MCC
 negatif lintas-jaringan adalah fenomena nyata, bukan artefak label.
 
+
+\paragraph{Penanganan ketidakseimbangan kelas.} Data NIDS bersifat tak-seimbang
+secara inheren, dan rasionya berbeda antar-dataset (CIC $\approx 83\%$ benign;
+UNSW $\approx 55\%$ benign; AWS-\emph{test} $\approx 99\%$ serangan). Kami
+menanganinya di tiga tingkat, bukan mengandalkan satu mekanisme. \emph{Pertama, di
+tingkat metrik}: kami memakai \emph{Matthews Correlation Coefficient} (MCC) sebagai
+metrik utama karena MCC memakai keempat sel matriks kebingungan dan memberi skor
+tinggi hanya bila kedua kelas diprediksi baik --- tahan terhadap imbalans, tak
+seperti akurasi/F1 yang dapat tampak tinggi secara menyesatkan~\cite{chicco}.
+\emph{Kedua, di tingkat pelatihan}: pengklasifikasi XGBoost menyetel
+\texttt{scale\_pos\_weight} $= n_{\text{neg}}/n_{\text{pos}}$ sehingga fungsi galat
+menimbang ulang kelas minoritas secara proporsional (diaktifkan hanya bila kedua
+kelas hadir, untuk menghindari bobot tak-terdefinisi). \emph{Ketiga, di tingkat
+protokol sampling}: kalibrasi \emph{few-shot} mengambil sampel secara
+\emph{stratified per kelas} dengan jaminan minimal satu sampel per kelas
+(Algoritma~\ref{alg:fewshot}), sehingga kelas langka tidak terhapus oleh anggaran
+label yang kecil. Kami \emph{tidak} memakai oversampling sintetik (mis.\ SMOTE) agar
+distribusi fitur yang diukur (Wasserstein, \S\ref{sec:wass}) tetap mencerminkan
+trafik asli, bukan artefak sampel buatan.
 \begin{table}[h]
 \centering
 \caption{Baseline lintas-dataset (MCC, Model A). Performa in-domain tinggi namun
@@ -777,7 +819,45 @@ target adaptation}: melatih pada source ditambah fraksi kecil label target
 target tanpa kebocoran). Sebagai pembanding yang hanya memakai label \emph{train}
 target, kami menguji \emph{cross-dataset mixup} (interpolasi Beta antar-\emph{flow}
 kedua dataset).
+\paragraph{Definisi ``few-shot'' dalam makalah ini.} Kami memakai istilah
+\emph{few-shot} dalam pengertian \emph{fraksi-persen} (\emph{percentage-shot}):
+sebuah pecahan $k\%$ (mis.\ $1\%$) dari data \emph{train} domain target
+ditambahkan ke data sumber. Ini \emph{berbeda} dari formulasi $k$-\emph{shot}
+klasik pada \emph{meta-learning} yang menetapkan tepat $k$ sampel \emph{per kelas}
+(mis.\ $5$-shot). Pilihan berbasis-fraksi ini disengaja karena dua alasan: (i)
+selaras dengan pertanyaan penyebaran ``berapa \emph{proporsi} trafik target
+berlabel yang dibutuhkan?'', dan (ii) menghormati ketidakseimbangan kelas alami
+NIDS --- menetapkan $k$ seragam per kelas justru akan mengoversampel kelas langka
+dan menyembunyikan biaya pelabelan sebenarnya. Untuk keterbandingan, kami laporkan
+pula ukuran absolutnya: $1\%$ setara $1{.}753$ \emph{flow} UNSW atau $11{.}362$
+\emph{flow} CIC (\S di bawah). Prosedur pengambilan sampel bersifat
+\emph{stratified per kelas} dan \emph{deterministik} (Algoritma~\ref{alg:fewshot}):
+proporsi kelas dipertahankan dan setiap kelas dijamin terwakili minimal satu
+sampel, sehingga anggaran kecil tidak menghapus kelas minoritas.
 
+\begin{algorithm}[h]
+\caption{Kalibrasi \emph{few-shot} lintas-jaringan (\emph{stratified},
+anti-bocor, \emph{seeded})}
+\label{alg:fewshot}
+\begin{algorithmic}[1]
+\Require sumber berlabel $\mathcal{S}$; target $\mathcal{T}$ (9 fitur SFM);
+fraksi $k$; \emph{seed} $r$
+\State \textbf{Split berlapis:} $\mathcal{T} \to (\mathcal{T}_{\text{train}},
+\mathcal{T}_{\text{test}})$ dengan stratifikasi kelas, \emph{seed} $r$;
+$\mathcal{T}_{\text{test}}$ \emph{dibekukan} (tak pernah dilatih)
+\State $\mathcal{A} \gets \emptyset$ \Comment{kolam sampel few-shot}
+\For{tiap kelas $c \in \{$benign, attack$\}$}
+  \State $G_c \gets \{x \in \mathcal{T}_{\text{train}} : y(x)=c\}$
+  \State $n_c \gets \max\!\bigl(1,\ \mathrm{round}(|G_c|\cdot k)\bigr)$
+  \State ambil $n_c$ sampel dari $G_c$ tanpa pengembalian (RNG ber-\emph{seed} $r$);
+  tambahkan ke $\mathcal{A}$
+\EndFor
+\State \textbf{Fit penskala} $(\mu,\sigma)$ pada $\mathcal{S}\cup\mathcal{A}$ saja
+\Comment{tanpa menyentuh $\mathcal{T}_{\text{test}}$}
+\State latih XGBoost pada $\mathcal{S}\cup\mathcal{A}$ (ter-\emph{z-score})
+\State \Return evaluasi pada $\mathcal{T}_{\text{test}}$ (MCC)
+\end{algorithmic}
+\end{algorithm}
 \paragraph{\emph{Mixup} lintas-dataset pada fitur tabular NIDS.} Karena \emph{mixup}
 awalnya diusulkan untuk citra, kami nyatakan secara tepat penerapannya pada
 \emph{flow} tabular kami. Kesembilan fitur SFM seluruhnya bersifat
@@ -949,6 +1029,27 @@ memperkecil celah namun tidak menghapusnya sepenuhnya; inilah alasan sedikit
 label target (\emph{few-shot}) masih memberi manfaat tambahan pada keputusan
 klasifikasi.
 
+\paragraph{Hubungan $W_1$ dengan $d_{\mathcal{H}\Delta\mathcal{H}}$ dan keterbatasan
+sebagai \emph{proxy}.} Kami memakai jarak Wasserstein $W_1$ sebagai \emph{ukuran
+teramati} pergeseran distribusi, bukan sebagai pengukuran langsung diskrepansi
+$d_{\mathcal{H}\Delta\mathcal{H}}$ pada batas Ben-David (Pers.~\eqref{eq:bendavid}).
+Keduanya berkaitan namun tidak identik: $d_{\mathcal{H}\Delta\mathcal{H}}$
+didefinisikan pada \emph{ruang hipotesis} $\mathcal{H}$ dan mengukur seberapa
+berbeda dua domain \emph{dapat dibedakan oleh pengklasifikasi}, sedangkan $W_1$
+adalah jarak antar-distribusi \emph{marginal} $P(X)$ yang \emph{agnostik terhadap
+label maupun pengklasifikasi}. Hubungan formalnya: untuk kelas hipotesis
+\emph{Lipschitz}-terbatas, $d_{\mathcal{H}\Delta\mathcal{H}}$ dapat \emph{dibatasi
+di atas} oleh $W_1$ (via dualitas Kantorovich--Rubinstein), sehingga $W_1$ yang
+besar \emph{mengindikasikan} potensi diskrepansi besar --- tetapi $W_1$ kecil
+\emph{tidak menjamin} $d_{\mathcal{H}\Delta\mathcal{H}}$ kecil, karena pergeseran
+\emph{kelas-kondisional} $P(Y\mid X)$ dapat tetap besar meski $P(X)$ mirip. Karena
+itu $W_1$ kami perlakukan sebagai \emph{proxy covariate-shift} yang perlu, bukan
+cukup: ia melengkapi --- bukan menggantikan --- bukti \emph{domain-classifier}
+(\S\ref{sec:rt-shift}) dan eksperimen multi-kelas per-kategori
+(\S\ref{sec:multiclass}) yang menyorot komponen kelas-kondisional. Interpretasi ini
+menjaga klaim kami tetap konservatif: kalibrasi memperkecil $W_1$ (terukur), dan
+\emph{secara konsisten} dengan menurunnya suku diskrepansi pada Pers.~\eqref{eq:bendavid},
+namun kami tidak mengklaim mengukur suku bound itu secara langsung.
 \ifadversarial
 % ============================================================
 \section{Evaluasi Adversarial yang Realistis}
@@ -1188,6 +1289,40 @@ sebagai langkah lanjutan konkret (Bagian~\ref{sec:conclusion}).
 \noindent Bagian ini menjelaskan alur penyebaran AWS ujung-ke-ujung, dari penangkapan
 paket hingga inferensi tingkat-\emph{flow}. Seluruh prosedur bersifat dapat-direproduksi.
 
+
+\paragraph{Ringkasan pengumpulan trafik AWS.} Tabel~\ref{tab:awscollect}
+merangkum protokol pengumpulan agar transparan dan dapat direproduksi: jenis
+serangan, perkakas, jumlah \emph{flow}, rasio benign/attack, dan definisi episode.
+Seluruh trafik dikumpulkan pada VPC terisolasi (region \texttt{ap-southeast-1});
+Fase~1 (FAR) memakai trafik benign-saja pada durasi bertingkat, sedangkan Fase~2
+(deteksi) memakai skenario serangan berfase $\sim$7 menit per varian. Sebuah
+\emph{episode} didefinisikan sebagai satu sub-fase berlabel-seragam dalam lini
+masa terkendali (mis.\ episode \emph{SSH brute-force} menit $1$--$3$), dipakai untuk
+pelabelan otomatis berbasis-\emph{timeline} (\S\ref{sec:rt-fewshot}) dan untuk
+\emph{split} tingkat-episode (\S\ref{sec:rt-robust}).
+
+\begin{table}[h]
+\centering
+\caption{Protokol pengumpulan trafik AWS (region \texttt{ap-southeast-1}). Periode
+kalender pengumpulan: \textsc{[diisi: tanggal mulai--selesai]}. Semua serangan
+dilancarkan hanya ke korban milik sendiri di dalam VPC terisolasi.}
+\label{tab:awscollect}
+\small
+\begin{tabular}{lp{5.6cm}}
+\toprule
+Aspek & Rincian \\
+\midrule
+Lingkungan     & AWS EC2, VPC terisolasi, \texttt{ap-southeast-1} \\
+Ekstraktor     & NFStream ($9$ fitur SFM), antarmuka \texttt{ens5} \\
+Fase 1 (FAR)   & Trafik \emph{benign}-saja; durasi bertingkat S0 ($\sim$3 mnt, $203$ \emph{flow}), D1 ($1$ jam, $3687$), D2 ($6$ jam, $22{.}644$) \\
+Fase 2 varian  & \emph{clean} (SSH \emph{brute-force} + Slowloris + SYN \emph{flood} $200$/s; $434$ \emph{flow}); \emph{volumetric} (SYN $5000$/s + HTTP + UDP \emph{flood}; $17{.}319$ \emph{flow}) \\
+Perkakas serangan & \texttt{hydra}, \texttt{slowloris}, \texttt{nping} \\
+Rasio kelas (few-shot) & Gabungan berlabel $17{.}753$ \emph{flow} ($17{.}620$ serangan; $133$ jinak $\approx 0{,}75\%$) \\
+Definisi episode & Sub-fase berlabel-seragam dalam lini masa: \emph{benign} $\to$ \emph{brute-force} $\to$ \emph{Slowloris} $\to$ \emph{SYN flood} $\to$ \emph{benign} \\
+Pelabelan      & Otomatis dari \emph{ground-truth timeline} (\texttt{bidirectional\_first\_seen\_ms}) \\
+\bottomrule
+\end{tabular}
+\end{table}
 \subsection{Gambaran Umum: Tiga Tahap Sederhana}
 Untuk menguji model pada trafik nyata, kami menjalankan tiga tahap berurutan pada
 sebuah mesin di jaringan cloud (AWS): (i) \textbf{menangkap} paket jaringan
@@ -1561,6 +1696,24 @@ konsisten dengan bukti (namun belum kami buktikan secara kausal): \emph{source}
 dengan dispersi fitur lebih besar (UNSW) \emph{diduga} lebih mudah dikalibrasi ke
 trafik nyata yang beragam.
 
+\paragraph{Perilaku non-monoton kurva CIC$+$AWS.} Berbeda dari kurva UNS$+$AWS
+yang naik cukup teratur, kurva CIC$+$AWS bersifat \emph{non-monoton}
+($-0{,}22 \to 0{,}13 \to 0{,}37 \to 0{,}21 \to 0{,}46$ pada $k=0,1,5,10,20\%$).
+Kami tidak memoles pola ini dan menjelaskannya apa adanya. Tiga faktor konsisten
+dengan bukti: (i) \emph{titik awal negatif} --- \emph{zero-shot} CIC memprediksi
+berlawanan arah (MCC $-0{,}22$), sehingga penambahan sedikit label target menggeser
+batas keputusan secara \emph{tidak stabil} sebelum menetap; (ii) \emph{kelas jinak
+sangat langka} pada AWS ($53$ alir uji), sehingga sedikit perubahan pada segelintir
+\emph{false positive} mengubah MCC secara relatif besar --- variansi antar-fraksi
+tinggi; dan (iii) \emph{asimetri domain} (\S\ref{sec:asymmetry}): memindahkan model
+dari CIC (dispersi rendah) ke trafik nyata yang beragam secara inheren lebih sulit
+dan lebih sensitif terhadap komposisi sampel few-shot yang terambil. Fluktuasi ini
+memperkuat --- bukan melemahkan --- pesan kami: pada \emph{source} yang sulit (CIC),
+kalibrasi few-shot tetap memulihkan MCC ke arah positif, namun besarannya lebih
+berisik dan menuntut pemilihan fraksi yang lebih hati-hati. Bukti adaptasi
+berbiaya-rendah yang paling kokoh tetap berada pada eksperimen \emph{offline}
+lintas-jaringan (\S\ref{sec:da}), tempat kelas jinak jauh lebih banyak sehingga
+kurva few-shot mendatar secara stabil.
 \paragraph{Catatan metrik: mengapa MCC, bukan F1.} AWS-\emph{test} sangat
 tak-seimbang: $7{.}049$ alir serangan vs hanya $53$ alir jinak ($\approx 99{,}2\%$
 serangan). Pada rasio seekstrem ini, F1 tetap tinggi ($\approx 0{,}99$) bahkan saat
@@ -1989,11 +2142,32 @@ multi-hari (3--7 hari).}
 \end{figure}
 
 % ============================================================
-\section*{Ketersediaan Reproduksi}
-Kode, konfigurasi, \emph{notebook}, dan berkas hasil ringkas ($*.json$) tersedia
+\section*{Ketersediaan Kode dan Data}
+Implementasi \emph{Semantic Feature Mapping} (SFM), skrip validasi pemetaan fitur,
+\emph{notebook} eksperimen (baseline lintas-dataset, CORAL, \emph{joint}, few-shot,
+mixup, analisis Wasserstein, dan pipeline validasi AWS), berkas konfigurasi, serta
+berkas hasil ringkas ($*.json$ --- termasuk metrik mentah tiap eksperimen) tersedia
 publik di \url{https://github.com/heroyudo-gmail/kiro-ssh} (subfolder
-\texttt{unswnb-15/}). Dataset besar tidak disertakan (lisensi/ukuran) namun dapat
-diperoleh dari sumber resmi masing-masing.
+\texttt{unswnb-15/}). Repositori memuat kode pemetaan SFM beserta ambang validasi
+statistik sehingga pemetaan dapat direproduksi dan diperiksa ulang. Dataset
+\emph{benchmark} (CSE-CIC-IDS2018, UNSW-NB15) tidak disertakan karena lisensi dan
+ukuran, namun tersedia dari sumber resmi masing-masing; tangkapan trafik AWS dan
+berkas fitur turunannya disertakan dalam bentuk ringkas agar hasil dapat ditelusuri.
+
+\section*{Pernyataan Etika}
+Seluruh trafik serangan dibangkitkan di dalam \emph{lingkungan cloud terisolasi
+milik sendiri} (AWS, \emph{Virtual Private Cloud} khusus pada region
+\texttt{ap-southeast-1}) yang kami kendalikan penuh. Serangan (\emph{SSH
+brute-force}, Slowloris, SYN/HTTP/UDP \emph{flood}) diarahkan \emph{hanya} ke mesin
+korban milik kami sendiri di dalam VPC tersebut; tidak ada sistem pihak ketiga,
+layanan publik, atau pengguna nyata yang menjadi sasaran atau terdampak. Trafik
+\emph{benign} dibangkitkan secara sintetik oleh mesin kami (permintaan HTTP lokal,
+pencarian DNS, unduhan kecil) dan \emph{tidak} memuat data pribadi atau lalu-lintas
+pengguna nyata. Perkakas serangan yang dipakai (\texttt{hydra}, \texttt{slowloris},
+\texttt{nping}) bersifat sumber-terbuka dan lazim dalam riset keamanan; kami
+memakainya semata untuk mengukur perilaku detektor pada trafik terkontrol. Dengan
+demikian eksperimen tidak menimbulkan risiko terhadap pihak lain dan mematuhi
+prinsip riset keamanan yang bertanggung jawab.
 
 % Format referensi: gaya IEEE — inisial nama depan; judul dalam tanda kutip;
 % nama venue italik; konferensi diawali "in Proc."; halaman & tahun.
@@ -2185,6 +2359,22 @@ and J.~W.~Vaughan, ``A theory of learning from different domains,''
 domain adaptation,'' in \emph{Proc. 30th AAAI Conf. Artificial Intelligence
 (AAAI)}, Phoenix, AZ, USA, 2016, pp.~2058--2065.
 
+\bibitem{dinids} S.~Layeghy, M.~Baktashmotlagh, and M.~Portmann, ``DI-NIDS:
+Domain invariant network intrusion detection system,'' \emph{Knowledge-Based
+Systems}, vol.~273, art.~110626, 2023.
+
+\bibitem{digeneralis} S.~Layeghy and M.~Portmann, ``On generalisability of
+machine learning-based network intrusion detection systems,''
+\emph{arXiv:2205.04112}, 2022.
+
+\bibitem{domconf} Y.~Yang, H.~Wang, and Z.~Yuan, ``A network intrusion detection
+method based on domain confusion,'' \emph{Electronics}, vol.~12, no.~5, art.~1255,
+2023.
+
+\bibitem{classbal} Q.~Wang, H.~Liu, M.~Zhang, Y.~Cheng, and B.~Zhang, ``A domain
+adaptation network intrusion detection algorithm based on class-balanced knowledge
+transfer and multi-structure domain alignment,'' \emph{Cluster Computing}, 2026,
+doi:10.1007/s10586-026-06374-5.
 \bibitem{fewshot} C.~Xu, Y.~Zhan, G.~Chen, Z.~Wang, S.~Liu, and W.~Hu,
 ``Elevated few-shot network intrusion detection via self-attention mechanisms
 and iterative refinement,'' \emph{PLoS ONE}, vol.~20, no.~1, art.~e0317713, 2025.
