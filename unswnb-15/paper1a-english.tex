@@ -140,7 +140,7 @@ distribution shift.
 This paper is a direct continuation of our prior NIDS work on CSE-CIC-IDS2018
 (XGBoost \citep{xgboost} feature reduction plus real-traffic AWS validation), which
 explicitly acknowledged its limitations. Two of these limitations form the
-\textbf{core gaps} of this paper:
+\emph{core gaps} of this paper:
 \begin{enumerate}
   \item \textbf{Cross-network generalization failure.} Models collapse when facing
   traffic characteristics from a different network topology.
@@ -273,6 +273,24 @@ budget, edge cost) needs a different deep stack than our fixed XGBoost backbone 
 is left as future work. We make this scope explicit rather than claim unmeasured
 superiority.
 
+
+\paragraph{Positioning: how we differ from the closest work.} Three lines of work
+are nearest to ours, and we delineate our contribution against each. (i) \emph{Unified
+feature sets} (Sarhan \emph{et al.}~\citep{sarhan,sarhannf}) standardize NetFlow
+fields across datasets to \emph{enable} cross-dataset comparison; we go further by
+\emph{statistically validating} each mapped pair on its original scale and, crucially,
+by \emph{rejecting} spuriously named matches --- the TCP-window case
+(Section~\ref{sec:sfm}) is a concrete feature-extractor mismatch that a name-based
+unified schema would silently admit. (ii) \emph{Cross-dataset generalization studies}
+(\citep{cantone,dhooge,verkerken}) \emph{document} the collapse but stop at observation;
+we add a controlled \emph{diagnosis} (joint training rules out feature insufficiency; a
+domain classifier and $W_1$ directly measure the shift) and a \emph{low-cost repair}
+($1\%$ labels / mixup). (iii) \emph{Domain-invariant NIDS} (DI-NIDS~\citep{layeghy})
+learns deep adversarially invariant features; we instead keep a fixed lightweight
+backbone and show that cheap per-deployment calibration recovers performance --- a
+different, edge-oriented operating point. We validate the whole recipe end-to-end on
+\emph{real} cloud traffic (FAR, three-domain shift, few-shot repair), which these prior
+works do not.
 \FloatBarrier
 
 % ============================================================
@@ -333,8 +351,10 @@ even when its raw medians differ by orders of magnitude.
 \caption{Semantic Feature Mapping (SFM): CSE-CIC-IDS2018 $\leftrightarrow$
 UNSW-NB15, validated on the original scale.}
 \label{tab:sfm}
-\small
-\begin{tabular}{lllrr>{\raggedright\arraybackslash}p{3cm}}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lllrr>{\raggedright\arraybackslash}p{3.2cm}}
 \toprule
 CIC feature & UNSW feature & Meaning & CIC median & UNSW median & Comparability note \\
 \midrule
@@ -354,7 +374,7 @@ CIC feature & UNSW feature & Meaning & CIC median & UNSW median & Comparability 
 \texttt{Init Fwd Win Byts} & \texttt{swin}   & TCP window (fwd)  & $953$ & $0$ & Discarded: binary vs continuous \\
 \texttt{Init Bwd Win Byts} & \texttt{dwin}   & TCP window (bwd)  & $-1$ & $0$ & Discarded: binary vs continuous \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 
 \vspace{0.4em}
 \raggedright{\footnotesize $^\dagger$Rate features: UNSW \texttt{sload}/\texttt{dload}
@@ -405,17 +425,17 @@ $z$-scored with statistics fitted \emph{only} on their training partitions
 
 \subsection{Model Selection and Deployment Efficiency}
 \label{sec:edge}
-We deliberately keep a \textbf{single XGBoost model} rather than a heavy ensemble
+We deliberately keep a \emph{single XGBoost model} rather than a heavy ensemble
 or complex deep learning. Besides preserving comparability with prior work and
 isolating the contributing variable (SFM and cross-network adaptation, not model
-capacity), this choice aligns with \textbf{edge deployment} needs. On real edge
+capacity), this choice aligns with \emph{edge deployment} needs. On real edge
 devices (smart routers, IoT gateways, inline sensors) multi-algorithm ensembles or
 large deep networks are unrealistic --- high memory, CPU, and energy cost, and
 latency that may exceed the flow arrival rate. A single XGBoost on $9$ features
 yields a light binary model with fast tree-based inference, an \emph{edge-friendly}
 NIDS candidate.
 
-\begin{table}[htbp]
+\begin{table}[!ht]
 \centering
 \caption{Efficiency profile of Model~A (9 features), measured on a single CPU
 core (single-thread, emulating a 1-vCPU edge).}
@@ -452,10 +472,9 @@ figure is thus a conservative per-core lower bound, not a system ceiling.
 \section{Cross-Dataset Baseline: The Generalization Gap}
 \label{sec:baseline}
 
-We train XGBoost (\texttt{max\_depth}=8, \texttt{lr}=0.1,
-\texttt{n\_estimators}=200, \texttt{subsample}/\texttt{colsample}=0.8) and evaluate
-four scenarios using scikit-learn \citep{sklearn} with stratified train/test
-splits \citep{kohavi}. The primary metric is the Matthews Correlation Coefficient
+We train XGBoost (max\_depth $=8$, learning rate $=0.1$, $200$ estimators,
+subsample $=$ colsample $=0.8$) and evaluate four scenarios using
+scikit-learn \citep{sklearn} with stratified train/test splits \citep{kohavi}. The primary metric is the Matthews Correlation Coefficient
 (MCC) \citep{matthews,chicco}, more informative and robust to class imbalance than
 accuracy.
 
@@ -529,7 +548,7 @@ cross-domain distribution comparison \emph{meaningful}; we do \emph{not} claim S
 by itself aligns $\mathcal{H}$ or reduces $d_{\mathcal{H}\Delta\mathcal{H}}$; (ii)
 we measure the input discrepancy only \emph{as a proxy} via $W_1$
 (Section~\ref{sec:wass}) and a domain classifier (Section~\ref{sec:rt-shift}) ---
-$W_1$ is \textbf{not} equivalent to $d_{\mathcal{H}\Delta\mathcal{H}}$
+$W_1$ is \emph{not} equivalent to $d_{\mathcal{H}\Delta\mathcal{H}}$
 (classifier-dependent), but a computable distance indicating the magnitude of
 \emph{covariate shift}; (iii) $1\%$ few-shot and mixup provide information about the
 target ideal classifier (related to $\lambda^\ast$) and shift training toward the
@@ -540,7 +559,7 @@ bound's terms. Figure~\ref{fig:bendavid} illustrates these components.
 
 \begin{figure}[htbp]
 \centering
-\resizebox{0.9\linewidth}{!}{\input{tikz-bendavid.tex}}
+\resizebox{0.62\linewidth}{!}{\input{tikz-bendavid.tex}}
 \caption{Schematic (conceptual-motivation) view of the Ben--David bound. The source
 ($\mathcal{D}_S$) and target ($\mathcal{D}_T$) feature distributions are separated
 by a discrepancy $d_{\mathcal{H}\Delta\mathcal{H}}$; $\lambda^\ast$ is the ideal
@@ -586,8 +605,7 @@ crossing zero over $5$ seeds).}
 \end{figure}
 
 The key finding: \emph{joint training} reaches MCC $0.912$ (CIC) and $0.732$
-(UNSW) \emph{simultaneously}, nearly in-domain. This demonstrates that \textbf{SFM
-is valid} --- 9 intersection features are expressive enough to represent both
+(UNSW) \emph{simultaneously}, nearly in-domain. This demonstrates that \emph{SFM is valid} --- 9 intersection features are expressive enough to represent both
 networks. In
 other words, this result shows that \emph{a lack of discriminative information in
 the shared feature space is not the sole explanation} for the single-source
@@ -855,10 +873,10 @@ the generalization gap; domain calibration does.
 \label{sec:realtraffic}
 
 To test the model on real traffic, we ran a three-stage AWS pipeline:
-(i) \textbf{capture} with \texttt{tcpdump} on interface \texttt{ens5} (not
+(i) \emph{capture} with \texttt{tcpdump} on interface \texttt{ens5} (not
 \texttt{any}, to avoid the Linux cooked-capture SLL layer that breaks flow
-extraction), (ii) \textbf{extract} 9 SFM features per flow with NFStream, and
-(iii) \textbf{score} each flow with the same Model~A. Two evaluations are separated
+extraction), (ii) \emph{extract} 9 SFM features per flow with NFStream, and
+(iii) \emph{score} each flow with the same Model~A. Two evaluations are separated
 by design: Phase~1 measures the False Alarm Rate (FAR) under benign-only traffic,
 and Phase~2 measures detection under real attacks.
 
@@ -880,8 +898,8 @@ floods), neither using adversarial manipulation.
 \centering
 \caption{AWS real-traffic collection protocol (Phase~2 attack session).}
 \label{tab:aws-protocol}
-\small
-\begin{tabular}{lll}
+\footnotesize
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.26\textwidth}>{\raggedright\arraybackslash}p{0.42\textwidth}>{\raggedright\arraybackslash}p{0.26\textwidth}@{}}
 \toprule
 Item & Value & Note \\
 \midrule
@@ -899,8 +917,8 @@ Episode split (§\ref{sec:rt-robust}) & train \{BruteForce, DoS\}; test \{DDoS\}
 \end{table}
 
 \paragraph{A crucial unit pitfall (feature-extractor mismatch in practice).} The
-model was trained on CICFlowMeter \texttt{Flow Duration} in \textbf{microseconds},
-whereas NFStream reports duration in \textbf{milliseconds}; ignoring this makes
+model was trained on CICFlowMeter \texttt{Flow Duration} in \emph{microseconds},
+whereas NFStream reports duration in \emph{milliseconds}; ignoring this makes
 \texttt{duration} off by $\sim$$10^6$ and FAR spikes to $100\%$. The extractor
 therefore converts duration to microseconds, while the rate denominators
 (\texttt{src\_load}, \texttt{dst\_load}) stay in seconds to match their CIC
@@ -1202,7 +1220,7 @@ CIC$\rightarrow$UNSW direction recovers a lower few-shot MCC ($\sim 0.66$--$0.69
 than UNSW$\rightarrow$CIC ($\sim 0.90$) at every tested fraction. (CORAL is too
 seed-unstable to support a directional claim: its CIs cross zero in both
 directions.) We analyze this asymmetry through
-\textbf{domain dispersion/heterogeneity} in the SFM feature space.
+\emph{domain dispersion/heterogeneity} in the SFM feature space.
 CSE-CIC-IDS2018 was generated on a relatively structured testbed, whereas
 UNSW-NB15 was generated by the IXIA PerfectStorm generator injecting more diverse
 attack variations (nine classes) with higher noise. Consequently, the UNSW-NB15
@@ -1283,9 +1301,13 @@ a directly measured distribution shift (rather than by a lack of discriminative
 information in the shared features), and can be closed with low-cost calibration
 ($1\%$ target labels) or supervised cross-dataset mixup using target train labels,
 confirmed on real AWS traffic via few-shot calibration (with the magnitude of the
-benefit depending on the evaluation protocol; see Section~\ref{sec:rt-robust}). A
-recommended operational configuration is a UNSW-source model plus $\sim$$10\%$
-target-domain labels, which nearly matches a model trained fully on the target.
+benefit depending on the evaluation protocol; see Section~\ref{sec:rt-robust}). Under
+a flow-level split a UNSW-source model plus $\sim$$10\%$ target-domain labels nearly
+matches a model trained fully on the target; we present this as a practical operating
+point rather than a universal prescription, since under the stricter episode-level
+split the few-shot gain is smaller and episode-dependent (Section~\ref{sec:rt-robust}).
+The most robust evidence for low-cost adaptation remains the offline cross-network
+experiments (Section~\ref{sec:da}).
 
 \paragraph{Real-traffic (AWS) validation, in summary.} The cloud experiment yields
 three consistent conclusions. First, under benign-only traffic the detector is
