@@ -202,6 +202,31 @@ bekerja di cloud nyata). MCC absolut rendah karena imbalance ekstrem (17.620 att
 AWS tetap lemah (MCC −0.04..0.07, ASR CIC 0.835) → few-shot memulihkan generalisasi,
 bukan evasion. Dilaporkan apa adanya.
 
+## H2. Hasil 7 — Bukti empiris mekanisme "sel keputusan sempit" (nb17)
+
+Mengubah hipotesis geometri batas keputusan pohon dari spekulatif jadi terukur, pada
+model few-shot, data uji target. (`decision_cell.csv`, grid pencarian Δε=0.002)
+
+| Target domain | κ (konsentrasi) | w (lebar sel) | d_boundary | P_cross(0.1) | #leaf |
+|---|---:|---:|---:|---:|---:|
+| UNSW (high-variance) | 5.00 | 3.5×10⁻⁴ | 4.0×10⁻³ | 0.091 | 24944 |
+| CIC (low-variance)   | 5.76 | ≈0 (1.6×10⁻¹⁰) | **2.0×10⁻³** | **0.237** | 21380 |
+
+- **κ** = IQR/median (makin kecil makin homogen); **w** = jarak median sampel ke ambang
+  split terdekat (z-score); **d_boundary** = perturbasi minimum (arah saliency, PCFS)
+  yang membalik prediksi; **P_cross(0.1)** = fraksi sampel yang prediksinya berubah di
+  ε=0.1.
+
+**Temuan (3 dari 4 ukuran mendukung, dilaporkan jujur):** mekanisme "sel CIC lebih
+sempit → lebih mudah ditembus" didukung oleh **tiga ukuran langsung** — w (CIC ≈0 ≪
+UNSW), d_boundary (CIC 0.002 = separuh UNSW 0.004), dan P_cross (CIC 0.237 ≫ UNSW
+0.091). Ketiganya searah dengan keruntuhan adaptive UNSW→CIC. **Hanya κ yang tidak
+searah** (CIC 5.76 > UNSW 5.00) — IQR/median bukan proksi homogenitas yang tajam untuk
+pasangan domain ini; dilaporkan apa adanya, tidak dipaksakan. Catatan: d_boundary
+awalnya terkunci di 0.020 pada grid kasar Δε=0.02; perhalusan grid ke 0.002 membuat
+perbedaan sesungguhnya tampak. Jumlah leaf serupa (24944 vs 21380) → perbedaan bukan
+granularitas pohon melainkan **posisi** sampel relatif terhadap ambang split.
+
 ## I. Grafik: generalisasi vs ketahanan per arah
 
 Dua gambar (`figure-p2/`) merangkum trade-off generalisasi (clean MCC) vs ketahanan
@@ -260,7 +285,13 @@ Data sumber (path SageMaker): `../../CICDDoS2018/data/cleaned_100.pkl`,
 | `14_reviewer_experiments.ipynb` | Revisi reviewer A2/A3/A5/B5 + #8/#10/#14 | reviewer_agg, multiattack, significance, perturbation_metrics, dataset_stats | `tab:multiattack`, `tab:fewshot_seeds`, `tab:significance`, `tab:advmetrics`, `tab:dataset` |
 | `15_aws_fewshot_calibration.ipynb` | Validasi 3-tahap AWS (offline) | aws_stages_agg.csv | `tab:aws_stages` |
 | `16_defense_baselines.ipynb` | Pembanding pertahanan (PGD-AT/Gaussian/rand-smoothing) | defense_baselines_agg.csv | `tab:defense_baselines` ✅ TERISI |
-| `17_decision_cell.ipynb` | Bukti empiris narrow-cell (kappa/w/d_boundary/crossing) | decision_cell.csv | `tab:decisioncell` ⏳ PLACEHOLDER |
+| `17_decision_cell.ipynb` | Bukti empiris narrow-cell (kappa/w/d_boundary/crossing) | decision_cell.csv | `tab:decisioncell` ✅ TERISI (3/4 ukuran mendukung) |
+
+
+> **Catatan gambar nb13:** semua teks di dalam figur (judul, label sumbu, legend,
+> diagram alur) memakai **Bahasa Inggris** agar langsung dipakai untuk paper & slide;
+> teks penjelasan markdown tetap Bahasa Indonesia. nb13 kini memuat **7 blok hasil**
+> (termasuk bukti sel-keputusan nb17).
 
 ## M. Status revisi reviewer
 
@@ -274,7 +305,7 @@ Data sumber (path SageMaker): `../../CICDDoS2018/data/cleaned_100.pkl`,
 | 8 | Variance/signifikansi | ✅ tab:significance p-value nyata |
 | 9 | Kurang defense baseline | ✅ nb16; **tab:defense_baselines TERISI** |
 | 10 | Metrik selain MCC (ASR dll) | ✅ tab:advmetrics + perturbation_metrics |
-| 11 | Narrow-cells spekulatif | ⏳ nb17 kuantifikasi — tab:decisioncell PLACEHOLDER |
+| 11 | Narrow-cells spekulatif | ✅ nb17 kuantifikasi — **tab:decisioncell TERISI**; w/d_boundary/P_cross mendukung, κ dilaporkan tak-searah |
 | 12 | MCC AWS "artefak" | ✅ reframe jadi trade-off sensitivitas-spesifisitas |
 | 13 | Threat model formal | ✅ tab:threatmodel |
 | 14 | Dataset section tipis | ✅ tab:dataset + paragraf praproses |
@@ -287,9 +318,10 @@ Belum pernah muncul dari reviewer: #2, #4, #15, #16.
 
 ## N. Tugas tersisa
 
-1. **[⏳] Isi `tab:decisioncell`** dari `decision_cell.csv` (nb17). Perlu dijalankan di
-   SageMaker dulu (data belum ada di S3). Verifikasi prediksi `d_boundary^CIC < UNSW`,
-   `w^CIC < UNSW`, `kappa^CIC < UNSW`; kalau TIDAK terkonfirmasi, revisi narasi jujur.
+1. **[✅] `tab:decisioncell` TERISI** dari `decision_cell.csv` (nb17, grid Δε=0.002).
+   Hasil: `w^CIC < UNSW` ✓, `d_boundary^CIC < UNSW` ✓ (0.002 vs 0.004),
+   `P_cross^CIC > UNSW` ✓; `kappa^CIC < UNSW` ✗ (5.76 > 5.00) — narasi direvisi jujur
+   (3 ukuran langsung mendukung, κ tak-searah). Versi EN belum diisi (fokus ID dulu).
 2. **[⏳] Polishing prioritas C:** abstract (padatkan, cerminkan angka final), reference
    formatting, nomenklatur/notasi. Paling akhir sebelum submit.
 3. **Compile final di Overleaf** + cek tak ada error, tabel muat, gambar tampil.
