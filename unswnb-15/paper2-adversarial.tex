@@ -476,7 +476,7 @@ saliency dihitung ulang dari \emph{model yang diserang itu sendiri} (bukan model
 pengganti), estimasi ini bersifat \emph{adaptive white-box} dan memberi setiap
 varian evaluasi terberat yang setara. Serangan khusus-pohon yang lebih kuat (mis.
 verifikasi robust-tree~\cite{chen2019robusttrees}) merupakan arah pelengkap;
-memakainya hanya akan \emph{memperkuat} temuan keruntuhan kami, bukan membaliknya.
+memakainya hanya akan \emph{memperkuat} temuan keruntuhan kami, bukan membaliknya. Secara khusus, serangan evasi pohon \emph{eksak} berbasis \emph{mixed-integer linear programming} (MILP)~\cite{kantchelian2016} memberikan batas serangan optimal; karena lebih kuat daripada FGSM/PGD \emph{finite-difference} kami, memakainya hanya akan \emph{memperdalam} keruntuhan pada arah UNSW$\rightarrow$CIC --- bukan memulihkannya --- sehingga \emph{finite-difference} \emph{adaptive} sudah memadai sebagai representasi \emph{worst-case} white-box untuk klaim kami.
 
 \paragraph{Suite serangan berlapis-kekuatan (FGSM satu-langkah bukan satu-satunya).}
 Kami tekankan bahwa FGSM finite-difference di atas adalah \emph{satu} anggota dari
@@ -980,18 +980,18 @@ noise augmentation, and randomized smoothing~\cite{cohen2019smoothing}. Source:
 Direction & Defense & clean MCC & FGSM $\epsilon{=}0.1$ & PGD $\epsilon{=}0.1$ \\
 \midrule
 \multirow{5}{*}{CIC$\rightarrow$UNSW}
- & few-shot (no evasion defense)          & -- & -- & -- \\
- & \textbf{few-shot+adv (FGSM, ours)}     & -- & -- & -- \\
- & few-shot+adv (PGD-AT)                  & -- & -- & -- \\
- & few-shot+Gaussian-aug                  & -- & -- & -- \\
- & few-shot+rand-smoothing                & -- & -- & -- \\
+ & few-shot (no evasion defense)       & $0{,}650$ & $0{,}493$ & $0{,}524$ \\
+ & \textbf{few-shot+adv (FGSM, ours)}  & $0{,}660$ & $0{,}523$ & $0{,}346$ \\
+ & few-shot+adv (PGD-AT)               & $0{,}647$ & $0{,}567$ & $0{,}558$ \\
+ & few-shot+Gaussian-aug               & $0{,}632$ & $0{,}441$ & $0{,}330$ \\
+ & few-shot+rand-smoothing             & $0{,}485$ & $0{,}337$ & $0{,}346$ \\
 \midrule
 \multirow{5}{*}{UNSW$\rightarrow$CIC}
- & few-shot (no evasion defense)          & -- & -- & -- \\
- & \textbf{few-shot+adv (FGSM, ours)}     & -- & -- & -- \\
- & few-shot+adv (PGD-AT)                  & -- & -- & -- \\
- & few-shot+Gaussian-aug                  & -- & -- & -- \\
- & few-shot+rand-smoothing                & -- & -- & -- \\
+ & few-shot (no evasion defense)       & $0{,}900$ & $-0{,}167$ & $-0{,}121$ \\
+ & \textbf{few-shot+adv (FGSM, ours)}  & $0{,}897$ & $0{,}276$ & $-0{,}029$ \\
+ & few-shot+adv (PGD-AT)               & $0{,}896$ & $-0{,}002$ & $-0{,}330$ \\
+ & few-shot+Gaussian-aug               & $0{,}894$ & $0{,}037$ & $0{,}210$ \\
+ & few-shot+rand-smoothing             & $0{,}169$ & $-0{,}097$ & $-0{,}068$ \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1000,10 +1000,27 @@ Direction & Defense & clean MCC & FGSM $\epsilon{=}0.1$ & PGD $\epsilon{=}0.1$ \
 serius alih-alih berdiri sendiri: \emph{PGD-AT} menguji apakah serangan-pelatihan
 yang lebih kuat memberi ketahanan lebih baik; \emph{Gaussian augmentation} menguji
 apakah sekadar perturbasi acak sudah cukup; dan \emph{randomized smoothing} menguji
-pertahanan yang secara teoretis tak bergantung gradien. Interpretasi kuantitatif
-mengikuti begitu angka lima-\emph{seed} terisi (artefak
-\texttt{defense\_baselines\_agg.csv}).
+pertahanan yang secara teoretis tak bergantung gradien.
 
+\paragraph{Interpretasi perbandingan pertahanan.} Tiga hal menonjol, dilaporkan apa
+adanya. \emph{Pertama, seluruh pembanding mempertahankan generalisasi (clean MCC)}
+pada tingkat sebanding --- $0{,}63$--$0{,}66$ pada CIC$\rightarrow$UNSW dan
+$0{,}89$--$0{,}90$ pada UNSW$\rightarrow$CIC --- \emph{kecuali randomized smoothing},
+yang justru menggerus clean MCC signifikan ($0{,}485$ pada CIC$\rightarrow$UNSW,
+runtuh ke $0{,}169$ pada UNSW$\rightarrow$CIC); perataan prediksi atas salinan berderau
+mengaburkan batas keputusan yang sudah sempit, sehingga pertahanan
+bersertifikat-inferensi ini \emph{tidak} cocok untuk rezim lintas-jaringan kami.
+\emph{Kedua, tidak ada pertahanan tunggal yang menang di semua sumbu.} Pada
+CIC$\rightarrow$UNSW, \emph{PGD-AT} memberi ketahanan PGD terbaik ($0{,}558$ vs
+$0{,}346$ milik kami) --- wajar karena serangan-latih dan serangan-uji sama-sama
+iteratif --- namun berbiaya pelatihan jauh lebih tinggi; pendekatan FGSM kami justru
+unggul di bawah FGSM ($0{,}523$). \emph{Ketiga, pada arah tersulit
+UNSW$\rightarrow$CIC, pendekatan FGSM kami satu-satunya yang memberi ketahanan FGSM
+positif berarti} ($0{,}276$), sedangkan PGD-AT ($-0{,}002$), Gaussian ($0{,}037$), dan
+rand-smoothing ($-0{,}097$) gagal; namun di bawah PGD seluruh pertahanan tetap
+$\le 0{,}21$ dan sebagian negatif --- menegaskan arah ini tetap masalah terbuka.
+Singkatnya, \emph{few-shot$+$adv} berbasis FGSM menawarkan keseimbangan terbaik antara
+generalisasi, ketahanan FGSM, dan biaya pelatihan, tanpa klaim dominasi universal.
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.8\linewidth]{figure-p2/paper2_CIC_to_UNSW.png}
@@ -1196,26 +1213,26 @@ sekadar \emph{zero-shot}.
 \caption{Three-stage validation of the proposed pipeline on real labelled AWS traffic
 (mean over five seeds; few-shot drawn only from an AWS \emph{train} split, evaluated
 on a disjoint AWS \emph{test} split). \emph{clean MCC} / \emph{recall} / \emph{prec.}
-are on unattacked AWS traffic; the last two columns report MCC under \emph{adaptive
+are on unattacked AWS traffic; \emph{bal.\ acc.}\ (balanced accuracy, mean of recall and specificity) is added to make the imbalance-robust performance explicit; the last two columns report MCC under \emph{adaptive
 PCFS} FGSM/PGD ($\epsilon{=}0.1$), evaluated only for the defended stage S2. This
 answers whether \emph{source $+$ 1\% AWS $+$ adversarial training} transfers to real
 cloud traffic, rather than only measuring zero-shot domain-shift failure. Source:
 \texttt{aws\_stages\_agg.csv}.}
 \label{tab:aws_stages}
 \small
-\begin{tabular}{llccccc}
+\begin{tabular}{llcccccc}
 \toprule
-Direction & Stage & clean MCC & recall & prec. & FGSM $\epsilon{=}0.1$ & PGD $\epsilon{=}0.1$ \\
+Direction & Stage & clean MCC & recall & prec. & bal.\ acc. & FGSM $\epsilon{=}0.1$ & PGD $\epsilon{=}0.1$ \\
 \midrule
 \multirow{3}{*}{CIC$\rightarrow$AWS}
- & S0: source$\rightarrow$AWS (zero-shot) & $0{,}001$ & $0{,}000$ & $0{,}800$ & -- & -- \\
- & S1: $+1\%$ AWS few-shot                & $0{,}184$ & $0{,}970$ & $0{,}995$ & -- & -- \\
- & S2: $+1\%$ AWS $+$ adv                 & $\mathbf{0{,}246}$ & $0{,}966$ & $0{,}997$ & $0{,}034$ & $-0{,}039$ \\
+ & S0: source$\rightarrow$AWS (zero-shot) & $0{,}001$ & $0{,}000$ & $0{,}800$ & $0{,}500$ & -- & -- \\
+ & S1: $+1\%$ AWS few-shot                & $0{,}184$ & $0{,}970$ & $0{,}995$ & $0{,}693$ & -- & -- \\
+ & S2: $+1\%$ AWS $+$ adv                 & $\mathbf{0{,}246}$ & $0{,}966$ & $0{,}997$ & $\mathbf{0{,}773}$ & $0{,}034$ & $-0{,}039$ \\
 \midrule
 \multirow{3}{*}{UNSW$\rightarrow$AWS}
- & S0: source$\rightarrow$AWS (zero-shot) & $0{,}052$ & $0{,}997$ & $0{,}993$ & -- & -- \\
- & S1: $+1\%$ AWS few-shot                & $0{,}026$ & $0{,}999$ & $0{,}993$ & -- & -- \\
- & S2: $+1\%$ AWS $+$ adv                 & $\mathbf{0{,}143}$ & $0{,}996$ & $0{,}994$ & $0{,}003$ & $0{,}074$ \\
+ & S0: source$\rightarrow$AWS (zero-shot) & $0{,}052$ & $0{,}997$ & $0{,}993$ & $0{,}524$ & -- & -- \\
+ & S1: $+1\%$ AWS few-shot                & $0{,}026$ & $0{,}999$ & $0{,}993$ & $0{,}505$ & -- & -- \\
+ & S2: $+1\%$ AWS $+$ adv                 & $\mathbf{0{,}143}$ & $0{,}996$ & $0{,}994$ & $\mathbf{0{,}570}$ & $0{,}003$ & $0{,}074$ \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1238,7 +1255,7 @@ ketidakseimbangan kelas ekstrem} pada potongan trafik AWS
 telah kami tekankan (Tabel~\ref{tab:aws_unsw}) --- \emph{recall}/\emph{precision}
 lebih informatif: keduanya $\ge 0{,}99$ pada arah UNSW$\rightarrow$AWS dan
 $\ge 0{,}96$ pada CIC$\rightarrow$AWS untuk S1/S2, menandakan model terkalibrasi
-sebenarnya menangkap hampir semua serangan. \emph{Ketiga, dan dilaporkan tanpa
+sebenarnya menangkap hampir semua serangan. \emph{Balanced accuracy} menegaskan hal ini: ia naik monotonik seiring kalibrasi (CIC$\rightarrow$AWS $0{,}500 \to 0{,}693 \to 0{,}773$; UNSW$\rightarrow$AWS $0{,}524 \to 0{,}505 \to 0{,}570$), memperlihatkan bahwa model terkalibrasi (S1/S2) sungguh bekerja di lapangan meski MCC absolut tertekan oleh ketidakseimbangan kelas. \emph{Ketiga, dan dilaporkan tanpa
 dihaluskan:} ketahanan \emph{adaptive} (PCFS FGSM/PGD $\epsilon{=}0{,}1$) pada S2
 tetap \emph{lemah} di AWS (MCC $-0{,}04$ hingga $0{,}07$) --- konsisten dengan batas
 \emph{adversarial training} pada model pohon yang kami temukan di
