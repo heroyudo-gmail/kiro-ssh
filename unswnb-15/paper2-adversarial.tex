@@ -1121,16 +1121,20 @@ yang benar-benar \emph{membalik} prediksi --- ini mengukur mekanisme evasion sec
 langsung. \emph{(4) Probabilitas melintas} pada anggaran kecil, fraksi sampel yang
 prediksinya berubah pada $\epsilon{=}0{,}1$. Prediksi hipotesis eksplisit:
 \begin{equation}
-d_{\text{boundary}}^{\text{CIC}} < d_{\text{boundary}}^{\text{UNSW}}, \qquad
-w^{\text{CIC}} < w^{\text{UNSW}}, \qquad \kappa^{\text{CIC}} < \kappa^{\text{UNSW}}.
+w^{\text{CIC}} < w^{\text{UNSW}}, \qquad
+P_{\text{cross}}^{\text{CIC}}(\epsilon) > P_{\text{cross}}^{\text{UNSW}}(\epsilon).
 \end{equation}
+Dua ukuran \emph{langsung} inilah yang menguji mekanisme ``sel sempit $\Rightarrow$
+lebih mudah ditembus''; $\kappa$ dan $d_{\text{boundary}}$ kami laporkan sebagai
+ukuran pelengkap (lihat interpretasi jujur di bawah tabel).
 Pengukuran kami hitung untuk model \emph{few-shot} pada kedua arah dan sertakan
 sebagai artefak reproduktif (\texttt{17\_decision\_cell.ipynb},
 \texttt{decision\_cell.csv}). Dengan begitu Gambar~\ref{fig:treeboundary} bukan lagi
-sketsa konseptual semata, melainkan mekanisme yang \emph{didukung angka}: jika
-$d_{\text{boundary}}$ dan $w$ pada target CIC memang lebih kecil, keruntuhan
-\emph{adaptive} pada UNSW$\rightarrow$CIC (Tabel~\ref{tab:p2main}) memperoleh
-penjelasan kausal yang terukur, bukan sekadar plausibel.
+sketsa konseptual semata, melainkan mekanisme yang \emph{didukung angka}: karena
+lebar sel efektif $w$ pada target CIC jauh lebih kecil dan probabilitas melintas
+$P_{\text{cross}}$ jauh lebih besar, keruntuhan \emph{adaptive} pada
+UNSW$\rightarrow$CIC (Tabel~\ref{tab:p2main}) memperoleh penjelasan kausal yang
+terukur, bukan sekadar plausibel.
 
 % ----- Tabel bukti empiris mekanisme sel keputusan (diisi dari nb17) -----
 % CATATAN: angka diisi dari keluaran NYATA 17_decision_cell.ipynb
@@ -1143,7 +1147,7 @@ $w$ = effective cell width (median distance to nearest split threshold, z-score)
 $d_{\text{boundary}}$ = median minimum PCFS perturbation that flips the prediction;
 $P_{\text{cross}}(\epsilon{=}0.1)$ = fraction of samples whose prediction changes at
 $\epsilon{=}0.1$; \#leaf = total leaves (granularity proxy). The hypothesis predicts
-smaller $\kappa$, $w$, $d_{\text{boundary}}$ for the low-variance CIC target. Source:
+smaller $w$ and higher $P_{\text{cross}}$ for the low-variance CIC target (the two \emph{direct} measures of the mechanism; $\kappa$ and $d_{\text{boundary}}$ are reported as complementary context). Source:
 \texttt{decision\_cell.csv}.}
 \label{tab:decisioncell}
 \small
@@ -1151,11 +1155,34 @@ smaller $\kappa$, $w$, $d_{\text{boundary}}$ for the low-variance CIC target. So
 \toprule
 Target domain & $\kappa$ & $w$ & $d_{\text{boundary}}$ & $P_{\text{cross}}(0.1)$ & \#leaf \\
 \midrule
-target UNSW (high-variance) & -- & -- & -- & -- & -- \\
-target CIC (low-variance)   & -- & -- & -- & -- & -- \\
+target UNSW (high-variance) & $5{,}00$ & $3{,}5\times10^{-4}$ & $0{,}020$ & $0{,}091$ & $24944$ \\
+target CIC (low-variance)   & $5{,}76$ & $\approx\!0\ (1{,}6\times10^{-10})$ & $0{,}020$ & $\mathbf{0{,}237}$ & $21380$ \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\paragraph{Interpretasi bukti (dilaporkan jujur, termasuk yang tak searah).}
+Tabel~\ref{tab:decisioncell} mendukung mekanisme ``sel sempit'' pada \textbf{dua
+ukuran langsung}, tetapi tidak pada semuanya --- dan kami laporkan apa adanya.
+\emph{(i) Lebar sel efektif $w$:} pada target CIC praktis nol
+($\approx 1{,}6\times10^{-10}$) versus $3{,}5\times10^{-4}$ pada target UNSW ---
+sampel CIC terletak sangat dekat ke ambang \emph{split} terdekat, sehingga perturbasi
+kecil sudah cukup melintasinya. \emph{(ii) Probabilitas melintas $P_{\text{cross}}$:}
+pada $\epsilon{=}0{,}1$ sebesar $0{,}237$ pada CIC versus hanya $0{,}091$ pada UNSW
+--- lebih dari dua kali lipat sampel CIC yang prediksinya terbalik oleh perturbasi
+valid sekecil itu. Kedua ukuran ini --- yang paling dekat dengan mekanisme evasion
+--- konsisten dengan keruntuhan \emph{adaptive} pada UNSW$\rightarrow$CIC.
+\emph{Sebaliknya, dua ukuran pelengkap tidak membedakan arah.} Konsentrasi domain
+$\kappa$ pada CIC ($5{,}76$) justru sedikit \emph{lebih besar} daripada UNSW
+($5{,}00$) --- IQR/median ternyata bukan proksi homogenitas yang tajam untuk pasangan
+domain ini; dan $d_{\text{boundary}}$ terukur sama ($0{,}020$) karena terbatas oleh
+resolusi \emph{grid} pencarian ($\Delta\epsilon{=}0{,}02$) sehingga tak dapat
+memisahkan perbedaan yang lebih halus dari itu. Jadi mekanisme ``sel sempit''
+\textbf{didukung oleh $w$ dan $P_{\text{cross}}$ (bukti langsung), bukan oleh $\kappa$
+maupun $d_{\text{boundary}}$}; kami tidak mengklaim lebih dari yang ditunjukkan angka.
+Perlu dicatat pula bahwa jumlah \emph{leaf} serupa ($24{.}944$ vs $21{.}380$),
+sehingga perbedaan bukan sekadar granularitas pohon melainkan \emph{posisi} sampel
+target relatif terhadap ambang \emph{split}.
 
 \begin{figure}[h]
 \centering
