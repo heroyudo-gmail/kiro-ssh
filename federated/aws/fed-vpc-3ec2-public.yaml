@@ -1,0 +1,170 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Paper 4 (Federated SFM-NIDS) - single-stack infra: VPC + public subnet + IGW +
+  Security Group (strict, no inbound from internet) + IAM (SSM + S3) + 3 EC2
+  (aggregator, client-cic, client-unsw) ALL with PUBLIC IP, NO NAT GATEWAY.
+  Weights exchanged via S3 (no socket between nodes). Operator access via SSM.
+  Teardown = delete this one stack -> everything gone, zero cost.
+  CIDR 10.7.0.0/16 to avoid clashing with Paper 1 (10.5) / Paper 2 (10.6).
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: fed-nids
+  InstanceType:
+    Type: String
+    Default: t3.medium
+  AmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
+    Description: Latest Amazon Linux 2023 AMI (resolved via SSM public parameter).
+
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.7.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags: [{ Key: Name, Value: !Sub "${ProjectName}-vpc" }]
+
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.7.1.0/24
+      AvailabilityZone: !Select [0, !GetAZs '']
+      MapPublicIpOnLaunch: true
+      Tags: [{ Key: Name, Value: !Sub "${ProjectName}-public" }]
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags: [{ Key: Name, Value: !Sub "${ProjectName}-igw" }]
+
+  IGWAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicRT:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags: [{ Key: Name, Value: !Sub "${ProjectName}-public-rt" }]
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: IGWAttachment
+    Properties:
+      RouteTableId: !Ref PublicRT
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicRTAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: { SubnetId: !Ref PublicSubnet, RouteTableId: !Ref PublicRT }
+
+  # STRICT SG: NO inbound from internet. Intra-VPC allowed (not required for S3
+  # transport, but harmless and useful if later you add gRPC). Egress 443 for S3/pip.
+  InstanceSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Sub "${ProjectName} strict (no public inbound; SSM access; egress for S3/pip)"
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: -1
+          CidrIp: 10.7.0.0/16
+          Description: Intra-VPC only (no 0.0.0.0/0 inbound)
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+          Description: HTTPS egress to S3 and package repos
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+          Description: HTTP egress for AL2023 dnf mirrors
+      Tags: [{ Key: Name, Value: !Sub "${ProjectName}-sg" }]
+
+  EC2Role:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: { Service: ec2.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Policies:
+        - PolicyName: S3FederatedAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: [s3:GetObject, s3:PutObject, s3:ListBucket]
+                Resource: "*"
+      Tags: [{ Key: Name, Value: !Sub "${ProjectName}-role" }]
+
+  EC2Profile:
+    Type: AWS::IAM::InstanceProfile
+    Properties: { Roles: [!Ref EC2Role] }
+
+  Aggregator:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      ImageId: !Ref AmiId
+      IamInstanceProfile: !Ref EC2Profile
+      NetworkInterfaces:
+        - DeviceIndex: 0
+          AssociatePublicIpAddress: true
+          SubnetId: !Ref PublicSubnet
+          GroupSet: [!Ref InstanceSG]
+      Tags:
+        - { Key: Name, Value: !Sub "${ProjectName}-aggregator" }
+        - { Key: FedRole, Value: aggregator }
+
+  ClientCIC:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      ImageId: !Ref AmiId
+      IamInstanceProfile: !Ref EC2Profile
+      NetworkInterfaces:
+        - DeviceIndex: 0
+          AssociatePublicIpAddress: true
+          SubnetId: !Ref PublicSubnet
+          GroupSet: [!Ref InstanceSG]
+      Tags:
+        - { Key: Name, Value: !Sub "${ProjectName}-client-cic" }
+        - { Key: FedRole, Value: client-cic }
+
+  ClientUNSW:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      ImageId: !Ref AmiId
+      IamInstanceProfile: !Ref EC2Profile
+      NetworkInterfaces:
+        - DeviceIndex: 0
+          AssociatePublicIpAddress: true
+          SubnetId: !Ref PublicSubnet
+          GroupSet: [!Ref InstanceSG]
+      Tags:
+        - { Key: Name, Value: !Sub "${ProjectName}-client-unsw" }
+        - { Key: FedRole, Value: client-unsw }
+
+Outputs:
+  AggregatorId:   { Value: !Ref Aggregator }
+  ClientCICId:    { Value: !Ref ClientCIC }
+  ClientUNSWId:   { Value: !Ref ClientUNSW }
+  VpcId:          { Value: !Ref VPC }
+  SecurityGroupId:{ Value: !Ref InstanceSG }
+  Note:
+    Value: "3 public EC2, no NAT. Weights via S3 unsw-far/federated/. Access via SSM. Delete stack to remove all."
