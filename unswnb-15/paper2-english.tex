@@ -62,7 +62,7 @@ combined \emph{few-shot $+$ adversarial} --- on two cross-network directions
 (CSE-CIC-IDS2018 $\leftrightarrow$ UNSW-NB15), under three attack regimes:
 unconstrained FGSM (upper bound), \emph{protocol-consistent feature-space} (PCFS)
 FGSM (feature-space consistency, not a deliverability claim), and
-\emph{adaptive white-box} (worst case). The results are mixed and reported
+\emph{adaptive score-based} (worst case). The results are mixed and reported
 honestly: cross-network generalization comes only from \emph{few-shot} (target MCC
 recovers to $0.65$--$0.90$), whereas \emph{adversarial training} alone does not
 close the cross-network gap. Adding \emph{adversarial training} on top of
@@ -70,11 +70,16 @@ close the cross-network gap. Adding \emph{adversarial training} on top of
 direction the \emph{few-shot$+$adv} variant is robust on \textbf{both} axes at once
 (target MCC $0.70$; \emph{adaptive PCFS evasion} robustness $0.50$). On the
 UNSW$\rightarrow$CIC direction, however, \emph{adaptive} robustness still collapses
-for all variants. Our main finding --- not reported before --- is an
-\textbf{asymmetric robustness regime}: both forms of robustness can coexist only
-conditionally on the source$\rightarrow$target direction, which we explain through
-the decision-cell width of the tree model on low- versus high-variance target
-domains. Through a \textbf{three-stage validation} on real labelled AWS cloud
+for all variants. Our main finding --- not reported before --- is that the interaction between
+generalization and adversarial robustness is \textbf{direction- and
+attack-strength-dependent}: robustness is a function of (source$\rightarrow$target
+direction, attack strength, defense), not a one-dimensional asymmetry. The sharpest
+example: under PGD, adding \emph{adversarial training} \emph{hurts} on
+CIC$\rightarrow$UNSW ($0.524\rightarrow0.302$) yet \emph{helps} on
+UNSW$\rightarrow$CIC ($-0.124\rightarrow0.178$) --- the same defense can help or harm
+depending on direction \emph{and} attack. The asymmetric two-axis coexistence is
+further explained through the decision-cell width of the tree model on low- versus
+high-variance target domains. Through a \textbf{three-stage validation} on real labelled AWS cloud
 traffic (zero-shot $\rightarrow$ $+1\%$ few-shot $\rightarrow$ $+$adversarial),
 few-shot calibration is shown to \emph{transfer} for the generalization axis
 (lifting \emph{recall} from $0.00$ to $0.97$ and MCC to $0.18$--$0.25$), while
@@ -84,7 +89,7 @@ are reported as-is.
 
 \begin{keyword}
 network intrusion detection \sep adversarial robustness \sep protocol-consistent
-feature-space evasion \sep adaptive white-box \sep cross-network generalization
+feature-space evasion \sep adaptive score-based \sep cross-network generalization
 \sep semantic feature mapping \sep few-shot \sep XGBoost
 \end{keyword}
 
@@ -125,7 +130,7 @@ if so, why is coexistence conditional on the network-shift direction?}
 techniques should be combined'', but ``how do these two forms of robustness
 interact, and why is the interaction asymmetric''. The components we use (SFM,
 \emph{few-shot}, FGSM, \emph{adversarial training}, the \emph{PCFS} constraint,
-\emph{adaptive white-box}) are all established; our contribution is the
+\emph{adaptive score-based}) are all established; our contribution is the
 \emph{finding} about their interaction, not the components.
 
 The novelty of this paper is \textbf{not} in its building blocks --- SFM,
@@ -144,18 +149,20 @@ conditional on the network-shift direction.}
 
 \noindent\textbf{Contributions:}
 \begin{itemize}
-  \item \textbf{Asymmetric-regime finding.} We show --- and explain theoretically
-  --- that \emph{few-shot$+$adv} can be robust on both axes at once in one direction
-  (CIC$\rightarrow$UNSW) yet collapse under \emph{adaptive white-box} in the reverse
-  direction (UNSW$\rightarrow$CIC). We relate this asymmetry to the decision-cell
-  width of the tree model on low- versus high-variance target domains
-  (Section~\ref{sec:hasil}), making it a \emph{testable} finding, not a mere
-  empirical result.
+  \item \textbf{Direction- and attack-strength-dependent interaction finding.}
+  We show --- and explain mechanistically --- that robustness is a function of
+  (direction, attack strength, defense): \emph{few-shot$+$adv} is robust on both axes
+  on CIC$\rightarrow$UNSW yet collapses under \emph{adaptive score-based} evasion on
+  UNSW$\rightarrow$CIC; and under PGD, \emph{adversarial training} \emph{hurts} on
+  CIC$\rightarrow$UNSW ($0.524\rightarrow0.302$) yet \emph{helps} on
+  UNSW$\rightarrow$CIC ($-0.124\rightarrow0.178$). The two-axis asymmetry component is
+  related to the decision-cell width of the tree model on low- versus high-variance
+  target domains (Section~\ref{sec:hasil}), making it a \emph{testable} finding, not
+  a mere empirical result.
   \item \textbf{A two-axis evaluation framework} that unifies the measurement of
   cross-network generalization and evasion robustness in a single protocol, with a
   layered threat model that separates unrealistic attacks (unconstrained FGSM) from
-  feature-space-consistent attacks (\emph{PCFS}) and the worst-case \emph{adaptive
-  white-box} (Section~\ref{sec:ancaman}).
+  feature-space-consistent attacks (\emph{PCFS}) and the strongest \emph{adaptive score-based} setting (Section~\ref{sec:ancaman}).
   \item \textbf{An honestly reported trade-off analysis}, including failures:
   \emph{adversarial training} alone does not close the cross-network gap and does
   not guarantee \emph{adaptive} robustness in all directions --- marking a real
@@ -235,14 +242,14 @@ separately on real traffic, Section~\ref{sec:aws}).
 training}~\citep{goodfellow2015,madry2018} adds perturbed samples to the training
 data to strengthen the decision boundary. However, Athalye \emph{et
 al.}~\citep{athalye2018} showed many defenses merely \emph{obfuscate gradients} and
-collapse under \emph{adaptive white-box} attacks that adapt to the defense. For tree
+collapse under \emph{adaptive score-based} attacks that adapt to the defense. For tree
 models specifically, attacks and hardening have been studied via tree-ensemble
 evasion~\citep{kantchelian2016} and \emph{robust} decision
 trees~\citep{chen2019robusttrees}, while certified defenses such as \emph{randomized
 smoothing}~\citep{cohen2019smoothing} offer guarantees independent of gradient
 smoothness. \emph{Transfer} attacks~\citep{papernot2016transfer} and \emph{score-
 based black-box} attacks~\citep{ilyas2018blackbox} mark the spectrum of attacker
-knowledge. We therefore test the \emph{adaptive white-box} regime explicitly and
+knowledge. We therefore test the \emph{adaptive score-based} regime explicitly and
 report results as-is, including where the defense fails.
 
 \paragraph{Positioning against related work.} Table~\ref{tab:related} contrasts this
@@ -271,7 +278,7 @@ separately, which we explain via the geometry of the tree decision boundary
 \caption{Positioning against representative related work. CN = cross-network
 generalization; Adv = adversarial robustness studied; FP = feature-space consistency
 constraints (protocol-consistent feature space, PCFS --- not full packet-level
-deliverability); AW = adaptive white-box attack; RT = evaluated on real
+deliverability); AW = adaptive score-based attack; RT = evaluated on real
 (non-benchmark) traffic. \checkmark\ = addressed, \ding{55}\ = not addressed,
 $\sim$ = partial.}
 \label{tab:related}
@@ -313,7 +320,7 @@ $+$adv}), to multi-threat evaluation.
 $\rightarrow$ \emph{PCFS (protocol-consistent feature-space)} FGSM perturbation
 generation $\rightarrow$ \emph{adversarial training} (few-shot$+$adv) on XGBoost
 $\rightarrow$ multi-threat evaluation (clean, unconstrained, PCFS,
-adaptive white-box) across two directions and two robustness axes.}
+adaptive score-based) across two directions and two robustness axes.}
 \label{fig:pipeline}
 \end{figure}
 
@@ -471,10 +478,10 @@ box} attacker~\citep{ilyas2018blackbox} with access only to model output scores 
 realistic assumption and no weaker than tree-specific attacks that require access to
 the internal tree structure. \emph{Fourth, cross-variant neutrality.} Because
 saliency is recomputed from \emph{the attacked model itself} (not a surrogate), the
-estimate is \emph{adaptive white-box} and gives every variant an equally hard
+estimate is \emph{adaptive score-based (model-aware)} --- saliency from the attacked model's output scores, without internal tree access, hence weaker than a full \emph{white-box} attacker --- and gives every variant an equally hard
 evaluation. Stronger tree-specific attacks (e.g., robust-tree
 verification~\citep{chen2019robusttrees}) are a complementary direction; using them
-would only \emph{strengthen} our collapse finding, not reverse it. In particular, \emph{exact} tree-evasion attacks based on \emph{mixed-integer linear programming} (MILP)~\citep{kantchelian2016} give an optimal attack bound; being stronger than our \emph{finite-difference} FGSM/PGD, using them would only \emph{deepen} the collapse on the UNSW$\rightarrow$CIC direction --- not recover it --- so the \emph{adaptive finite-difference} already suffices as a worst-case white-box representation for our claims.
+would only \emph{strengthen} our collapse finding, not reverse it. In particular, \emph{exact} tree-evasion attacks based on \emph{mixed-integer linear programming} (MILP)~\citep{kantchelian2016} give an optimal attack bound. We therefore use the adaptive \emph{finite-difference} attack as a \emph{strong score-based evaluation} and \emph{acknowledge} exact tree-specific optimization attacks (MILP; robust-tree verification~\citep{chen2019robusttrees}) as a stronger \emph{upper bound}; using them would only \emph{deepen} the collapse on the UNSW$\rightarrow$CIC direction, not reverse it --- so our claims remain defensible without asserting the finite-difference attack as a global \emph{worst-case white-box}.
 
 \paragraph{Strength-layered attack suite (one-step FGSM is not the only one).} We
 stress that the finite-difference FGSM above is \emph{one} member of a strength-
@@ -546,8 +553,8 @@ standard adversarial-evaluation taxonomy.
 
 \begin{table}[h]
 \centering
-\caption{Formal threat model. The strongest setting we evaluate is
-\emph{adaptive white-box} evasion at inference time, restricted to a
+\caption{Formal threat model. The strongest setting we evaluate is an
+\emph{adaptive score-based (model-aware)} evasion at inference time, restricted to a
 protocol-consistent feature-space (PCFS) region with monotonic \emph{add-only}
 changes.}
 \label{tab:threatmodel}
@@ -556,7 +563,7 @@ changes.}
 \toprule
 Dimension & Setting \\
 \midrule
-Attacker knowledge   & white-box (adaptive) $\vert$ transfer/static (weaker, discussed) \\
+Attacker knowledge   & adaptive score-based, model-aware (our eval) $\vert$ full white-box / transfer-static (discussed) \\
 Attacker goal        & evasion (integrity, test-time) \\
 Target class         & malicious flows ($y{=}1$) \\
 Perturbation space   & feature-space (nine SFM features, z-score) \\
@@ -576,9 +583,9 @@ An \emph{evasion} attack is characterized by \emph{two independent properties}, 
 an attack can combine both. \emph{Axis-1 (attacker knowledge)} determines where
 saliency is computed: under \textbf{\emph{transfer/static}}, saliency comes from a
 \emph{surrogate model} so the attacker does not know the defended model (weak
-scenario); under \textbf{\emph{adaptive white-box}}, saliency is computed from
-\emph{the attacked model itself}, i.e., the attacker knows the defended model
-exactly (worst case). \emph{Axis-2 (realism)} determines how \emph{consistent} the
+scenario); under \textbf{\emph{model-aware}} (our instantiation, score-based), saliency is computed from
+\emph{the attacked model itself} via output scores, i.e., the attacker knows the defended model
+(the hardest setting we evaluate, though weaker than full white-box). \emph{(Terminology note:} throughout, \emph{adaptive score-based} denotes a \emph{model-aware} attacker that accesses only the model's \emph{output scores} via \emph{finite difference}; this is \emph{not} a full \emph{white-box} attacker with access to internal tree structure, so we report it as a strong score-based \emph{lower bound} on true white-box strength.\emph{)} \emph{Axis-2 (realism)} determines how \emph{consistent} the
 attacked \emph{flow} is in feature space: \textbf{\emph{unconstrained}} perturbs
 features freely in z-score space and can produce impossible \emph{flows} (e.g.,
 \emph{bytes} $<$ \emph{packets}), useful only as an \emph{upper bound} of attack
@@ -592,11 +599,11 @@ can actually be delivered packet-by-packet (\emph{deliverability}); that is why 
 deliberately avoid the term ``\emph{functional-preserving}'', which usually implies
 full protocol realizability. The term \emph{adaptive PCFS} used in the columns of
 Table~\ref{tab:p2main} is the combination of both axes --- an attack that is
-\textbf{simultaneously} \emph{adaptive white-box} \textbf{and} \emph{PCFS} --- the
+\textbf{simultaneously} \emph{adaptive score-based} \textbf{and} \emph{PCFS} --- the
 \emph{hardest} yet most \emph{feature-space-consistent} scenario (not the most
 realistic on a network). We evaluate three regimes
 ($\epsilon \in \{0.05, 0.1, 0.2\}$): \emph{unconstrained} (upper bound), \emph{PCFS}
-(feature-space consistent), and \emph{adaptive white-box} (saliency from the target
+(feature-space consistent), and \emph{adaptive score-based} (saliency from the target
 model itself).
 
 \paragraph{PCFS constraint formulation.} Table~\ref{tab:constraint} summarizes the
@@ -689,11 +696,11 @@ class-imbalanced traffic MCC can be low even when \emph{recall} is high
 % ----- Main table (from paper2_eval_results.json, notebook 12) -----
 \begin{table}[h]
 \centering
-\caption{MCC of four variants on two dimensions: cross-network generalization
+\caption{\emph{Preliminary single-run reference (notebook 12).} The definitive evaluation uses the five-seed protocol in Tables~\ref{tab:fewshot_seeds},~\ref{tab:multiattack} and~\ref{tab:significance}; this table is retained for continuity with the earlier pipeline. MCC of four variants on two dimensions: cross-network generalization
 (\emph{clean target} column) and robustness to \emph{adaptive PCFS
 (protocol-consistent feature-space) evasion} ($\epsilon=0.1$). The last column
 reports MCC when the model is attacked by an evasion that is simultaneously
-\emph{adaptive white-box} (saliency computed from the attacked model itself --- the
+\emph{adaptive score-based} (saliency computed from the attacked model itself --- the
 attacker knows the defense) and \emph{PCFS} (perturbation restricted to an
 arithmetically/semantically consistent feature-space region --- \emph{not} a claim
 of full packet-level deliverability), of strength $\epsilon=0.1$ (a shift of
@@ -722,6 +729,8 @@ Direction & Variant & clean (source) & clean (target) & adaptive evasion ($\epsi
 \bottomrule
 \end{tabular}
 \end{table}
+
+\noindent\emph{Protocol note.} Table~\ref{tab:p2main} is a \emph{single-run} result (one realization, notebook 12) retained as a complementary reference for continuity with the earlier pipeline. \textbf{The definitive results of this paper use the five-seed protocol} (Tables~\ref{tab:fewshot_seeds}, \ref{tab:multiattack}, \ref{tab:significance}, \ref{tab:advmetrics}); all main claims refer to those five-seed numbers, not to the single-point values in Table~\ref{tab:p2main}.
 
 % ----- clean-target MCC mean+-std (5 seeds) -- few-shot sensitivity -----
 \begin{table}[h]
@@ -752,7 +761,7 @@ adv                   & $-0.049 \pm 0.203$ & $-0.079 \pm 0.052$ \\
 \centering
 \caption{Robustness curve: MCC of the four variants under attacks of \emph{increasing
 strength} --- one-step finite-difference FGSM vs iterative PGD
-(\emph{PCFS: protocol-consistent feature-space}, adaptive white-box) --- across three budgets
+(\emph{PCFS: protocol-consistent feature-space}, adaptive score-based) --- across three budgets
 $\epsilon\in\{0.05,0.1,0.2\}$. Reporting a single attack overstates robustness; a
 variant may look robust under FGSM yet collapse under PGD. Values are the mean over
 five seeds $\{13,42,101,202,303\}$ from \texttt{14\_reviewer\_experiments.ipynb}
@@ -916,6 +925,17 @@ hardest direction --- a concrete security improvement even though absolute MCC i
 still low. We note that ASR on UNSW$\rightarrow$CIC remains high ($\ge0.74$), so a
 full defense in this direction is still open.
 
+\noindent\emph{ASR confidence intervals (five seeds).} So that the ASR reduction is
+not misread as a random effect, we report ASR as a mean with a $95\%$ confidence
+interval. On UNSW$\rightarrow$CIC: \emph{few-shot} FGSM $0.985\,[0.971,0.999]$ drops to
+\emph{few-shot$+$adv} $0.872\,[0.801,0.943]$; and PGD \emph{few-shot}
+$0.938\,[0.889,0.987]$ to \emph{few-shot$+$adv} $0.738\,[0.537,0.940]$. The narrow
+intervals for pure \emph{few-shot} confirm a stable, high ASR (a genuine collapse),
+whereas the wider \emph{few-shot$+$adv} intervals --- especially under PGD --- are
+reported as-is: the ASR improvement \emph{exists} but varies across seeds, consistent
+with a ``helps but does not resolve'' status in this direction. (Computed from
+\texttt{reviewer\_raw.csv} per seed.)
+
 \paragraph{Perturbation \& validity metrics.} Complementing ASR, we measure the
 character of the FGSM $\epsilon{=}0.1$ attack (artefact
 \texttt{perturbation\_metrics.csv}). The attack is \emph{sparse}: on average only
@@ -1036,7 +1056,7 @@ partition and the $1\%$ calibration selection are re-randomized per \emph{seed}.
 \emph{few-shot$+$adv} preserves target MCC on par with pure \emph{few-shot}
 ($0.696$ vs $0.650$ on CIC$\rightarrow$UNSW; $0.897$ vs $0.897$ on
 UNSW$\rightarrow$CIC) --- so adding an evasion defense does \emph{not} cost
-generalization. \emph{Third, robustness to adaptive white-box is asymmetric.} On
+generalization. \emph{Third, robustness to adaptive score-based is asymmetric.} On
 CIC$\rightarrow$UNSW, \emph{few-shot$+$adv} is the only variant robust on
 \textbf{both} axes at once: highest generalization ($0.696$) and highest
 \emph{adaptive PCFS evasion} robustness ($0.495$, far above \emph{adv} which
@@ -1051,12 +1071,12 @@ boundary is wide enough to resist \emph{PCFS} perturbation; conversely when CIC 
 the more narrowly distributed \emph{target}, an \emph{adaptive} attacker who knows
 the model can find a feature-consistent evasion direction that still breaks through.
 This finding reveals a \textbf{limit of adversarial training on tree models under
-adaptive white-box}, and at the same time \textbf{positive evidence} that on at
+adaptive score-based}, and at the same time \textbf{positive evidence} that on at
 least one direction a single lightweight XGBoost can be robust on both axes at once.
 Both are honest contributions: one success and one limit, both guiding the design
 of the next defense.
 
-\paragraph{Why tree models collapse under adaptive white-box: a theoretical
+\paragraph{Why tree models collapse under adaptive score-based: a theoretical
 explanation.} The MCC collapse to $-0.025$ on UNSW$\rightarrow$CIC is not an
 accident but a consequence of the \emph{decision-boundary structure} of tree models.
 XGBoost builds the decision boundary as a \emph{step function} composed of axis-
@@ -1066,7 +1086,7 @@ Two implications follow. \emph{First}, the model output score is \emph{constant}
 within each cell and changes sharply only when crossing a threshold; the true
 gradient is near-zero almost everywhere except at boundaries. The \emph{finite-
 difference} estimate (saliency equation, $h=0.01$) overcomes this by ``sensing'' the
-direction toward the nearest threshold --- and for an \emph{adaptive white-box}
+direction toward the nearest threshold --- and for an \emph{adaptive score-based}
 attacker who computes saliency from the target model itself, this is enough to steer
 a \emph{PCFS} perturbation past the nearest threshold. \emph{Second}, this
 vulnerability worsens when the \emph{target decision cells are narrow}. On
@@ -1101,16 +1121,19 @@ measures the evasion mechanism directly. \emph{(4) Crossing probability} at a sm
 budget, the fraction of samples whose prediction changes at $\epsilon{=}0.1$. The
 explicit hypothesis prediction:
 \begin{equation}
+w^{\text{CIC}} < w^{\text{UNSW}}, \qquad
 d_{\text{boundary}}^{\text{CIC}} < d_{\text{boundary}}^{\text{UNSW}}, \qquad
-w^{\text{CIC}} < w^{\text{UNSW}}, \qquad \kappa^{\text{CIC}} < \kappa^{\text{UNSW}}.
+P_{\text{cross}}^{\text{CIC}}(\epsilon) > P_{\text{cross}}^{\text{UNSW}}(\epsilon).
 \end{equation}
 We compute these for the \emph{few-shot} model on both directions and include them
 as reproducible artefacts (\texttt{17\_decision\_cell.ipynb},
 \texttt{decision\_cell.csv}). Thereby Figure~\ref{fig:treeboundary} is no longer
 merely a conceptual sketch but a mechanism \emph{backed by numbers}: if
-$d_{\text{boundary}}$ and $w$ on the CIC target are indeed smaller, the
+the effective cell width $w$ on the CIC target is far smaller, $d_{\text{boundary}}$
+is about half, and the crossing probability $P_{\text{cross}}$ is far larger, the
 \emph{adaptive} collapse on UNSW$\rightarrow$CIC (Table~\ref{tab:p2main}) gains a
-measurable causal explanation, not just a plausible one.
+\emph{mechanistically supported} explanation (mechanistic evidence, not causal
+identification), not just a plausible one.
 
 % ----- empirical evidence of decision-cell mechanism (from nb17) -----
 % NOTE: numbers to be filled from the REAL output of 17_decision_cell.ipynb
@@ -1123,7 +1146,7 @@ $w$ = effective cell width (median distance to nearest split threshold, z-score)
 $d_{\text{boundary}}$ = median minimum PCFS perturbation that flips the prediction;
 $P_{\text{cross}}(\epsilon{=}0.1)$ = fraction of samples whose prediction changes at
 $\epsilon{=}0.1$; \#leaf = total leaves (granularity proxy). The hypothesis predicts
-smaller $\kappa$, $w$, $d_{\text{boundary}}$ for the low-variance CIC target. Source:
+smaller $w$, smaller $d_{\text{boundary}}$ and higher $P_{\text{cross}}$ for the low-variance CIC target (the three \emph{direct} measures of the mechanism; $\kappa$ is reported as complementary context). Source:
 \texttt{decision\_cell.csv}.}
 \label{tab:decisioncell}
 \small
@@ -1131,11 +1154,34 @@ smaller $\kappa$, $w$, $d_{\text{boundary}}$ for the low-variance CIC target. So
 \toprule
 Target domain & $\kappa$ & $w$ & $d_{\text{boundary}}$ & $P_{\text{cross}}(0.1)$ & \#leaf \\
 \midrule
-target UNSW (high-variance) & -- & -- & -- & -- & -- \\
-target CIC (low-variance)   & -- & -- & -- & -- & -- \\
+target UNSW (high-variance) & $5.00$ & $3.5\times10^{-4}$ & $4.0\times10^{-3}$ & $0.091$ & $24944$ \\
+target CIC (low-variance)   & $5.76$ & $\approx\!0\ (1.6\times10^{-10})$ & $\mathbf{2.0\times10^{-3}}$ & $\mathbf{0.237}$ & $21380$ \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\paragraph{Interpreting the evidence (reported honestly, including what does not
+align).} Table~\ref{tab:decisioncell} supports the ``narrow cells'' mechanism on
+\textbf{three direct measures}, but not on the complementary measure $\kappa$ ---
+reported as-is. \emph{(i) Effective cell width $w$:} on the CIC target it is
+practically zero ($\approx 1.6\times10^{-10}$) versus $3.5\times10^{-4}$ on UNSW
+--- CIC samples lie extremely close to the nearest \emph{split} threshold.
+\emph{(ii) Distance-to-boundary $d_{\text{boundary}}$:} with the refined search grid
+($\Delta\epsilon{=}0.002$), the minimum prediction-flipping perturbation on CIC is
+only $2.0\times10^{-3}$ versus $4.0\times10^{-3}$ on UNSW --- half, aligned with $w$
+and $P_{\text{cross}}$. (On the coarse grid $\Delta\epsilon{=}0.02$ both read $0.020$
+due to resolution; refining the grid exposes the true difference.)
+\emph{(iii) Crossing probability $P_{\text{cross}}$:} at $\epsilon{=}0.1$ it is
+$0.237$ on CIC versus only $0.091$ on UNSW --- more than twice as many CIC samples
+are flipped by such a small valid perturbation. \emph{One complementary measure does
+not align, reported as-is:} domain concentration $\kappa$ on CIC ($5.76$) is slightly
+\emph{larger} than on UNSW ($5.00$) --- IQR/median is not a sharp homogeneity proxy
+for this domain pair. Thus the ``narrow cells'' mechanism is \textbf{supported by
+three direct measures ($w$, $d_{\text{boundary}}$, $P_{\text{cross}}$), while
+$\kappa$ as an indirect proxy does not separate the directions}; we claim no more
+than the numbers show. The \emph{leaf} counts are similar ($24{,}944$ vs $21{,}380$),
+so the difference is the \emph{position} of target samples relative to split
+thresholds, not tree granularity.
 
 \begin{figure}[h]
 \centering
@@ -1230,7 +1276,7 @@ class imbalance} on the AWS traffic slice ($\approx 17{,}600$ attack vs
 $\approx 130$ benign), so --- as we have stressed (Table~\ref{tab:aws_unsw}) ---
 \emph{recall}/\emph{precision} are more informative: both $\ge 0.99$ on
 UNSW$\rightarrow$AWS and $\ge 0.96$ on CIC$\rightarrow$AWS for S1/S2, indicating the
-calibrated model actually catches almost all attacks. \emph{Balanced accuracy} confirms this: it rises monotonically with calibration (CIC$\rightarrow$AWS $0.500 \to 0.693 \to 0.773$; UNSW$\rightarrow$AWS $0.524 \to 0.505 \to 0.570$), showing that the calibrated model (S1/S2) genuinely works in the field even though the absolute MCC is suppressed by class imbalance. \emph{Third, and reported
+calibrated model actually catches almost all attacks. \emph{Balanced accuracy} confirms this: it rises monotonically with calibration (CIC$\rightarrow$AWS $0.500 \to 0.693 \to 0.773$; UNSW$\rightarrow$AWS $0.524 \to 0.505 \to 0.570$), showing that the calibrated model (S1/S2) genuinely works in the field even though the absolute MCC is suppressed by class imbalance. Specifically, \emph{specificity} (and thus the FPR reduction) also improves with calibration: CIC$\rightarrow$AWS \emph{specificity} $0.41\to0.58$ (FPR $0.59\to0.42$) from S1 to S2, and UNSW$\rightarrow$AWS $0.01\to0.14$ (FPR $0.99\to0.86$) --- confirming that adversarial training at S2 improves discrimination of the benign minority, not merely recall. (Per-seed values from \texttt{aws\_stages\_raw.csv}.) \emph{Third, and reported
 without smoothing:} \emph{adaptive} robustness (PCFS FGSM/PGD $\epsilon{=}0.1$) at S2
 remains \emph{weak} on AWS (MCC $-0.04$ to $0.07$) --- consistent with the limit of
 \emph{adversarial training} on tree models we found on the \emph{benchmark}
@@ -1252,7 +1298,7 @@ SFM work~\citep{martono2024sfm} (a two-EC2 pattern: \emph{attacker} and
 \texttt{ap-southeast-1}). Pipeline: tcpdump captures traffic on a specific interface
 $\rightarrow$ NFStream extracts the nine SFM features $\rightarrow$ the four models
 score each \emph{flow}, then \emph{PCFS (protocol-consistent feature-space)}
-perturbation (adaptive white-box) is applied to those real features.
+perturbation (adaptive score-based) is applied to those real features.
 
 \paragraph{PoC design.} Two captures were generated on identical infrastructure,
 following a seven-minute \emph{timeline} (benign $\rightarrow$ SSH brute-force
@@ -1378,7 +1424,7 @@ full four files are stored in
 Rather than introducing a new technique, this paper studies the \emph{interaction}
 between cross-network generalization and adversarial evasion robustness on a single
 lightweight flow-based XGBoost, and evaluates it honestly under \emph{protocol-
-valid} and \emph{adaptive white-box} attacks.
+valid} and \emph{adaptive score-based} attacks.
 
 \paragraph{Main messages (reported without smoothing).} The strength of this paper
 lies precisely in the \emph{honesty of its results}, not in a claim of perfect
@@ -1391,21 +1437,26 @@ staying $\ge0.74$ under the layered suite).
 guarantee adversarial robustness} --- the two axes are separate and do not
 automatically lift each other.
 \emph{(3) The interaction between domain calibration and adversarial robustness is
-directional/asymmetric} --- their coexistence is reliable in only one
-source$\rightarrow$target direction. These three statements, including their
+\textbf{direction- and attack-strength-dependent}} --- it is a function of (direction,
+attack strength, defense): under PGD, \emph{adversarial training} \emph{hurts} on
+CIC$\rightarrow$UNSW ($0.524\rightarrow0.302$) yet \emph{helps} on
+UNSW$\rightarrow$CIC ($-0.124\rightarrow0.178$), so two-axis coexistence is reliable
+only in specific direction--attack configurations. These three statements, including their
 failures, are testable scientific contributions that guide the design of the next
 defense --- in line with the principle that credible adversarial evaluation rests on
 a clear threat model, strong testing, and honest reporting of method limits, not on
 a claim of all-around robustness.
 
-\noindent The main scientific contribution is the disclosure of an \emph{asymmetric
-robustness regime}: both forms of robustness can coexist, but their existence is
-conditional on the source$\rightarrow$target direction and can be explained via the
-geometry of the tree decision boundary. Three conclusions: (i) cross-network
+\noindent The main scientific contribution is the disclosure of a
+\emph{direction- and attack-strength-dependent generalization--robustness
+interaction}: both forms of robustness can coexist, but their existence is
+conditional on the source$\rightarrow$target direction \emph{and} on attack strength
+(FGSM versus PGD); its asymmetry component can be explained via the geometry of the
+tree decision boundary. Three conclusions: (i) cross-network
 generalization is obtained via \emph{few-shot}, not \emph{adversarial training};
 (ii) adding \emph{adversarial training} on top of \emph{few-shot} does not cost
 generalization, and on the CIC$\rightarrow$UNSW direction yields a single model
-robust on both axes at once; (iii) yet robustness to \emph{adaptive white-box} is
+robust on both axes at once; (iii) yet robustness to \emph{adaptive score-based} is
 asymmetric and still collapses on UNSW$\rightarrow$CIC, marking a real limit of
 \emph{adversarial training} on tree models; and (iv) through the three-stage
 validation on real AWS cloud traffic (Section~\ref{sec:aws}), $1\%$ \emph{few-shot}
