@@ -353,3 +353,55 @@ future work Paper 2. Nanti bikin `documentation_online.md` + runbook (pola sama)
 - Notebook: docstring pakai `#` (BUKAN triple-quote) — hindari SyntaxError escape di JSON.
   Validasi tiap edit: json.load + ast.parse.
 - Angka desimal di `.tex`: koma (`0{,}696`). Di laporan markdown (Bagian I): titik.
+
+
+---
+
+## Q. Anatomi teknis `13_rangkuman_adversarial.ipynb` (per sel)
+
+> **Tujuan bagian ini:** merekam *apa yang dikerjakan tiap sel* nb13 sehingga isinya
+> dapat diketahui **tanpa menjalankan notebook**. nb13 adalah notebook *rangkuman*
+> (tidak menghasilkan artefak baru untuk paper) — ia memuat ulang CSV/JSON dari
+> notebook 11-17 dan merender tabel + gambar untuk paper & slide. **Semua teks di
+> dalam gambar berbahasa Inggris**; teks penjelasan markdown Indonesia. Struktur: 16
+> section (0-15), 7 blok hasil (section 4-10). Setiap sel kode diakhiri penanda
+> `=== SEL n SELESAI ===`.
+
+**Pola pemuatan data (sel 0).** Mendefinisikan `SEARCH_DIRS` = `['.', 'paper2_reviewer_out',
+'../paper2_reviewer_out', 'paper2_eval_out', 'paper2_models', '..']`, lalu helper
+`load_json(name)` / `load_csv(name)` yang mencari file di dir-dir itu; bila tidak ada,
+mengembalikan `None` sehingga sel memakai **fallback** = angka nyata tertanam (identik
+hasil tercatat). Jadi notebook tetap jalan di mana saja; angka tak berubah.
+
+| Sel | Jenis | Yang dikerjakan (teknis) | Sumber data | Output |
+|---|---|---|---|---|
+| **0. Setup** | code | import matplotlib/pandas/numpy; set `rcParams` (dpi 110); definisikan `SEARCH_DIRS`, `load_json`, `load_csv`. | - | fungsi loader siap |
+| **1. Dua sumbu** | md+code | Diagram scatter dua-panel: x=`clean_target` MCC (generalisasi), y=`adaptive_pcfs_eps0.1` MCC (ketahanan). MCC [-1,1] dipetakan `(v+1)/2` ke [0,1] hanya utk tata-letak; label tampilkan MCC asli. Titik nyata `pts_c2u`/`pts_u2c` (dari paper2_eval_results.json). | paper2_eval_results.json (hard-coded nyata) | 2 scatter + tabel ringkas (Inggris) |
+| **2. Empat varian** | md+code | Muat `paper2_pipeline_meta.json`; cetak konfigurasi `eps_train=0.1, adv_ratio=0.20, fewshot_frac=0.01`, hyperparameter XGBoost. | paper2_pipeline_meta.json (nb11) | tabel konfigurasi |
+| **3. Tiga rezim** | md+code | DataFrame deskriptif 3 rezim: Unconstrained / PCFS / Adaptive white-box (model-aware score-based). Tidak ada komputasi. | - | tabel rezim |
+| **3b. Metrik** | md | Definisi TP/TN/FP/FN + rumus Recall, Precision, MCC, ASR (LaTeX). Penjelasan kenapa MCC utama + ASR pendamping. | - | - |
+| **4. Hasil 1 (tabel utama)** | md+code | Muat `paper2_eval_results.json` (nb12 single-run); normalkan nama kolom lama `adaptive_functional_eps0.1` -> `adaptive_pcfs_eps0.1`; tampilkan clean_source/clean_target/unconstrained/adaptive. Fallback `FALLBACK_ROWS`. | paper2_eval_results.json | tabel 8 baris |
+| **4b. Grafik hasil 1** | code | Bar chart per arah: `clean_target` vs `adaptive_pcfs_eps0.1` (MCC) utk 4 varian, ylim -0.6..1.0. | dari sel 4 | 2 bar chart (Inggris) |
+| **5. Hasil 2 (multi-attack)** | md+code | Muat `reviewer_agg.csv`; untuk tiap (arah,model) ambil `mcc_mean` pada kondisi `fgsm_eps{0.05,0.1,0.2}` & `pgd_eps*`; bangun `dfm`. Plot kurva MCC vs eps (FGSM garis penuh `-o`, PGD garis putus `--s`) per arah, warna per varian. Fallback angka nyata. | reviewer_agg.csv (nb14, 5 seed) | tabel + 2 kurva (Inggris) |
+| **6. Hasil 3 (signifikansi)** | md+code | Muat `significance_fewshot_vs_adv.csv`; tambah kolom `significant_0.05 = t_p<0.05`; tampilkan. Fallback 6 baris nyata (p-value t-test). | significance_fewshot_vs_adv.csv (nb14) | tabel signifikansi |
+| **7. Hasil 4 (ASR+perturbasi)** | md+code | Muat `reviewer_agg.csv`; untuk fewshot & fewshot_adv pada fgsm/pgd eps0.1 ambil MCC/ASR/recall/precision -> `dfA`. Lalu muat `perturbation_metrics.csv` (nmod_mean, valid_flow_rate, fpr, balanced_acc). | reviewer_agg.csv + perturbation_metrics.csv (nb14) | 2 tabel |
+| **8. Hasil 5 (defense)** | md+code | Muat `defense_baselines_agg.csv`; mapping `DEF_ORDER`/`DEF_LABEL` (fewshot, fs_adv_fgsm, fs_adv_pgd, fs_gauss_aug, fs_rand_smooth); untuk tiap (arah,defense) ambil mcc_mean pada clean/fgsm_eps0.1/pgd_eps0.1. | defense_baselines_agg.csv (nb16) | tabel pembanding |
+| **9. Hasil 6 (AWS 3-tahap)** | md+code | Muat `aws_stages_agg.csv`; mapping `STAGE_LABEL` (S0_zeroshot/S1_fewshot/S2_fewshot_adv); ambil clean MCC/recall/precision + FGSM/PGD eps0.1 utk S2. | aws_stages_agg.csv (nb15) | tabel 3-tahap |
+| **10. Hasil 7 (decision-cell)** | md+code | Muat `decision_cell.csv`; tabel kappa/w_eff/d_boundary_med/crossing_p_eps0.10/n_leaf dua arah; bar chart dua-panel d_boundary & P_cross (lebih rendah d_boundary / lebih tinggi P_cross = lebih mudah dievasi). | decision_cell.csv (nb17, grid 0.002) | tabel + 2 bar chart (Inggris) |
+| **11. PoC AWS zero-shot** | md+code | DataFrame hasil PoC AWS nyata (hard-coded dari `aws/paper2_aws/*.json`): 2 arah x 4 varian x {clean,evasion} dengan MCC/recall/precision + FGSM PCFS eps0.1. Pivot per arah; sorot UNSW few-shot+adv (recall 0.954). | aws/paper2_aws/*.json | 2 pivot table + sorotan |
+| **12. Alur cerita** | md+code | Diagram 7 kotak alur (Motivation -> Foundation -> Question -> 4 variants x 2 directions -> 3 regimes PCFS -> Findings 7 result blocks -> Future work Paper 3) dengan panah. | - | 1 diagram alur (Inggris) |
+| **13. Rangkuman temuan** | md | Bullet angka nyata (generalisasi few-shot, adv tak merusak, CIC->UNSW dua-sumbu, UNSW->CIC runtuh, kurva multi-attack, signifikansi, ASR, defense, AWS). | - | - |
+| **14. Catatan promotor** | md | Posisi Paper 2 vs isu kausal Paper 1; 4 pesan utama; batas ruang-lingkup nb 11-17. | - | - |
+| **15. Kesimpulan final** | md | Ketangguhan dua-sumbu: tabel ringkas bukti + poin kunci + posisi jujur & arah lanjut (Paper 3). | - | - |
+
+**Catatan reproduksi nb13.**
+- Semua sel kode **idempoten & aman tanpa data**: bila CSV/JSON tak ditemukan di
+  `SEARCH_DIRS`, dipakai fallback angka nyata yang identik dengan artefak S3 — jadi
+  tabel/gambar tetap muncul dengan angka benar.
+- **Gambar (figur) berbahasa Inggris** (judul, label sumbu, legend, teks diagram) agar
+  langsung dipakai di paper/slide; dipastikan 0 teks Indonesia di dalam figur.
+- nb13 **tidak menulis artefak** ke `paper2_reviewer_out/` maupun S3 (murni render);
+  sumber kebenaran angka tetap notebook 11-17.
+- Untuk me-render gambar sebagai berkas (mis. PNG untuk slide), jalankan nb13 sekali di
+  Jupyter/SageMaker; ia memuat CSV dari S3/`paper2_reviewer_out/` yang sudah ada.
+

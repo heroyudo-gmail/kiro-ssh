@@ -50,7 +50,7 @@ dan gabungan \emph{few-shot $+$ adversarial} --- pada dua arah lintas-jaringan
 (CSE-CIC-IDS2018 $\leftrightarrow$ UNSW-NB15), dan mengevaluasinya di bawah tiga
 rezim serangan: FGSM tak-terbatas (batas atas), FGSM \emph{protocol-consistent
 feature-space} (PCFS --- konsisten di ruang fitur, bukan klaim deliverability), dan
-\emph{adaptive white-box} (skenario terburuk). Hasilnya campuran
+\emph{adaptive score-based} (skenario terburuk). Hasilnya campuran
 dan dilaporkan jujur: generalisasi lintas-jaringan hanya datang dari \emph{few-shot}
 (MCC target pulih ke $0{,}65$--$0{,}90$), sedangkan \emph{adversarial training} saja
 tidak menutup celah lintas-jaringan. Menambahkan \emph{adversarial training} di atas
@@ -58,10 +58,16 @@ tidak menutup celah lintas-jaringan. Menambahkan \emph{adversarial training} di 
 varian \emph{few-shot$+$adv} bahkan tangguh di \textbf{kedua} sumbu sekaligus (MCC
 target $0{,}70$; ketahanan \emph{adaptive PCFS evasion} $0{,}50$). Namun pada
 arah UNSW$\rightarrow$CIC ketahanan \emph{adaptive} tetap runtuh untuk semua varian.
-Temuan utama kami --- yang belum pernah dilaporkan sebelumnya --- adalah adanya
-\textbf{rezim ketangguhan asimetris}: kedua bentuk ketangguhan dapat hidup
-berdampingan hanya bergantung pada arah sumber$\rightarrow$target, dan kami
-menjelaskan asimetri ini melalui lebar sel keputusan model pohon pada domain target
+Temuan utama kami --- yang belum pernah dilaporkan sebelumnya --- adalah bahwa
+interaksi antara generalisasi dan ketahanan adversarial bersifat
+\textbf{bergantung-arah \emph{dan} bergantung-kekuatan-serangan}: ia merupakan fungsi
+dari (arah sumber$\rightarrow$target, kekuatan serangan, strategi pertahanan), bukan
+sekadar asimetri satu-dimensi. Contoh paling tajam: di bawah PGD, menambahkan
+\emph{adversarial training} \emph{merugikan} pada arah CIC$\rightarrow$UNSW
+($0{,}524\rightarrow0{,}302$) namun \emph{membantu} pada arah UNSW$\rightarrow$CIC
+($-0{,}124\rightarrow0{,}178$) --- pertahanan yang sama bisa menolong atau merusak
+tergantung arah \emph{dan} serangan. Asimetri ko-eksistensi dua-sumbu ini kami
+jelaskan lebih lanjut melalui lebar sel keputusan model pohon pada domain target
 bervarians-rendah versus tinggi. Melalui \textbf{validasi tiga-tahap} pada trafik
 cloud AWS berlabel nyata (\emph{zero-shot} $\rightarrow$ $+1\%$ few-shot $\rightarrow$
 $+$adversarial), kalibrasi few-shot terbukti \emph{transfer} untuk sumbu generalisasi
@@ -71,7 +77,7 @@ eksperimen nyata dan dilaporkan apa adanya.
 
 \vspace{0.5em}
 \noindent\textbf{Kata kunci:} deteksi intrusi jaringan, ketahanan adversarial,
-\emph{protocol-consistent feature-space evasion}, \emph{adaptive white-box},
+\emph{protocol-consistent feature-space evasion}, \emph{adaptive score-based},
 generalisasi lintas-jaringan, pemetaan fitur semantik, \emph{few-shot}, XGBoost.
 
 \vspace{0.5em}
@@ -79,7 +85,7 @@ generalisasi lintas-jaringan, pemetaan fitur semantik, \emph{few-shot}, XGBoost.
 \begin{itemize}
   \item We study the interaction of cross-network shift and adversarial evasion on one lightweight NIDS.
   \item Few-shot calibration recovers cross-network generalization; adversarial training does not.
-  \item Robustness of few-shot+adv is asymmetric across the source$\rightarrow$target direction.
+  \item The generalization--robustness interaction depends on direction AND attack strength.
   \item A protocol-consistent feature-space (PCFS) attack avoids over-claiming deliverability.
   \item Three-stage AWS validation shows the pipeline transfers for generalization, not evasion.
 \end{itemize}
@@ -121,7 +127,7 @@ perpindahan jaringan?}
 ``teknik mana yang harus digabung'', melainkan ``bagaimana dua bentuk ketangguhan
 itu berinteraksi, dan mengapa interaksinya asimetris''. Komponen yang kami pakai
 (SFM, \emph{few-shot}, FGSM, \emph{adversarial training}, kendala \emph{PCFS},
-\emph{adaptive white-box}) semuanya sudah mapan;
+\emph{adaptive score-based}) semuanya sudah mapan;
 sumbangan kami adalah \emph{temuan} tentang interaksinya, bukan komponennya.
 
 Kebaruan makalah ini \textbf{bukan} terletak pada komponen penyusunnya --- SFM,
@@ -130,28 +136,34 @@ kalibrasi \emph{few-shot}, FGSM, \emph{adversarial training}, kendala
 white-box} semuanya sudah mapan secara individual. Kebaruan kami berada pada tataran \emph{temuan ilmiah}:
 kami adalah yang pertama mempelajari \emph{interaksi} antara dua sumbu ketangguhan
 --- \emph{distribution shift} lintas-jaringan dan ketahanan \emph{evasion}
-adversarial --- pada satu NIDS ringan berbasis-alir, dan mengungkap sebuah
-\textbf{rezim ketangguhan asimetris} yang belum pernah dilaporkan: kalibrasi
-\emph{few-shot} lintas-domain dan \emph{adversarial training} \emph{berinteraksi
-secara berbeda bergantung pada arah} sumber$\rightarrow$target jaringan. Alih-alih
+adversarial --- pada satu NIDS ringan berbasis-alir, dan mengungkap bahwa interaksinya
+bersifat \textbf{bergantung-arah \emph{dan} bergantung-kekuatan-serangan} ---
+sebuah temuan yang belum pernah dilaporkan: kalibrasi \emph{few-shot} lintas-domain
+dan \emph{adversarial training} \emph{berinteraksi secara berbeda bergantung pada
+arah} sumber$\rightarrow$target jaringan \emph{dan pada kekuatan serangan} (FGSM
+satu-langkah versus PGD iteratif), sehingga pertahanan yang sama dapat menolong di
+satu konfigurasi namun merugikan di konfigurasi lain. Alih-alih
 sekadar menggabungkan teknik yang ada, kami menjawab pertanyaan yang belum terjawab:
 \emph{apakah kedua bentuk ketangguhan itu dapat hidup berdampingan pada satu model,
 dan mengapa keberadaannya bersyarat pada arah perpindahan jaringan.}
 
 \noindent\textbf{Kontribusi:}
 \begin{itemize}
-  \item \textbf{Temuan rezim asimetris.} Kami menunjukkan --- dan menjelaskan
-  secara teoretis --- bahwa \emph{few-shot$+$adv} dapat tangguh di kedua sumbu
-  sekaligus pada satu arah (CIC$\rightarrow$UNSW) namun runtuh di bawah
-  \emph{adaptive white-box} pada arah sebaliknya (UNSW$\rightarrow$CIC). Asimetri
-  ini kami kaitkan dengan lebar sel keputusan model pohon pada domain target
-  bervarians-rendah versus tinggi (Bagian~\ref{sec:hasil}), sehingga menjadi
-  \emph{temuan} yang dapat diuji, bukan sekadar hasil empiris.
+  \item \textbf{Temuan interaksi bergantung-arah dan bergantung-kekuatan-serangan.}
+  Kami menunjukkan --- dan menjelaskan secara mekanistik --- bahwa ketahanan adalah
+  fungsi dari (arah, kekuatan serangan, pertahanan): \emph{few-shot$+$adv} tangguh di
+  kedua sumbu pada CIC$\rightarrow$UNSW namun runtuh di bawah \emph{adaptive
+  score-based} pada UNSW$\rightarrow$CIC; dan di bawah PGD, \emph{adversarial
+  training} \emph{merugikan} pada CIC$\rightarrow$UNSW ($0{,}524\rightarrow0{,}302$)
+  tetapi \emph{membantu} pada UNSW$\rightarrow$CIC ($-0{,}124\rightarrow0{,}178$).
+  Komponen asimetri dua-sumbu ini kami kaitkan dengan lebar sel keputusan model pohon
+  pada domain target bervarians-rendah versus tinggi (Bagian~\ref{sec:hasil}),
+  sehingga menjadi \emph{temuan} yang dapat diuji, bukan sekadar hasil empiris.
   \item \textbf{Kerangka evaluasi dua-sumbu} yang menyatukan pengukuran
   generalisasi lintas-jaringan dan ketahanan evasion dalam satu protokol, dengan
   ancaman berlapis yang membedakan serangan tak-realistis (FGSM tak-terbatas) dari
   serangan konsisten-di-ruang-fitur (\emph{PCFS}) serta skenario terburuk
-  \emph{adaptive white-box} (Bagian~\ref{sec:ancaman}).
+  \emph{adaptive score-based} (Bagian~\ref{sec:ancaman}).
   \item \textbf{Analisis trade-off yang dilaporkan jujur}, termasuk kegagalan:
   \emph{adversarial training} saja tidak menutup celah lintas-jaringan, dan tidak
   menjamin ketahanan \emph{adaptive} di semua arah --- menandai batas nyata
@@ -234,14 +246,14 @@ training}~\cite{goodfellow2015,madry2018} menambahkan sampel perturbasi ke data
 latih untuk memperkuat batas keputusan. Namun Athalye \emph{et
 al.}~\cite{athalye2018} menunjukkan banyak pertahanan hanya \emph{menyamarkan
 gradien} (\emph{obfuscated gradients}) dan runtuh di bawah serangan
-\emph{adaptive white-box} yang menyesuaikan diri terhadap pertahanan. Untuk model
+\emph{adaptive score-based} yang menyesuaikan diri terhadap pertahanan. Untuk model
 berbasis pohon secara khusus, serangan dan pengerasan telah dipelajari melalui
 evasi ansambel pohon~\cite{kantchelian2016} dan pohon keputusan
 \emph{robust}~\cite{chen2019robusttrees}, sementara pertahanan bersertifikat seperti
 \emph{randomized smoothing}~\cite{cohen2019smoothing} menawarkan jaminan yang tak
 bergantung pada kemulusan gradien. Serangan \emph{transfer}~\cite{papernot2016transfer}
 dan \emph{score-based black-box}~\cite{ilyas2018blackbox} menandai spektrum
-pengetahuan penyerang. Karena itu kami menguji rezim \emph{adaptive white-box}
+pengetahuan penyerang. Karena itu kami menguji rezim \emph{adaptive score-based}
 secara eksplisit dan melaporkan hasilnya apa adanya, termasuk saat pertahanan gagal.
 
 \paragraph{Posisi terhadap karya terkait.} Tabel~\ref{tab:related} mengontraskan
@@ -271,7 +283,7 @@ terpisah, dan yang kami jelaskan lewat geometri batas keputusan pohon
 \caption{Positioning against representative related work. CN = cross-network
 generalization; Adv = adversarial robustness studied; FP = feature-space consistency
 constraints (protocol-consistent feature space, PCFS --- not full packet-level
-deliverability); AW = adaptive white-box attack; RT = evaluated on real
+deliverability); AW = adaptive score-based attack; RT = evaluated on real
 (non-benchmark) traffic. \checkmark\ = addressed, \ding{55}\ = not addressed,
 $\sim$ = partial.}
 \label{tab:related}
@@ -314,7 +326,7 @@ evaluasi multi-ancaman.
 $\rightarrow$ \emph{PCFS (protocol-consistent feature-space)} FGSM perturbation
 generation $\rightarrow$ \emph{adversarial training} (few-shot$+$adv) on XGBoost
 $\rightarrow$ multi-threat evaluation (clean, unconstrained, PCFS,
-adaptive white-box) across two directions and two robustness axes.}
+adaptive score-based) across two directions and two robustness axes.}
 \label{fig:pipeline}
 \end{figure}
 
@@ -473,10 +485,18 @@ black-box}~\cite{ilyas2018blackbox} yang hanya mengakses skor keluaran model ---
 asumsi realistis dan tidak lebih lemah dari serangan khusus-pohon yang memerlukan
 akses ke struktur internal pohon. \emph{Keempat, netralitas antar-varian.} Karena
 saliency dihitung ulang dari \emph{model yang diserang itu sendiri} (bukan model
-pengganti), estimasi ini bersifat \emph{adaptive white-box} dan memberi setiap
-varian evaluasi terberat yang setara. Serangan khusus-pohon yang lebih kuat (mis.
-verifikasi robust-tree~\cite{chen2019robusttrees}) merupakan arah pelengkap;
-memakainya hanya akan \emph{memperkuat} temuan keruntuhan kami, bukan membaliknya. Secara khusus, serangan evasi pohon \emph{eksak} berbasis \emph{mixed-integer linear programming} (MILP)~\cite{kantchelian2016} memberikan batas serangan optimal; karena lebih kuat daripada FGSM/PGD \emph{finite-difference} kami, memakainya hanya akan \emph{memperdalam} keruntuhan pada arah UNSW$\rightarrow$CIC --- bukan memulihkannya --- sehingga \emph{finite-difference} \emph{adaptive} sudah memadai sebagai representasi \emph{worst-case} white-box untuk klaim kami.
+pengganti), estimasi ini bersifat \emph{adaptive score-based (model-aware)}: saliency
+dihitung dari \emph{skor keluaran} model yang diserang (tanpa akses struktur pohon
+internal), sehingga memberi setiap varian evaluasi score-based terberat yang setara,
+namun \emph{lebih lemah} daripada penyerang \emph{white-box} penuh yang mengakses
+struktur model. Kami memakai serangan \emph{finite-difference} adaptif ini sebagai
+\emph{evaluasi score-based yang kuat}, dan \emph{mengakui} bahwa serangan optimasi
+khusus-pohon yang eksak (mis. \emph{mixed-integer linear programming}, MILP;
+Kantchelian \emph{et al.}~\cite{kantchelian2016}, dan verifikasi robust-tree~\cite{chen2019robusttrees})
+merupakan \emph{batas-atas} yang lebih kuat. Penggunaannya hanya akan
+\emph{memperdalam} keruntuhan pada arah UNSW$\rightarrow$CIC, bukan membalikkannya ---
+sehingga klaim kami tetap defensif tanpa menyatakan \emph{finite-difference} sebagai
+\emph{worst-case white-box} global.
 
 \paragraph{Suite serangan berlapis-kekuatan (FGSM satu-langkah bukan satu-satunya).}
 Kami tekankan bahwa FGSM finite-difference di atas adalah \emph{satu} anggota dari
@@ -529,9 +549,7 @@ adversarial dan mendefinisikan penyerang melalui empat komponen.
 \emph{(i) Tujuan (goal):} membuat \emph{flow} serangan ($y=1$) diklasifikasikan
 sebagai benign ($\hat{y}=0$) --- serangan \emph{integritas} berjenis
 \emph{misklasifikasi terarah} (attack$\rightarrow$benign), bukan sebaliknya.
-\emph{(ii) Pengetahuan (knowledge):} skenario terberat kami adalah
-\emph{white-box}, yakni penyerang mengetahui model $m$ dan menghitung saliency
-langsung darinya (adaptive); kami juga membahas varian \emph{transfer/static} yang
+\emph{(ii) Pengetahuan (knowledge):} skenario terberat yang kami \emph{evaluasi} adalah \emph{adaptive score-based (model-aware)}, yakni penyerang mengetahui model $m$ dan menghitung saliency dari \emph{skor keluaran}-nya via \emph{finite-difference} (tanpa akses struktur pohon internal) --- lebih lemah daripada \emph{white-box} penuh; \emph{(Catatan terminologi:} sepanjang makalah, istilah \emph{adaptive score-based} menandai serangan \emph{model-aware} yang hanya mengakses \emph{skor keluaran} model via \emph{finite-difference}; ini \emph{bukan} \emph{white-box} penuh yang memerlukan akses ke struktur pohon internal, sehingga kami melaporkannya sebagai \emph{batas-bawah} score-based yang kuat atas kekuatan white-box sejati.\emph{)} kami juga membahas varian \emph{transfer/static} yang
 lebih lemah. \emph{(iii) Kemampuan (capability):} penyerang memodifikasi
 \emph{fitur alir} pada saat inferensi (\emph{test-time evasion}), \emph{tanpa}
 akses ke data latih maupun bobot model (tidak ada \emph{poisoning}). Perubahan
@@ -552,7 +570,7 @@ secara formal mengikuti taksonomi baku evaluasi adversarial.
 \begin{table}[h]
 \centering
 \caption{Formal threat model. The strongest setting we evaluate is
-\emph{adaptive white-box} evasion at inference time, restricted to a
+\emph{adaptive score-based} evasion at inference time, restricted to a
 protocol-consistent feature-space (PCFS) region with monotonic \emph{add-only}
 changes.}
 \label{tab:threatmodel}
@@ -561,7 +579,7 @@ changes.}
 \toprule
 Dimension & Setting \\
 \midrule
-Attacker knowledge   & white-box (adaptive) $\vert$ transfer/static (weaker, discussed) \\
+Attacker knowledge   & adaptive score-based, model-aware (our eval) $\vert$ full white-box / transfer-static (discussed) \\
 Attacker goal        & evasion (integrity, test-time) \\
 Target class         & malicious flows ($y{=}1$) \\
 Perturbation space   & feature-space (nine SFM features, z-score) \\
@@ -581,8 +599,7 @@ Sebuah serangan \emph{evasion} dicirikan oleh \emph{dua properti yang saling beb
 sehingga sebuah serangan dapat menggabungkan keduanya. \emph{Sumbu-1 (pengetahuan
 penyerang)} menentukan dari mana saliency dihitung: pada \textbf{\emph{transfer /
 static}}, saliency berasal dari \emph{model pengganti} sehingga penyerang tidak tahu
-model pertahanan (skenario lemah); sebaliknya pada \textbf{\emph{adaptive white-box}}
-saliency dihitung dari \emph{model yang diserang itu sendiri}, artinya penyerang
+model pertahanan (skenario lemah); sebaliknya pada ujung \textbf{\emph{model-aware}} (yang kami pakai, berbasis skor) saliency dihitung dari \emph{model yang diserang itu sendiri}, artinya penyerang
 mengetahui persis model pertahanan (skenario terburuk). \emph{Sumbu-2 (realisme)}
 menentukan seberapa \emph{konsisten} \emph{flow} hasil serangan pada ruang fitur:
 \textbf{\emph{unconstrained}} memperturbasi fitur bebas di ruang z-score dan dapat
@@ -597,11 +614,11 @@ jaminan bahwa \emph{flow} tersebut dapat benar-benar dikirim paket-demi-paket
 (\emph{deliverability}); itulah sebabnya kami sengaja \emph{tidak} memakai istilah
 ``\emph{functional-preserving}'' yang lazim menyiratkan realizability protokol penuh.
 Istilah \emph{adaptive PCFS} yang dipakai pada kolom Tabel~\ref{tab:p2main} adalah
-gabungan kedua sumbu --- serangan yang \textbf{sekaligus} \emph{adaptive white-box}
+gabungan kedua sumbu --- serangan yang \textbf{sekaligus} \emph{adaptive score-based}
 \textbf{dan} \emph{PCFS} --- yaitu skenario \emph{paling berat} sekaligus \emph{paling
 konsisten di ruang fitur} (bukan klaim paling realistis di jaringan). Kami
 mengevaluasi tiga rezim ($\epsilon \in \{0{,}05; 0{,}1; 0{,}2\}$): \emph{unconstrained}
-(batas atas), \emph{PCFS} (konsisten di ruang fitur), dan \emph{adaptive white-box}
+(batas atas), \emph{PCFS} (konsisten di ruang fitur), dan \emph{adaptive score-based}
 (saliency dari model target sendiri).
 
 \paragraph{Formulasi batasan PCFS (\emph{protocol-consistent feature-space}).}
@@ -697,11 +714,11 @@ tinggi (Bagian~\ref{sec:aws}).
 % ----- Tabel utama (diisi dari paper2_eval_results.json, notebook 12) -----
 \begin{table}[h]
 \centering
-\caption{MCC of four variants on two dimensions: cross-network generalization
+\caption{\emph{Preliminary single-run reference (notebook 12).} The definitive evaluation uses the five-seed protocol in Tables~\ref{tab:fewshot_seeds},~\ref{tab:multiattack} and~\ref{tab:significance}; this table is retained for continuity with the earlier pipeline. MCC of four variants on two dimensions: cross-network generalization
 (\emph{clean target} column) and robustness to \emph{adaptive PCFS
 (protocol-consistent feature-space) evasion} ($\epsilon=0.1$). The last column
 reports MCC when the model is attacked by an evasion that is simultaneously
-\emph{adaptive white-box} (saliency computed from the attacked model itself --- the
+\emph{adaptive score-based} (saliency computed from the attacked model itself --- the
 attacker knows the defense) and \emph{PCFS} (perturbation restricted to an
 arithmetically/semantically consistent feature-space region --- \emph{not} a claim
 of full packet-level deliverability), of strength $\epsilon=0.1$ (a shift of
@@ -729,6 +746,13 @@ Direction & Variant & clean (source) & clean (target) & adaptive evasion ($\epsi
 \bottomrule
 \end{tabular}
 \end{table}
+
+\noindent\emph{Catatan protokol.} Tabel~\ref{tab:p2main} adalah hasil \emph{single-run}
+(satu realisasi, notebook 12) yang dipertahankan sebagai rujukan pelengkap untuk
+kesinambungan dengan pipeline awal. \textbf{Hasil definitif makalah ini memakai protokol
+lima-\emph{seed}} (Tabel~\ref{tab:fewshot_seeds}, \ref{tab:multiattack},
+\ref{tab:significance}, \ref{tab:advmetrics}); seluruh klaim utama mengacu pada angka
+lima-\emph{seed} tersebut, bukan pada angka titik-tunggal di Tabel~\ref{tab:p2main}.
 
 % ----- Tabel clean-target MCC mean+-std (5 seed) — sensitivitas few-shot -----
 \begin{table}[h]
@@ -762,7 +786,7 @@ adv                   & $-0{,}049 \pm 0{,}203$ & $-0{,}079 \pm 0{,}052$ \\
 \centering
 \caption{Robustness curve: MCC of the four variants under attacks of \emph{increasing
 strength} --- one-step finite-difference FGSM vs iterative PGD
-(\emph{PCFS: protocol-consistent feature-space}, adaptive white-box) --- across three budgets
+(\emph{PCFS: protocol-consistent feature-space}, adaptive score-based) --- across three budgets
 $\epsilon\in\{0.05,0.1,0.2\}$. Reporting a single attack overstates robustness; a
 variant may look robust under FGSM yet collapse under PGD. Values are the mean over
 five seeds $\{13,42,101,202,303\}$ from \texttt{14\_reviewer\_experiments.ipynb}
@@ -930,6 +954,18 @@ konkret meski MCC absolut masih rendah. Kami mencatat bahwa ASR pada arah
 UNSW$\rightarrow$CIC tetap tinggi ($\ge0{,}74$), sehingga pertahanan penuh di arah
 ini masih terbuka.
 
+\noindent\emph{Selang kepercayaan ASR (lima \emph{seed}).} Agar penurunan ASR tidak
+disalahartikan sebagai efek acak, kami laporkan ASR sebagai rerata dengan selang
+kepercayaan $95\%$. Pada UNSW$\rightarrow$CIC: \emph{few-shot} FGSM
+$0{,}985\,[0{,}971;0{,}999]$ turun menjadi \emph{few-shot$+$adv}
+$0{,}872\,[0{,}801;0{,}943]$; dan PGD \emph{few-shot} $0{,}938\,[0{,}889;0{,}987]$
+menjadi \emph{few-shot$+$adv} $0{,}738\,[0{,}537;0{,}940]$. Selang \emph{few-shot}
+yang murni sempit menegaskan ASR tinggi yang stabil (keruntuhan nyata), sedangkan
+selang \emph{few-shot$+$adv} yang lebih lebar --- khususnya PGD --- kami laporkan apa
+adanya: perbaikan ASR \emph{ada} namun bervariasi antar-\emph{seed}, konsisten dengan
+status ``membantu tetapi belum menuntaskan'' pada arah ini. (Dihitung dari
+\texttt{reviewer\_raw.csv} per-\emph{seed}.)
+
 \paragraph{Metrik perturbasi \& validitas.} Melengkapi ASR, kami mengukur karakter
 serangan FGSM $\epsilon{=}0{,}1$ (artefak \texttt{perturbation\_metrics.csv}).
 Serangan bersifat \emph{sparse}: rata-rata hanya $\approx 2{,}6$--$5{,}4$ dari
@@ -1054,7 +1090,7 @@ walau pemartisian dan pemilihan $1\%$ kalibrasi diacak ulang tiap \emph{seed}.
 \emph{few-shot$+$adv} mempertahankan MCC target setara \emph{few-shot} murni
 ($0{,}696$ vs $0{,}650$ pada CIC$\rightarrow$UNSW; $0{,}897$ vs $0{,}897$ pada
 UNSW$\rightarrow$CIC) --- jadi menambah pertahanan evasion \emph{tidak}
-mengorbankan generalisasi. \emph{Ketiga, ketahanan terhadap adaptive white-box
+mengorbankan generalisasi. \emph{Ketiga, ketahanan terhadap adaptive score-based
 bersifat asimetris.} Pada arah CIC$\rightarrow$UNSW, \emph{few-shot$+$adv} adalah
 satu-satunya varian yang tangguh di \textbf{kedua} sumbu sekaligus: generalisasi
 tertinggi ($0{,}696$) sekaligus ketahanan \emph{adaptive PCFS evasion}
@@ -1070,12 +1106,12 @@ menahan perturbasi \emph{PCFS}; sebaliknya ketika CIC menjadi
 \emph{target} yang berdistribusi lebih sempit, penyerang \emph{adaptive} yang tahu
 model dapat menemukan arah evasion konsisten-fitur yang tetap menembus. Temuan ini
 menunjukkan \textbf{batas adversarial training pada model pohon di bawah
-adaptive white-box}, sekaligus \textbf{bukti positif} bahwa pada setidaknya satu
+adaptive score-based}, sekaligus \textbf{bukti positif} bahwa pada setidaknya satu
 arah, satu XGBoost ringan dapat tangguh di kedua sumbu sekaligus. Keduanya adalah
 kontribusi yang jujur: satu keberhasilan dan satu batas, keduanya memandu desain
 pertahanan berikutnya.
 
-\paragraph{Mengapa model pohon runtuh di bawah adaptive white-box: penjelasan
+\paragraph{Mengapa model pohon runtuh di bawah adaptive score-based: penjelasan
 teoretis.} Keruntuhan MCC ke $-0{,}025$ pada arah UNSW$\rightarrow$CIC bukan
 kebetulan, melainkan konsekuensi \emph{struktur batas keputusan} model pohon.
 XGBoost membangun batas keputusan sebagai \emph{fungsi tangga}
@@ -1135,8 +1171,8 @@ sketsa konseptual semata, melainkan mekanisme yang \emph{didukung angka}: karena
 lebar sel efektif $w$ pada target CIC jauh lebih kecil, jarak-ke-batas
 $d_{\text{boundary}}$ separuhnya, dan probabilitas melintas $P_{\text{cross}}$ jauh
 lebih besar, keruntuhan \emph{adaptive} pada
-UNSW$\rightarrow$CIC (Tabel~\ref{tab:p2main}) memperoleh penjelasan kausal yang
-terukur, bukan sekadar plausibel.
+UNSW$\rightarrow$CIC (Tabel~\ref{tab:p2main}) memperoleh penjelasan \emph{mekanistik} yang
+terukur (bukti mekanistik, bukan identifikasi kausal), bukan sekadar plausibel.
 
 % ----- Tabel bukti empiris mekanisme sel keputusan (diisi dari nb17) -----
 % CATATAN: angka diisi dari keluaran NYATA 17_decision_cell.ipynb
@@ -1290,7 +1326,7 @@ ketidakseimbangan kelas ekstrem} pada potongan trafik AWS
 telah kami tekankan (Tabel~\ref{tab:aws_unsw}) --- \emph{recall}/\emph{precision}
 lebih informatif: keduanya $\ge 0{,}99$ pada arah UNSW$\rightarrow$AWS dan
 $\ge 0{,}96$ pada CIC$\rightarrow$AWS untuk S1/S2, menandakan model terkalibrasi
-sebenarnya menangkap hampir semua serangan. \emph{Balanced accuracy} menegaskan hal ini: ia naik monotonik seiring kalibrasi (CIC$\rightarrow$AWS $0{,}500 \to 0{,}693 \to 0{,}773$; UNSW$\rightarrow$AWS $0{,}524 \to 0{,}505 \to 0{,}570$), memperlihatkan bahwa model terkalibrasi (S1/S2) sungguh bekerja di lapangan meski MCC absolut tertekan oleh ketidakseimbangan kelas. \emph{Ketiga, dan dilaporkan tanpa
+sebenarnya menangkap hampir semua serangan. \emph{Balanced accuracy} menegaskan hal ini: ia naik monotonik seiring kalibrasi (CIC$\rightarrow$AWS $0{,}500 \to 0{,}693 \to 0{,}773$; UNSW$\rightarrow$AWS $0{,}524 \to 0{,}505 \to 0{,}570$), memperlihatkan bahwa model terkalibrasi (S1/S2) sungguh bekerja di lapangan meski MCC absolut tertekan oleh ketidakseimbangan kelas. Secara spesifik, \emph{specificity} (dan karenanya penurunan FPR) juga meningkat seiring kalibrasi: CIC$\rightarrow$AWS \emph{specificity} $0{,}41\to0{,}58$ (FPR $0{,}59\to0{,}42$) dari S1 ke S2, dan UNSW$\rightarrow$AWS $0{,}01\to0{,}14$ (FPR $0{,}99\to0{,}86$) --- menegaskan bahwa \emph{adversarial training} pada S2 memperbaiki diskriminasi kelas-minoritas benign, bukan sekadar menaikkan recall. (Angka per-seed dari \texttt{aws\_stages\_raw.csv}.) \emph{Ketiga, dan dilaporkan tanpa
 dihaluskan:} ketahanan \emph{adaptive} (PCFS FGSM/PGD $\epsilon{=}0{,}1$) pada S2
 tetap \emph{lemah} di AWS (MCC $-0{,}04$ hingga $0{,}07$) --- konsisten dengan batas
 \emph{adversarial training} pada model pohon yang kami temukan di
@@ -1312,7 +1348,7 @@ dengan karya SFM~\cite{martono2024sfm} (pola dua-EC2: \emph{attacker} dan
 \texttt{ap-southeast-1}). Pipeline: tcpdump menangkap trafik pada antarmuka
 spesifik $\rightarrow$ NFStream mengekstrak sembilan fitur SFM $\rightarrow$ keempat
 model menskor tiap \emph{flow}, lalu perturbasi \emph{PCFS (protocol-consistent
-feature-space)} (adaptive white-box) diterapkan pada fitur nyata tersebut.
+feature-space)} (adaptive score-based) diterapkan pada fitur nyata tersebut.
 
 \paragraph{Rancangan PoC.} Dua rekaman dibangkitkan pada infrastruktur identik,
 mengikuti \emph{timeline} tujuh menit (benign $\rightarrow$ SSH brute-force
@@ -1440,7 +1476,7 @@ tersimpan di \texttt{detect\_\{clean,evasion\}\_\{CIC\_to\_UNSW,UNSW\_to\_CIC\}}
 Alih-alih memperkenalkan teknik baru, makalah ini mempelajari \emph{interaksi}
 antara generalisasi lintas-jaringan dan ketahanan \emph{evasion} adversarial pada
 satu XGBoost ringan berbasis-alir, dan mengevaluasinya secara jujur di bawah
-serangan yang \emph{valid protokol} dan \emph{adaptive white-box}.
+serangan yang \emph{valid protokol} dan \emph{adaptive score-based}.
 
 \paragraph{Pesan utama (dilaporkan tanpa dihaluskan).} Kekuatan makalah ini justru
 terletak pada \emph{kejujuran hasilnya}, bukan pada klaim pertahanan sempurna. Tiga
@@ -1453,23 +1489,27 @@ ASR tetap $\ge0{,}74$ di bawah suite berjenjang).
 menjamin ketahanan adversarial} --- kedua sumbu itu terpisah dan tidak otomatis
 saling mengangkat.
 \emph{(3) Interaksi antara kalibrasi domain dan ketahanan adversarial bersifat
-terarah/asimetris} --- ko-eksistensi keduanya hanya andal pada satu arah
-sumber$\rightarrow$target. Ketiga pernyataan ini, termasuk kegagalannya, adalah
+\textbf{bergantung-arah dan bergantung-kekuatan-serangan}} --- ia fungsi dari (arah,
+kekuatan serangan, pertahanan): di bawah PGD, \emph{adversarial training}
+\emph{merugikan} pada CIC$\rightarrow$UNSW ($0{,}524\rightarrow0{,}302$) namun
+\emph{membantu} pada UNSW$\rightarrow$CIC ($-0{,}124\rightarrow0{,}178$), sehingga
+ko-eksistensi dua-sumbu hanya andal pada konfigurasi arah-serangan tertentu. Ketiga pernyataan ini, termasuk kegagalannya, adalah
 kontribusi ilmiah yang dapat diuji dan memandu desain pertahanan berikutnya ---
 sejalan dengan prinsip bahwa evaluasi adversarial yang kredibel bertumpu pada model
 ancaman yang jelas, pengujian yang kuat, dan pelaporan batas metode secara jujur,
 bukan pada klaim ketangguhan menyeluruh.
 
 \noindent Kontribusi
-ilmiah utamanya adalah pengungkapan sebuah \emph{rezim ketangguhan asimetris}:
-kedua bentuk ketangguhan dapat hidup berdampingan, tetapi keberadaannya bersyarat
-pada arah sumber$\rightarrow$target dan dapat dijelaskan lewat geometri batas
-keputusan model pohon. Tiga kesimpulan:
+ilmiah utamanya adalah pengungkapan \emph{interaksi generalisasi--ketahanan yang
+bergantung-arah dan bergantung-kekuatan-serangan}: kedua bentuk ketangguhan dapat
+hidup berdampingan, tetapi keberadaannya bersyarat pada arah sumber$\rightarrow$target
+\emph{dan} pada kekuatan serangan (FGSM versus PGD) --- komponen asimetrinya dapat
+dijelaskan lewat geometri batas keputusan model pohon. Tiga kesimpulan:
 (i) generalisasi lintas-jaringan diperoleh melalui \emph{few-shot}, bukan
 \emph{adversarial training}; (ii) menambahkan \emph{adversarial training} di atas
 \emph{few-shot} tidak mengorbankan generalisasi, dan pada arah
 CIC$\rightarrow$UNSW menghasilkan satu model yang tangguh di kedua sumbu sekaligus;
-(iii) namun ketahanan terhadap \emph{adaptive white-box} bersifat asimetris dan
+(iii) namun ketahanan terhadap \emph{adaptive score-based} bersifat asimetris dan
 tetap runtuh pada arah UNSW$\rightarrow$CIC, menandai batas nyata
 \emph{adversarial training} pada model pohon; dan (iv) melalui validasi tiga-tahap
 pada trafik cloud AWS nyata (Bagian~\ref{sec:aws}), kalibrasi \emph{few-shot} $1\%$
