@@ -2,6 +2,16 @@
 
 ## NIDS yang Mengalibrasi-Diri: Pengenalan Jenis Serangan Baru secara Online (Open-Set + Class-Incremental) untuk Trafik Cloud
 
+> **JUDUL RESMI (final — JISA, strategi rilis berurutan Paper 1→2→3→4):**
+> - **Indonesia:** *NIDS yang Mengalibrasi-Diri: Pengenalan Jenis Serangan Baru secara
+>   Online melalui Open-Set Recognition dan Pembelajaran Class-Incremental untuk Trafik Cloud.*
+> - **English (naskah submit):** *Self-Calibrating NIDS: Online Discovery of Novel Attack
+>   Classes via Open-Set Recognition and Class-Incremental Learning for Cloud Traffic.*
+>
+> Judul lama (framing *concept-drift / few-shot*) di-pensiunkan; arah final = **open-set +
+> class-incremental**. Sudah disinkronkan ke `paper3.tex` (title, abstract, keywords).
+> Target jurnal: **JISA (Elsevier)**.
+
 > **PETA MEMORI (baca ini dulu).** Ini dokumentasi **Paper 3** (NIDS *closed-loop*:
 > deteksi jenis serangan **baru** saat runtime + penambahan kelas otonom tanpa lupa
 > kelas lama). Pasangannya: `aws/runbook.md` (operasi AWS Paper 3 — deployment jangka
@@ -60,25 +70,40 @@ Kebutuhan itu terurai menjadi empat komponen teknis:
 > + validasi**, bukan pada satu teknik tunggal. Daftar ini sengaja dibuat berperingkat
 > dan **boleh direvisi** saat eksperimen berjalan.
 
-**Tesis novelty (rumusan kerja):** kerangka *closed-loop* yang **menemukan, memberi
-label, dan mengintegrasikan jenis serangan yang belum pernah dilihat** secara **online**
-pada **trafik cloud nyata**, yang **memisahkan novelty sejati dari pergeseran distribusi
-lintas-jaringan**, dengan **gerbang promosi tahan-poisoning** yang menjamin tidak ada
-regresi pada kelas lama. Empat kata kunci yang sulit diklaim serentak oleh paper lain:
-**online + cloud-live + cross-network-aware + safe-promotion**.
+**Tesis novelty (FINAL — klaim utama dipertajam):** masalah ilmiah inti adalah
+**membedakan "serangan BENAR-BENAR BARU" dari sekadar "kelas LAMA pada jaringan
+berbeda"** — keduanya sama-sama *jauh dari centroid* sehingga detektor open-set naif
+rancu. Kami menyebutnya **novelty-vs-shift disentanglement**. Kontribusi utama Paper 3:
+sebuah kerangka yang **secara andal memisahkan kebaruan sejati dari pergeseran
+distribusi lintas-jaringan**, lalu **menemukan, melabeli, dan mengintegrasikan** kelas
+baru secara **online** di **trafik cloud nyata**, dengan **promosi tahan-poisoning**.
+
+> **Mengapa #2 (disentanglement) jadi klaim UTAMA, bukan "closed-loop":** komponen
+> closed-loop (open-set, HDBSCAN, class-incremental, replay) sudah lazim di literatur
+> (lihat `reference/ref1.md`: DOC++, OpenMax, SSF, CITADEL). Menjual "closed-loop"
+> berisiko dinilai *engineering/integration* oleh reviewer JISA. Sebaliknya,
+> **novelty-vs-shift** adalah pertanyaan ilmiah tajam yang **belum terjawab** dan
+> **hanya bisa kita jawab** karena kita memiliki SFM + bukti cross-network collapse
+> dari Paper 1. Closed-loop & cloud-live diposisikan sebagai **validasi** tesis ini,
+> bukan sebagai novelty itu sendiri. Empat kata kunci pembeda tetap:
+> **cross-network-aware (utama) + online + cloud-live + safe-promotion**.
 
 | # | Kontribusi | Kekuatan | Posisi |
 |---|---|---|---|
-| 1 | **Closed-loop penuh divalidasi pada trafik cloud LIVE** (serangan baru dijalankan nyata + ground-truth terjadwal), bukan replay CSV dataset | Paling sulit ditiru; menyambung kekuatan Paper 1 | **Utama** |
-| 2 | **Class-discovery di tengah cross-network distribution shift** — membedakan "flow ini KELAS BARU" vs "kelas LAMA dari jaringan berbeda" (keduanya sama-sama jauh dari centroid) | Paling bernilai ilmiah; tumbuh langsung dari temuan Paper 1 (MCC kolaps lintas-jaringan) | **Utama (kandidat)** |
+| 1 | **Closed-loop penuh divalidasi pada trafik cloud LIVE** (serangan baru dijalankan nyata + ground-truth terjadwal), bukan replay CSV dataset | Paling sulit ditiru; menyambung kekuatan Paper 1 | **Validasi tesis utama** (pembuktian, bukan klaim novelty) |
+| 2 | **Novelty-vs-shift disentanglement** — membedakan "KELAS BARU" vs "kelas LAMA dari jaringan berbeda" (keduanya jauh dari centroid) | Paling bernilai ilmiah; hanya mungkin dgn SFM+temuan cross-network Paper 1 | **KLAIM UTAMA (final)** |
 | 3 | **Guardrail promosi tahan-poisoning** — gerbang dua-kriteria (recall lama tak turun + baru naik) menolak update yang meracuni | Angle keamanan "safe autonomous adaptation" | Pendukung kuat |
 | 4 | **LLM sebagai auto-namer cluster** — menjembatani cluster statistik tak-berlabel → label semantik taksonomi serangan, diukur jujur vs oracle | Menjual untuk 2026, tapi berisiko dianggap gimmick bila overclaim | **Sekunder** |
 | 5 | **Efisiensi/deployability** — seluruh loop di atas XGBoost 9-fitur ringan (2,9 MB, ~439µs/flow, 1 vCPU) | Argumen kepraktisan edge | Pendukung |
 
-> **Keputusan yang masih terbuka (akan difinalisasi seiring eksperimen):**
-> - Apakah #2 (novelty vs shift) jadi kontribusi utama (butuh sub-eksperimen: sistem tak
->   boleh salah menganggap "kelas lama dari jaringan lain" sebagai "kelas baru").
-> - Apakah #4 (LLM) jadi kontribusi ber-eksperimen atau cukup *future work* di paper ini.
+> **Keputusan (DIFINALISASI):**
+> - **#2 (novelty-vs-shift) = klaim utama.** Butuh sub-eksperimen pembeda: sistem TIDAK
+>   boleh salah menandai "kelas lama dari jaringan lain" sebagai "kelas baru". Metrik:
+>   confusion antara {novel-true, shift-old} + akurasi pemisahan. Ini headline paper.
+> - **#4 (LLM) = sekunder/ber-eksperimen terbatas** (auto-namer, divalidasi vs oracle);
+>   bila meleset, tesis utama tetap berdiri. Bukan penentu acceptance.
+> - **#1 (closed-loop cloud-live) = kendaraan validasi** tesis #2, bukan dijual sebagai
+>   novelty mandiri.
 
 ---
 
@@ -126,6 +151,27 @@ Aset & temuan Paper 1 yang dipakai (semua nyata, lihat `../unswnb-15/documentati
   pada 9 fitur SFM (T1).
 - Taksonomi label CIC vs UNSW **berbeda** → perlu **skema label multi-class terpadu**
   (pemetaan kategori) — isu baru khusus multi-class (T1).
+
+### 2a. Hubungan sumber daya Paper 1 & Paper 2 → Paper 3 (dipakai ulang, bukan diulang)
+
+Paper 3 **berdiri di atas** aset nyata Paper 1 dan Paper 2. Tabel ini memetakan apa yang
+diwarisi dan bagaimana dipakai (agar tak menduplikasi + agar sitasi silang jelas).
+
+| Sumber daya | Dari | Status | Dipakai Paper 3 untuk |
+|---|---|---|---|
+| **9 fitur SFM** (`dur,spkts,dpkts,sbytes,dbytes,smean,dmean,sload,dload`) + validasi | Paper 1 | tervalidasi | Ruang fitur **sama** untuk model multi-class, open-set (Mahalanobis), & clustering. Tak ada pemetaan fitur baru. |
+| **Temuan cross-network collapse** (MCC→0 lintas-jaringan; shift terukur Wasserstein+domain-classifier) | Paper 1 (nb21) | nyata | **Novelty #2**: memisahkan "kelas BARU" vs "kelas LAMA dari jaringan lain" — keduanya jauh dari centroid. Fondasi langsung. |
+| **Multi-class XGBoost** `multi:softprob` (in-domain + cross-dataset kategori sepadan) | Paper 1 (nb24) | ada | **Titik awal T1** (latih ulang model *known* multi-class). |
+| **PoC drift detector** ($W_1$ sliding + CUSUM, stream CIC→UNS→AWS) | Paper 1 (nb30) | PoC jalan | **Titik awal T2/T4** (formalkan ambang; alarm drift = sinyal kelas baru mungkin muncul). |
+| **Audit satuan deployment** (`duration` = mikrodetik di NFStream) | Paper 1 (§18.3) | nyata | Gate sanity runtime AWS (Skenario C) — cegah mismatch scaler. |
+| **Infra AWS 2/3-EC2 + NFStream `extract9()` + boto3/SSM + S3** | Paper 1 & Paper 2 | terbukti | **Skenario C online**: deploy, ekstraksi 9-fitur live, injeksi serangan, ground-truth terjadwal. Pola operasional (boto3 bukan `aws s3 cp`, iface `ens5`) diwarisi. |
+| **XGBoost 9-fitur ringan** (2,9 MB, ~439 µs/flow, 1 vCPU — profil efisiensi) | Paper 1 (nb09) / dikutip Paper 2 | nyata | **Kontribusi #5**: seluruh closed-loop berjalan di backbone ringan (argumen deployability edge). *Wajib ukur ulang untuk multi-class.* |
+| **Pipeline & evaluasi adversarial (PCFS, 5-seed, ASR, pelaporan jujur)** | Paper 2 | matang | **Metodologi**: protokol evaluasi 5-seed + metrik + gaya pelaporan jujur diwarisi. Guardrail promosi tahan-**poisoning** menyambung angle keamanan Paper 2. |
+| **Model/scaler deployment + `deploy_meta`** (pola artefak S3) | Paper 1/2 | pola ada | Paper 3 bikin versi **multi-class** sendiri (`deploy_meta_mc.json` + centroid/inv-cov per-kelas untuk Mahalanobis). |
+
+> **Sitasi silang (naskah):** `\cite{paper1}` (SFM/few-shot, fondasi fitur & cross-network)
+> dan `\cite{paper2}` (adversarial, backbone ringan + metodologi evaluasi + angle keamanan)
+> sudah terpasang di `paper3.tex`. Rilis berurutan: Paper 3 submit setelah Paper 1 & 2.
 
 ---
 
@@ -333,8 +379,8 @@ meng-cluster-nya jadi kandidat kelas baru → `cluster_profile_<DS>.csv` jadi in
 | T3 | Open-set scorer: Mahalanobis (utama) + confidence (pembanding); kalibrasi $\tau$; ukur AUROC known-vs-unknown | **KODE DIBUAT** (`02_openset_scorer.ipynb`) — belum dirun di SageMaker |
 | T3b | Novelty clustering (HDBSCAN); uji "≈ M cluster" pada held-out; ukur homogeneity/ARI | **KODE DIBUAT** (`03_novelty_clustering.ipynb`) — belum dirun di SageMaker |
 | T4 | Pelabelan: oracle terjadwal + LLM auto-name dari profil statistik; ukur akurasi LLM vs oracle | **KODE DIBUAT** (`05_labeling_oracle_llm.ipynb`) — belum dirun di SageMaker |
-| T5 | Class-incremental update + replay memory; ablation dengan vs tanpa memory (forgetting) | Belum |
-| T6 | Guardrail promosi (recall lama tetap & baru naik); uji skenario poisoning/rollback | Belum |
+| T5 | Class-incremental update + replay memory; ablation dengan vs tanpa memory (forgetting) | **KODE DIBUAT** (`06_incremental_replay.ipynb`) — belum dirun |
+| T6 | Guardrail promosi (recall lama tetap & baru naik); uji skenario poisoning/rollback | **KODE DIBUAT** (`07_guardrail_promotion.ipynb`) — belum dirun |
 | T7 | **Skenario A** (held-out dalam dataset) end-to-end offline | Belum |
 | T8 | **Skenario B** (cross-dataset novelty) offline | Belum |
 | T9 | **Skenario C** (AWS online, 4 fase) — injeksi serangan baru live; ukur recall/MCC/FAR seiring waktu | Belum |
@@ -387,3 +433,49 @@ meng-cluster-nya jadi kandidat kelas baru → `cluster_profile_<DS>.csv` jadi in
 
 > Sumber kebenaran detail tetap notebook + `git log`. Dokumen ini pengingat tingkat-tinggi,
 > bukan pengganti kode.
+
+
+---
+
+## 12. Ringkasan Singkat (TL;DR — baca ini untuk gambaran cepat)
+
+**Judul (final, target JISA):**
+- ID: *NIDS yang Mengalibrasi-Diri: Pengenalan Jenis Serangan Baru secara Online melalui Open-Set Recognition dan Class-Incremental untuk Trafik Cloud.*
+- EN: *Self-Calibrating NIDS: Online Discovery of Novel Attack Classes via Open-Set Recognition and Class-Incremental Learning for Cloud Traffic.*
+
+**Masalah & ide inti:**
+- Model NIDS hanya kenal **N kelas serangan tetap**; jenis **baru** (zero-day) muncul saat runtime → model statis **buta** (recall kelas baru ≈ 0).
+- Solusi: kerangka **closed-loop** yang **menemukan → melabeli → mengintegrasikan** jenis serangan baru secara **online** di trafik cloud nyata.
+
+**Empat komponen teknis:**
+1. **Open-Set Recognition** — Mahalanobis di 9 fitur SFM (utama) + confidence (pembanding) → tandai *unknown*. Metrik: AUROC known-vs-unknown.
+2. **Novelty Clustering** — HDBSCAN kelompokkan *unknown* padat+persisten → kandidat kelas baru (target ≈ M cluster).
+3. **Pelabelan** — oracle terjadwal (utama, ground-truth lab) + **LLM auto-namer** dari profil statistik cluster (tambahan, divalidasi vs oracle).
+4. **Class-Incremental + Replay Memory + Guardrail** — tambah kelas tanpa *catastrophic forgetting*; promosi hanya bila recall lama tak turun & baru naik (anti-poisoning, rollback bila gagal).
+
+**Novelty (4 kata kunci sulit diklaim serentak):** *online + cloud-live + cross-network-aware + safe-promotion.* Kontribusi utama: (1) closed-loop divalidasi di trafik cloud LIVE; (2) membedakan "kelas baru" vs "kelas lama dari jaringan lain" (novelty vs distribution shift). Pendukung: guardrail anti-poisoning, LLM auto-namer, efisiensi edge.
+
+**Warisan Paper 1 & 2 (dipakai ulang, bukan diulang — lihat §2a):**
+- Paper 1: 9 fitur SFM, temuan cross-network collapse (nb21), multi-class XGBoost (nb24), drift PoC (nb30), audit satuan µs, infra AWS/NFStream.
+- Paper 2: backbone XGBoost 9-fitur ringan, metodologi evaluasi 5-seed + pelaporan jujur, angle keamanan (guardrail tahan-poisoning).
+
+**Tiga skenario eksperimen:**
+- **A** Held-out classes dalam 1 dataset (PoC terkontrol).
+- **B** Cross-dataset novelty (lintas-jaringan, lebih menantang).
+- **C** AWS online 4 fase (puncak): serangan baru dijalankan live + validasi silang **Amazon GuardDuty** (pembanding, bukan ground-truth).
+
+**Status (per dokumen ini):**
+- **Kode DIBUAT, belum dirun di SageMaker:** T1 (`01` known multi-class), T2 (`04` drift), T3 (`02` open-set), T3b (`03` clustering), T4 (`05` labeling oracle+LLM).
+- **Kode DIBUAT (belum dirun):** T5 (`06` incremental+replay), T6 (`07` guardrail).
+- **Belum dikerjakan:** T7–T9 skenario A/B/C, T9b GuardDuty, T10 naskah.
+- Sebagian fondasi sudah ada di Paper 1 (nb21/24/30) → Paper 3 **melanjutkan, bukan mengulang**.
+
+**Risiko dicatat terbuka (diuji, bukan diasumsikan):**
+1. XGBoost overconfident → open-set murni-confidence bisa lemah (Mahalanobis = basis).
+2. Cluster ≠ selalu 1 jenis serangan (bisa menyatu/pecah).
+3. LLM dari 9 angka statistik terbatas → dibatasi ke penamaan cluster + validasi oracle.
+
+**Prinsip mutlak:** semua angka dari eksperimen nyata & reproducible — **tidak dikarang**; placeholder sampai dirun.
+
+**Strategi rilis:** JISA (Elsevier), berurutan **Paper 1 → 2 → 3 → 4**; Paper 3 submit setelah Paper 1 & 2.
+
