@@ -1056,7 +1056,15 @@ positif berarti} ($0{,}276$), sedangkan PGD-AT ($-0{,}002$), Gaussian ($0{,}037$
 rand-smoothing ($-0{,}097$) gagal; namun di bawah PGD seluruh pertahanan tetap
 $\le 0{,}21$ dan sebagian negatif --- menegaskan arah ini tetap masalah terbuka.
 Singkatnya, \emph{few-shot$+$adv} berbasis FGSM menawarkan keseimbangan terbaik antara
-generalisasi, ketahanan FGSM, dan biaya pelatihan, tanpa klaim dominasi universal.
+generalisasi, ketahanan FGSM, dan biaya pelatihan, tanpa klaim dominasi universal. Yang paling menentukan: bahkan \emph{PGD-AT} --- \emph{adversarial training}
+terkuat dalam pembanding kami --- tetap runtuh di bawah PGD pada arah
+UNSW$\rightarrow$CIC (MCC $-0{,}330$). Ini mempertegas bahwa kegagalan pertahanan pada
+arah tersebut \textbf{bukan sekadar keterbatasan FGSM atau PGD-AT}, melainkan
+mencerminkan \textbf{batas fundamental ansambel pohon} (\emph{tree ensembles}) dalam
+membentuk batas keputusan mulus (\emph{smooth decision boundary}) pada domain target
+berdistribusi sempit: betapapun kuat serangan-latihnya, batas keputusan tetap berupa
+fungsi tangga sejajar-sumbu sehingga sel keputusan pada domain bervarians-rendah tetap
+terlalu tipis untuk menahan perturbasi \emph{adaptive} yang valid.
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.8\linewidth]{figure-p2/paper2_CIC_to_UNSW.png}

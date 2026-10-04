@@ -1022,7 +1022,14 @@ whereas PGD-AT ($-0.002$), Gaussian ($0.037$), and rand-smoothing ($-0.097$) fai
 yet under PGD all defenses stay $\le 0.21$ and some are negative --- confirming this
 direction remains an open problem. In short, FGSM-based \emph{few-shot$+$adv} offers
 the best balance of generalization, FGSM robustness, and training cost, without a
-claim of universal dominance.
+claim of universal dominance. Most tellingly, even \emph{PGD-AT} --- the strongest \emph{adversarial training}
+in our comparison --- still collapses under PGD on the UNSW$\rightarrow$CIC direction
+(MCC $-0.330$). This underscores that the defense failure in that direction is
+\textbf{not merely a limitation of FGSM or PGD-AT}, but reflects a \textbf{fundamental
+limit of tree ensembles} in forming a \emph{smooth decision boundary} on a narrowly
+distributed target domain: however strong the training attack, the boundary remains an
+axis-parallel staircase, so decision cells on a low-variance domain stay too thin to
+resist valid \emph{adaptive} perturbations.
 
 \begin{figure}[h]
 \centering
