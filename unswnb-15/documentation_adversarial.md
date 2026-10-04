@@ -202,7 +202,7 @@ bekerja di cloud nyata). MCC absolut rendah karena imbalance ekstrem (17.620 att
 AWS tetap lemah (MCC −0.04..0.07, ASR CIC 0.835) → few-shot memulihkan generalisasi,
 bukan evasion. Dilaporkan apa adanya.
 
-## H2. Hasil 7 — Bukti empiris mekanisme "sel keputusan sempit" (nb17)
+## H2. Hasil 6 — Bukti empiris mekanisme "sel keputusan sempit" (nb17)
 
 Mengubah hipotesis geometri batas keputusan pohon dari spekulatif jadi terukur, pada
 model few-shot, data uji target. (`decision_cell.csv`, grid pencarian Δε=0.002)
@@ -281,24 +281,19 @@ Data sumber (path SageMaker): `../../CICDDoS2018/data/cleaned_100.pkl`,
 |---|---|---|---|
 | `11_adv_fewshot_pipeline.ipynb` | INTI: latih 4 varian × 2 arah; simpan model+scaler ke S3 `unsw-far/paper2/` | paper2_pipeline_meta.json, model+scaler | fondasi semua + deploy AWS |
 | `12_adv_evaluation.ipynb` | Evaluasi clean/evasion/adaptive 4 varian (single-run) | paper2_eval_results.json | `tab:p2main` |
-| `13_rangkuman_adversarial.ipynb` | Rangkuman + AWS 2-EC2 (sel 5b) | ringkasan, aws JSON | `tab:aws`, `tab:aws_unsw` |
+| `13_rangkuman_adversarial.ipynb` | Rangkuman/render untuk paper & slide (7 blok hasil, gambar Inggris; tak menulis artefak) — anatomi per-sel di **Bagian Q** | — (memuat ulang CSV/JSON nb11–17) | merender ulang semua tabel hasil |
 | `14_reviewer_experiments.ipynb` | Revisi reviewer A2/A3/A5/B5 + #8/#10/#14 | reviewer_agg, multiattack, significance, perturbation_metrics, dataset_stats | `tab:multiattack`, `tab:fewshot_seeds`, `tab:significance`, `tab:advmetrics`, `tab:dataset` |
 | `15_aws_fewshot_calibration.ipynb` | Validasi 3-tahap AWS (offline) | aws_stages_agg.csv | `tab:aws_stages` |
 | `16_defense_baselines.ipynb` | Pembanding pertahanan (PGD-AT/Gaussian/rand-smoothing) | defense_baselines_agg.csv | `tab:defense_baselines` ✅ TERISI |
 | `17_decision_cell.ipynb` | Bukti empiris narrow-cell (kappa/w/d_boundary/crossing) | decision_cell.csv | `tab:decisioncell` ✅ TERISI (3/4 ukuran mendukung) |
 
 
-> **Catatan gambar nb13:** semua teks di dalam figur (judul, label sumbu, legend,
-> diagram alur) memakai **Bahasa Inggris** agar langsung dipakai untuk paper & slide;
-> teks penjelasan markdown tetap Bahasa Indonesia. nb13 kini memuat **7 blok hasil**
-> (termasuk bukti sel-keputusan nb17).
-
 ## M. Status revisi reviewer
 
 | # | Isu | Status |
 |---|---|---|
-| 1 | Adaptive white-box lemah (butuh PGD/suite) | ✅ suite FGSM→PGD→AutoAttack, tab:multiattack |
-| 3 | Novelty = kombinasi komponen | ✅ reframe jadi temuan interaksi/rezim asimetris |
+| 1 | Adaptive white-box lemah (butuh PGD/suite) | ✅ suite FGSM→PGD→AutoAttack, tab:multiattack · *terminologi diperhalus di M.2-R1* |
+| 3 | Novelty = kombinasi komponen | ✅ reframe jadi temuan interaksi · *dipertajam di M.2-R3 jadi* direction × attack-strength |
 | 5 | "functional-preserving" over-claim | ✅ diganti PCFS di seluruh paper |
 | 6 | AWS belum validasi pipeline | ✅ nb15 validasi 3-tahap, tab:aws_stages |
 | 7 | Leakage few-shot 1% | ✅ D_calib⊔D_test eksplisit + 5 seed |
@@ -316,12 +311,35 @@ Data sumber (path SageMaker): `../../CICDDoS2018/data/cleaned_100.pkl`,
 
 Belum pernah muncul dari reviewer: #2, #4, #15, #16.
 
+### M.2 Revisi reviewer putaran 2 (Major Revision, nilai 7,8/10)
+
+Reviewer menilai *core scientific story* sudah ada; rekomendasi **Major Revision**
+(bukan reject). Lima poin merah (wajib) + dua poin saran-data — SEMUA sudah
+dikerjakan di **kedua** naskah (ID `paper2-adversarial.tex` + EN `paper2-english.tex`),
+tanpa mengubah satu angka hasil pun.
+
+| Poin | Isi | Status |
+|---|---|---|
+| R1 (merah) | Terminology "adaptive white-box" ambigu (Tabel 3 = score-based) | ✅ diganti **adaptive score-based (model-aware)** utk serangan kita; "white-box" dipertahankan hanya utk taksonomi; +catatan terminologi |
+| R2 (merah) | Klaim "worst-case white-box" terlalu kuat | ✅ diturunkan: finite-diff = *strong score-based eval*; MILP/tree-specific = *upper bound* |
+| R3 (merah) | Thesis seharusnya **direction × attack-strength**, bukan sekadar asimetri | ✅ di-reframe di abstract, kontribusi, kesimpulan; contoh PGD: adv *merugikan* CIC→UNSW (0,524→0,302), *membantu* UNSW→CIC (−0,124→0,178) |
+| R4 (merah) | Jangan klaim "causal" pada decision-cell | ✅ "kausal" → **mekanistik** (bukti mekanistik, bukan identifikasi kausal) |
+| R5 (merah) | Pisahkan hasil preliminary (single-run) dari final | ✅ `tab:p2main` di-demote jadi *preliminary reference*; hasil definitif = 5-seed (+catatan protokol) |
+| P7 (saran) | Tambah confidence interval ASR | ✅ CI 95% dari `reviewer_raw.csv` per-seed (mis. UNSW→CIC fs+adv PGD 0,738 [0,537;0,940]) |
+| P8 (saran) | Tambah specificity/FPR (& PR-AUC) di AWS | ✅ specificity/FPR dari `aws_stages_raw.csv` per-seed (naik S1→S2); PR-AUC ditunda (butuh skor mentah) |
+| P6 (saran) | Tree-specific strong attack (MILP/AutoAttack) | ⏸️ **DITUNDA** (berat, butuh SageMaker + implementasi serangan baru; posisi sudah defensible stlh R1/R2 — hanya dikerjakan bila reviewer memaksa) |
+
+> **Catatan sinkronisasi EN↔ID.** Sejak putaran 2, **kedua naskah setara penuh**:
+> `paper2-adversarial.tex` (ID, desimal koma) dan `paper2-english.tex` (EN, desimal
+> titik, elsarticle authoryear, highlights di `highlights-p2.tex`). Setiap revisi
+> diterapkan ke keduanya. Angka identik; hanya format desimal & bahasa yang beda.
+
 ## N. Tugas tersisa
 
 1. **[✅] `tab:decisioncell` TERISI** dari `decision_cell.csv` (nb17, grid Δε=0.002).
    Hasil: `w^CIC < UNSW` ✓, `d_boundary^CIC < UNSW` ✓ (0.002 vs 0.004),
    `P_cross^CIC > UNSW` ✓; `kappa^CIC < UNSW` ✗ (5.76 > 5.00) — narasi direvisi jujur
-   (3 ukuran langsung mendukung, κ tak-searah). Versi EN belum diisi (fokus ID dulu).
+   (3 ukuran langsung mendukung, κ tak-searah). **Versi EN sudah diisi & sinkron.**
 2. **[⏳] Polishing prioritas C:** abstract (padatkan, cerminkan angka final), reference
    formatting, nomenklatur/notasi. Paling akhir sebelum submit.
 3. **Compile final di Overleaf** + cek tak ada error, tabel muat, gambar tampil.
