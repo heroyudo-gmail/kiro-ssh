@@ -10,7 +10,7 @@
 > - **Bagian II — Memori Operasional** (K–P): peta notebook↔tabel, status, tugas,
 >   S3, konvensi.
 >
-> **STATUS: PERENCANAAN (Fase 0).** Belum ada eksperimen; semua angka hasil `[TBD]`.
+> **STATUS: RUN-1 SELESAI (hasil nyata ada) — HIPOTESIS TIDAK TERDUKUNG; PERBAIKAN METODE SEDANG BERLANGSUNG.** Lihat Bagian D–J untuk angka & diagnosa run-1.
 > **JANGAN mengarang angka** — placeholder `[TBD]`/`--` sampai hasil nyata.
 >
 > **Prasyarat rilis:** Paper 4 di-submit SETELAH Paper 1 (SFM) accepted. Kita
@@ -201,13 +201,56 @@ hasil kalibrasi nyata di Fase 1 (jangan dikunci sebelum diuji).
 
 ## D–J. Hasil (BELUM ADA — placeholder, isi dari artefak nyata)
 
-- **D. Hasil 1 — Centralized vs Local-only vs Federated-SFM (MCC, 5 seed).** [TBD]
-- **E. Hasil 2 — Ablasi: FL dengan vs tanpa SFM (bukti SFM = enabler).** [TBD]
-- **F. Hasil 3 — Pengaruh non-IID / jumlah klien (Skenario-B).** [TBD]
-- **G. Hasil 4 — FedAvg vs FedProx + biaya komunikasi (rounds/bytes vs MCC).** [TBD]
-- **H. (opsional) Hasil 5 — validasi AWS / jembatan XGBoost↔MLP.** [TBD]
-- **I. Grafik** (`figure-fed/`, teks figur Inggris). [TBD]
-- **J. Kesimpulan (pesan utama, hasil campuran jujur).** [TBD]
+### RUN-1 (SageMaker, SEED 13/42/101/202/303) — HASIL NYATA & DIAGNOSA
+
+> **Peringatan kejujuran:** angka di bawah adalah hasil eksperimen NYATA run pertama
+> (CSV di S3 `unsw-far/federated/results/`). Hasil ini **TIDAK mendukung hipotesis
+> utama**. Didokumentasikan apa adanya; perbaikan metode sedang dikerjakan (lihat akhir bagian).
+
+**D. Hasil 1 — Centralized / Local-only / Federated-SFM (MCC).** Dari `fedavg_sfm.csv`
++ `fed_agg.csv` (5 seed). GLOBAL-test:
+- Centralized (upper bound): MCC **0,646**.
+- Local-only (rerata 5 seed, model terbaik antar-klien): MCC **0,237** (sb 0,024).
+- Federated-SFM (rerata 5 seed): MCC **0,175** (sb 0,048).
+- **H2 TERBALIK:** federated < local-only, selisih −0,062, **signifikan** (t-test p=0,015;
+  Wilcoxon p=0,0625). Lihat `significance_fed.csv`.
+- Per-domain federated: CIC-test 0,566 (baik) vs **UNSW-test 0,018** (nyaris gagal).
+
+**E. Hasil 2 — Ablasi SFM (H1).** Dari `ablation_sfm.csv`, GLOBAL-test MCC:
+- Federated-SFM (9 selaras): **0,217**; Naif-1 (by-position): **0,201** — selisih hanya
+  0,016 (praktis setara). **H1 kuantitatif LEMAH.** Naif-2 (irisan nama) = kosong →
+  argumen kualitatif (federasi mentah tak terbentuk) MASIH berlaku, tapi klaim utama lemah.
+
+**F. Hasil 3 — non-IID / jumlah klien (H3).** Dari `noniid_scaling.csv`. Pada
+alpha=1,0 tren wajar (K naik → MCC turun: 0,620 → 0,510). Pada alpha=0,1 ada anomali
+K=6 (MCC 0,267) akibat satu klien skew ekstrem. H3 **sebagian terdukung**.
+
+**G. Hasil 4 — FedAvg vs FedProx + biaya.** Dari `fedprox_comm.csv`. FedProx
+(mu 0,001–0,1) ~ identik FedAvg (MCC_final 0,267), rounds-to-converge 12–13,
+2.753 param, 132 KB/round. FedProx **tak membantu** pada setting ini.
+
+**Jembatan backbone (nb02).** Dari `bridge_centralized.csv`, GLOBAL-test: XGBoost
+**0,896** vs MLP **0,766** — gap BESAR (MLP under-trained; ConvergenceWarning nb02 nyata).
+
+**DIAGNOSA AKAR MASALAH (run-1):**
+1. **Ketimpangan ukuran ekstrem** — CIC train 1.136.282 vs UNSW 82.332 (rasio 14:1).
+   FedAvg (bobot n_k/n) → model global didominasi CIC → UNSW-test kolaps (0,018). *Penyebab utama H2 terbalik.*
+2. **Ketimpangan label** — CIC pos-rate 0,17 vs UNSW 0,55–0,68.
+3. **MLP under-trained** — lr/epoch kurang; MLP << XGBoost.
+4. **Baseline local-only "best"** murah hati (ambil MCC terbaik antar-klien).
+
+**RENCANA PERBAIKAN RUN-2 (sedang dikerjakan):**
+- nb01: **subsample CIC train stratified ~100k** (jaga pos-rate 0,17) → rasio ~1,2:1, FedAvg adil.
+- nb02 & fed_node: naikkan kapasitas/iterasi MLP (max_iter/early_stopping; lr/epoch) agar konvergen.
+- Re-run nb01→nb07; isi angka run-2 di sini (JANGAN hapus temuan run-1 — simpan sebagai jejak jujur).
+
+**I. Grafik** (`figure-fed/`, teks figur Inggris). [TBD — dibuat dari CSV run final].
+
+**J. Kesimpulan sementara (jujur).** Pada run-1, FedAvg naif di ruang SFM dengan dua
+klien sangat timpang (ukuran 14:1 + distribusi label beda jauh) menghasilkan model
+global yang **kalah dari local-only** dan ablasi SFM yang **tak tegas**. SFM tampak
+**perlu tetapi belum cukup** tanpa penanganan ketidakseimbangan klien. Keputusan arah:
+perbaiki keseimbangan klien + kapasitas model, lalu re-run sebelum menilai ulang hipotesis.
 
 ---
 
@@ -290,6 +333,53 @@ Kredensial user `hero` (akun 232032302717), region `ap-southeast-1`.
 - Dua naskah: `.tex` ID (kerja) + `-english.tex` (submit JISA, elsarticle authoryear).
 - Angka SOTA dari paper lain (mis. "98.5%") HANYA sebagai related-work; hasil kita
   wajib dari eksperimen nyata.
+
+
+## Q. Penilaian Peluang Diterima di JISA (JUJUR, kondisi run-1)
+
+> Ditulis apa adanya setelah run-1. Bukan motivasi kosong — pijakan untuk keputusan.
+> Diperbarui tiap run; run-1 di bawah ini.
+
+### Q.1 Status kelayakan saat ini: RENDAH (dengan hasil run-1 apa adanya)
+JISA (Journal of Information Security and Applications, Elsevier, Q1) menuntut
+kontribusi yang jelas + hasil yang mendukung klaim. Pada run-1:
+- **Klaim utama (H1, SFM=enabler) TIDAK terbukti kuantitatif** — SFM 0,217 vs naif 0,201 (Δ=0,016).
+- **Klaim pendukung (H2, FL menutup gap) TERBALIK & signifikan** — federated (0,175) < local-only (0,237), p=0,015.
+- Yang tersisa: argumen kualitatif (irisan nama kosong) + jembatan backbone. **Tidak cukup untuk Q1.**
+
+**Kesimpulan jujur:** jika disubmit apa adanya sekarang, **kemungkinan besar ditolak (desk-reject / major-reject)**.
+
+### Q.2 Mengapa ini BISA diperbaiki (akar jelas, bukan cacat fatal)
+Hasil buruk run-1 bukan karena ide SFM salah, melainkan karena **setup eksperimen
+cacat**: ketimpangan klien 14:1 (CIC 1,14 jt vs UNSW 82 rb) membuat FedAvg didominasi
+CIC → UNSW kolaps. Ini masalah METODE, bukan masalah KONSEP. Dapat diperbaiki
+(subsample seimbang + kapasitas MLP). Diagnosa lengkap di Bagian D–J.
+
+### Q.3 Skenario setelah RUN-2 (perbaikan) — realistis, tiga kemungkinan
+- **Skenario BAIK (peluang JISA naik ke sedang–tinggi):** setelah seimbang, federated-SFM
+  ≥ local-only pada GLOBAL-test DAN ablasi SFM jadi tegas (SFM ≫ naif). Maka klaim
+  'SFM enabler + FL menutup gap privasi' terdukung → paper layak JISA.
+- **Skenario SEDANG (peluang JISA sedang, atau turun ke venue Q2):** federated jadi
+  SETARA local-only (tak kalah) + ablasi SFM moderat. Masih publishable, framing jadi
+  'SFM memungkinkan federasi lintas-skema dgn performa setara, menjaga privasi'.
+- **Skenario KURANG (JISA kecil, pindah venue / ubah framing):** federated tetap di
+  bawah. Maka jujur jadikan **studi temuan**: 'SFM perlu tapi tak cukup; FedAvg naif
+  gagal pada klien timpang — pelajaran + arah mitigasi'. Tetap kontribusi, tapi bukan Q1.
+
+### Q.4 Yang HARUS ada agar kompetitif di JISA (checklist menuju terbit)
+1. **Hasil run-2 mendukung** minimal skenario BAIK/SEDANG (data nyata, bukan dipaksakan).
+2. **Backbone adil** — MLP konvergen (bukan under-trained) agar perbandingan sah.
+3. **Baseline & ablasi tegas** — SFM vs naif menunjukkan beda bermakna + uji signifikansi.
+4. **Analisis non-IID** rapi (H3) + biaya komunikasi (sudah ada kerangkanya).
+5. **(Nilai tambah kuat) validasi deployment nyata 3-EC2** — bukti klaim privasi, bukan simulasi.
+6. **Posisi vs SOTA FL-NIDS** jelas (41 referensi sudah siap); novelty 'interoperabilitas
+   skema-fitur' belum banyak digarap — ini kekuatan bila hasilnya mendukung.
+7. **Prasyarat rilis:** Paper 1 (SFM) accepted dulu (fondasi sitasi).
+
+### Q.5 Keputusan arah (disepakati)
+Lanjut **perbaikan metode → run-2** (subsample CIC ~100k + kapasitas MLP), nilai ulang
+berdasar DATA run-2, lalu tentukan framing final & kelayakan JISA. **Tidak** menyubmit
+hasil run-1. **Tidak** mengarang/menyetel angka demi lolos. Kejujuran data mutlak.
 
 
 ---
