@@ -241,8 +241,8 @@ diwarisi dari `unswnb-15/notebooks/01,02,05`. JANGAN mengarang angka.
 | 3 | Arsitektur = MLP pada 9 fitur SFM + jembatan XGBoost | ✅ diputuskan (Bagian B) |
 | 4 | Rapikan daftar referensi FL → federated_refs_clean.md (41 unik) | ✅ |
 | 5 | Implementasi partisi + baseline (Fase 1) | ◐ notebook DISUSUN (nb01,nb02); eksekusi SageMaker menunggu |
-| 6 | Eksperimen federated inti (Fase 2) | ◐ infra+skrip+runbook DISUSUN; eksekusi menunggu |
-| 7 | Validasi 5-seed + naskah ID → EN (Fase 3) | ⏳ |
+| 6 | Eksperimen federated inti (Fase 2) | ◐ infra+skrip+runbook + nb03(FedAvg)+nb04(ablasi SFM) DISUSUN; eksekusi menunggu |
+| 7 | Validasi 5-seed + naskah ID → EN (Fase 3) | ◐ nb05–nb07 DISUSUN; eksekusi + naskah menunggu |
 
 ## N. ROADMAP BERTAHAP (langkah kerja)
 
@@ -262,13 +262,13 @@ diwarisi dari `unswnb-15/notebooks/01,02,05`. JANGAN mengarang angka.
 - [~] Infra DISUSUN: `aws/fed-vpc-3ec2-public.yaml` (3 EC2 publik, no-NAT, SG ketat, SSM) +
       `aws/fed_node.py` (aggregator+client, MLP numpy, bobot via S3) + `aws/fed-runbook.md`.
       Eksekusi SageMaker/AWS menunggu (Fase 1 harus jalan dulu utk isi data S3).
-- [ ] nb03: FedAvg di ruang SFM (skenario-A) + centralized/local sebagai batas.
-- [ ] nb04: ablasi FL dengan vs tanpa SFM → **bukti utama H1**.
-- [ ] nb05: skenario-B K klien non-IID → H3.
-- [ ] nb06: FedProx + kurva biaya-komunikasi → H2/efisiensi.
+- [~] nb03: `03_fedavg_sfm.ipynb` DISUSUN (siap jalan) — FedAvg ruang SFM skenario-A + centralized/local sebagai batas; reuse logika `aws/fed_node.py` (simulasi ≡ EC2). Eksekusi menunggu nb01.
+- [~] nb04: `04_ablation_sfm.ipynb` DISUSUN (siap jalan) — ablasi FL dengan vs tanpa SFM (naif by-position & name-intersection) → **bukti utama H1**. Eksekusi menunggu nb01 + data mentah.
+- [~] nb05: `05_noniid_scaling.ipynb` DISUSUN — skenario-B K klien non-IID (Dirichlet alpha) → H3; reuse `aws/fed_node.py`. Eksekusi menunggu nb01.
+- [~] nb06: `06_fedprox_comm.ipynb` DISUSUN — FedAvg vs FedProx (mu) + biaya komunikasi (bytes/round, rounds-to-converge) → H2/efisiensi; FedProx via `fed_node.py` (mu>0). Eksekusi menunggu nb01.
 
 **Fase 3 — Validasi & naskah**
-- [ ] nb07: 5-seed + CI + uji signifikansi (pola Paper 2).
+- [~] nb07: `07_multiseed_ci.ipynb` DISUSUN — 5-seed {13,42,101,202,303} + rerata/std/CI95 + uji signifikansi (t-test & Wilcoxon) federated-SFM vs local-only (pola Paper 2). Eksekusi menunggu nb01.
 - [ ] (opsional) validasi AWS: deploy model global federated, ukur di trafik nyata.
 - [ ] Tulis `paper-federated.tex` (ID) → `paper-federated-english.tex` (EN, elsarticle).
 - [ ] Gambar `figure-fed/` teks Inggris; highlights terpisah.
