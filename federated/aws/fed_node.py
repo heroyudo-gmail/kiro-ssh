@@ -6,9 +6,9 @@
 #   client:     tunggu global_<t>.npz -> latih lokal E epoch -> tulis client_<id>_<t>.npz
 #
 # Jalankan via SSM pada tiap EC2:
-#   python3 fed_node.py --role aggregator --run R1 --clients cic,unsw --rounds 50 --mu 0.0
-#   python3 fed_node.py --role client --client-id cic  --run R1 --rounds 50 --local-epochs 1
-#   python3 fed_node.py --role client --client-id unsw --run R1 --rounds 50 --local-epochs 1
+#   python3 fed_node.py --role aggregator --run R2 --clients cic,unsw --rounds 100 --mu 0.0
+#   python3 fed_node.py --role client --client-id cic  --run R2 --rounds 100 --local-epochs 5
+#   python3 fed_node.py --role client --client-id unsw --run R2 --rounds 100 --local-epochs 5
 #
 # Data klien (dari nb01) diharapkan di S3 unsw-far/federated/data/<id>/<id>_train.npz
 # ARG --mu > 0 mengaktifkan FedProx (proximal term).
@@ -55,8 +55,8 @@ def wait_for(key, timeout=1800, poll=5):
         time.sleep(poll)
     return False
 
-# ---------- Tiny MLP (numpy): 9 -> 64 -> 32 -> 1 (sigmoid) ----------
-LAYERS = [9, 64, 32, 1]
+# ---------- Tiny MLP (numpy): 9 -> 128 -> 64 -> 1 (sigmoid) ----------
+LAYERS = [9, 128, 64, 1]
 def init_weights(seed=42):
     rng = np.random.RandomState(seed); W=[]
     for a,b in zip(LAYERS[:-1], LAYERS[1:]):
@@ -143,9 +143,9 @@ if __name__=="__main__":
     ap.add_argument("--run", default="R1")
     ap.add_argument("--clients", default="cic,unsw", help="aggregator: comma list of client ids")
     ap.add_argument("--client-id", default="cic")
-    ap.add_argument("--rounds", type=int, default=50)
-    ap.add_argument("--local-epochs", type=int, default=1)
-    ap.add_argument("--lr", type=float, default=1e-3)
+    ap.add_argument("--rounds", type=int, default=100)
+    ap.add_argument("--local-epochs", type=int, default=5)
+    ap.add_argument("--lr", type=float, default=3e-3)
     ap.add_argument("--mu", type=float, default=0.0, help=">0 enables FedProx")
     ap.add_argument("--seed", type=int, default=42)
     a=ap.parse_args()
