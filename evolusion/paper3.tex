@@ -24,10 +24,13 @@
 \geometry{margin=2.5cm}
 \hypersetup{colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue}
 
-\title{\textbf{NIDS yang Mengalibrasi-Diri: Deteksi \emph{Concept Drift}
-Streaming dan Adaptasi \emph{Few-Shot} Otonom untuk Trafik Cloud}}
-% English working title: "Self-Calibrating NIDS: Streaming Concept-Drift
-% Detection and Autonomous Few-Shot Adaptation for Cloud Traffic".
+\title{\textbf{NIDS yang Mengalibrasi-Diri: Pengenalan Jenis Serangan Baru
+secara \emph{Online} melalui \emph{Open-Set Recognition} dan Pembelajaran
+\emph{Class-Incremental} untuk Trafik Cloud}}
+% English title (for JISA submission): "Self-Calibrating NIDS: Online Discovery
+% of Novel Attack Classes via Open-Set Recognition and Class-Incremental Learning
+% for Cloud Traffic".
+% Judul lama (concept-drift framing) di-pensiunkan; arah final = open-set + class-incremental.
 
 \author{Hero Yudo Martono, \quad Iwan Syarif, \quad Ferry Astika Saputra \\
 \textit{Departemen Teknik Informatika, Politeknik Elektronika Negeri Surabaya}}
@@ -38,20 +41,28 @@ Streaming dan Adaptasi \emph{Few-Shot} Otonom untuk Trafik Cloud}}
 
 \begin{abstract}
 \textbf{[KERANGKA — diisi setelah eksperimen.]} NIDS berbasis ML yang dikalibrasi
-lintas-jaringan (mis. via \emph{Semantic Feature Mapping} dan \emph{few-shot},
-\cite{paper1}) melakukan kalibrasi \emph{offline} sekali sebelum penyebaran. Namun
-trafik cloud nyata mengalami \emph{concept drift} dinamis (pola siang/malam,
-musiman), sehingga model statis lambat-laun menurun. Makalah ini mengusulkan
-kerangka \emph{closed-loop}: detektor \emph{drift} \emph{streaming} berbasis
-jendela-geser jarak Wasserstein ($W_1$) dan CUSUM pada aliran \emph{flow}
-NFStream, yang memicu pembaruan \emph{micro-few-shot} otomatis dengan anggaran
-label minimal (\emph{active learning}), disertai \emph{guardrail} anti-peracunan
-untuk mencegah adaptasi keliru saat serangan berlangsung. [Ringkasan hasil
-menyusul.]
+lintas-jaringan via \emph{Semantic Feature Mapping} (SFM) dan \emph{few-shot}
+\cite{paper1} melakukan kalibrasi \emph{offline} sekali sebelum penyebaran dan
+mengenali hanya himpunan kelas serangan \emph{tetap}. Di dunia nyata, jenis
+serangan \emph{baru} (zero-day) terus bermunculan saat \emph{runtime}; model
+statis buta terhadapnya (recall kelas baru $\approx 0$). Makalah ini mengusulkan
+kerangka NIDS \emph{closed-loop} yang \emph{menemukan, memberi label, dan
+mengintegrasikan} jenis serangan yang belum pernah dilihat secara \emph{online}
+pada trafik cloud nyata: (i) \emph{open-set recognition} (jarak Mahalanobis pada
+9 fitur SFM) menandai \emph{flow} \emph{unknown}; (ii) \emph{novelty clustering}
+(HDBSCAN) mengelompokkannya menjadi kandidat kelas baru; (iii) pelabelan oracle
+terjadwal (dibantu \emph{LLM auto-namer}) memberi nama kelas; (iv) pembaruan
+\emph{class-incremental} dengan \emph{replay memory} menambah kelas tanpa
+\emph{catastrophic forgetting}, dijaga \emph{guardrail} promosi tahan-peracunan
+(model baru menggantikan lama hanya bila recall kelas lama tak turun dan kelas baru
+terdeteksi). Kerangka ini secara eksplisit \emph{memisahkan novelty sejati dari
+pergeseran distribusi lintas-jaringan} (warisan temuan \cite{paper1}) dan berjalan
+di atas satu XGBoost 9-fitur ringan \cite{paper2}. [Ringkasan hasil menyusul.]
 
 \vspace{0.5em}
-\noindent\textbf{Kata kunci:} NIDS, \emph{concept drift}, jarak Wasserstein,
-\emph{online domain adaptation}, \emph{few-shot}, \emph{active learning}, cloud.
+\noindent\textbf{Kata kunci:} NIDS, \emph{open-set recognition}, \emph{class-incremental
+learning}, deteksi serangan baru (\emph{novel attack discovery}), \emph{novelty clustering},
+\emph{replay memory}, \emph{catastrophic forgetting}, \emph{active learning}, trafik cloud.
 \end{abstract}
 
 % ============================================================
@@ -161,6 +172,9 @@ eksperimen selesai.
 Cross-Dataset pada NIDS Menggunakan Semantic Feature Mapping dan Few-Shot
 Adaptation dengan Validasi Trafik Cloud Nyata,'' \emph{naskah kerja} (Paper~1),
 2026.
+\bibitem{paper2} H.~Y.~Martono, I.~Syarif, and F.~A.~Saputra, ``Adversarial
+Robustness of Cross-Network Intrusion Detection via Semantic Feature Mapping and
+Few-Shot XGBoost,'' \emph{naskah kerja} (Paper~2), 2026.
 \bibitem{layeghy} S.~Layeghy, M.~Gallagher, and M.~Portmann, ``Benchmarking the
 benchmark --- Comparing synthetic and real-world network IDS datasets,''
 \emph{J. Inf. Secur. Appl.}, vol.~80, art.~103689, 2024.

@@ -1,0 +1,13 @@
+\multirow{5}{*}{CIC$\rightarrow$UNSW}
+ & few-shot (no evasion defense) & $0,650$ & $0,493$ & $0,524$ \\
+ & \textbf{few-shot+adv (FGSM, ours)} & $0,660$ & $0,523$ & $0,346$ \\
+ & few-shot+adv (PGD-AT) & $0,647$ & $0,567$ & $0,558$ \\
+ & few-shot+Gaussian-aug & $0,632$ & $0,441$ & $0,330$ \\
+ & few-shot+rand-smoothing & $0,485$ & $0,337$ & $0,346$ \\
+\midrule
+\multirow{5}{*}{UNSW$\rightarrow$CIC}
+ & few-shot (no evasion defense) & $0,900$ & $-0,167$ & $-0,121$ \\
+ & \textbf{few-shot+adv (FGSM, ours)} & $0,897$ & $0,276$ & $-0,029$ \\
+ & few-shot+adv (PGD-AT) & $0,896$ & $-0,002$ & $-0,330$ \\
+ & few-shot+Gaussian-aug & $0,894$ & $0,037$ & $0,210$ \\
+ & few-shot+rand-smoothing & $0,169$ & $-0,097$ & $-0,068$ \\

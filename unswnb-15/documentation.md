@@ -804,3 +804,94 @@ opsi Jalur B (belum dikerjakan) adalah notebook baru Paper 1 (mis.
 `26_causal_separation.ipynb`): (i) replikasi kolaps→pulih pada detektor non-XGBoost
 (RandomForest/MLP/LogReg) untuk menutup faktor #5, dan (ii) dekomposisi covariate vs
 label shift pada kelas bersama untuk menutup faktor #4.
+
+
+---
+## 20. Revisi Mayor JISA (Putaran 3): Domain-Invariant Baseline, CI, Prosedur Few-Shot, dll
+
+Reviewer JISA memberi keputusan **Revisi Mayor** dengan daftar poin kritis, penting, dan
+minor. Bagian ini mencatat revisi yang **sudah dikerjakan (tulisan)** pada
+`paper1-generalisasi.tex` dan poin **eksperimen yang ditunda**. Prinsip kejujuran dipegang:
+referensi yang belum bisa diverifikasi TIDAK dikarang; angka yang belum ada ditandai eksplisit.
+
+### 20.1 Poin KRITIS — status
+
+| # | Poin reviewer | Jenis | Status |
+|---|---|---|---|
+| K1 | Label/judul gambar ke bahasa Inggris (Fig 8 & 9) | perbaikan gambar | **SELESAI** (masalah copy-paste Overleaf; label ID di gambar sudah tampil benar) |
+| K2 | Baseline domain-invariant (DI-NIDS/DANN) pada CIC↔UNSW | **eksperimen (berat, butuh PyTorch)** | **DITUNDA sadar** — review ini informal (bukan reviewer resmi jurnal); DANN menuntut dependency neural baru. Teks pengait sudah ada di §related & §align. Dikerjakan bila diminta reviewer resmi. |
+| K3 | Perbarui related work (DI-NIDS, dll) | tulisan | **SELESAI** — paragraf baru "NIDS domain-invariant" + 4 bibitem terverifikasi |
+| K4 | CI/std untuk semua MCC + few-shot multi-seed | **eksperimen** | **NOTEBOOK SIAP** — `notebooks/19_multiseed_ci.ipynb` (5 seed; mean±std + CI95 t-interval untuk tab:baseline/align/fewshot; output `multiseed_ci.json`). Menunggu Run All di SageMaker. |
+| K5 | Deskripsi rinci pengumpulan trafik AWS | tulisan | **SELESAI** — tabel ringkas `tab:awscollect` (jenis serangan, jumlah flow, rasio kelas, definisi episode, pelabelan); periode kalender ditandai `[diisi]` |
+| K6 | Prosedur few-shot presisi & algoritmik | tulisan | **SELESAI** — blok `Algorithm` few-shot (stratified per-kelas, anti-bocor, seeded) |
+
+### 20.2 Poin PENTING — status
+
+| # | Poin reviewer | Jenis | Status |
+|---|---|---|---|
+| P1 | Pernyataan ketersediaan kode + repo publik (SFM) | tulisan | **SELESAI** — bagian "Ketersediaan Kode dan Data" diperkuat (sebut implementasi SFM + ambang validasi) |
+| P2 | Pernyataan etika protokol AWS | tulisan | **SELESAI** — bagian "Pernyataan Etika" (VPC terisolasi, serangan hanya ke korban sendiri, tanpa data pengguna nyata) |
+| P3 | Jelaskan non-monoton kurva CIC+AWS few-shot (Fig 9) | tulisan | **SELESAI** — paragraf "Perilaku non-monoton kurva CIC+AWS" (titik awal negatif, benign langka, asimetri domain) |
+| P4 | Hubungan W1 & d_HΔH + keterbatasan W1 sebagai proxy | tulisan | **SELESAI** — paragraf hubungan bound Kantorovich–Rubinstein; W1 = proxy covariate-shift (perlu, bukan cukup) |
+| P5 | Strategi penanganan class imbalance | tulisan | **SELESAI** — paragraf 3-tingkat (MCC; scale_pos_weight; stratified sampling; tanpa SMOTE) |
+| P6 | Ablation jumlah fitur SFM | **eksperimen** | **NOTEBOOK SIAP** — `notebooks/18_feature_ablation.ipynb` (top-k {3,5,7,9} via importance joint; in-domain/joint/cross; output `feature_ablation.json`+PNG+S3). Menunggu Run All di SageMaker. |
+
+### 20.3 Poin MINOR — status
+- **M1 Perpendek judul**: judul Paper 1 aktif sudah ringkas ("Pemetaan Fitur Semantik dan
+  Kalibrasi Few-Shot untuk Deteksi Intrusi Lintas-Jaringan") — tidak diubah.
+- **M2 Padatkan §3–5**: **SELESAI** — buang redundansi tanpa menghilangkan angka/kualifikasi: §edge (frasa berulang), §sfmmap (gabung skema 3-langkah + L1–L4), §align (penutup CORAL).
+- **M3 Definisi "few-shot" (1% vs k-shot)**: **SELESAI** — paragraf "Definisi few-shot"
+  menjelaskan pemakaian *percentage-shot* vs *k-shot* klasik.
+
+### 20.4 Referensi baru (terverifikasi via web, bukan karangan)
+Ditambahkan ke bibliografi `paper1-generalisasi.tex`:
+- `dinids` — Layeghy, Baktashmotlagh, Portmann, "DI-NIDS: Domain invariant network intrusion
+  detection system," *Knowledge-Based Systems*, vol. 273, art. 110626, 2023.
+- `digeneralis` — Layeghy & Portmann, "On generalisability of ML-based NIDS," arXiv:2205.04112, 2022.
+- `domconf` — Yang et al., "A network intrusion detection method based on domain confusion,"
+  *Electronics*, vol. 12, no. 5, art. 1255, 2023.
+- `classbal` — Wang et al., "A domain adaptation NIDS algorithm based on class-balanced
+  knowledge transfer and multi-structure domain alignment," *Cluster Computing*, 2026.
+
+**Belum diverifikasi (TIDAK dimasukkan agar tidak mengarang):** "MEFA" dan "Zhang et al. (2025)"
+yang disebut reviewer — tidak ditemukan paper NIDS spesifik yang dapat dipastikan lewat pencarian.
+Menunggu detail sitasi dari penulis, atau dibiarkan digantikan oleh DI-NIDS + 3 rujukan DA-NIDS di atas.
+
+### 20.5 Sisa pekerjaan (eksperimen — setelah tulisan)
+1. **DANN/DI-NIDS baseline** (K2): DITUNDA (review informal; berat). Rencana file bila lanjut: `19_1_dann_baseline.ipynb` (PyTorch, GRL, 2 arah, multi-seed).
+2. **Multi-seed + CI** (K4): notebook `19_multiseed_ci.ipynb` SIAP (5 seed) — tinggal Run All di SageMaker, lalu tulis mean±std/CI ke tabel MCC utama.
+3. **Ablation jumlah fitur SFM** (P6): notebook `18_feature_ablation.ipynb` SIAP — tinggal Run All di SageMaker, lalu tulis tabel+paragraf ke naskah.
+4. **Editing** (M2): padatkan §3–5.
+5. Isi periode kalender pengumpulan AWS pada `tab:awscollect`.
+
+
+---
+## 21. Hasil Eksperimen nb18 & nb19 Terintegrasi ke Naskah (P6 & K4 SELESAI)
+
+Notebook 18 (ablation) & 19 (multi-seed CI) telah dijalankan di SageMaker; hasil nyata
+(`feature_ablation.json`, `multiseed_ci.json`) diintegrasikan ke `paper1-generalisasi.tex`.
+
+### 21.1 P6 Ablation Jumlah Fitur (SELESAI)
+Subbagian baru **\S Ablasi Jumlah Fitur SFM** (`sec:ablation`) + `tab:ablation`. Temuan:
+fitur terpenting `fwd_bytes, dst_load, duration`; MCC in-domain/joint **jenuh ~5 fitur**
+(3 fitur sudah CIC 0.90/UNSW 0.70; k=5->9 hanya +0.002/+0.016). 9 fitur tak berlebihan
+tapi marginal fitur ke-6..9 kecil. Cross tetap ~0 di semua k -> menegaskan celah =
+distribution shift, bukan jumlah fitur.
+
+### 21.2 K4 Multi-Seed + CI (SELESAI)
+5 seed {42,1,7,123,2024}, mean +- CI95 t-interval ditambahkan ke `tab:baseline`,
+`tab:align`, `tab:fewshot`.
+- Few-shot **sangat stabil**: 1% -> CIC->UNSW 0.659 [0.64,0.68], UNSW->CIC 0.900 [0.90,0.90]. Joint 0.913/0.730 (CI sempit).
+- Baseline cross ~0 (CI melintasi nol) -> konfirmasi runtuh.
+
+### 21.3 KOREKSI PENTING (kejujuran): CORAL
+Angka lama **CORAL UNSW->CIC = +0.164** ternyata **artefak 1 seed**. Multi-seed (5) menunjukkan
+CORAL **negatif rata-rata pada kedua arah** (CIC->UNSW -0.118, UNSW->CIC -0.032) dengan
+**CI lebar melintasi nol** -> efek tak dapat dibedakan dari nol, sangat bergantung seed.
+Semua rujukan single-seed CORAL (-0.185/+0.164) di naskah (tab:align, paragraf "Mengapa CORAL
+gagal", \S asimetri) **dikoreksi** ke framing multi-seed: CORAL tidak andal; few-shot yang stabil.
+Ini justru memperkuat argumen few-shot/mixup > CORAL.
+
+### 21.4 Status akhir revisi (informal review)
+SELESAI: K3, K5, K6, P1, P2, P3, P4, P5, M1, M3, **M2, P6, K4**.
+DITUNDA sadar: K2 (DANN, review informal + butuh PyTorch); periode kalender AWS (`tab:awscollect`).

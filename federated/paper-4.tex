@@ -1,0 +1,553 @@
+\documentclass[11pt,a4paper]{article}
+
+% ============================================================
+% Paper 4 (versi Bahasa Indonesia) --- draft kerja untuk promotor.
+% Judul: Federated Cross-Network NIDS via Semantic Feature Mapping.
+% Fondasi: Paper 1 (SFM) \cite{sfm}; sejajar Paper 2 (adversarial), Paper 3 (online).
+% CATATAN KEJUJURAN: seluruh ANGKA HASIL masih [TBD] -- diisi dari eksperimen NYATA
+%   (notebook federated/notebooks/nb01-nb07 + eksekusi AWS). JANGAN mengarang angka.
+% ============================================================
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[bahasa]{babel}
+\usepackage{graphicx}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{booktabs}
+\usepackage{amsmath,amssymb}
+\usepackage{siunitx}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{caption}
+\usepackage{multirow}
+\usepackage{placeins}
+\geometry{margin=2.5cm}
+\graphicspath{{figure-fed/}}
+\hypersetup{colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue}
+
+% Penanda placeholder hasil yang belum ada (kejujuran data).
+\newcommand{\TBD}{\textit{[TBD]}}
+
+\title{\textbf{NIDS Terfederasi Lintas-Jaringan melalui Pemetaan Fitur Semantik:
+Dapatkah Ruang Fitur Semantik Bersama Mengatasi Heterogenitas Skema-Fitur dalam
+\emph{Federated Learning}?}}
+
+\author{Hero Yudo Martono\thanks{Penulis koresponden: \texttt{hero@pens.ac.id}},
+\quad Iwan Syarif, \quad Ferry Astika Saputra \\[0.3em]
+\textit{Departemen Teknik Informatika, Politeknik Elektronika Negeri Surabaya,
+Surabaya, Indonesia} \\
+\texttt{hero@pens.ac.id; iwanarif@pens.ac.id; ferryas@pens.ac.id}}
+
+\date{Draft --- \today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\emph{Federated learning} (FL) menjanjikan kolaborasi antar-organisasi untuk
+melatih sistem deteksi intrusi jaringan (NIDS) tanpa memusatkan data mentah yang
+sensitif. Namun hampir seluruh pekerjaan FL-NIDS mengasumsikan setiap klien
+memakai ruang fitur yang identik --- asumsi yang runtuh di dunia nyata karena
+tiap organisasi lazim memakai \emph{alat ekstraksi fitur} berbeda (mis.
+CICFlowMeter versus Argus/Bro), sehingga \emph{skema fitur} antar-klien berbeda.
+Makalah ini mengusulkan \emph{Semantic Feature Mapping} (SFM) --- ruang fitur
+semantik yang tervalidasi statistik dari karya pendahulu kami \cite{sfm} ---
+sebagai \emph{enabler} federasi antar-klien berskema-fitur berbeda. Kontribusi
+utama bukan menambahkan FL pada \emph{pipeline} lama, melainkan menunjukkan bahwa
+SFM \emph{menyelesaikan} heterogenitas skema-fitur yang selama ini menggagalkan FL
+lintas-\emph{dataset}: kamus pemetaan SFM diperlakukan sebagai \emph{kesepakatan
+skema publik} (bukan hasil belajar dari data gabungan), diterapkan tiap klien
+secara lokal dan mandiri, sehingga hanya bobot model yang dipertukarkan. Kami
+mengevaluasi pada CSE-CIC-IDS2018 dan UNSW-NB15 dengan protokol multi-\emph{seed}
+(MCC sebagai metrik utama, dilengkapi \emph{recall}/\emph{precision}/F1 dan
+\emph{balanced accuracy}), membandingkan model terpusat (\emph{upper bound}),
+lokal-saja (\emph{lower bound}), dan federated-SFM (FedAvg serta FedProx), beserta
+ablasi FL dengan dan tanpa SFM dan biaya komunikasi. \textbf{Catatan:} seluruh
+angka hasil pada draf ini masih \TBD{} karena eksperimen belum dieksekusi; nilai
+akan diisi dari hasil nyata sebelum diajukan untuk publikasi.
+
+\medskip
+\noindent\textbf{Kata kunci:} deteksi intrusi jaringan; \emph{federated learning};
+pemetaan fitur semantik; heterogenitas skema-fitur; interoperabilitas; privasi.
+\end{abstract}
+
+% ============================================================
+\section{Pendahuluan}
+\label{sec:intro}
+
+Sistem deteksi intrusi jaringan berbasis pembelajaran mesin mencapai akurasi
+tinggi pada pengaturan \emph{dalam-jaringan}, tetapi kolaborasi antar-organisasi
+untuk berbagi pengetahuan deteksi terbentur masalah privasi dan regulasi: data
+trafik mentah jarang boleh keluar dari batas organisasi. \emph{Federated
+learning} \cite{popoola} menawarkan jalan keluar --- melatih model bersama hanya
+dengan bertukar parameter, bukan data. Dalam ranah NIDS, FL telah banyak dikaji
+dari sisi arsitektur, agregasi, non-IID, hingga ketahanan \emph{Byzantine}
+\cite{fsurvey1,fsurvey2,ftaxonomy}.
+
+Namun terdapat celah mendasar yang jarang disentuh. Mayoritas kerangka FL-NIDS
+mengandaikan seluruh klien berbagi \emph{ruang fitur yang sama}. Di lapangan,
+asumsi ini tidak realistis: organisasi berbeda memakai perangkat ekstraksi fitur
+berbeda, dengan penamaan dan definisi kolom yang tidak sepadan. Satu klien
+mungkin menghasilkan fitur ala CICFlowMeter, klien lain ala Argus atau Zeek.
+Akibatnya, FedAvg \cite{popoola} --- yang merata-ratakan bobot per-dimensi ---
+menjadi tak-bermakna karena dimensi ke-$i$ pada satu klien tidak sepadan secara
+semantik dengan dimensi ke-$i$ pada klien lain. Kami menyebut persoalan ini
+\emph{heterogenitas skema-fitur}.
+
+\paragraph{Pertanyaan riset.} Dapatkah \emph{Semantic Feature Mapping} (SFM) ---
+ruang fitur semantik yang tervalidasi statistik dari karya pendahulu kami
+\cite{sfm} --- berperan sebagai \emph{enabler} federasi antar-klien
+berskema-fitur berbeda, dan seberapa jauh federated-SFM menutup celah performa
+terhadap model terpusat tanpa memusatkan data mentah?
+
+\paragraph{Kontribusi.} Makalah ini menyumbang:
+\begin{enumerate}
+  \item \textbf{SFM sebagai jembatan interoperabilitas fitur dalam FL.} Untuk
+  pertama kalinya, ruang fitur semantik tervalidasi statistik dipakai agar klien
+  berskema berbeda (CIC versus UNSW) dapat berfederasi dalam satu model global
+  tanpa berbagi data mentah. Kebaruan terletak pada peran SFM sebagai
+  \emph{penyelesai} heterogenitas skema, bukan sekadar penambahan modul FL.
+  \item \textbf{Kerangka privasi yang eksplisit.} Kamus SFM diperlakukan sebagai
+  \emph{public prior} (kesepakatan skema), diterapkan tiap klien secara lokal;
+  normalisasi dilakukan per-klien. Kami rinci apa yang \emph{tidak} dilakukan
+  (tak ada \emph{fitting} pada data gabungan) untuk menutup celah kebocoran.
+  \item \textbf{Evaluasi menyeluruh dan jujur.} Perbandingan terpusat / lokal-saja
+  / federated-SFM, ablasi dengan--tanpa SFM, pengaruh non-IID dan jumlah klien,
+  FedAvg versus FedProx, serta biaya komunikasi, dengan protokol multi-\emph{seed}
+  dan uji signifikansi (pola Paper~2).
+\end{enumerate}
+
+\paragraph{Posisi terhadap karya kami sebelumnya (anti \emph{salami-slicing}).}
+Paper~1 \cite{sfm} memperkenalkan SFM + \emph{few-shot} untuk generalisasi
+lintas-jaringan pada model \emph{terpusat}. Paper~2 membahas ketahanan
+adversarial, juga terpusat. Paper~3 menangani adaptasi \emph{online} terhadap
+pergeseran distribusi. Makalah ini (Paper~4) membuka sumbu baru:
+\emph{desentralisasi/privasi}. SFM dipindahkan ke pengaturan \emph{federated};
+kontribusi orisinalnya adalah SFM sebagai \emph{enabler} federasi lintas-skema,
+diukur terhadap batas terpusat dan lokal-saja. Dimensi \emph{few-shot} dan
+adversarial sengaja tidak disertakan agar klaim tetap tajam.
+
+% ============================================================
+\FloatBarrier
+\section{Karya Terkait}
+\label{sec:related}
+
+\paragraph{FL untuk NIDS.} Survei dan taksonomi terkini
+\cite{fsurvey1,fsurvey2,ftaxonomy,falgo} memetakan arsitektur, strategi agregasi,
+dan tantangan terbuka FL-NIDS. Sejumlah kerangka menekankan efisiensi sumber daya
+\cite{fresource,fdbscan}, pengaturan \emph{cross-silo} berbasis graf \cite{fentente},
+atau IIoT berskala besar \cite{fiiot}. Karya-karya ini memperkuat kelayakan FL,
+tetapi hampir seluruhnya mengandaikan ruang fitur homogen antar-klien.
+
+\paragraph{Non-IID dan heterogenitas.} Heterogenitas \emph{statistik} (distribusi
+data berbeda antar-klien) telah banyak dikaji \cite{fnoniid,fpersonal,fmist}, dan
+batas FL untuk IDS mulai disorot secara kritis \cite{flimit}. Namun heterogenitas
+yang kami angkat berbeda jenis: bukan sekadar distribusi berbeda pada ruang fitur
+sama, melainkan \emph{ruang fitur yang berbeda} akibat alat ekstraksi berbeda.
+Upaya penyelarasan lintas-domain \cite{fcrossvan} umumnya bekerja pada ruang yang
+sudah sepadan; kami justru menyediakan sepadan-nya itu melalui SFM.
+
+\paragraph{Robustness, few-shot, dan transfer.} Garis riset ketahanan adversarial
+dan \emph{Byzantine}/\emph{poisoning} dalam FL \cite{frobust,fbackdoor,fdelve}
+serta \emph{few-shot}/\emph{meta}/\emph{transfer} \cite{ffewshot,ffecograph,ftransfer}
+bersifat komplementer terhadap kerja kami dan dicadangkan sebagai arah lanjutan.
+Fokus Paper~4 adalah \emph{interoperabilitas fitur} sebagai prasyarat yang selama
+ini terlewat.
+
+\paragraph{Set fitur standar.} Upaya menuju set fitur NIDS standar
+\cite{sarhan,sarhannf} sejalan semangat kami, namun SFM menekankan \emph{validasi
+semantik dan statistik} pemetaan antar-\emph{tool} serta penerapannya sebagai
+\emph{public prior} dalam federasi --- bukan sekadar menyepakati nama kolom.
+
+% ============================================================
+\FloatBarrier
+\section{Metode}
+\label{sec:method}
+
+\subsection{Semantic Feature Mapping sebagai \emph{public prior}}
+\label{sec:sfm}
+
+SFM adalah \emph{kamus pemetaan} yang menerjemahkan keluaran beragam alat
+ekstraksi fitur ke ruang bersama berdimensi sembilan. Kesembilan fitur ---
+\emph{duration}, \emph{fwd\_pkts}, \emph{bwd\_pkts}, \emph{fwd\_bytes},
+\emph{bwd\_bytes}, \emph{fwd\_mean}, \emph{bwd\_mean}, \emph{src\_load},
+\emph{dst\_load} --- diwarisi dari Paper~1 \cite{sfm}, di mana pemetaannya
+ditemukan sekali secara \emph{offline} dengan membandingkan \emph{definisi/semantik
+kolom} tiap alat (mis.\ ``Flow Duration'' pada CICFlowMeter $\approx$ ``dur'' pada
+Argus) dan divalidasi secara statistik \emph{pada tiap dataset secara terpisah}.
+Hasilnya berupa metadata beberapa baris, yakni pengetahuan domain --- bukan data.
+
+Poin yang paling mungkin dipertanyakan penilai adalah: dari mana sembilan fitur
+itu berasal tanpa klien berbagi data? Jawaban kami tegas: \textbf{kamus SFM adalah
+kesepakatan skema (public prior), bukan hasil belajar dari data gabungan.} Alur
+dalam federasi:
+\begin{enumerate}
+  \item (\emph{offline}, sekali) peneliti menerbitkan kamus SFM dari Paper~1 ke ranah publik;
+  \item (tiap klien, lokal dan mandiri) menerapkan kamus ke datanya sendiri untuk
+  memperoleh sembilan fitur SFM --- klien-CIC memakai pemetaan CICFlowMeter,
+  klien-UNSW memakai pemetaan Argus, tanpa bertukar data;
+  \item (federasi) kedua klien kini berada pada ruang sembilan dimensi yang
+  \emph{sama secara semantik}, sehingga agregasi bobot menjadi sah.
+\end{enumerate}
+Yang \emph{tidak} dilakukan: melakukan \emph{fitting} pemetaan atau normalisasi
+pada data gabungan kedua klien, maupun mengintip data mentah pihak lain.
+
+\subsection{SFM sebagai \emph{interlingua} fitur dan \emph{adapter} per-alat}
+\label{sec:adapter}
+
+Secara lebih umum, yang dipetakan adalah skema \emph{alat} ekstraktor, bukan
+datanya. SFM berperan sebagai \emph{interlingua}: tiap alat (CICFlowMeter,
+Argus/Bro, NFStream, Zeek, \dots) diterjemahkan ke sembilan fitur SFM yang sama
+melalui sebuah \emph{adapter} publik berisi nama kolom sumber, rumus derivasi, dan
+catatan validasi. Klien baru dengan alat $Z$ cukup mengambil \emph{adapter}~$Z$
+dari \emph{registry} publik, menerapkannya secara lokal, lalu berfederasi hanya
+dalam ``bahasa'' sembilan fitur SFM. Server tidak perlu mengetahui alat klien
+maupun melihat datanya.
+
+Keterbatasan diakui secara jujur: bila alat klien belum memiliki \emph{adapter},
+seorang pakar domain perlu membuatnya sekali; jadi SFM tidak sepenuhnya otomatis.
+Lebih jauh, \emph{adapter} hanya sah bila alat sasaran benar-benar mengukur besaran
+yang bersesuaian secara semantik --- bila sebuah besaran tak terukur (mis.\ byte
+per-arah), fitur itu tak dapat dipetakan. Ini batas kelayakan yang kami nyatakan di
+Bagian~\ref{sec:limitations}.
+
+\subsection{Keputusan arsitektur: MLP ringan pada ruang SFM}
+\label{sec:arch}
+
+XGBoost yang menjadi \emph{backbone} Paper~1/2 tidak natural untuk FL karena
+agregasi bobot pohon tidak langsung. Karena itu model lokal pada Paper~4 adalah
+\emph{multilayer perceptron} (MLP) ringan di atas sembilan fitur SFM, dengan
+arsitektur masukan~$9 \rightarrow [64, 32] \rightarrow 1$ (ReLU pada lapis
+tersembunyi, \emph{sigmoid} pada keluaran). MLP ini memungkinkan FedAvg langsung
+atas bobot. Sebagai \emph{jembatan} ke Paper~1, kami tetap melaporkan XGBoost
+terpusat dan memastikan MLP terpusat tidak kalah jauh pada sembilan fitur SFM
+(uji kewarasan). Arsitektur sengaja kecil: tujuan Paper~4 bukan mengejar MLP
+terbaik, melainkan menguji SFM sebagai \emph{enabler} FL.
+
+\subsection{Protokol federasi}
+\label{sec:protocol}
+
+Agregasi mengikuti FedAvg \eqref{eq:fedavg} dengan pembanding FedProx
+\eqref{eq:fedprox} yang menambahkan suku \emph{proximal} untuk meredam
+penyimpangan klien di bawah non-IID. Normalisasi \emph{z-score} dihitung
+\emph{per-klien lokal} (opsi paling menjaga privasi); statistik tidak dibagikan.
+Pertukaran parameter dilakukan melalui penyimpanan objek (S3), sehingga antar-node
+tidak perlu membuka \emph{socket} langsung.
+
+\begin{align}
+  w_{t+1} &= \sum_{k} \frac{n_k}{n}\, w_k^{(t)} \label{eq:fedavg}\\[2pt]
+  \min_{w}\; & F_k(w) + \frac{\mu}{2}\lVert w - w_{\text{global}} \rVert^2 \label{eq:fedprox}
+\end{align}
+
+\noindent di mana $n_k$ adalah ukuran data klien~$k$, $n=\sum_k n_k$, $F_k$ rugi
+lokal (\emph{binary cross-entropy}), dan $\mu$ bobot \emph{proximal} FedProx.
+Metrik utama adalah \emph{Matthews Correlation Coefficient} (MCC),
+\begin{equation}
+  \mathrm{MCC} = \frac{TP\cdot TN - FP\cdot FN}
+  {\sqrt{(TP{+}FP)(TP{+}FN)(TN{+}FP)(TN{+}FN)}},
+  \label{eq:mcc}
+\end{equation}
+dilengkapi \emph{recall}, \emph{precision}, F1, dan \emph{balanced accuracy}
+(penting karena data tak-seimbang).
+
+\begin{algorithm}[t]
+\caption{FedAvg/FedProx di ruang SFM (per \emph{run})}
+\label{alg:fed}
+\begin{algorithmic}[1]
+\State Server inisialisasi bobot global $w_0$; sebar ke semua klien.
+\For{ronde $t=0,\dots,R-1$}
+  \For{tiap klien $k$ (paralel)}
+    \State Terapkan kamus SFM ke data lokal; \emph{z-score} lokal.
+    \State $w_k^{(t)} \gets$ latih $E$ \emph{epoch} dari $w_t$ (FedProx bila $\mu>0$).
+    \State Kirim $w_k^{(t)}$ dan ukuran $n_k$ (hanya bobot, bukan data).
+  \EndFor
+  \State $w_{t+1} \gets \sum_k (n_k/n)\, w_k^{(t)}$ \Comment{FedAvg}
+\EndFor
+\State \Return model global $w_R$.
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Pengaturan eksperimen}
+\label{sec:setup}
+
+\emph{Dataset:} CSE-CIC-IDS2018 \cite{cicids} dan UNSW-NB15 \cite{unsw}, memakai
+sembilan fitur SFM yang telah tervalidasi pada Paper~1 (tidak divalidasi ulang).
+\emph{Skenario:} (A) dua klien $\{\text{CIC},\text{UNSW}\}$ dengan non-IID natural
+akibat beda skema asli yang disatukan via SFM; (B) perluasan ke $K$ klien
+(mis.\ $4$--$10$) melalui partisi non-IID berbasis label (Dirichlet). \emph{Baseline:}
+terpusat (\emph{upper bound}), lokal-saja (\emph{lower bound}), dan federated-SFM
+(FedAvg + FedProx), serta ablasi FL \emph{dengan} vs \emph{tanpa} SFM. \emph{Protokol:}
+lima \emph{seed} $\{13,42,101,202,303\}$, rerata $\pm$ simpangan baku, selang
+kepercayaan 95\%, dan uji signifikansi (pola Paper~2). Metrik komunikasi tambahan:
+jumlah ronde hingga konvergen dan \emph{byte} per ronde terhadap MCC.
+
+\paragraph{Infrastruktur.} Federasi dijalankan pada tiga instans EC2 ber-IP publik
+(satu agregator, dua klien) di dalam satu VPC dengan \emph{Internet Gateway} tanpa
+NAT, \emph{Security Group} ketat (tanpa SSH terbuka; akses operator via SSM), dan
+pertukaran bobot melalui S3. Data mentah tiap klien tetap hanya berada di
+node-nya. Logika agregator/klien yang dieksekusi di EC2 identik dengan yang
+disimulasikan pada \emph{notebook} evaluasi, sehingga hasil simulasi memvalidasi
+skrip sebelum penggelaran.
+
+% ============================================================
+\FloatBarrier
+\section{Hasil}
+\label{sec:results}
+
+\begin{quote}
+\small\itshape Catatan kejujuran: seluruh sel bertanda \TBD{} akan diisi dari
+eksperimen nyata (notebook \texttt{nb01--nb07} + eksekusi AWS). Tidak ada angka
+ilustratif pada draf ini.
+\end{quote}
+
+\subsection{Jembatan \emph{backbone} dan batas terpusat/lokal (H2)}
+Tabel~\ref{tab:main} membandingkan terpusat, lokal-saja, dan federated-SFM pada
+tiga himpunan uji. Urutan yang diharapkan: terpusat $\ge$ federated-SFM $\ge$
+lokal-saja; besar selisih menunjukkan seberapa jauh FL menutup celah tanpa
+memusatkan data.
+
+\begin{table}[t]
+\centering
+\caption{MCC (rerata $\pm$ sb, lima \emph{seed}) pada CIC-\emph{test},
+UNSW-\emph{test}, dan GLOBAL-\emph{test}. Nilai diisi dari \texttt{nb03}/\texttt{nb07}.}
+\label{tab:main}
+\begin{tabular}{lccc}
+\toprule
+Pengaturan & CIC-\emph{test} & UNSW-\emph{test} & GLOBAL-\emph{test} \\
+\midrule
+Terpusat (\emph{upper bound}) & \TBD & \TBD & \TBD \\
+Lokal-saja (\emph{lower bound}) & \TBD & \TBD & \TBD \\
+Federated-SFM (FedAvg) & \TBD & \TBD & \TBD \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Ablasi: SFM sebagai \emph{enabler} (H1)}
+Tabel~\ref{tab:ablation} menguji klaim inti: FedAvg di ruang SFM selaras versus
+upaya naif tanpa SFM (penumpukan \emph{by-position}; irisan nama kolom). Bukti
+dapat bersifat kuantitatif (MCC SFM jauh di atas naif) maupun kualitatif (bila
+irisan nama kosong, federasi lintas-skema bahkan tak terbentuk tanpa SFM).
+
+\begin{table}[t]
+\centering
+\caption{Ablasi FL dengan vs tanpa SFM, MCC GLOBAL-\emph{test}. Dari \texttt{nb04}.}
+\label{tab:ablation}
+\begin{tabular}{lcc}
+\toprule
+Varian & Dimensi fitur & MCC GLOBAL-\emph{test} \\
+\midrule
+Federated-SFM (9 selaras) & 9 & \TBD \\
+Naif-1 (\emph{by-position}) & 9 & \TBD \\
+Naif-2 (irisan nama) & \TBD & \TBD \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Pengaruh non-IID dan jumlah klien (H3)}
+Tabel~\ref{tab:noniid} melaporkan MCC global terhadap jumlah klien $K$ dan derajat
+non-IID (parameter Dirichlet $\alpha$). Diharapkan: $\alpha$ kecil (non-IID
+ekstrem) dan $K$ besar menurunkan MCC; besarnya penurunan dilaporkan apa adanya.
+
+\begin{table}[t]
+\centering
+\caption{MCC GLOBAL-\emph{test} vs $(K,\alpha)$. Dari \texttt{nb05}.}
+\label{tab:noniid}
+\begin{tabular}{lccc}
+\toprule
+$K$ & $\alpha=0{,}1$ & $\alpha=1{,}0$ & $\alpha=100$ \\
+\midrule
+2  & \TBD & \TBD & \TBD \\
+4  & \TBD & \TBD & \TBD \\
+6  & \TBD & \TBD & \TBD \\
+10 & \TBD & \TBD & \TBD \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{FedAvg vs FedProx dan biaya komunikasi}
+Tabel~\ref{tab:comm} membandingkan FedAvg dan FedProx di bawah non-IID beserta
+biaya komunikasi (jumlah parameter, \emph{byte} per ronde, ronde hingga konvergen).
+
+\begin{table}[t]
+\centering
+\caption{FedAvg vs FedProx + biaya komunikasi. Dari \texttt{nb06}.}
+\label{tab:comm}
+\begin{tabular}{lcccc}
+\toprule
+Metode & MCC & Ronde-ke-konvergen & \emph{Byte}/ronde & Total \emph{byte} \\
+\midrule
+FedAvg          & \TBD & \TBD & \TBD & \TBD \\
+FedProx ($\mu{=}0{,}001$) & \TBD & \TBD & \TBD & \TBD \\
+FedProx ($\mu{=}0{,}01$)  & \TBD & \TBD & \TBD & \TBD \\
+FedProx ($\mu{=}0{,}1$)   & \TBD & \TBD & \TBD & \TBD \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Signifikansi statistik}
+Uji berpasangan (\emph{t-test} dan Wilcoxon) atas lima \emph{seed} membandingkan
+federated-SFM dengan lokal-saja; nilai $p$ dan ukuran efek (selisih rerata) diisi
+dari \texttt{nb07}. Dengan lima \emph{seed}, daya uji Wilcoxon rendah; kedua uji
+dilaporkan bersama ukuran efek.
+
+% ============================================================
+\FloatBarrier
+\section{Diskusi}
+\label{sec:discussion}
+
+Jika hipotesis terkonfirmasi, temuan utama bukanlah ``FL bekerja untuk NIDS'' ---
+itu sudah diketahui --- melainkan bahwa \emph{interoperabilitas fitur} adalah
+prasyarat yang selama ini terlewat, dan SFM menyediakannya sebagai lapisan
+\emph{public prior} yang murah dan menjaga privasi. Hasil ablasi (H1) menjadi
+pembeda terkuat: tanpa jembatan semantik, penggabungan fitur lintas-\emph{tool}
+tidak bermakna, bahkan dapat gagal terbentuk. Perbandingan terhadap batas terpusat
+(H2) mengukur ``harga privasi'', sedangkan studi non-IID (H3) memetakan batas
+praktis penerapan.
+
+% ============================================================
+\FloatBarrier
+\section{Keterbatasan}
+\label{sec:limitations}
+
+Pertama, SFM membutuhkan \emph{adapter} per-alat; alat tanpa \emph{adapter}
+memerlukan upaya pakar sekali, sehingga SFM tidak sepenuhnya otomatis. Kedua,
+sebagian besaran mungkin tak terpetakan antar-alat (batas kelayakan semantik),
+seperti dicontohkan pada Paper~1. Ketiga, eksperimen inti memakai dua
+alat/dua klien sebagai instansiasi konkret; generalisasi ke lebih banyak alat
+adalah kerja lanjutan. Keempat, kajian ini belum mencakup ketahanan adversarial
+dan serangan \emph{poisoning} dalam setting federasi, yang dicadangkan untuk
+makalah berikutnya.
+
+% ============================================================
+\FloatBarrier
+\section{Kesimpulan dan Kerja Mendatang}
+\label{sec:conclusion}
+
+Kami mengajukan SFM sebagai \emph{enabler} \emph{federated learning} NIDS
+lintas-skema: kamus pemetaan semantik publik memungkinkan klien berskema berbeda
+berfederasi tanpa berbagi data mentah. Draf ini memaparkan motivasi, kerangka
+privasi, arsitektur, protokol, dan rancangan evaluasi yang menyeluruh; seluruh
+angka hasil akan diisi dari eksperimen nyata sebelum publikasi. Kerja mendatang
+meliputi perluasan \emph{registry adapter}, integrasi ketahanan adversarial dan
+pertahanan \emph{poisoning}, serta mekanisme normalisasi lintas-klien yang lebih
+selaras namun tetap menjaga privasi.
+
+% ============================================================
+\section*{Ketersediaan Kode dan Data}
+Implementasi node federasi (\texttt{aws/fed\_node.py}), templat infrastruktur
+(\texttt{aws/fed-vpc-3ec2-public.yaml}), \emph{runbook}, dan \emph{notebook}
+eksperimen (\texttt{nb01--nb07}) disertakan pada repositori proyek. Kamus SFM
+diwarisi dari Paper~1. Dataset sumber bersifat publik \cite{cicids,unsw}.
+
+\section*{Pernyataan Etika}
+Seluruh trafik serangan yang dipakai berasal dari \emph{dataset} publik; eksekusi
+federasi dilakukan di lingkungan \emph{cloud} terisolasi milik sendiri. Tidak ada
+data pribadi yang dikumpulkan.
+
+% ============================================================
+\begin{thebibliography}{99}
+% Format IEEE. Nomor urut sesuai kemunculan; label dari federated_refs_clean.md.
+
+\bibitem{sfm} H.~Y.~Martono, I.~Syarif, and F.~A.~Saputra, ``Cross-dataset
+generalization of ML-based network intrusion detection via semantic feature
+mapping and few-shot adaptation, validated on real cloud traffic,'' \emph{status
+terbit diisi saat accepted}.
+
+\bibitem{popoola} S.~I.~Popoola, G.~Gui, B.~Adebisi, M.~Hammoudeh, and
+H.~Gacanin, ``Federated deep learning for collaborative intrusion detection in
+heterogeneous networks,'' in \emph{Proc. IEEE 94th Veh. Technol. Conf.
+(VTC-Fall)}, 2021, pp.~1--6.
+
+\bibitem{fsurvey1} A.~Khraisat, A.~Alazab, T.~Jan, and A.~Gopez, ``Survey on
+federated learning for intrusion detection system: Concept, architectures,
+aggregation strategies, challenges, and future directions,'' \emph{ACM Comput.
+Surv.}, 2024.
+
+\bibitem{fsurvey2} J.~L.~Hern\'andez-Ramos \emph{et~al.}, ``Intrusion detection
+based on federated learning: A systematic review,'' \emph{ACM Comput. Surv.},
+2025.
+
+\bibitem{ftaxonomy} A.~A.~Wardana and P.~Sukarno, ``Taxonomy and survey of
+collaborative intrusion detection system using federated learning,'' \emph{ACM
+Comput. Surv.}, 2024.
+
+\bibitem{falgo} E.~V.~Fedorchenko, E.~Novikova, and A.~N.~Shulepov, ``Comparative
+review of the IDS based on federated learning,'' \emph{Algorithms}, vol.~15,
+no.~7, art.~247, 2022.
+
+\bibitem{fresource} R.~Doriguzzi-Corin, S.~Cretti, and D.~Siracusa,
+``Resource-efficient federated learning for network intrusion detection,'' in
+\emph{Proc. IEEE NetSoft}, 2024.
+
+\bibitem{fdbscan} Y.-C.~Lee, W.-C.~Chien, and Y.-C.~Chang, ``FedDB: A federated
+learning approach using DBSCAN for DDoS attack detection,'' \emph{Appl. Sci.},
+2024.
+
+\bibitem{fentente} J.~Xu, C.~Li, Y.~Zheng, and Z.~Li, ``Entente: Cross-silo
+intrusion detection on network log graphs with federated learning,''
+\emph{arXiv:2503.14284}, 2025.
+
+\bibitem{fiiot} J.~Mao, Z.~Wei, B.~Li, R.~Zhang, and L.~Song, ``FedIn-NID: A FL
+framework for NID in large-scale heterogeneous industrial IoT,'' \emph{IEEE Trans.
+Inf. Forensics Security}, 2025.
+
+\bibitem{fnoniid} L.~Lavaur, Y.~Busnel, and F.~Autrel, ``Highlighting the limits
+of federated learning in intrusion detection,'' in \emph{Proc. IEEE ICDCS}, 2024.
+
+\bibitem{fpersonal} S.~Gurpreet, S.~Keshav, P.~Rajalakshmi, and Y.~Xong,
+``Sentinel: Dynamic knowledge distillation for personalized federated intrusion
+detection in heterogeneous IoT networks,'' \emph{arXiv:2510.23019}, 2025.
+
+\bibitem{fmist} S.~Ali, R.~Alireza, and A.~Mahmood, ``Mist-assisted federated
+learning for intrusion detection in heterogeneous IoT networks,''
+\emph{arXiv:2511.00271}, 2025.
+
+\bibitem{flimit} L.~Lavaur, Y.~Busnel, and F.~Autrel, ``Demo: Highlighting the
+limits of federated learning in intrusion detection,'' in \emph{Proc. IEEE
+ICDCS}, 2024.
+
+\bibitem{fcrossvan} M.~Khalid, U.~Zukaib, M.~Al-Rakhami, and A.~M.~Alamri,
+``FedCross-VAN: Federated cross-domain behavior alignment for VANET intrusion
+detection,'' \emph{Trans. Emerg. Telecommun. Technol.}, vol.~37, 2025.
+
+\bibitem{frobust} J.~Zhang \emph{et~al.}, ``Delving into the adversarial
+robustness of federated learning,'' \emph{arXiv:2302.09479}, 2023.
+
+\bibitem{fbackdoor} Z.~Sun, P.~Kairouz, A.~T.~Suresh, and H.~B.~McMahan, ``Can you
+really backdoor federated learning?'' \emph{arXiv:1911.07963}, 2019.
+
+\bibitem{fdelve} V.~Rey, P.~M.~S.~S\'anchez, A.~H.~Celdr\'an, G.~Bovet, and
+M.~Jaggi, ``Federated learning for malware detection in IoT devices,''
+\emph{Comput. Netw.}, 2021.
+
+\bibitem{ffewshot} Y.~Hu, J.~Wu, G.~Li, J.~Li, and J.~Cheng, ``Privacy-preserving
+few-shot traffic detection against APTs via federated meta learning,'' \emph{IEEE
+Trans. Netw. Sci. Eng.}, vol.~11, pp.~2549--2560, 2024.
+
+\bibitem{ffecograph} Q.~Mao, X.~Lin, G.~Li, and J.~Li, ``FeCoGraph: Label-aware
+federated graph contrastive learning for few-shot network intrusion detection,''
+\emph{IEEE Trans. Inf. Forensics Security}, 2025.
+
+\bibitem{ftransfer} J.~Zhang, C.~Luo, M.~Carpenter, and G.~Min, ``Federated
+learning for distributed IIoT intrusion detection using transfer approaches,''
+\emph{IEEE Trans. Ind. Informat.}, vol.~19, pp.~8159--8169, 2023.
+
+\bibitem{sarhan} M.~Sarhan, S.~Layeghy, and M.~Portmann, ``Towards a standard
+feature set for network intrusion detection system datasets,'' \emph{Mobile Netw.
+Appl.}, vol.~27, no.~1, pp.~357--370, 2022.
+
+\bibitem{sarhannf} M.~Sarhan, S.~Layeghy, N.~Moustafa, and M.~Portmann, ``NetFlow
+datasets for machine learning-based network intrusion detection systems,'' in
+\emph{Big Data Technologies and Applications}. Cham, Switzerland: Springer, 2021.
+
+\bibitem{cicids} I.~Sharafaldin, A.~H.~Lashkari, and A.~A.~Ghorbani, ``Toward
+generating a new intrusion detection dataset and intrusion traffic
+characterization,'' in \emph{Proc. 4th ICISSP}, 2018, pp.~108--116.
+
+\bibitem{unsw} N.~Moustafa and J.~Slay, ``UNSW-NB15: A comprehensive data set for
+network intrusion detection systems,'' in \emph{Proc. MilCIS}, 2015, pp.~1--6.
+
+\end{thebibliography}
+
+\end{document}
