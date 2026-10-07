@@ -15,7 +15,10 @@
 > mulus) -> pipeline FL VALID. HETEROGEN lintas-dataset (nb03): federated KOLAPS
 > (−0,026). Kontras ini = bukti kuat "SFM perlu tapi tak cukup; FedAvg naif divergen
 > HANYA di heterogenitas lintas-dataset". KEPUTUSAN: framing temuan-negatif terkontrol
-> (Opsi B diperkuat). Lihat Bagian D–J (TEMA 1 homogen, TEMA 2 heterogen).
+> (Opsi B diperkuat). JEMBATAN non-IID (nb09): titik putus FedAvg di α≈0,1 pada UNSW
+> (rapuh krn prior label seimbang 0,55), CIC tahan sampai α=0,01 (condong-benign 0,17)
+> -> asimetri ini menjelaskan penyebab kolaps lintas-dataset. BERIKUT: one-class (nb10).
+> Lihat Bagian D–J (TEMA 1 homogen, 1b jembatan non-IID, 2 heterogen).
 > **JANGAN mengarang angka** — placeholder `[TBD]`/`--` sampai hasil nyata.
 >
 > **Prasyarat rilis:** Paper 4 di-submit SETELAH Paper 1 (SFM) accepted. Kita
@@ -248,6 +251,45 @@ naskah dicatat sebagai detail (deployment nyata pakai z-score lokal per-klien).
 
 ---
 
+### TEMA 1b — JEMBATAN non-IID bertingkat (satu dataset, sweep alpha) — nb09, HASIL NYATA
+
+> **Peringatan kejujuran:** angka NYATA dari `noniid_bridge.csv` + `_curve.csv`
+> (S3 `unsw-far/federated/results/noniid_bridge/`, diunduh 2026-10-07). Jembatan
+> antara TEMA 1 (homogen) dan TEMA 2 (heterogen): SATU dataset dipecah K=4 klien
+> via Dirichlet(alpha); alpha turun dari ~IID (100) ke ekstrem (0.01) = SATU-SATUNYA
+> sumber heterogenitas (bersih; beda dari nb05 yang mencampur CIC+UNSW). Model/HP
+> identik nb03/nb08. Cari **titik putus** FedAvg.
+
+**Hasil (MCC federated vs centralized, per-dataset):**
+
+| dataset | centralized | α=100 | α=10 | α=1 | α=0,5 | α=0,1 | α=0,05 | α=0,01* |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| CIC (pos 0,17)  | 0,619 | 0,562 | 0,557 | 0,575 | 0,569 | 0,581 | 0,577 | 0,582 |
+| UNSW (pos 0,55) | 0,723 | 0,672 | 0,673 | 0,698 | 0,694 | **0,337** | **0,310** | **0,245** |
+
+(*α=0,01: K jatuh ke 2 klien karena shard kosong di-drop -> tidak apple-to-apple,
+dilaporkan apa adanya; untuk naskah batasi sweep ≤ α=0,05 agar K konsisten.)
+
+**TEMUAN KUNCI (asimetri CIC vs UNSW):**
+1. **CIC sangat TAHAN non-IID** -- bertahan ~0,56–0,58 sampai α=0,01 (ekstrem),
+   tak ada titik putus pada rentang ini.
+2. **UNSW RAPUH** -- **titik putus tajam di α≈0,1** (label_skew ~0,49): MCC jatuh
+   0,69 -> 0,34 (separuh), lalu makin dalam (0,25 di α=0,01).
+3. **Penjelasan:** prior label. UNSW seimbang (0,55) -> saat α kecil memaksa klien
+   condong satu kelas, klien jadi hampir single-class -> model lokal menyimpang jauh
+   -> FedAvg divergen. CIC condong-benign (0,17) -> mayoritas tetap benign di semua
+   klien meski skew tinggi -> model lokal tak menyimpang -> FedAvg bertahan.
+4. **Menjelaskan nb03:** di lintas-dataset, sisi UNSW (seimbang) + perbedaan
+   distribusi dgn CIC menempatkan kondisi DI LUAR titik putus -> divergence nb03
+   kemungkinan besar DIDORONG sisi UNSW + heterogenitas antar-sumber.
+
+**Nilai untuk naskah:** kurva MCC-vs-α + titik putus mengkuantifikasi 'seberapa jauh
+FedAvg naif menahan heterogenitas sebelum runtuh'. Lintas-dataset berada di luar
+batas tsb -> motivasi kuat untuk mitigasi (FedProx μ besar, FedBN/personalized,
+atau pendekatan one-class ala Fed-ANIDS yang menghapus ketergantungan prior-label).
+
+---
+
 ### TEMA 2 — HETEROGEN LINTAS-DATASET (CIC↔UNSW) — nb03, run-1 & run-2
 
 > Inilah kasus inti Paper 4 (klien = dataset berbeda-sumber, skema & distribusi
@@ -422,6 +464,7 @@ diwarisi dari `unswnb-15/notebooks/01,02,05`. JANGAN mengarang angka.
 | `06_fedprox_comm.ipynb` | FedAvg vs FedProx + biaya komunikasi | fedprox_comm.csv | tabel G |
 | `07_multiseed_ci.ipynb` | Agregasi 5 seed + CI + signifikansi | fed_agg.csv, significance_fed.csv | semua tabel |
 | `08_fed_homogen_iid.ipynb` | KONTROL homogen IID per-dataset (CIC-only, UNSW-only) | homogen_iid.csv, homogen_iid_curve.csv | TEMA 1 (homogen) |
+| `09_fed_noniid_bridge.ipynb` | JEMBATAN non-IID: sweep Dirichlet alpha per-dataset, titik putus | noniid_bridge.csv, noniid_bridge_curve.csv | TEMA 1b (jembatan) |
 
 ## M. Status
 
@@ -436,6 +479,8 @@ diwarisi dari `unswnb-15/notebooks/01,02,05`. JANGAN mengarang angka.
 | 7 | Validasi 5-seed + naskah ID → EN (Fase 3) | ◐ nb07 run-2 selesai (fed 0,229±0,184 < local 0,612±0,003); naskah menunggu framing Opsi B |
 | 8 | Keputusan framing: temuan-negatif (Opsi B) | ✅ disepakati (Q.6); naskah belum ditulis |
 | 9 | Kontrol homogen IID (nb08) — baseline positif | ✅ selesai: CIC 0,563 / UNSW 0,674 (≈ centralized), FL VALID |
+| 10 | Jembatan non-IID bertingkat (nb09) — titik putus | ✅ selesai: UNSW putus α≈0,1; CIC tahan sampai α=0,01 (asimetri prior-label) |
+| 11 | Eksperimen one-class federated (nb10) — mitigasi | ◐ notebook DISUSUN; eksekusi SageMaker menunggu |
 
 ## N. ROADMAP BERTAHAP (langkah kerja)
 
