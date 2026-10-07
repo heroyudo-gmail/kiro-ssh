@@ -178,13 +178,19 @@ practical implications, and Section~7 concludes.
 %==================================================================
 
 \subsection{Federated learning for intrusion detection}
-FL for intrusion detection has grown rapidly; recent surveys catalog
-architectures, aggregation strategies, and open challenges
-\cite{ref-fl-survey,ref-fl-review}. The dominant design is a client--server
-topology in which a central aggregator maintains a global model, broadcasts it,
-collects locally trained updates, and aggregates them with FedAvg \cite{mcmahan}.
-Reported results are often strong: with enough communication rounds, a federated
-detector approaches the accuracy of a centralized one. However, the overwhelming
+FL for intrusion detection has grown rapidly; recent surveys and taxonomies
+catalog architectures, aggregation strategies, and open challenges
+\cite{ref-fl-survey,ref-fl-review,wardana-survey,fedorchenko}. The dominant design
+is a client--server topology in which a central aggregator maintains a global
+model, broadcasts it, collects locally trained updates, and aggregates them with
+FedAvg \cite{mcmahan}. Early collaborative-detection work established that
+federated deep learning can match centralized detectors on shared benchmarks
+\cite{popoola,agrawal}, and later systems extended FL-NIDS to edge, SDN, and
+industrial-IoT settings \cite{chen-fedagru,doriguzzi-eff,mao-fedin}. DDoS-oriented
+variants add clustering or adaptive client selection to the aggregator
+\cite{lee-feddb,zainudin-fedddos,doriguzzi-flad}. Reported results are often
+strong: with enough communication rounds, a federated detector approaches the
+accuracy of a centralized one. However, the overwhelming
 majority of these studies evaluate on a \emph{single} public dataset partitioned
 across simulated clients, so the feature space is identical by construction and
 the inter-client distributions are near-IID. Under those conditions FedAvg is
@@ -202,8 +208,12 @@ represents a good global optimum \cite{ref-limits}. The degree of degradation
 depends on the kind and severity of heterogeneity --- label skew, feature skew,
 and quantity skew. Proximal methods such as FedProx \cite{fedprox} add a term that
 penalizes divergence from the global model and improve stability, while
-personalized and clustered FL approaches \cite{ref-personalized} abandon a single
-global model when clients are too different. These methods mitigate but do not
+personalized, distillation-based, and clustered FL approaches
+\cite{ref-personalized,benkaddour,ali-mist} abandon or soften a single global
+model when clients are too different. Cross-domain alignment has also been applied
+to vehicular and heterogeneous-IoT intrusion detection
+\cite{khalid-fedcross,ks-ensemble}. The limits of FL under heterogeneity are now
+explicitly studied \cite{ref-limits}, yet these methods mitigate but do not
 eliminate the problem, and they are typically evaluated with synthetic non-IID
 partitions of a single dataset rather than genuinely different datasets. Our
 graded non-IID sweep follows this tradition but uses it as a diagnostic to locate
@@ -218,9 +228,14 @@ that models transfer across datasets. The \emph{semantic feature alignment} we u
 belongs to this line: it builds a statistically validated dictionary that maps
 features from different extraction tools into a shared, semantically meaningful
 space, and such alignment has been shown to help \emph{centralized} cross-dataset
-generalization. The present paper asks whether such an alignment is also
-sufficient to enable \emph{federated} learning across clients that use different
-schemas --- a question not previously examined.
+generalization. Related efforts transfer knowledge across domains through
+few-shot and meta-learning in a federated setting
+\cite{hu-fewshot,mao-fecograph,yin-fedpkt,zhang-transfer,ceviz-fewshot}, and
+cross-silo log-graph methods federate structurally different sources
+\cite{xu-entente}. These address \emph{label} or \emph{sample} scarcity; the
+present paper instead targets \emph{feature-schema} heterogeneity and asks whether
+semantic alignment is also sufficient to enable \emph{federated} learning across
+clients that use different extraction tools --- a question not previously examined.
 
 \subsection{Anomaly-based detection}
 An alternative to supervised classification is anomaly detection, in which a model
@@ -228,9 +243,21 @@ is trained only on normal traffic and attacks are flagged as deviations. This is
 attractive when labeled attacks are scarce and when attack distributions differ
 across sites. Autoencoder-based detectors measure reconstruction error, and
 Fed-ANIDS \cite{fedanids} demonstrates their effectiveness in a homogeneous
-federated setting. We test whether the same paradigm helps in our heterogeneous
-cross-dataset setting, where the label-prior mismatch that hurts supervised FedAvg
-is, in principle, side-stepped.
+federated setting; semi-supervised and generative federated variants pursue the
+same idea with shrink autoencoders or GANs \cite{semisup-sae,bjorn-fgan,zeng-fga}.
+We test whether the same paradigm helps in our heterogeneous cross-dataset
+setting, where the label-prior mismatch that hurts supervised FedAvg is, in
+principle, side-stepped.
+
+\subsection{Adversarial robustness in federated NIDS}
+A parallel concern is the robustness of federated detectors to adversarial or
+poisoned updates. Robust aggregation, proximal defenses, and adversarial training
+have been proposed to harden FL-NIDS \cite{ennaji-advrobust,chandu-hada,%
+saha-krum,wang-robust}, and the broader adversarial-ML literature frames both
+attacks and defenses on intrusion detectors \cite{debicha-advtrain,gadot}. These
+works are complementary to ours: we study a benign failure mode (heterogeneity),
+not an adversarial one, but the mitigation direction (personalized or robust
+aggregation) overlaps.
 
 \subsection{Positioning}
 
@@ -982,6 +1009,139 @@ vol.~27, no.~1, pp.~357--370, 2022.
 B.~W.~Matthews, ``Comparison of the predicted and observed secondary structure of
 T4 phage lysozyme,'' \emph{Biochim. Biophys. Acta}, vol.~405, no.~2,
 pp.~442--451, 1975.
+
+\bibitem{wardana-survey}
+A.~A.~Wardana and P.~Sukarno, ``Taxonomy and survey of collaborative intrusion
+detection system using federated learning,'' \emph{ACM Comput. Surveys}, 2024.
+
+\bibitem{fedorchenko}
+E.~V.~Fedorchenko, E.~Novikova, and A.~N.~Shulepov, ``Comparative review of the
+IDS based on federated learning: Advantages and open challenges,''
+\emph{Algorithms}, vol.~15, no.~7, art.~247, 2022.
+
+\bibitem{popoola}
+S.~I.~Popoola, G.~Gui, B.~Adebisi, M.~Hammoudeh, and H.~Gacanin, ``Federated deep
+learning for collaborative intrusion detection in heterogeneous networks,'' in
+\emph{Proc. IEEE VTC-Fall}, 2021, pp.~1--6.
+
+\bibitem{agrawal}
+S.~Agrawal \emph{et al.}, ``Federated learning for intrusion detection system:
+Concepts, challenges and future directions,'' \emph{Comput. Commun.}, vol.~195,
+pp.~346--361, 2022.
+
+\bibitem{chen-fedagru}
+Z.~Chen, N.~Lv, P.~Li, Y.~Fang, K.~Chen, and W.~Pan, ``Intrusion detection for
+wireless edge networks based on federated learning,'' \emph{IEEE Access}, vol.~8,
+pp.~217463--217472, 2020.
+
+\bibitem{doriguzzi-eff}
+R.~Doriguzzi-Corin, S.~Cretti, and D.~Siracusa, ``Resource-efficient federated
+learning for network intrusion detection,'' in \emph{Proc. IEEE NetSoft}, 2024.
+
+\bibitem{mao-fedin}
+J.~Mao, Z.~Wei, B.~Li, R.~Zhang, and L.~Song, ``FedIn-NID: A federated learning
+framework for network intrusion detection in large-scale heterogeneous industrial
+IoT,'' \emph{IEEE Trans. Inf. Forensics Security}, 2025.
+
+\bibitem{lee-feddb}
+Y.-C.~Lee, W.-C.~Chien, and Y.-C.~Chang, ``FedDB: A federated learning approach
+using DBSCAN for DDoS attack detection,'' \emph{Appl. Sci.}, 2024.
+
+\bibitem{zainudin-fedddos}
+A.~F.~I.~M.~Zainudin, R.~Akter, D.-S.~Kim, and J.-M.~Lee, ``FedDDoS: An efficient
+FL-based DDoS attacks classification in SDN-enabled IIoT networks,'' in
+\emph{Proc. ICTC}, 2022.
+
+\bibitem{doriguzzi-flad}
+R.~Doriguzzi-Corin and D.~Siracusa, ``FLAD: Adaptive federated learning for DDoS
+attack detection,'' \emph{arXiv:2205.06661}, 2022.
+
+\bibitem{benkaddour}
+M.~Benkaddour, ``Enhancing federated learning for privacy-preserving intrusion
+detection in IoT networks,'' \emph{Przegl\k{a}d Elektrotechniczny}, 2025.
+
+\bibitem{ali-mist}
+S.~Ali, R.~Alireza, and A.~Mahmood, ``Mist-assisted federated learning for
+intrusion detection in heterogeneous IoT networks,'' \emph{arXiv:2511.00271},
+2025.
+
+\bibitem{khalid-fedcross}
+M.~Khalid, U.~Zukaib, M.~Al-Rakhami, and A.~M.~Alamri, ``FedCross-VAN: Federated
+cross-domain behavior alignment for VANET intrusion detection,'' \emph{Trans.
+Emerg. Telecommun. Technol.}, vol.~37, 2025.
+
+\bibitem{ks-ensemble}
+K.~S \emph{et al.}, ``Federated and explainable IDS for large-scale heterogeneous
+networks using ensemble deep learning,'' in \emph{Proc. IEEE ICACRS}, 2025.
+
+\bibitem{hu-fewshot}
+Y.~Hu, J.~Wu, G.~Li, J.~Li, and J.~Cheng, ``Privacy-preserving few-shot traffic
+detection against APTs via federated meta learning,'' \emph{IEEE Trans. Netw.
+Sci. Eng.}, vol.~11, pp.~2549--2560, 2024.
+
+\bibitem{mao-fecograph}
+Q.~Mao, X.~Lin, G.~Li, and J.~Li, ``FeCoGraph: Label-aware federated graph
+contrastive learning for few-shot network intrusion detection,'' \emph{IEEE Trans.
+Inf. Forensics Security}, 2025.
+
+\bibitem{yin-fedpkt}
+K.~Yin, J.~Zhang, Z.~Xia, and C.~Yu, ``FedPKT: Robust cross-domain few-shot
+intrusion detection via prototypical knowledge transfer,'' \emph{IEEE Trans. (in
+press)}, 2025.
+
+\bibitem{zhang-transfer}
+J.~Zhang, C.~Luo, M.~Carpenter, and G.~Min, ``Federated learning for distributed
+IIoT intrusion detection using transfer approaches,'' \emph{IEEE Trans. Ind.
+Informat.}, vol.~19, pp.~8159--8169, 2023.
+
+\bibitem{ceviz-fewshot}
+\"{O}.~Ceviz, S.~\c{S}en, and P.~Sadioglu, ``Distributed intrusion detection in
+dynamic networks of UAVs using few-shot federated learning,''
+\emph{arXiv:2501.13213}, 2025.
+
+\bibitem{xu-entente}
+J.~Xu, C.~Li, Y.~Zheng, and Z.~Li, ``Entente: Cross-silo intrusion detection on
+network log graphs with federated learning,'' \emph{arXiv:2503.14284}, 2025.
+
+\bibitem{semisup-sae}
+Authors of FedMSE, ``Semi-supervised federated learning approach for IoT network
+intrusion detection using shrink autoencoder,'' \emph{arXiv:2410.14121}, 2024.
+
+\bibitem{bjorn-fgan}
+T.~Bj\"{o}rn, ``FGAN: Federated generative adversarial networks for anomaly
+detection in network traffic,'' \emph{arXiv:2203.11106}, 2022.
+
+\bibitem{zeng-fga}
+Q.~Zeng, S.~Olatunde-Salawu, and F.~Nait-Abdesselam, ``FGA-IDS: A federated
+learning and GAN-augmented IDS for UAV networks,'' in \emph{Proc. IEEE CIC}, 2024.
+
+\bibitem{ennaji-advrobust}
+E.~M.~Ennaji, S.~E.~Hajla, Y.~Maleh, and S.~Mounir, ``Adversarially robust
+federated deep learning models for intrusion detection in IoT,'' \emph{Indones. J.
+Electr. Eng. Comput. Sci.}, vol.~37, no.~2, p.~937, 2024.
+
+\bibitem{chandu-hada}
+G.~Chandu, T.~S.~Karthik, and B.~Parag, ``Federated learning for distributed IoT
+security: A privacy-preserving approach to intrusion detection,'' \emph{IEEE
+Access}, 2025.
+
+\bibitem{saha-krum}
+S.~Saha, M.~I.~Sayed, M.~Faezipour, and S.~Bhatt, ``Resilient federated learning
+for DDoS detection with multi-Krum aggregation and anomaly detection,'' in
+\emph{Proc. IEEE SmartNets}, 2025.
+
+\bibitem{wang-robust}
+J.~Wang, K.~Yang, and M.~Li, ``NIDS-FGPA: A federated learning network intrusion
+detection algorithm based on secure aggregation of gradient similarity models,''
+\emph{PLoS ONE}, vol.~19, no.~10, art.~e0308639, 2024.
+
+\bibitem{debicha-advtrain}
+I.~Debicha, T.~Debatty, J.-M.~Dricot, and W.~Mees, ``Adversarial training for
+deep learning-based intrusion detection systems,'' \emph{arXiv:2104.09852}, 2021.
+
+\bibitem{gadot}
+``GADoT: GAN-based adversarial training for robust DDoS attack detection,''
+\emph{arXiv:2201.13102}, 2022.
 
 \end{thebibliography}
 
