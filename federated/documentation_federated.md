@@ -10,7 +10,12 @@
 > - **Bagian II — Memori Operasional** (K–P): peta notebook↔tabel, status, tugas,
 >   S3, konvensi.
 >
-> **STATUS: RUN-2 SELESAI (hasil nyata ada) — H2 TETAP GAGAL (federated KOLAPS), H1 hanya kualitatif. KEPUTUSAN: REFRAME ke studi temuan-negatif (Opsi B); opsional run-3 FedProx sebagai pelengkap.** Lihat Bagian D–J untuk angka & diagnosa run-1 DAN run-2.
+> **STATUS: RUN-2 + KONTROL HOMOGEN (nb08) SELESAI.** Kontrol HOMOGEN (nb08):
+> FedAvg BEKERJA normal (CIC 0,563 / UNSW 0,674, mendekati centralized, konvergen
+> mulus) -> pipeline FL VALID. HETEROGEN lintas-dataset (nb03): federated KOLAPS
+> (−0,026). Kontras ini = bukti kuat "SFM perlu tapi tak cukup; FedAvg naif divergen
+> HANYA di heterogenitas lintas-dataset". KEPUTUSAN: framing temuan-negatif terkontrol
+> (Opsi B diperkuat). Lihat Bagian D–J (TEMA 1 homogen, TEMA 2 heterogen).
 > **JANGAN mengarang angka** — placeholder `[TBD]`/`--` sampai hasil nyata.
 >
 > **Prasyarat rilis:** Paper 4 di-submit SETELAH Paper 1 (SFM) accepted. Kita
@@ -199,7 +204,55 @@ hasil kalibrasi nyata di Fase 1 (jangan dikunci sebelum diuji).
 **MCC:** `(TP*TN - FP*FN)/sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN))` (metrik utama, konsisten Paper 1–3).
 **SFM:** warisi definisi Paper 1 (peta fitur tervalidasi; z-score fit train-only).
 
-## D–J. Hasil (BELUM ADA — placeholder, isi dari artefak nyata)
+## D–J. Hasil (urutan tematik: HOMOGEN dulu, baru HETEROGEN)
+
+> **Urutan baca (disepakati):** tampilkan dulu **kontrol HOMOGEN** (FL bekerja
+> normal) sebagai baseline positif, baru **HETEROGEN lintas-dataset** (FL kolaps)
+> sebagai temuan negatif. Kontras keduanya = bukti utama "SFM perlu tapi tak cukup".
+
+---
+
+### TEMA 1 — KONTROL HOMOGEN (IID, per-dataset) — nb08, HASIL NYATA
+
+> **Peringatan kejujuran:** angka NYATA dari `homogen_iid.csv` + `homogen_iid_curve.csv`
+> (S3 `unsw-far/federated/results/homogen/`, diunduh 2026-10-07). Eksperimen ini
+> **kontrol yang hilang** dari run-1/run-2: menguji FedAvg pada setting HOMOGEN
+> (satu dataset dipecah IID ke K=4 klien), mereplikasi kondisi SOTA (mis. Fed-ANIDS).
+> Model/hyperparameter IDENTIK nb03 (MLP 128,64; FedAvg; ROUNDS=100, LOCAL_EPOCHS=5,
+> LR=3e-3) -> satu-satunya variabel yang berubah: homogen vs heterogen.
+
+**H-kontrol. Centralized / Federated-IID / Local-only (MCC, dievaluasi di test
+dataset yang SAMA).**
+
+| Dataset | Centralized | Federated-IID | Local-only (mean) | Gap (cent−fed) |
+|---|---:|---:|---:|---:|
+| CIC-only  | 0,619 | **0,563** | 0,558 | 0,056 |
+| UNSW-only | 0,723 | **0,674** | 0,671 | 0,049 |
+
+**Kurva konvergensi (dari `homogen_iid_curve.csv`): NAIK MULUS, tak ada divergence.**
+- CIC: 0,290 (round 0) -> naik monoton -> **0,563** (round 99); plateau mulus.
+- UNSW: 0,408 -> naik stabil -> **0,674** (round 99); tak ada kolaps.
+
+**TEMUAN (kontrol VALID):**
+1. Urutan sesuai teori FL sehat: **centralized ≥ federated-IID ≥ local-only**,
+   dengan gap kecil (0,05–0,06). Federated mendekati centralized, sedikit di atas
+   local-only — persis pola FL yang benar.
+2. **Pipeline FL kita VALID** (tak ada bug di FedAvg/MLP/ruang SFM): pada homogen,
+   FedAvg konvergen mulus di KEDUA dataset.
+3. Mereplikasi kondisi SOTA (satu-sumber dipecah) -> metode kita juga sukses di
+   kondisi yang sama dgn literatur.
+
+**Catatan metodologi (jujur):** evaluasi federated-IID memakai z-score monitoring
+dari gabungan train (mu_g,sd_g). Pada IID antar-shard mirip -> efeknya kecil; untuk
+naskah dicatat sebagai detail (deployment nyata pakai z-score lokal per-klien).
+
+---
+
+### TEMA 2 — HETEROGEN LINTAS-DATASET (CIC↔UNSW) — nb03, run-1 & run-2
+
+> Inilah kasus inti Paper 4 (klien = dataset berbeda-sumber, skema & distribusi
+> label berbeda). Di sinilah FedAvg/FedProx naif **gagal** — kontras tajam dengan
+> TEMA 1. Dua run didokumentasikan apa adanya di bawah.
 
 ### RUN-1 (SageMaker, SEED 13/42/101/202/303) — HASIL NYATA & DIAGNOSA
 
@@ -368,6 +421,7 @@ diwarisi dari `unswnb-15/notebooks/01,02,05`. JANGAN mengarang angka.
 | `05_noniid_scaling.ipynb` | K klien non-IID (skenario B) | noniid_scaling.csv | tabel F |
 | `06_fedprox_comm.ipynb` | FedAvg vs FedProx + biaya komunikasi | fedprox_comm.csv | tabel G |
 | `07_multiseed_ci.ipynb` | Agregasi 5 seed + CI + signifikansi | fed_agg.csv, significance_fed.csv | semua tabel |
+| `08_fed_homogen_iid.ipynb` | KONTROL homogen IID per-dataset (CIC-only, UNSW-only) | homogen_iid.csv, homogen_iid_curve.csv | TEMA 1 (homogen) |
 
 ## M. Status
 
@@ -381,6 +435,7 @@ diwarisi dari `unswnb-15/notebooks/01,02,05`. JANGAN mengarang angka.
 | 6 | Eksperimen federated inti (Fase 2) | ✅ run-2 selesai (nb03–nb06); H2 gagal (federated kolaps), FedProx mu=0,1 terbaik 0,187 |
 | 7 | Validasi 5-seed + naskah ID → EN (Fase 3) | ◐ nb07 run-2 selesai (fed 0,229±0,184 < local 0,612±0,003); naskah menunggu framing Opsi B |
 | 8 | Keputusan framing: temuan-negatif (Opsi B) | ✅ disepakati (Q.6); naskah belum ditulis |
+| 9 | Kontrol homogen IID (nb08) — baseline positif | ✅ selesai: CIC 0,563 / UNSW 0,674 (≈ centralized), FL VALID |
 
 ## N. ROADMAP BERTAHAP (langkah kerja)
 
