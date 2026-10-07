@@ -1,5 +1,5 @@
 %==============================================================================
-%  Paper 4 - Federated Cross-Dataset NIDS via Semantic Feature Mapping
+%  Paper 4 - Federated Cross-Dataset NIDS via Semantic Feature Alignment
 %  Target venue: Journal of ICT Research and Applications (JICTRA), ITB (Scopus Q4)
 %  Format disetarakan dgn pedoman JICTRA: TNR 11pt, abstrak 100-200 kata,
 %  5-10 keyword, maks 20 halaman, gaya referensi IEEE (sesuai saran reviewer).
@@ -35,7 +35,7 @@
 \setcounter{totalnumber}{5}
 
 \title{\textbf{When Does Cross-Dataset Federated Learning Work for Network
-Intrusion Detection? A Controlled Study on Semantic Feature Mapping}}
+Intrusion Detection? A Controlled Study with Semantic Feature Alignment}}
 \author{Hero Yudo Martono, Iwan Syarif, Ferry Astika Saputra\\
 \small Politeknik Elektronika Negeri Surabaya (PENS), Surabaya, Indonesia\\
 \small \texttt{hero@pens.ac.id, iwanarif@pens.ac.id, ferryas@pens.ac.id}}
@@ -50,23 +50,25 @@ Intrusion Detection? A Controlled Study on Semantic Feature Mapping}}
 Federated learning (FL) lets organizations train a shared network intrusion
 detection model without sharing raw traffic, but real deployments face
 \emph{feature-schema heterogeneity}: clients extract features with different
-tools, so their feature spaces differ. We study whether a validated Semantic
-Feature Mapping (SFM) can bridge this gap and enable cross-dataset FL between
-CSE-CIC-IDS2018 and UNSW-NB15. Using an identical lightweight model and FedAvg
-across all settings, we run a controlled experiment that isolates the effect of
-heterogeneity. On homogeneous partitions (one dataset split IID across clients)
-FedAvg behaves normally, reaching Matthews correlation coefficient (MCC) close to
-the centralized bound (0.563 and 0.674). A graded non-IID sweep locates a sharp
-break point: the balanced dataset (UNSW) collapses near Dirichlet
+tools, so their feature spaces differ. We study whether a statistically validated
+\emph{semantic feature alignment} --- mapping the features of different extraction
+tools into a shared space --- can bridge this gap and enable cross-dataset FL
+between CSE-CIC-IDS2018 and UNSW-NB15. Using an identical lightweight model and
+FedAvg across all settings, we run a controlled experiment that isolates the
+effect of heterogeneity. On homogeneous partitions (one dataset split IID across
+clients) FedAvg behaves normally, reaching Matthews correlation coefficient (MCC)
+close to the centralized bound (0.563 and 0.674). A graded non-IID sweep locates a
+sharp break point: the balanced dataset (UNSW) collapses near Dirichlet
 \(\alpha\approx0.1\), while the benign-skewed dataset (CIC) stays stable. In the
 true cross-dataset setting, naive FedAvg diverges (global MCC \(-0.026\)) and a
-one-class autoencoder variant does not recover it. We conclude that SFM is
-necessary for interoperability but not sufficient for detection under label-prior
-heterogeneity, and we quantify exactly when cross-dataset FL fails.
+one-class autoencoder variant does not recover it. We conclude that semantic
+feature alignment is necessary for interoperability but not sufficient for
+detection under label-prior heterogeneity, and we quantify exactly when
+cross-dataset FL fails.
 \end{abstract}
 
 \noindent\textbf{Keywords:} \emph{federated learning; network intrusion
-detection; cross-dataset generalization; semantic feature mapping; non-IID;
+detection; cross-dataset generalization; semantic feature alignment; non-IID;
 data heterogeneity; FedAvg.}
 
 \vspace{1em}
@@ -109,12 +111,14 @@ the feature space is identical by construction and the distributions are close t
 independent and identically distributed (IID). This is a convenient but
 optimistic abstraction of the real cross-organization problem.
 
-A Semantic Feature Mapping (SFM) --- a statistically validated dictionary that
-maps features from different extraction tools to a common semantic space --- has
-been proposed to bridge schema heterogeneity for \emph{centralized} cross-dataset
-generalization \cite{paper1}. A natural question follows: can SFM also serve as an
-\emph{enabler} for federated learning across clients that use different feature
-schemas, and how far does federated-SFM close the gap to a centralized model?
+One way to bridge schema heterogeneity is \emph{semantic feature alignment}: a
+statistically validated dictionary that maps features from different extraction
+tools to a common semantic space, so that models expressed in that space become
+comparable. Such alignment has been used to improve \emph{centralized}
+cross-dataset generalization. A natural question follows: can semantic feature
+alignment also serve as an \emph{enabler} for federated learning across clients
+that use different feature schemas, and how far does the resulting federated model
+close the gap to a centralized one?
 
 This paper answers that question with a \emph{controlled} empirical study rather
 than a claim of superiority. Crucially, our setting departs from existing FL-NIDS
@@ -127,8 +131,8 @@ the harder, more realistic case that prior work avoids, and it is enabled only b
 a validated semantic feature space. Our contributions are:
 \begin{enumerate}[leftmargin=1.6em]
   \item \textbf{A new problem setting:} cross-dataset FL-NIDS across clients with
-  \emph{different feature schemas}, bridged by a validated Semantic Feature
-  Mapping used as an interoperability enabler --- not a single dataset split, as
+  \emph{different feature schemas}, bridged by a validated semantic feature
+  alignment used as an interoperability enabler --- not a single dataset split, as
   in prior FL-NIDS work.
   \item \textbf{A controlled protocol} that holds the model and aggregation fixed
   and varies only the degree of heterogeneity, isolating its causal effect; a
@@ -137,12 +141,13 @@ a validated semantic feature space. Our contributions are:
   where FedAvg collapses and explains the asymmetry between a balanced and a
   benign-skewed dataset --- an analysis not reported for cross-dataset FL-NIDS.
   \item \textbf{An honest, diagnosed negative result:} naive FedAvg diverges and a
-  one-class autoencoder (the Fed-ANIDS paradigm) does not recover it; we show SFM
-  is necessary for schema interoperability but not sufficient for detection under
-  label-prior heterogeneity.
+  one-class autoencoder (the Fed-ANIDS paradigm) does not recover it; we show that
+  semantic feature alignment is necessary for schema interoperability but not
+  sufficient for detection under label-prior heterogeneity.
 \end{enumerate}
 To be explicit about scope: our novelty is in the \emph{problem framing, the
-cross-schema federation via SFM, and the controlled when-does-it-fail analysis},
+cross-schema federation via feature alignment, and the controlled
+when-does-it-fail analysis},
 not in a new aggregation algorithm. We reuse standard FedAvg/FedProx deliberately,
 so that the observed behavior reflects the data heterogeneity we study rather than
 a bespoke optimizer.
@@ -199,13 +204,13 @@ Cross-dataset generalization of NIDS is difficult precisely because feature
 schemas and distributions differ between datasets. A line of work seeks a common
 feature representation --- for example a standardized NetFlow feature set
 \cite{sarhan} --- so
-that models transfer across datasets. Semantic Feature Mapping (SFM)
-\cite{paper1} belongs to this line: it builds a statistically validated
-dictionary that maps features from different extraction tools into a shared,
-semantically meaningful space, and was shown to help \emph{centralized}
-cross-dataset generalization. The present paper asks whether such a mapping is
-also sufficient to enable \emph{federated} learning across clients that use
-different schemas --- a question not previously examined.
+that models transfer across datasets. The \emph{semantic feature alignment} we use
+belongs to this line: it builds a statistically validated dictionary that maps
+features from different extraction tools into a shared, semantically meaningful
+space, and such alignment has been shown to help \emph{centralized} cross-dataset
+generalization. The present paper asks whether such an alignment is also
+sufficient to enable \emph{federated} learning across clients that use different
+schemas --- a question not previously examined.
 
 \subsection{Anomaly-based detection}
 An alternative to supervised classification is anomaly detection, in which a model
@@ -239,38 +244,42 @@ Fed-ANIDS \cite{fedanids}        & single & single-source split & no \\
 FL-NIDS surveys \cite{ref-fl-survey,ref-fl-review} & single & single-source & no \\
 Limits of FL \cite{ref-limits}   & single & single-source & partial \\
 Personalized FL \cite{ref-personalized} & single & single-source & no \\
-\textbf{This work}               & \textbf{different (SFM-bridged)} & \textbf{cross-dataset} & \textbf{yes (graded)} \\
+\textbf{This work}               & \textbf{different (aligned)} & \textbf{cross-dataset} & \textbf{yes (graded)} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 Our work therefore differs on all three axes: clients use \emph{different}
-feature schemas reconciled by SFM, the federation is \emph{cross-dataset}, and we
+feature schemas reconciled by alignment, the federation is \emph{cross-dataset}, and we
 frame the study around \emph{when} FL fails rather than asserting that it wins.
 
 %==================================================================
 \section{Method}
 %==================================================================
-\subsection{Semantic Feature Mapping (public prior)}
-We reuse the SFM dictionary from \cite{paper1}: nine semantically aligned flow
-features that both CICFlowMeter (CIC) and Argus/Bro (UNSW) can produce.
-Table~\ref{tab:sfm} lists the mapping. The key property is that the mapping is a
-\emph{public prior} --- a dictionary of column correspondences and derivations
-agreed \emph{before} any training and validated statistically on each dataset
-\emph{separately}, not learned from pooled data. Each client applies the mapping
-to its own raw data locally to obtain the nine common features; no raw data and no
-joint statistics are exchanged, which preserves the privacy premise of FL. The
-mapping therefore functions as an \emph{interlingua}: once each client expresses
-its traffic in the nine SFM features, model weights live in a common space and can
-be averaged.
+\subsection{Semantic feature alignment (public prior)}
+We define a semantic feature alignment between the two extraction tools: nine
+semantically equivalent flow features that both CICFlowMeter (CIC) and Argus/Bro
+(UNSW) can produce. Table~\ref{tab:align} lists the mapping. We constructed it by
+matching column definitions across the two tools (e.g.\ ``Flow Duration'' $\equiv$
+``dur'', ``Tot Fwd Pkts'' $\equiv$ ``spkts'') and validating, on each dataset
+\emph{separately}, that the mapped features have comparable statistical meaning;
+features without a semantically matching counterpart (for example tool-specific
+TCP window encodings) are discarded rather than forced into correspondence. The
+key property is that the mapping is a \emph{public prior} --- a dictionary of
+column correspondences agreed \emph{before} any training, not learned from pooled
+data. Each client applies the mapping to its own raw data locally to obtain the
+nine common features; no raw data and no joint statistics are exchanged, which
+preserves the privacy premise of FL. The alignment therefore functions as an
+\emph{interlingua}: once each client expresses its traffic in the nine aligned
+features, model weights live in a common space and can be averaged.
 
 \begin{table}[htbp]
 \centering\small
-\caption{The nine SFM features and their source columns (public prior).}
-\label{tab:sfm}
+\caption{The nine aligned features and their source columns (public prior).}
+\label{tab:align}
 \begin{tabular}{@{}lll@{}}
 \toprule
-SFM feature & CIC column (CICFlowMeter) & UNSW column (Argus/Bro) \\
+Aligned feature & CIC column (CICFlowMeter) & UNSW column (Argus/Bro) \\
 \midrule
 duration   & Flow Duration      & dur    \\
 fwd\_pkts  & Tot Fwd Pkts       & spkts  \\
@@ -285,14 +294,15 @@ dst\_load  & Bwd Pkts/s         & dload  \\
 \end{tabular}
 \end{table}
 
-A consequence worth stating up front is that the SFM space is optimized for
-\emph{alignment} --- it keeps only features whose semantics match across tools ---
-and not necessarily for \emph{separability} of attacks. This distinction becomes
+A consequence worth stating up front is that the aligned feature space is
+optimized for \emph{alignment} --- it keeps only features whose semantics match
+across tools --- and not necessarily for \emph{separability} of attacks. This
+distinction becomes
 important when we test anomaly detection (Section~\ref{sec:oc}).
 
 \subsection{Model and aggregation (held fixed across all settings)}
 To make every setting comparable (apple-to-apple), we use one lightweight
-multilayer perceptron (MLP) over the nine SFM features
+multilayer perceptron (MLP) over the nine aligned features
 (\(9\!\to\!128\!\to\!64\!\to\!1\), ReLU activations, sigmoid output) trained with
 binary cross-entropy. The model is intentionally small: the goal is not to find
 the best possible classifier but to study how federation behaves under
@@ -391,12 +401,12 @@ paired significance test for the main comparison.
 \section{Experimental Design}
 %==================================================================
 Two datasets act as clients: CSE-CIC-IDS2018 (CIC) \cite{cicids} and UNSW-NB15
-(UNSW) \cite{unsw}, both mapped to the nine SFM features. Table~\ref{tab:data} summarizes the per-client
+(UNSW) \cite{unsw}, both mapped to the nine aligned features. Table~\ref{tab:data} summarizes the per-client
 statistics after a stratified subsample of CIC to balance client sizes.
 
 \begin{table}[htbp]
 \centering\small
-\caption{Per-client dataset statistics (nine SFM features).}
+\caption{Per-client dataset statistics (nine aligned features).}
 \label{tab:data}
 \begin{tabular}{@{}lrrr@{}}
 \toprule
@@ -472,7 +482,7 @@ each client.}
 Table~\ref{tab:homo} shows that on homogeneous IID partitions, FedAvg reaches MCC
 close to the centralized bound for both datasets, and above local-only. The
 convergence curves rise smoothly without divergence. This establishes that the
-FL pipeline (MLP, FedAvg, SFM space) is valid: any later failure is attributable
+FL pipeline (MLP, FedAvg, aligned feature space) is valid: any later failure is attributable
 to heterogeneity, not to an implementation defect.
 
 \begin{table}[htbp]
@@ -527,11 +537,11 @@ UNSW & 0.723 & 0.672 & 0.673 & 0.698 & 0.694 & \textbf{0.337} & \textbf{0.310} \
 
 \subsection{Cross-dataset: naive FedAvg diverges}
 Table~\ref{tab:cross} reports the core setting. Centralized reaches global MCC
-0.745 and a single local model (UNSW) 0.614, but federated-SFM collapses to
+0.745 and a single local model (UNSW) 0.614, but the federated model collapses to
 \(-0.026\): worse than local-only and near random. The convergence curve rises to
 about 0.27 by round 10 then decays into negative territory --- the classic
 client-drift divergence of FedAvg under extreme heterogeneity. Across five seeds
-federated-SFM is 0.229\(\pm\)0.184 versus local-only 0.612\(\pm\)0.003 (paired-$t$
+the federated model is 0.229\(\pm\)0.184 versus local-only 0.612\(\pm\)0.003 (paired-$t$
 \(p=0.010\)), i.e.\ federated is \emph{significantly worse}. The cross-dataset
 case lies beyond the break point found in Table~\ref{tab:bridge}.
 
@@ -545,7 +555,7 @@ Setting & CIC-test & UNSW-test & GLOBAL-test \\
 \midrule
 Centralized      & 0.612 & 0.732 & 0.745 \\
 Local-only (UNSW)& $-0.004$ & 0.723 & 0.614 \\
-Federated-SFM    & 0.532 & 0.616 & \textbf{$-0.026$} \\
+Federated (aligned) & 0.532 & 0.616 & \textbf{$-0.026$} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -611,8 +621,8 @@ Motivated by the label-prior diagnosis, we tested a one-class autoencoder
 behind Fed-ANIDS \cite{fedanids}. Table~\ref{tab:oc} shows that this does not
 recover cross-dataset performance: federated-AE reaches only global MCC 0.039,
 and even the centralized autoencoder fails (near-zero MCC). This indicates that
-the nine SFM features --- optimized for cross-dataset \emph{interoperability} ---
-do not provide enough \emph{separability} for reconstruction-based detection on
+the nine aligned features --- optimized for cross-dataset \emph{interoperability}
+--- do not provide enough \emph{separability} for reconstruction-based detection on
 these datasets. The limitation is the feature space, not merely the aggregation.
 
 To make this concrete, we projected the nine-feature space and quantified its
@@ -628,7 +638,7 @@ feature isolates attacks on its own.
 
 \begin{table}[htbp]
 \centering\small
-\caption{Separability of the nine SFM features (lower silhouette and higher
+\caption{Separability of the nine aligned features (lower silhouette and higher
 overlap indicate poorer separability).}
 \label{tab:sep}
 \begin{tabular}{@{}lccc@{}}
@@ -660,7 +670,7 @@ unsupervised reconstruction.
 \includegraphics[width=0.44\columnwidth]{sep_tsne_cic.png}\hfill
 \includegraphics[width=0.44\columnwidth]{sep_tsne_unsw.png}\\[2pt]
 \includegraphics[width=0.80\columnwidth]{sep_overlap_hist.png}
-\caption{Low separability of the nine SFM features (real data). Top: PCA
+\caption{Low separability of the nine aligned features (real data). Top: PCA
 projections (CIC, UNSW); middle: t-SNE projections; bottom: LDA-1D class
 histograms. Normal (blue) and attack (red) overlap heavily, explaining the failure
 of reconstruction-based detection.}
@@ -684,7 +694,7 @@ Federated-AE   & 0.150 & 0.002 & 0.039 \\
 
 \subsection{Synthesis across the four experiments}
 Read together, the four experiments form a single, coherent narrative that
-increases in difficulty. (1) On homogeneous data FL over the SFM space is valid:
+increases in difficulty. (1) On homogeneous data FL over the aligned feature space is valid:
 federated MCC is within 0.05--0.06 of the centralized bound and above local-only,
 and convergence is smooth. (2) Moderate non-IID is tolerated, but there is a
 measurable break point --- near \(\alpha\approx0.1\) for the balanced dataset ---
@@ -713,13 +723,14 @@ the progression.
 \end{tabular}
 \end{table}
 
-\subsection{Why SFM is necessary but not sufficient}
-The SFM mapping is \emph{necessary} because without a shared feature space the two
-clients cannot federate at all --- their raw schemas have no usable intersection,
-so averaging weights is undefined. It is \emph{not sufficient} for two distinct
-reasons that this study separates. First, even with a shared input space, the
-label-prior mismatch between a benign-skewed and a balanced client drives FedAvg
-past its break point (Experiments 2--3). Second, the SFM space is optimized for
+\subsection{Why feature alignment is necessary but not sufficient}
+The semantic feature alignment is \emph{necessary} because without a shared feature
+space the two clients cannot federate at all --- their raw schemas have no usable
+intersection, so averaging weights is undefined. It is \emph{not sufficient} for
+two distinct reasons that this study separates. First, even with a shared input
+space, the label-prior mismatch between a benign-skewed and a balanced client
+drives FedAvg past its break point (Experiments 2--3). Second, the aligned feature
+space is optimized for
 \emph{alignment} --- keeping only tool-agnostic, semantically matched features ---
 which does not guarantee \emph{separability} between normal and attack traffic;
 the one-class result (Experiment 4) exposes this as a limitation of the feature
@@ -735,8 +746,8 @@ we report it for transparency. \emph{Internal validity:} we hold the model and
 hyperparameters fixed across settings to isolate heterogeneity, at the cost of not
 tuning each setting individually; a per-setting tuned model might shift absolute
 numbers, though the qualitative homogeneous-vs-heterogeneous contrast is large and
-unlikely to reverse. \emph{External validity:} we study two datasets and nine SFM
-features; other dataset pairs, richer feature sets, or packet-level features could
+unlikely to reverse. \emph{External validity:} we study two datasets and nine
+aligned features; other dataset pairs, richer feature sets, or packet-level features could
 behave differently, and indeed the one-class result suggests feature richness
 matters. \emph{Model capacity:} the autoencoder is deliberately small, but since
 the centralized AE also fails, enlarging it is unlikely to help while the feature
@@ -770,20 +781,22 @@ feature mapping is necessary but not sufficient.
 We outline four concrete directions that follow directly from the diagnosed
 failure causes.
 
-\emph{(1) SFM combined with domain adaptation / feature alignment networks.}
-Because the residual gap after SFM is a distribution mismatch (not a schema
-mismatch), the natural next step is to compose SFM with a learned alignment stage.
-A domain-adaptation layer --- for example a CORAL-style second-order statistics
-alignment or an adversarial domain-alignment network trained to make client
-feature distributions indistinguishable --- can be inserted \emph{after} the SFM
-projection and \emph{before} the classifier. Crucially, the alignment can be
-trained in a privacy-preserving way (aligning to shared summary statistics or via
-federated adversarial objectives), so the SFM interoperability guarantee is kept
-while the distribution gap that drives gradient cancellation is reduced.
+\emph{(1) Alignment combined with domain adaptation networks.}
+Because the residual gap after semantic feature alignment is a distribution
+mismatch (not a schema mismatch), the natural next step is to compose the
+alignment with a learned domain-adaptation stage. A domain-adaptation layer ---
+for example a CORAL-style second-order statistics alignment or an adversarial
+domain-alignment network trained to make client feature distributions
+indistinguishable --- can be inserted \emph{after} the semantic projection and
+\emph{before} the classifier. Crucially, it can be trained in a privacy-preserving
+way (aligning to shared summary statistics or via federated adversarial
+objectives), so the interoperability guarantee is kept while the distribution gap
+that drives gradient cancellation is reduced.
 
 \emph{(2) Higher-order, tool-agnostic flow features.} The one-class result points
 to a separability deficit in the nine alignment-oriented features. A promising
-remedy is to enrich the SFM space with \emph{higher-order statistical} flow
+remedy is to enrich the aligned feature space with \emph{higher-order statistical}
+flow
 features that remain computable from any extraction tool --- for instance ratios
 (bytes-per-packet, forward/backward asymmetry), dispersion statistics (variance,
 inter-arrival-time percentiles), and entropy-based descriptors. These preserve
@@ -820,11 +833,6 @@ B.~McMahan, E.~Moore, D.~Ramage, S.~Hampson, and B.~A.~y~Arcas,
 ``Communication-efficient learning of deep networks from decentralized data,''
 in \emph{Proc. 20th Int. Conf. Artif. Intell. Statist. (AISTATS)}, 2017,
 pp.~1273--1282.
-
-\bibitem{paper1}
-H.~Y.~Martono, I.~Syarif, and F.~A.~Saputra, ``Cross-dataset generalization of
-ML-based network intrusion detection via semantic feature mapping and few-shot
-adaptation,'' submitted for publication.
 
 \bibitem{ref-fl-survey}
 A.~Khraisat, A.~Alazab, T.~Jan, and A.~Gopez, ``Survey on federated learning for
