@@ -1,0 +1,454 @@
+%==============================================================================
+%  Materi Pembelajaran MK Cyber Security
+%  Review Paper State-of-the-Art: Federated Learning untuk NIDS
+%  Paper yang diulas: Fed-ANIDS (Expert Systems with Applications, 2023)
+%==============================================================================
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[bahasa]{babel}
+\usepackage{amsmath,amssymb}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue}
+
+% ----- Gaya listing kode Python -----
+\definecolor{codegray}{gray}{0.95}
+\definecolor{codegreen}{rgb}{0.0,0.5,0.0}
+\definecolor{codeblue}{rgb}{0.0,0.0,0.7}
+\definecolor{codepurple}{rgb}{0.58,0.0,0.82}
+\lstdefinestyle{py}{
+  language=Python,
+  backgroundcolor=\color{codegray},
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{codeblue}\bfseries,
+  stringstyle=\color{codegreen},
+  commentstyle=\color{codepurple}\itshape,
+  numberstyle=\tiny\color{gray},
+  numbers=left,
+  numbersep=6pt,
+  frame=single,
+  breaklines=true,
+  showstringspaces=false,
+  tabsize=2,
+  captionpos=b
+}
+
+\title{\textbf{Review Paper State-of-the-Art:\\
+Federated Learning untuk Network Intrusion Detection System (NIDS)}\\[4pt]
+\large Studi Kasus Metode Unggulan: \textit{Fed-ANIDS}}
+\author{Materi Pembelajaran --- Mata Kuliah \textit{Cyber Security}}
+\date{}
+
+\begin{document}
+\maketitle
+
+%------------------------------------------------------------------
+\begin{center}
+\begin{tabular}{@{}ll@{}}
+\textbf{Nama} & : Hero Yudo Martono \\
+\textbf{NRP}  & : 1026900012 \\
+\end{tabular}
+\end{center}
+\vspace{0.5em}
+\hrule
+\vspace{1em}
+
+%==================================================================
+\section{Identitas Penulis (Paper yang Diulas)}
+%==================================================================
+
+Paper yang dipilih sebagai representasi metode unggulan FL untuk NIDS adalah
+sebagai berikut.
+
+\begin{table}[h]
+\centering
+\renewcommand{\arraystretch}{1.35}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{4.2cm}>{\raggedright\arraybackslash}p{9.5cm}@{}}
+\toprule
+\textbf{Komponen} & \textbf{Keterangan} \\
+\midrule
+Judul makalah &
+\textit{Fed-ANIDS: Federated learning for anomaly-based network intrusion
+detection systems} \\
+Penulis &
+Meryem Janati Idrissi, Hamza Alami, Abdelkader El Mahdaouy, Abdellah El Mekki,
+Soufiane Oualil, Zakaria Yartaoui, Ismail Berrada \\
+Afiliasi &
+Mohammed VI Polytechnic University (UM6P), Maroko \\
+Nama jurnal &
+\textit{Expert Systems with Applications} (ESWA), Penerbit Elsevier \\
+Volume / Nomor artikel &
+Volume 234 / Article 121000 \\
+Tahun &
+2023 \\
+Halaman &
+Article number 121000 (artikel bernomor, bukan rentang halaman konvensional) \\
+DOI &
+\href{https://doi.org/10.1016/j.eswa.2023.121000}{10.1016/j.eswa.2023.121000} \\
+Status Scopus &
+Terindeks Scopus; ESWA merupakan jurnal \textbf{Q1} (bidang Computer Science /
+Artificial Intelligence \& Engineering) dengan reputasi tinggi (CiteScore
+tinggi, impact factor $>7$). \\
+Kode sumber &
+Tersedia publik: \url{https://github.com/meryemJanatiIdrissi/Fed-ANIDS} \\
+\bottomrule
+\end{tabular}
+\caption{Identitas bibliografis paper Fed-ANIDS.}
+\end{table}
+
+\noindent\textbf{Alasan pemilihan.} Paper ini dipilih karena:
+(1) terbit di jurnal Q1 bereputasi (ESWA, Elsevier);
+(2) memadukan dua teknik unggulan sekaligus --- \emph{anomaly detection}
+berbasis \emph{autoencoder} dan \emph{federated learning} --- yang menjadi
+arah utama riset FL-NIDS modern;
+(3) membandingkan beberapa varian \emph{autoencoder} (AE, VAE, USAD) dan dua
+algoritma agregasi (FedAvg, FedProx), sehingga kaya sebagai bahan ajar;
+(4) kode sumbernya terbuka sehingga mekanismenya dapat dicontohkan secara
+konkret kepada mahasiswa.
+
+%==================================================================
+\section{Solusi yang Diusulkan Penulis}
+%==================================================================
+
+\subsection{Solusi}
+Masalah inti yang diangkat: NIDS tradisional berbasis \emph{machine learning}
+umumnya \textbf{terpusat} --- data lalu lintas jaringan dari banyak organisasi
+harus dikumpulkan ke satu server untuk melatih model. Ini menimbulkan dua
+persoalan: \textbf{privasi} (data lalu lintas sensitif tidak boleh keluar
+organisasi) dan \textbf{ketergantungan pada data serangan berlabel} yang mahal
+dan jarang.
+
+Solusi Fed-ANIDS menggabungkan dua gagasan:
+\begin{enumerate}[leftmargin=1.4em]
+  \item \textbf{Federated Learning (FL)} --- setiap node melatih model
+  \emph{secara lokal} dan hanya mengirim \emph{parameter model} (bukan data
+  mentah) ke server agregator. Privasi data terjaga.
+  \item \textbf{Anomaly Detection (AD) berbasis rekonstruksi} --- model dilatih
+  \textbf{hanya pada lalu lintas normal}, lalu serangan dideteksi sebagai
+  anomali ketika \emph{reconstruction error} melebihi ambang. Dengan ini,
+  sistem \textbf{tidak membutuhkan data serangan berlabel} saat pelatihan.
+\end{enumerate}
+
+\subsection{Sistem}
+Arsitektur sistem bersifat \emph{client--server} klasik FL:
+\begin{itemize}[leftmargin=1.4em]
+  \item \textbf{Klien} ($K$ node): masing-masing memiliki data lalu lintas
+  lokal (hanya trafik normal untuk pelatihan). Tiap klien melatih
+  \emph{autoencoder} pada datanya sendiri.
+  \item \textbf{Server agregator}: menginisialisasi model global, menyiarkannya
+  ke klien, lalu menggabungkan parameter yang dikembalikan klien menjadi model
+  global baru. Diulang sampai konvergen.
+\end{itemize}
+Yang berpindah di jaringan hanyalah bobot model; data mentah tidak pernah
+meninggalkan klien.
+
+\subsection{Model}
+Fed-ANIDS mengevaluasi tiga keluarga model rekonstruksi:
+\begin{itemize}[leftmargin=1.4em]
+  \item \textbf{Simple Autoencoder (AE)} --- \emph{encoder}--\emph{decoder}
+  yang memampatkan input ke ruang laten lalu merekonstruksinya.
+  \item \textbf{Variational Autoencoder (VAE)} --- varian probabilistik dengan
+  regularisasi distribusi laten.
+  \item \textbf{USAD (UnSupervised Anomaly Detection)} --- dua
+  \emph{autoencoder} yang dilatih secara \textbf{adversarial}; inilah varian
+  yang memberi hasil terbaik pada paper ini.
+\end{itemize}
+Deteksi dilakukan via \textbf{intrusion score} = kesalahan rekonstruksi.
+Trafik dengan skor di atas ambang $\tau$ ditandai sebagai serangan.
+
+\subsection{Metode / Algoritma (beserta penjelasan)}
+
+\subsubsection*{(a) Agregasi federated: FedAvg dan FedProx}
+Pada tiap \emph{round} komunikasi $t$, server menyiarkan bobot global $w^{(t)}$.
+Tiap klien $k$ melatih secara lokal $E$ epoch menghasilkan $w_k^{(t)}$, lalu
+server menggabungkan dengan \textbf{FedAvg} (rata-rata berbobot ukuran data):
+\begin{equation}
+w^{(t+1)} = \sum_{k=1}^{K} \frac{n_k}{n}\, w_k^{(t)},
+\qquad n = \sum_{k=1}^{K} n_k ,
+\end{equation}
+dengan $n_k$ jumlah sampel klien $k$. Varian \textbf{FedProx} menambahkan
+\emph{proximal term} pada fungsi rugi lokal untuk menahan klien agar tidak
+menyimpang terlalu jauh dari model global (penting saat data antar-klien
+\emph{non-IID}):
+\begin{equation}
+\min_{w}\; \mathcal{L}_k(w) \;+\; \frac{\mu}{2}\,\lVert w - w^{(t)} \rVert^2 .
+\end{equation}
+
+\subsubsection*{(b) Model terbaik: USAD (adversarial autoencoder)}
+USAD memakai satu \emph{encoder} $E$ bersama dan dua \emph{decoder} $D_1, D_2$
+(membentuk dua \emph{autoencoder} $AE_1 = D_1\!\circ\!E$ dan
+$AE_2 = D_2\!\circ\!E$). Pelatihan dua fase:
+\begin{itemize}[leftmargin=1.4em]
+  \item \textbf{Fase 1 (rekonstruksi).} Kedua \emph{autoencoder} belajar
+  merekonstruksi input normal $x$:
+  \begin{equation}
+  \mathcal{L}_{AE_1} = \lVert x - AE_1(x) \rVert_2, \qquad
+  \mathcal{L}_{AE_2} = \lVert x - AE_2(x) \rVert_2 .
+  \end{equation}
+  \item \textbf{Fase 2 (adversarial).} $AE_2$ belajar \emph{membedakan} data
+  asli dari hasil rekonstruksi $AE_1$, sementara $AE_1$ berusaha
+  \emph{mengelabui} $AE_2$. Permainan \emph{min--max} ini mempertajam batas
+  antara normal dan anomali:
+  \begin{equation}
+  \min_{AE_1}\max_{AE_2}\;
+  \lVert x - AE_2(AE_1(x)) \rVert_2 .
+  \end{equation}
+\end{itemize}
+Pada inferensi, \textbf{intrusion score} menggabungkan kedua kesalahan:
+\begin{equation}
+s(x) = \alpha\,\lVert x - AE_1(x)\rVert_2
+     + \beta\,\lVert x - AE_2(AE_1(x))\rVert_2,
+\qquad \alpha+\beta = 1 .
+\end{equation}
+Jika $s(x) > \tau$ maka $x$ dinyatakan serangan. Ambang $\tau$ dikalibrasi dari
+distribusi skor data normal (mis. persentil tinggi).
+
+\subsubsection*{(c) Alur lengkap pelatihan federated (pseudokode)}
+\begin{enumerate}[leftmargin=1.6em]
+  \item Server inisialisasi bobot global $w^{(0)}$ (encoder + dua decoder).
+  \item \textbf{Untuk} tiap round $t = 0,1,\dots,R-1$:
+  \begin{enumerate}[leftmargin=1.4em,label=\arabic*.]
+    \item Server siarkan $w^{(t)}$ ke semua klien.
+    \item Tiap klien $k$ latih USAD $E$ epoch \emph{pada trafik normal lokal}
+    (fase rekonstruksi + adversarial) $\rightarrow w_k^{(t)}$.
+    \item Klien kirim $w_k^{(t)}$ ke server (data tetap lokal).
+    \item Server agregasi FedAvg/FedProx $\rightarrow w^{(t+1)}$.
+  \end{enumerate}
+  \item Keluaran: model global; evaluasi pada test set (normal + serangan)
+  memakai \emph{intrusion score} $s(x)$ dan ambang $\tau$.
+\end{enumerate}
+
+\subsection{Desain}
+Rancangan evaluasi dibuat sistematis sebagai \emph{faktorial}:
+\begin{itemize}[leftmargin=1.4em]
+  \item \textbf{Tiga model AD}: AE, VAE, USAD.
+  \item \textbf{Dua agregasi FL}: FedAvg, FedProx.
+  \item \textbf{Tiga dataset benchmark}: USTC-TFC2016, CIC-IDS2017,
+  CSE-CIC-IDS2018.
+  \item \textbf{Pembanding}: model terpusat (\emph{centralized}) sebagai batas
+  atas, serta variasi jumlah klien untuk menguji skalabilitas.
+\end{itemize}
+Metrik: \emph{accuracy, precision, recall, F1-score}. Pelatihan hanya memakai
+trafik normal (\emph{semi-supervised / one-class}); serangan hanya muncul saat
+evaluasi.
+
+\begin{center}
+\footnotesize
+\begin{tabular}{@{}p{2.3cm}p{11.2cm}@{}}
+\toprule
+\textbf{Lapisan} & \textbf{Peran dalam desain} \\
+\midrule
+Data lokal & Trafik ternormalisasi per-klien; hanya kelas normal untuk latih. \\
+Model lokal & USAD (encoder bersama + 2 decoder), ringan agar hemat komunikasi. \\
+Agregasi & FedAvg (dasar) / FedProx (stabil saat non-IID). \\
+Deteksi & Intrusion score dari reconstruction error + ambang $\tau$. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Keunggulan Sistem}
+\begin{enumerate}[leftmargin=1.4em]
+  \item \textbf{Menjaga privasi} --- data mentah tak pernah keluar klien; hanya
+  bobot yang dipertukarkan. Cocok untuk kolaborasi antar-organisasi.
+  \item \textbf{Tidak butuh label serangan} --- pelatihan \emph{one-class} pada
+  trafik normal; mampu mendeteksi serangan baru (\emph{zero-day}) sebagai
+  anomali.
+  \item \textbf{Akurasi tinggi \& stabil} --- varian USAD memberi F1 mendekati
+  model terpusat, dengan deteksi tajam berkat pelatihan adversarial.
+  \item \textbf{Efisien komunikasi} --- \emph{autoencoder} ringan; FedProx
+  mempercepat kestabilan konvergensi pada data non-IID.
+  \item \textbf{Teruji lintas-dataset} --- konsisten di tiga benchmark NIDS
+  yang berbeda karakteristik.
+\end{enumerate}
+
+%==================================================================
+\section{Contoh Kode: Inti Metode Terbaik (USAD + FedAvg)}
+%==================================================================
+
+Berikut ilustrasi \emph{inti} metode (disederhanakan untuk pembelajaran, PyTorch
+dan NumPy). Kode difokuskan pada tiga bagian kunci: (a) model USAD, (b)
+pelatihan lokal dua fase, dan (c) agregasi FedAvg. Ini bukan salinan verbatim
+repositori penulis, melainkan rekonstruksi edukatif agar mahasiswa memahami
+mekanismenya.
+
+\subsection{(a) Arsitektur USAD}
+\begin{lstlisting}[style=py,caption={Encoder bersama + dua decoder (USAD).}]
+import torch, torch.nn as nn
+
+class Encoder(nn.Module):
+    def __init__(self, d_in, d_lat):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(d_in, d_in // 2), nn.ReLU(),
+            nn.Linear(d_in // 2, d_lat), nn.ReLU())
+    def forward(self, x): return self.net(x)
+
+class Decoder(nn.Module):
+    def __init__(self, d_lat, d_out):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(d_lat, d_out // 2), nn.ReLU(),
+            nn.Linear(d_out // 2, d_out), nn.Sigmoid())
+    def forward(self, z): return self.net(z)
+
+class USAD(nn.Module):
+    """Satu encoder E dipakai bersama; dua decoder D1, D2."""
+    def __init__(self, d_in, d_lat):
+        super().__init__()
+        self.E  = Encoder(d_in, d_lat)
+        self.D1 = Decoder(d_lat, d_in)
+        self.D2 = Decoder(d_lat, d_in)
+    def forward(self, x):
+        z   = self.E(x)
+        w1  = self.D1(z)            # AE1(x)
+        w2  = self.D2(z)            # AE2(x)
+        w3  = self.D2(self.E(w1))   # AE2(AE1(x))
+        return w1, w2, w3
+\end{lstlisting}
+
+\subsection{(b) Pelatihan lokal dua fase (rekonstruksi + adversarial)}
+\begin{lstlisting}[style=py,caption={Satu klien melatih USAD pada trafik normal lokal.}]
+def train_local(model, X_normal, epochs=5, lr=1e-3):
+    opt = torch.optim.Adam(model.parameters(), lr=lr)
+    for ep in range(1, epochs + 1):
+        n = ep  # bobot adversarial meningkat tiap epoch
+        for xb in X_normal:                       # xb: batch trafik normal
+            w1, w2, w3 = model(xb)
+            # Fase 1: rekonstruksi. Fase 2: adversarial (min-max).
+            loss_ae1 = (1/n)   * torch.mean((xb - w1)**2) \
+                     + (1-1/n) * torch.mean((xb - w3)**2)
+            loss_ae2 = (1/n)   * torch.mean((xb - w2)**2) \
+                     - (1-1/n) * torch.mean((xb - w3)**2)
+            loss = loss_ae1 + loss_ae2
+            opt.zero_grad(); loss.backward(); opt.step()
+    return model.state_dict()                     # hanya bobot yang dikirim
+
+def intrusion_score(model, x, alpha=0.5, beta=0.5):
+    w1, _, w3 = model(x)
+    return alpha*torch.mean((x-w1)**2, dim=1) \
+         + beta *torch.mean((x-w3)**2, dim=1)      # s(x) > tau -> serangan
+\end{lstlisting}
+
+\subsection{(c) Agregasi FedAvg di server}
+\begin{lstlisting}[style=py,caption={Rata-rata berbobot ukuran data (FedAvg).}]
+import copy, torch
+
+def fedavg(client_states, client_sizes):
+    total = float(sum(client_sizes))
+    avg = copy.deepcopy(client_states[0])
+    for key in avg.keys():
+        avg[key] = sum((client_sizes[k]/total) * client_states[k][key]
+                       for k in range(len(client_states)))
+    return avg                                     # -> bobot global baru
+
+def federated_round(global_model, clients, rounds=50, epochs=5):
+    for t in range(rounds):
+        states, sizes = [], []
+        for Xk in clients:                         # tiap klien = trafik normal lokal
+            local = copy.deepcopy(global_model)
+            local.load_state_dict(global_model.state_dict())  # terima bobot global
+            states.append(train_local(local, Xk, epochs))
+            sizes.append(len(Xk))
+        global_model.load_state_dict(fedavg(states, sizes))   # agregasi
+    return global_model
+\end{lstlisting}
+
+\noindent\textbf{Catatan pengajaran.} Perhatikan: fungsi \texttt{train\_local}
+mengembalikan \emph{state\_dict} (bobot), \textbf{bukan} data. Inilah inti
+privasi FL. Faktor \texttt{1/n} vs \texttt{1-1/n} menyeimbangkan tujuan
+rekonstruksi (awal pelatihan) dan adversarial (akhir pelatihan) --- ciri khas
+USAD.
+
+%==================================================================
+\section{Hasil Percobaan yang Dilakukan}
+%==================================================================
+
+Ringkasan temuan utama paper (dari evaluasi pada tiga dataset benchmark):
+
+\begin{itemize}[leftmargin=1.4em]
+  \item \textbf{USAD unggul.} Di antara ketiga model AD, varian berbasis
+  \textbf{USAD} secara konsisten memberi \emph{F1-score} tertinggi, mengungguli
+  AE dan VAE pada ketiga dataset.
+  \item \textbf{Mendekati model terpusat.} Model \emph{federated} (USAD) mencapai
+  kinerja yang \textbf{sangat dekat} dengan model terpusat (\emph{centralized})
+  --- selisih kecil --- padahal data \textbf{tidak pernah dipusatkan}. Ini bukti
+  bahwa privasi dapat dijaga nyaris tanpa mengorbankan akurasi.
+  \item \textbf{Skor tinggi lintas-dataset.} Pada CIC-IDS2017, CSE-CIC-IDS2018,
+  dan USTC-TFC2016, metrik \emph{accuracy}, \emph{precision}, \emph{recall}, dan
+  \emph{F1} berada pada kisaran tinggi (umumnya di atas $\sim$0,95 untuk
+  konfigurasi terbaik), menunjukkan generalisasi yang baik.
+  \item \textbf{FedProx vs FedAvg.} FedProx membantu kestabilan ketika distribusi
+  antar-klien tidak seragam (\emph{non-IID}), meski pada kondisi relatif seimbang
+  perbedaannya tipis terhadap FedAvg.
+  \item \textbf{Robust terhadap serangan tak-terlihat.} Karena dilatih hanya pada
+  trafik normal, sistem mendeteksi beragam jenis serangan sebagai anomali tanpa
+  perlu contoh serangan saat pelatihan.
+\end{itemize}
+
+\begin{table}[h]
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Konfigurasi (ilustratif)} & \textbf{Accuracy} & \textbf{Precision} &
+\textbf{Recall} & \textbf{F1} \\
+\midrule
+Centralized (USAD)        & tinggi & tinggi & tinggi & \textbf{tertinggi} \\
+Federated USAD (FedAvg)   & $\approx$ centralized & tinggi & tinggi & $\approx$ centralized \\
+Federated USAD (FedProx)  & $\approx$ centralized & tinggi & tinggi & stabil (non-IID) \\
+Federated AE / VAE        & baik & baik & baik & di bawah USAD \\
+\bottomrule
+\end{tabular}
+\caption{Pola hasil (deskriptif). Angka pasti lihat paper asli; tabel ini
+menegaskan \emph{tren}: USAD terbaik, federated $\approx$ centralized.}
+\end{table}
+
+\noindent\textit{Catatan kejujuran akademik:} nilai metrik persisnya mengacu
+pada tabel di paper asli (DOI di atas). Tabel ini sengaja menyajikan \emph{pola}
+agar fokus pembelajaran pada mekanisme, bukan menghafal angka.
+
+%==================================================================
+\section{Kesimpulan}
+%==================================================================
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item \textbf{Fed-ANIDS} menunjukkan bahwa menggabungkan \emph{federated
+  learning} dengan \emph{anomaly detection} berbasis \emph{autoencoder}
+  merupakan salah satu pendekatan paling unggul untuk NIDS yang
+  \textbf{menjaga privasi} sekaligus \textbf{akurat}.
+  \item Model \textbf{USAD} (autoencoder adversarial) memberi kinerja terbaik;
+  pelatihan dua fase (rekonstruksi lalu adversarial) menghasilkan batas
+  normal--anomali yang tajam.
+  \item Kinerja \emph{federated} \textbf{mendekati} model terpusat tanpa pernah
+  memusatkan data mentah --- bukti nyata bahwa privasi dan akurasi tidak harus
+  dikorbankan satu sama lain.
+  \item Pendekatan \emph{semi-supervised} (hanya butuh trafik normal) membuat
+  sistem praktis di dunia nyata, di mana data serangan berlabel langka, dan
+  mampu menangkap serangan baru sebagai anomali.
+  \item \textbf{Pelajaran untuk FL-NIDS secara umum:} kunci keberhasilan ada
+  pada (a) pemilihan model lokal yang tepat (USAD $>$ VAE $>$ AE), (b) algoritma
+  agregasi yang tahan \emph{non-IID} (FedProx), dan (c) strategi deteksi berbasis
+  rekonstruksi yang tidak bergantung label serangan.
+\end{enumerate}
+
+\vspace{1em}
+\hrule
+\vspace{0.5em}
+\noindent\footnotesize
+\textbf{Referensi utama:} M. Janati Idrissi dkk., ``Fed-ANIDS: Federated
+learning for anomaly-based network intrusion detection systems,''
+\textit{Expert Systems with Applications}, vol.~234, art.~121000, 2023.
+DOI: \href{https://doi.org/10.1016/j.eswa.2023.121000}{10.1016/j.eswa.2023.121000}.
+Metode USAD mengacu pada J. Audibert dkk., ``USAD: UnSupervised Anomaly
+Detection on Multivariate Time Series,'' \textit{ACM SIGKDD}, 2020.
+
+\end{document}
