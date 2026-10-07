@@ -1,0 +1,550 @@
+%==============================================================================
+%  Tugas 3 --- Rangkuman Rencana Riset Doktoral
+%  Topik: Online Federated NIDS + Adversarial Training (cross-dataset, cloud)
+%==============================================================================
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[bahasa]{babel}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{ragged2e}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue}
+
+\tikzset{
+  spine/.style={-{Stealth[length=3mm]},very thick},
+  bone/.style={-{Stealth[length=2mm]},thick,gray!60!black},
+  head/.style={rectangle,rounded corners,draw=black,fill=blue!15,
+               align=center,font=\small\bfseries,minimum height=1.3cm,text width=2.8cm},
+  cat/.style={rectangle,rounded corners,draw=black,fill=green!12,
+              align=center,font=\footnotesize\bfseries,text width=2.6cm},
+  twig/.style={font=\scriptsize,align=left,text width=3.4cm},
+}
+
+\title{\textbf{Rangkuman Rencana Riset Doktoral}\\[4pt]
+\large Arsitektur \emph{Online Federated} NIDS dengan \emph{Adversarial Training}\\
+untuk Mitigasi \emph{Evasion Attack} dan Adaptasi \emph{Cross-Dataset}\\
+pada Lingkungan \emph{Cloud}}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+%------------------------------------------------------------------
+\begin{center}
+\begin{tabular}{@{}ll@{}}
+\textbf{Nama} & : Hero Yudo Martono \\
+\textbf{NRP}  & : 1026900012 \\
+\end{tabular}
+\end{center}
+\vspace{0.4em}
+\hrule
+\vspace{0.8em}
+
+\noindent\textbf{Judul Topik Riset Doktoral:}\\[2pt]
+\emph{``Arsitektur Online Federated NIDS dengan Adversarial Training untuk
+Mitigasi Evasion Attack dan Adaptasi Cross-Dataset pada Lingkungan Cloud.''}
+
+\vspace{0.6em}
+\noindent\textbf{Benang merah penelitian.} Disertasi ini dibangun bertahap
+melalui enam studi yang saling menyambung: (i) deteksi serangan SSH tunggal
+sebagai titik awal, (ii) antisipasi ransomware, (iii) ketahanan terhadap
+serangan adversarial (\emph{evasion}), (iv) interoperabilitas lintas-dataset
+melalui \emph{Semantic Feature Mapping} (SFM), (v) gabungan SFM dengan
+\emph{adversarial training}, (vi) adaptasi \emph{online} terhadap
+\emph{concept drift}, hingga (vii) desentralisasi melalui \emph{federated
+learning}. Semua komponen dimuarakan ke satu arsitektur NIDS yang
+\emph{online}, \emph{federated}, tahan \emph{evasion}, dan mampu beradaptasi
+lintas-dataset di lingkungan cloud nyata.
+
+%==================================================================
+\section{Rumusan Masalah}
+%==================================================================
+
+NIDS berbasis \emph{machine learning} menghadapi sejumlah keterbatasan yang
+saling berkaitan. Disertasi ini merumuskan masalah berikut:
+
+\begin{enumerate}[label=\textbf{RM\arabic*.},leftmargin=3.2em]
+  \item \textbf{Deteksi serangan spesifik.} Bagaimana membangun pendeteksi
+  serangan terarah (mis.\ \emph{brute-force} SSH) yang akurat dan dapat
+  dioperasikan pada trafik nyata di cloud? [1]
+
+  \item \textbf{Antisipasi ransomware.} Bagaimana memodelkan dan mendeteksi
+  perilaku ransomware (mis.\ enkripsi/korupsi berkas) secara dini agar dampak
+  dapat dimitigasi? [2]
+
+  \item \textbf{Kerentanan terhadap evasion.} Model NIDS mudah dikelabui
+  \emph{adversarial examples}. Bagaimana meningkatkan ketahanan model terhadap
+  serangan \emph{evasion} yang \emph{functionality-preserving}? [3,4,5]
+
+  \item \textbf{Generalisasi lintas-dataset.} Skema fitur antar-dataset/tool
+  ekstraksi berbeda (CICFlowMeter vs Argus/Bro), sehingga model tidak dapat
+  dipindah antar-jaringan. Bagaimana \emph{Semantic Feature Mapping} (SFM)
+  menjembatani heterogenitas skema fitur agar model tergeneralisasi
+  lintas-dataset? [6,7,8]
+
+  \item \textbf{Ketahanan sekaligus generalisasi.} Dapatkah SFM dan
+  \emph{adversarial training} dipadukan sehingga model tahan \emph{evasion}
+  sekaligus tetap mampu beradaptasi lintas-dataset? [3,6]
+
+  \item \textbf{Adaptasi online terhadap drift.} Trafik jaringan berubah
+  seiring waktu (\emph{concept drift}). Bagaimana model diperbarui secara
+  \emph{online} agar tetap akurat tanpa melatih ulang dari nol? [9,10]
+
+  \item \textbf{Desentralisasi \& privasi.} Data lalu lintas antar-organisasi
+  tidak boleh dipusatkan. Bagaimana \emph{federated learning} memungkinkan
+  pelatihan kolaboratif lintas-klien berskema-fitur-beda tanpa berbagi data
+  mentah, dan apa batas kinerjanya di bawah heterogenitas lintas-dataset?
+  [11,12,13]
+
+  \item \textbf{Integrasi arsitektur.} Bagaimana menyatukan deteksi,
+  ketahanan adversarial, adaptasi online, dan federasi ke dalam satu arsitektur
+  NIDS yang utuh dan teruji di lingkungan cloud nyata? [1--13]
+\end{enumerate}
+
+%==================================================================
+\section{Perbandingan Studi Literatur}
+%==================================================================
+
+Tabel~\ref{tab:lit} merangkum studi literatur yang menjadi landasan tiap
+komponen disertasi, dikelompokkan menurut tema penelitian.
+
+\renewcommand{\arraystretch}{1.3}
+\begin{longtable}{@{}>{\RaggedRight\arraybackslash}p{3.3cm}
+                     >{\RaggedRight\arraybackslash}p{8.4cm}
+                     >{\RaggedRight\arraybackslash}p{1.9cm}@{}}
+\caption{Perbandingan studi literatur per tema penelitian.}
+\label{tab:lit}\\
+\toprule
+\textbf{Studi Literatur (Tema)} & \textbf{Rangkuman} & \textbf{Referensi} \\
+\midrule
+\endfirsthead
+\multicolumn{3}{c}{\tablename\ \thetable\ -- \textit{lanjutan}}\\
+\toprule
+\textbf{Studi Literatur (Tema)} & \textbf{Rangkuman} & \textbf{Referensi} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{3}{r}{\textit{bersambung ke halaman berikutnya}}\\
+\endfoot
+\bottomrule
+\endlastfoot
+
+Deteksi serangan SSH (titik awal) &
+Deteksi \emph{brute-force}/SSH berbasis fitur alir pada dataset NIDS modern;
+titik awal pipeline deteksi pada trafik cloud nyata. Menggunakan dataset
+benchmark NIDS sebagai acuan karakterisasi serangan. &
+[1,7,8] \\
+
+Antisipasi ransomware &
+Pemodelan perilaku ransomware (enkripsi/overwrite/korupsi metadata) dan deteksi
+dini; evaluasi dampak serta pemulihan (RTO) pada simulasi cloud. &
+[2] \\
+
+Serangan \& ketahanan adversarial &
+Landasan \emph{adversarial examples} (FGSM, PGD, C\&W) dan pemodelan serangan
+realistis terhadap NIDS; \emph{adversarial training} sebagai pertahanan;
+tinjauan dualitas serangan--pertahanan pada NIDS. &
+[3,4,5] \\
+
+Generalisasi \& \emph{domain adaptation} lintas-dataset &
+Studi generalisasi lintas-dataset NIDS, standardisasi himpunan fitur
+(NetFlow), serta teori adaptasi domain (CORAL, Ben-David) yang melandasi SFM. &
+[6,7,8] \\
+
+Semantic Feature Mapping (SFM) + few-shot (fondasi sendiri) &
+Pemetaan fitur semantik tervalidasi statistik antar-dataset + kalibrasi
+\emph{few-shot}; divalidasi pada trafik cloud nyata (Paper 1 --- fondasi
+disertasi). &
+[6] \\
+
+Adaptasi \emph{online} / \emph{concept drift} &
+Deteksi dan adaptasi terhadap \emph{concept drift} secara \emph{streaming}
+(ADWIN/DDM, pembaruan inkremental) agar model tetap mutakhir tanpa latih-ulang
+penuh. &
+[9,10] \\
+
+\emph{Federated learning} untuk NIDS (survei \& arsitektur) &
+Survei konsep, arsitektur, dan strategi agregasi FL-NIDS; FedAvg/FedProx
+sebagai dasar; peluang dan tantangan desentralisasi. &
+[11,12,14] \\
+
+FL non-IID \& heterogenitas lintas-klien &
+Batas FL pada data \emph{non-IID}/heterogen; personalisasi dan penyelarasan
+lintas-domain --- relevan dengan temuan kolaps FedAvg pada skema CIC vs UNSW. &
+[13,15,16] \\
+
+FL + adversarial robustness &
+Ketahanan FL terhadap \emph{adversarial}/poisoning (agregasi robust, SFAT);
+menautkan sumbu adversarial dengan sumbu federated. &
+[17,18] \\
+
+FL anomaly-based (SOTA pembanding) &
+Fed-ANIDS: FL + \emph{autoencoder} (AE/VAE/USAD) berbasis \emph{reconstruction
+error}; mencapai kinerja mendekati terpusat pada data homogen (satu-sumber). &
+[19] \\
+
+\end{longtable}
+
+\noindent\footnotesize\textit{Catatan kejujuran akademik:} nomor referensi
+untuk tema SSH tunggal [1] dan ransomware [2] merujuk naskah/karya penulis
+sendiri yang statusnya perlu dilengkapi (judul, venue, tahun) saat finalisasi.
+Entri lintas-dataset, adversarial, online, dan federated mengacu pada
+literatur terverifikasi (lihat Daftar Referensi). Beberapa entri FL berstatus
+pracetak (arXiv) dan DOI-nya perlu diverifikasi ulang sebelum publikasi.
+
+%==================================================================
+\section{Hasil Identifikasi Celah (Gap) dan Solusi yang Diusulkan}
+%==================================================================
+
+Dari tinjauan literatur (Tabel~\ref{tab:lit}), teridentifikasi lima celah utama.
+Tiap celah dipasangkan dengan solusi yang diusulkan disertasi ini.
+
+\renewcommand{\arraystretch}{1.3}
+\begin{longtable}{@{}>{\RaggedRight\arraybackslash}p{0.6cm}
+                     >{\RaggedRight\arraybackslash}p{6.0cm}
+                     >{\RaggedRight\arraybackslash}p{7.0cm}@{}}
+\caption{Celah penelitian dan solusi yang diusulkan.}\label{tab:gap}\\
+\toprule
+\textbf{\#} & \textbf{Celah (Gap) yang Teridentifikasi} & \textbf{Solusi yang Diusulkan} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Celah (Gap)} & \textbf{Solusi} \\
+\midrule
+\endhead
+\bottomrule
+\endlastfoot
+
+G1 & Model NIDS terlatih pada satu dataset tidak tergeneralisasi
+ke jaringan lain karena \textbf{skema fitur antar-tool ekstraksi berbeda};
+literatur hanya memakai penyelarasan fitur implisit, bukan peta semantik
+tervalidasi. &
+\textbf{Semantic Feature Mapping (SFM)}: peta fitur semantik tervalidasi
+statistik + kalibrasi \emph{few-shot}, memungkinkan transfer model
+lintas-dataset tanpa melatih ulang penuh. \\
+
+G2 & NIDS berbasis ML \textbf{rapuh terhadap \emph{evasion}}
+(\emph{adversarial examples} yang mempertahankan fungsionalitas serangan);
+pertahanan sering diuji dengan serangan tak-realistis. &
+\textbf{Adversarial training} dengan serangan \emph{functionality-preserving}
+yang realistis; evaluasi ketahanan diukur bersama metrik deteksi normal. \\
+
+G3 & \textbf{SFM dan ketahanan adversarial dikaji terpisah};
+belum ada studi apakah interoperabilitas lintas-dataset bertahan di bawah
+tekanan adversarial. &
+\textbf{SFM + adversarial training terpadu}: menguji apakah ruang fitur
+semantik tetap stabil (robust) ketika model dilatih adversarial. \\
+
+G4 & Model statis \textbf{usang akibat \emph{concept drift}};
+pelatihan ulang penuh mahal dan lambat untuk operasi \emph{real-time}. &
+\textbf{Adaptasi \emph{online}}: deteksi drift + pembaruan model inkremental
+pada ruang SFM, menjaga akurasi tanpa latih-ulang dari nol. \\
+
+G5 & FL-NIDS SOTA sukses pada data \textbf{homogen (satu-sumber dipecah)},
+tetapi \textbf{FedAvg/FedProx naif divergen} pada heterogenitas lintas-dataset
+nyata (prior label \& skema berbeda). &
+\textbf{Online Federated NIDS berbasis SFM}: SFM sebagai \emph{enabler}
+interoperabilitas + agregasi sadar-heterogenitas; sekaligus memetakan
+\emph{batas} FL lintas-dataset (temuan jujur). \\
+
+\end{longtable}
+
+%==================================================================
+\section{Konsep Penyelesaian dan Pemetaan Judul Paper}
+%==================================================================
+
+Celah di atas diselesaikan melalui rangkaian paper yang saling membangun.
+Pemetaan konsep $\rightarrow$ judul paper disajikan pada Tabel~\ref{tab:paper}.
+
+\renewcommand{\arraystretch}{1.3}
+\begin{longtable}{@{}>{\RaggedRight\arraybackslash}p{0.9cm}
+                     >{\RaggedRight\arraybackslash}p{4.4cm}
+                     >{\RaggedRight\arraybackslash}p{7.3cm}
+                     >{\RaggedRight\arraybackslash}p{1.0cm}@{}}
+\caption{Pemetaan konsep ke judul paper yang direncanakan.}\label{tab:paper}\\
+\toprule
+\textbf{Paper} & \textbf{Konsep Kunci} & \textbf{Judul (rencana)} & \textbf{Gap} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Paper} & \textbf{Konsep} & \textbf{Judul} & \textbf{Gap} \\
+\midrule
+\endhead
+\bottomrule
+\endlastfoot
+
+P0 & Deteksi SSH + validasi cloud &
+Deteksi serangan SSH berbasis ML pada trafik cloud nyata (titik awal pipeline).
+& --- \\
+
+P0b & Antisipasi ransomware &
+Pemodelan \& deteksi dini perilaku ransomware di lingkungan cloud. & --- \\
+
+P1 & SFM + few-shot &
+\emph{Cross-Dataset Generalization of ML-based NIDS via Semantic Feature
+Mapping and Few-Shot Adaptation, Validated on Real Cloud Traffic.} & G1 \\
+
+P2 & SFM + adversarial &
+\emph{Robust Cross-Dataset NIDS: Adversarial Training on a Semantic Feature
+Space.} & G2, G3 \\
+
+P3 & Online / concept drift &
+\emph{Online Adaptation of Cross-Dataset NIDS under Concept Drift via
+Incremental Learning on the SFM Space.} & G4 \\
+
+P4 & Federated + SFM &
+\emph{Federated Cross-Network NIDS via Semantic Feature Mapping: when does
+cross-dataset FL work, and why is SFM necessary but not sufficient?} & G5 \\
+
+P5 & Integrasi (disertasi) &
+\emph{Online Federated NIDS with Adversarial Training for Evasion Mitigation
+and Cross-Dataset Adaptation in Cloud.} & G1--G5 \\
+
+\end{longtable}
+
+%==================================================================
+\section{Keunggulan yang Diharapkan (Klaim Kinerja)}
+%==================================================================
+
+\noindent\textbf{Indikator kinerja yang diklaim: \emph{Matthews Correlation
+Coefficient} (MCC) pada evaluasi \emph{cross-dataset}.} MCC dipilih (bukan
+akurasi) karena tahan terhadap ketidakseimbangan kelas yang lazim pada trafik
+NIDS, sehingga menjadi ukuran kualitas deteksi yang paling jujur.
+
+\begin{quote}
+\textbf{Klaim keunggulan.} \emph{Model NIDS yang dilatih pada dataset sumber
+dan dipindah ke dataset target melalui \textbf{Semantic Feature Mapping (SFM)}
+mempertahankan MCC cross-dataset yang \textbf{secara signifikan lebih tinggi}
+dibandingkan model baseline tanpa SFM (transfer fitur mentah / by-position),
+pada tingkat anggaran label target yang sama.}
+\end{quote}
+
+\noindent Klaim ini bersifat \emph{terukur} (MCC), \emph{terbatas} (satu
+indikator, kondisi cross-dataset), dan \emph{dapat dibantah} (falsifiable):
+jika SFM tidak meningkatkan MCC melebihi baseline, klaim gugur.
+
+%==================================================================
+\section{Penjelasan Ilmiah atas Klaim (Argumen Deduktif--Nomologis)}
+%==================================================================
+
+Klaim keunggulan dijelaskan dengan skema \emph{deductive--nomological} (D--N):
+dari hukum/premis umum ($L$) + kondisi awal ($C$), kesimpulan ($E$) menyusul
+secara deduktif.
+
+\begin{description}[leftmargin=2.2em,font=\normalfont\itshape]
+  \item[Hukum umum $L_1$ (teori adaptasi domain).] Galat model pada domain
+  target dibatasi oleh galat sumber ditambah \emph{divergensi distribusi}
+  antar-domain (Ben-David dkk.): $\varepsilon_T(h) \le \varepsilon_S(h) +
+  d_{\mathcal{H}\Delta\mathcal{H}}(S,T) + \lambda$. Menurunkan divergensi
+  menurunkan batas-atas galat target. [8]
+  \item[Hukum umum $L_2$ (invariansi semantik).] Jika dua fitur dari dua tool
+  ekstraksi mengukur \emph{besaran semantik yang sama}, menyelaraskannya ke satu
+  ruang mengurangi perbedaan distribusi \emph{yang bersifat artefak-skema}
+  (bukan perbedaan sejati antar-serangan). [6,7]
+  \item[Kondisi awal $C_1$.] SFM memetakan fitur CIC dan UNSW ke 9 fitur
+  semantik tervalidasi statistik; artefak skema-fitur dihilangkan.
+  \item[Kondisi awal $C_2$.] Baseline tanpa SFM menyelaraskan fitur
+  \emph{by-position}/mentah, sehingga artefak skema tetap ada.
+  \item[Kesimpulan $E$ (deduktif).] Dari $L_1,L_2,C_1,C_2$: ruang SFM memiliki
+  $d_{\mathcal{H}\Delta\mathcal{H}}$ lebih kecil daripada ruang baseline
+  $\Rightarrow$ batas-atas galat target lebih rendah $\Rightarrow$ MCC
+  cross-dataset model SFM $\ge$ MCC baseline. \textbf{Inilah klaim keunggulan.}
+\end{description}
+
+\noindent\textbf{Syarat batas (agar argumen tidak \emph{over-claim}).} Argumen
+berlaku bila (i) pemetaan semantik benar-benar valid (divalidasi statistik per
+fitur), dan (ii) perbedaan sejati antar-serangan tidak ikut terhapus. Jika
+salah satu syarat gagal, kesimpulan $E$ tidak dijamin --- sejalan dengan temuan
+Paper 4 bahwa SFM \emph{perlu tetapi tidak cukup} ketika heterogenitas berasal
+dari distribusi label (bukan sekadar skema fitur).
+
+%==================================================================
+\section{Rencana Pembuktian Klaim Keunggulan}
+%==================================================================
+
+Pembuktian memakai \textbf{kombinasi simulasi dan eksperimen}, berlapis dari
+terkendali ke realistis.
+
+\begin{enumerate}[label=\textbf{\arabic*.},leftmargin=2.2em]
+  \item \textbf{Eksperimen offline terkontrol (inti klaim).}
+  \begin{itemize}[leftmargin=1.3em]
+    \item Data: CSE-CIC-IDS2018 $\leftrightarrow$ UNSW-NB15 (dua arah).
+    \item Perlakuan: (a) SFM, (b) baseline tanpa SFM (by-position/mentah).
+    \item Protokol: latih di sumber, uji di target; variasikan anggaran label
+    target \emph{few-shot} (0, $k$, \dots). Metrik utama \textbf{MCC} +
+    recall/precision/F1/balanced-accuracy.
+    \item Statistik: 5 \emph{seed} \{13,42,101,202,303\}, rerata$\pm$std,
+    \textbf{CI95}, uji signifikansi (paired-$t$ \& Wilcoxon). Klaim didukung
+    bila $\Delta$MCC(SFM $-$ baseline) $>0$ signifikan.
+  \end{itemize}
+
+  \item \textbf{Eksperimen ketahanan adversarial.} Serangan
+  \emph{functionality-preserving} (mis.\ PGD terbatasi pada fitur yang dapat
+  dimanipulasi); ukur penurunan MCC dengan vs tanpa \emph{adversarial training}
+  pada ruang SFM.
+
+  \item \textbf{Eksperimen online (concept drift).} Aliran data terurut-waktu;
+  bandingkan MCC model statis vs model yang diperbarui inkremental saat drift
+  terdeteksi.
+
+  \item \textbf{Simulasi \emph{federated}.} Simulasi FedAvg/FedProx \emph{in
+  memory} (logika identik node EC2) untuk prediksi hasil sebelum \emph{deploy};
+  uji urutan centralized $\ge$ federated $\ge$ local-only.
+
+  \item \textbf{Validasi \emph{deployment} cloud nyata.} AWS multi-EC2
+  (aggregator + klien, IP publik + SG ketat, pertukaran bobot via S3); ukur MCC
+  pada trafik cloud nyata + biaya komunikasi (rounds, bytes/round) --- menjembatani
+  simulasi dengan dunia nyata.
+\end{enumerate}
+
+\noindent\textit{Prinsip kejujuran:} semua angka dari eksperimen nyata; hasil
+negatif (mis.\ FL kolaps pada heterogenitas lintas-dataset) dilaporkan apa
+adanya sebagai temuan ilmiah, bukan disembunyikan.
+
+%==================================================================
+\section{Diagram Alur Penelitian (Fishbone)}
+%==================================================================
+
+Gambar~\ref{fig:fishbone} menyajikan diagram tulang-ikan (\emph{Ishikawa}):
+tulang punggung menuju tujuan akhir (NIDS online-federated yang tahan evasion
+dan adaptif lintas-dataset), dengan lima cabang penyebab/komponen yang
+masing-masing dialamatkan oleh satu paper.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[node distance=4mm]
+  % spine
+  \node[head] (goal) at (14.5,0)
+       {Online Federated NIDS\\ tahan \emph{evasion}\\ \& adaptif\\ cross-dataset};
+  \draw[spine] (0,0) -- (goal.west);
+  % upper categories
+  \node[cat] (c1) at (2.2,2.2) {SFM\\ (interoperabilitas)};
+  \node[cat] (c3) at (7.0,2.2) {Online\\ (concept drift)};
+  \node[cat] (c5) at (11.5,2.2) {Deteksi awal\\ (SSH, ransomware)};
+  % lower categories
+  \node[cat] (c2) at (2.2,-2.2) {Adversarial\\ (evasion)};
+  \node[cat] (c4) at (7.0,-2.2) {Federated\\ (privasi)};
+  % bones from category to spine
+  \draw[bone] (c1.south) -- (2.2,0);
+  \draw[bone] (c3.south) -- (7.0,0);
+  \draw[bone] (c5.south) -- (11.5,0);
+  \draw[bone] (c2.north) -- (2.2,0);
+  \draw[bone] (c4.north) -- (7.0,0);
+  % twigs (sub-items) -- upper
+  \node[twig,anchor=west] at (2.6,3.3) {$\cdot$ peta fitur tervalidasi (P1)};
+  \node[twig,anchor=west] at (2.6,3.0) {$\cdot$ few-shot calibration};
+  \node[twig,anchor=west] at (7.4,3.3) {$\cdot$ deteksi drift (P3)};
+  \node[twig,anchor=west] at (7.4,3.0) {$\cdot$ update inkremental};
+  \node[twig,anchor=west] at (11.9,3.3) {$\cdot$ brute-force SSH (P0)};
+  \node[twig,anchor=west] at (11.9,3.0) {$\cdot$ perilaku ransomware (P0b)};
+  % twigs -- lower
+  \node[twig,anchor=west] at (2.6,-3.0) {$\cdot$ adversarial training (P2)};
+  \node[twig,anchor=west] at (2.6,-3.3) {$\cdot$ serangan realistis (PGD)};
+  \node[twig,anchor=west] at (7.4,-3.0) {$\cdot$ FedAvg/FedProx (P4)};
+  \node[twig,anchor=west] at (7.4,-3.3) {$\cdot$ validasi AWS multi-EC2};
+\end{tikzpicture}
+\caption{Diagram \emph{fishbone} (Ishikawa) alur penelitian doktoral: lima
+komponen (SFM, adversarial, online, federated, deteksi awal) menyatu menuju
+arsitektur NIDS \emph{online-federated} yang tahan \emph{evasion} dan adaptif
+lintas-dataset. Label P0--P5 menautkan tiap cabang ke paper pada
+Tabel~\ref{tab:paper}.}
+\label{fig:fishbone}
+\end{figure}
+
+%==================================================================
+\section*{9. Daftar Referensi}
+\addcontentsline{toc}{section}{Daftar Referensi}
+%==================================================================
+\begin{enumerate}[label={[\arabic*]},leftmargin=2.6em]
+
+\item H.~Y.~Martono \emph{et al.}, ``Deteksi serangan SSH berbasis
+\emph{machine learning} pada trafik cloud nyata,'' naskah kerja penulis
+(Paper SSH), \emph{status terbit dilengkapi saat finalisasi}.
+
+\item H.~Y.~Martono \emph{et al.}, ``Pemodelan dan deteksi dini perilaku
+ransomware pada lingkungan cloud,'' naskah kerja penulis (Paper Ransomware),
+\emph{status terbit dilengkapi saat finalisasi}.
+
+\item I.~J.~Goodfellow, J.~Shlens, C.~Szegedy, ``Explaining and harnessing
+adversarial examples,'' in Proc.\ ICLR, 2015.
+
+\item A.~Madry, A.~Makelov, L.~Schmidt, D.~Tsipras, A.~Vladu, ``Towards deep
+learning models resistant to adversarial attacks,'' in Proc.\ ICLR, 2018.
+
+\item G.~Apruzzese, M.~Andreolini, L.~Ferretti, M.~Marchetti, M.~Colajanni,
+``Modeling realistic adversarial attacks against network intrusion detection
+systems,'' ACM Trans.\ Privacy Security, 2022.
+
+\item H.~Y.~Martono, I.~Syarif, F.~A.~Saputra, ``Cross-Dataset Generalization
+of ML-based Network Intrusion Detection via Semantic Feature Mapping and
+Few-Shot Adaptation, Validated on Real Cloud Traffic,'' naskah kerja (Paper 1),
+\emph{status terbit dilengkapi saat finalisasi}.
+
+\item M.~Sarhan, S.~Layeghy, M.~Portmann, ``Towards a standard feature set for
+network intrusion detection system datasets,'' Mobile Netw.\ Appl., vol.~27,
+no.~1, pp.~357--370, 2022.
+
+\item S.~Ben-David, J.~Blitzer, K.~Crammer, A.~Kulesza, F.~Pereira,
+J.~W.~Vaughan, ``A theory of learning from different domains,'' Mach.\ Learn.,
+vol.~79, no.~1--2, pp.~151--175, 2010.
+
+\item S.~Layeghy, M.~Gallagher, M.~Portmann, ``Benchmarking the benchmark ---
+Comparing synthetic and real-world network IDS datasets,'' J.\ Inf.\ Secur.\
+Appl., vol.~80, art.~103689, 2024.
+
+\item R.~Doriguzzi-Corin, D.~Siracusa, ``FLAD: Adaptive Federated Learning for
+DDoS Attack Detection,'' arXiv:2205.06661, 2022.
+
+\item A.~Khraisat, A.~Alazab, T.~Jan, A.~Gopez, ``Survey on Federated Learning
+for Intrusion Detection System: Concept, Architectures, Aggregation Strategies,
+Challenges, and Future Directions,'' ACM Comput.\ Surv., 2024.
+doi:10.1145/3687124.
+
+\item J.~L.~Hern\'andez-Ramos \emph{et al.}, ``Intrusion Detection Based on
+Federated Learning: A Systematic Review,'' ACM Comput.\ Surv., 2025.
+doi:10.1145/3731596.
+
+\item L.~Lavaur, Y.~Busnel, F.~Autrel, ``Highlighting the Limits of Federated
+Learning in Intrusion Detection,'' in Proc.\ IEEE ICDCS, 2024.
+doi:10.1109/icdcs60910.2024.00135.
+
+\item A.~A.~Wardana, P.~Sukarno, ``Taxonomy and Survey of Collaborative
+Intrusion Detection System using Federated Learning,'' ACM Comput.\ Surv.,
+2024. doi:10.1145/3701724.
+
+\item S.~Gurpreet \emph{et al.}, ``Sentinel: Dynamic Knowledge Distillation for
+Personalized Federated Intrusion Detection in Heterogeneous IoT Networks,''
+arXiv:2510.23019, 2025.
+
+\item M.~Khalid, U.~Zukaib, M.~Al-Rakhami, A.~M.~Alamri, ``FedCross-VAN:
+Federated Cross-Domain Behavior Alignment for VANET Intrusion Detection,''
+Trans.\ Emerg.\ Telecommun.\ Technol., vol.~37, 2025. doi:10.1002/ett.70309.
+
+\item ``Combating Exacerbated Heterogeneity for Robust Models in Federated
+Learning (SFAT),'' arXiv:2303.00250, 2023.
+
+\item E.~M.~Ennaji, S.~E.~Hajla, Y.~Maleh, S.~Mounir, ``Adversarially robust
+federated deep learning models for intrusion detection in IoT,'' Indonesian J.\
+Electr.\ Eng.\ Comput.\ Sci., vol.~37, no.~2, p.~937, 2024.
+doi:10.11591/ijeecs.v37.i2.pp937-947.
+
+\item M.~Janati Idrissi, H.~Alami, A.~El Mahdaouy, A.~El Mekki, S.~Oualil,
+Z.~Yartaoui, I.~Berrada, ``Fed-ANIDS: Federated learning for anomaly-based
+network intrusion detection systems,'' Expert Syst.\ Appl., vol.~234,
+art.~121000, 2023. doi:10.1016/j.eswa.2023.121000.
+
+\end{enumerate}
+
+\end{document}
