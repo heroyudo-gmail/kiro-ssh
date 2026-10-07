@@ -50,9 +50,10 @@ Intrusion Detection? A Controlled Study with Semantic Feature Alignment}}
 Federated learning (FL) lets organizations train a shared network intrusion
 detection model without sharing raw traffic, but real deployments face
 \emph{feature-schema heterogeneity}: clients extract features with different
-tools, so their feature spaces differ. We study whether a statistically validated
+tools, so their feature spaces differ. We study whether a
 \emph{semantic feature alignment} --- mapping the features of different extraction
-tools into a shared space --- can bridge this gap and enable cross-dataset FL
+tools into a shared, semantically equivalent space --- can bridge this gap and
+enable cross-dataset FL
 between CSE-CIC-IDS2018 and UNSW-NB15. Using an identical lightweight model and
 FedAvg across all settings, we run a controlled experiment that isolates the
 effect of heterogeneity. On homogeneous partitions (one dataset split IID across
@@ -63,8 +64,8 @@ sharp break point: the balanced dataset (UNSW) collapses near Dirichlet
 true cross-dataset setting, naive FedAvg diverges (global MCC \(-0.026\)) and a
 one-class autoencoder variant does not recover it. However, a
 heterogeneity-aware strategy that shares a federated backbone while personalizing
-the decision head (FedPer) raises the global MCC to 0.731, close to the
-centralized upper bound. We conclude that semantic feature alignment is necessary
+the decision head (FedPer) raises the pooled test MCC (under personalized
+evaluation) from \(-0.026\) to 0.731, close to the centralized upper bound. We conclude that semantic feature alignment is necessary
 for interoperability but not sufficient under label-prior heterogeneity, that we
 can quantify a measurable failure boundary, and that personalizing the federation
 substantially reduces the performance gap under the studied cross-dataset setting.
@@ -115,9 +116,9 @@ independent and identically distributed (IID). This is a convenient but
 optimistic abstraction of the real cross-organization problem.
 
 One way to bridge schema heterogeneity is \emph{semantic feature alignment}: a
-statistically validated dictionary that maps features from different extraction
-tools to a common semantic space, so that models expressed in that space become
-comparable. Such alignment has been used to improve \emph{centralized}
+dictionary that maps features from different extraction tools --- matched by
+physical quantity, unit, and semantic meaning --- to a common feature space, so
+that models expressed in that space become comparable. Such alignment has been used to improve \emph{centralized}
 cross-dataset generalization. A natural question follows: can semantic feature
 alignment also serve as an \emph{enabler} for federated learning across clients
 that use different feature schemas, and how far does the resulting federated model
@@ -152,7 +153,7 @@ a validated semantic feature space. Our contributions are:
   recover it, showing that semantic feature alignment is necessary but not
   sufficient under label-prior heterogeneity; yet a heterogeneity-aware strategy
   (FedPer, sharing a backbone while personalizing the head) restores
-  near-centralized global MCC, demonstrating that the failure boundary can be
+  near-centralized pooled test MCC, demonstrating that the failure boundary can be
   largely mitigated.
 \end{enumerate}
 To be explicit about scope: our novelty is in the \emph{problem framing, the
@@ -168,9 +169,9 @@ detection, and positions our study. Section~3 describes the method: the semantic
 feature mapping used as a public prior, the shared model and aggregation
 algorithms, and the one-class variant. Section~4 details the controlled
 experimental design, datasets, hyperparameters, and evaluation protocol.
-Section~5 presents and discusses the four experiments in increasing order of
-difficulty, from the homogeneous control to the cross-dataset case and the
-one-class mitigation attempt. Section~6 discusses threats to validity and
+Section~5 presents and discusses the five experimental stages in increasing order
+of difficulty, from the homogeneous control to the cross-dataset case, the
+one-class mitigation attempt, and the personalized-federation mitigation. Section~6 discusses threats to validity and
 practical implications, and Section~7 concludes.
 
 %==================================================================
@@ -225,9 +226,10 @@ schemas and distributions differ between datasets. A line of work seeks a common
 feature representation --- for example a standardized NetFlow feature set
 \cite{sarhan} --- so
 that models transfer across datasets. The \emph{semantic feature alignment} we use
-belongs to this line: it builds a statistically validated dictionary that maps
-features from different extraction tools into a shared, semantically meaningful
-space, and such alignment has been shown to help \emph{centralized} cross-dataset
+belongs to this line: it builds a dictionary that maps features from different
+extraction tools --- matched by physical quantity, unit, and semantic meaning ---
+into a shared feature space, and such alignment has been shown to help
+\emph{centralized} cross-dataset
 generalization. Related efforts transfer knowledge across domains through
 few-shot and meta-learning in a federated setting
 \cite{hu-fewshot,mao-fecograph,yin-fedpkt,zhang-transfer,ceviz-fewshot}, and
@@ -264,9 +266,10 @@ aggregation) overlaps.
 Table~\ref{tab:position} positions this work against representative FL-NIDS
 studies along three axes that matter for our question: whether clients share one
 feature schema, whether the data is single- or cross-source, and whether the
-study isolates \emph{when} FL fails. To our knowledge, no prior FL-NIDS study
-combines cross-schema federation (via a validated semantic mapping) with a
-controlled break-point analysis across the homogeneous-to-cross-dataset spectrum.
+study isolates \emph{when} FL fails. To the best of our knowledge, we found no
+prior FL-NIDS study that combines cross-schema federation (via a validated
+semantic mapping) with a controlled break-point analysis across the
+homogeneous-to-cross-dataset spectrum.
 That combination is the gap this paper fills.
 
 \begin{table}[htbp]
@@ -536,7 +539,8 @@ CIC (test)   & 486{,}979 & 82{,}443 & 0.169 \\
 \end{tabular}
 \end{table}
 
-We run four experiments, from homogeneous to heterogeneous:
+We organize the study into five experimental stages, from homogeneous to
+heterogeneous and then to mitigation:
 \begin{enumerate}[leftmargin=1.6em]
   \item \textbf{Homogeneous (control).} One dataset split IID across \(K=4\)
   clients; evaluate on the same-dataset test set.
@@ -547,6 +551,9 @@ We run four experiments, from homogeneous to heterogeneous:
   evaluate on CIC-test, UNSW-test and a pooled GLOBAL-test.
   \item \textbf{One-class mitigation.} Autoencoder trained only on normal traffic,
   detection by reconstruction error (Section~\ref{sec:oc}).
+  \item \textbf{Personalized federation.} FedPer (shared backbone, personalized
+  head) and clustered FL as mitigation of the cross-dataset failure
+  (Section~\ref{sec:fedper}).
 \end{enumerate}
 
 \subsection{Partitioning and evaluation protocol}
@@ -670,9 +677,12 @@ about 0.27 by round 10 then decays into negative territory --- the classic
 client-drift divergence of FedAvg under extreme heterogeneity. Across five seeds
 the federated model is 0.229\(\pm\)0.184 (95\% CI \([0.07,0.39]\)) versus
 local-only 0.612\(\pm\)0.003 (95\% CI \([0.61,0.61]\)); the mean difference is
-\(-0.38\) (paired-$t$ \(p=0.010\); Wilcoxon \(p=0.063\)), a large effect
-(Cohen's \(d\approx2.9\)). Federated is thus \emph{significantly and substantially
-worse} than local-only. The high federated standard deviation (0.18 vs.\ 0.003)
+\(-0.38\). The paired \(t\)-test indicates a statistically significant difference
+(\(p=0.010\)), although the Wilcoxon signed-rank test is only marginal
+(\(p=0.063\)) --- unsurprising with five seeds; the effect size is nevertheless
+large (Cohen's \(d\approx2.9\)). Federated is thus \emph{substantially worse} than
+local-only, with the two tests agreeing in direction if not in strict
+significance. The high federated standard deviation (0.18 vs.\ 0.003)
 also shows the cross-dataset federation is unstable across seeds. The cross-dataset
 case lies beyond the break point found in Table~\ref{tab:bridge}.
 
@@ -792,9 +802,10 @@ UNSW & 0.090 & 0.510 & 0.55--0.78 \\
 Figure~\ref{fig:sep} visualizes this. In the PCA and t-SNE projections of the nine
 features, normal (blue) and attack (red) points are intermingled rather than
 forming separate clusters, and the LDA-1D histograms of the two classes peak at
-the same location. This is direct empirical evidence of why a reconstruction-based
-detector cannot distinguish attacks in this space: an autoencoder trained on
-normal traffic reconstructs attack traffic almost equally well, so the
+the same location. This provides empirical evidence that the limited class
+separability of the aligned feature space constrains reconstruction-based
+detection: an autoencoder trained on normal traffic reconstructs attack traffic
+almost equally well, so the
 reconstruction error carries little discriminative signal. It also clarifies that
 the nine features --- chosen for cross-tool \emph{alignment} --- retain only
 limited attack \emph{separability}, which is adequate for a well-regularized
@@ -859,9 +870,10 @@ Centralized (upper bound)& 0.612 & 0.732 & 0.745 \\
 \end{tabular}
 \end{table}
 
-The headline result is \textbf{FedPer}, which lifts the global MCC from
-\(-0.026\) (naive FedAvg) to \textbf{0.731}, close to the centralized bound of
-0.745 --- while still sharing a federated backbone and never pooling data. This is
+The headline result is \textbf{FedPer}, which lifts the pooled test MCC (under the
+personalized evaluation protocol of Section~\ref{sec:fedper}) from \(-0.026\)
+(naive FedAvg) to \textbf{0.731}, close to the centralized bound of 0.745 ---
+while still sharing a federated backbone and never pooling data. This is
 the key finding: the failure boundary identified by our framework can be
 \emph{substantially reduced} once the federation accounts for client heterogeneity.
 
@@ -881,16 +893,18 @@ The practical message is that the right question is not whether to federate but
 boundary overcomes the label-prior mismatch that sinks naive FedAvg, under the
 studied cross-dataset setting.
 
-\subsection{Synthesis across the four experiments}
-Read together, the four experiments form a single, coherent narrative that
+\subsection{Synthesis across the five experimental stages}
+Read together, the five stages form a single, coherent narrative that
 increases in difficulty. (1) On homogeneous data FL over the aligned feature space is valid:
 federated MCC is within 0.05--0.06 of the centralized bound and above local-only,
 and convergence is smooth. (2) Moderate non-IID is tolerated, but there is a
 measurable break point --- near \(\alpha\approx0.1\) for the balanced dataset ---
 beyond which FedAvg collapses; the benign-skewed dataset is far more robust,
-revealing that \emph{label prior}, not merely ``non-IID'', is the operative
-factor. (3) The real cross-dataset case lies beyond that break point, so naive
-FedAvg diverges, significantly below local-only across five seeds. (4) Switching
+indicating that \emph{label-prior heterogeneity is a major contributor} to the
+observed FedAvg degradation (though in the cross-dataset case it is not fully
+isolated from feature- and distribution-level differences). (3) The real
+cross-dataset case lies beyond that break point, so naive FedAvg diverges, below
+local-only across five seeds. (4) Switching
 to a one-class paradigm does not recover performance, and critically the
 \emph{centralized} autoencoder also fails, which indicates that feature-space
 separability is an important limiting factor alongside aggregation instability.
@@ -900,7 +914,7 @@ personalizing the federation. Table~\ref{tab:summary} summarizes the progression
 
 \begin{table}[htbp]
 \centering\small
-\caption{Summary of the five experiments (increasing difficulty).}
+\caption{Summary of the five experimental stages (increasing difficulty).}
 \label{tab:summary}
 \begin{tabular}{@{}llll@{}}
 \toprule
@@ -919,10 +933,11 @@ personalizing the federation. Table~\ref{tab:summary} summarizes the progression
 The semantic feature alignment is \emph{necessary} because without a shared feature
 space the two clients cannot federate at all --- their raw schemas have no usable
 intersection, so averaging weights is undefined. It is \emph{not sufficient} for
-two distinct reasons that this study separates. First, even with a shared input
-space, the label-prior mismatch between a benign-skewed and a balanced client
-drives FedAvg past its break point (Experiments 2--3). Second, the aligned feature
-space is optimized for
+two distinct reasons. First, even with a shared input
+space, label-prior heterogeneity between a benign-skewed and a balanced client is
+a major contributor to driving FedAvg past its break point (Experiments 2--3),
+although in the full cross-dataset case it acts together with feature- and
+distribution-level differences. Second, the aligned feature space is optimized for
 \emph{alignment} --- keeping only tool-agnostic, semantically matched features ---
 which does not guarantee \emph{separability} between normal and attack traffic;
 the one-class result (Experiment 4) exposes this as a limitation of the feature
@@ -969,8 +984,8 @@ recover it, and because even the centralized autoencoder fails, feature-space
 separability emerges as an important limiting factor alongside aggregation
 instability. Crucially, we then showed that the boundary can be \emph{largely
 mitigated}: a heterogeneity-aware strategy that shares a federated backbone while
-personalizing the decision head (FedPer) restores the global MCC to 0.731, close
-to the centralized bound. The study thus quantifies a measurable failure boundary
+personalizing the decision head (FedPer) restores the pooled test MCC to 0.731,
+close to the centralized bound. The study thus quantifies a measurable failure boundary
 for cross-dataset FL-NIDS, explains why it arises, and shows that personalizing
 the federation substantially reduces the gap --- so semantic feature alignment is
 necessary but not sufficient, while personalization recovers much of the lost
