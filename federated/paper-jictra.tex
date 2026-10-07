@@ -18,11 +18,21 @@
 \usepackage{array}
 \usepackage{graphicx}
 \graphicspath{{figure-fed/}{./}}
+\usepackage{float}
 \usepackage{enumitem}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning}
 \usepackage[hidelinks]{hyperref}
 \linespread{1.0}
+
+% --- Longgarkan penempatan float agar tidak menumpuk di akhir dokumen ---
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.9}
+\renewcommand{\textfraction}{0.1}
+\renewcommand{\floatpagefraction}{0.8}
+\setcounter{topnumber}{3}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{5}
 
 \title{\textbf{When Does Cross-Dataset Federated Learning Work for Network
 Intrusion Detection? A Controlled Study on Semantic Feature Mapping}}
@@ -217,7 +227,7 @@ combines cross-schema federation (via a validated semantic mapping) with a
 controlled break-point analysis across the homogeneous-to-cross-dataset spectrum.
 That combination is the gap this paper fills.
 
-\begin{table}[h]
+\begin{table}[htbp]
 \centering\small
 \caption{Positioning against representative FL-NIDS work.}
 \label{tab:position}
@@ -254,7 +264,7 @@ mapping therefore functions as an \emph{interlingua}: once each client expresses
 its traffic in the nine SFM features, model weights live in a common space and can
 be averaged.
 
-\begin{table}[h]
+\begin{table}[htbp]
 \centering\small
 \caption{The nine SFM features and their source columns (public prior).}
 \label{tab:sfm}
@@ -310,7 +320,7 @@ Unless stated otherwise, hyperparameters are identical across all settings:
 \(R=100\) rounds, \(E=5\) local epochs, learning rate \(3\times10^{-3}\), batch
 size 256, seed 42 (five seeds for the significance test).
 
-\begin{figure}[h]
+\begin{figure}[htbp]
 \centering
 \fbox{\begin{minipage}{0.92\columnwidth}\small
 \textbf{Algorithm 1:} Federated training (FedAvg / FedProx)\\[2pt]
@@ -347,7 +357,7 @@ exactly as the supervised model. The rationale is that ``normal'' traffic may be
 more similar across datasets than the supervised decision boundary, so the AE
 weights might average more stably and side-step the label-prior mismatch.
 
-\begin{figure}[h]
+\begin{figure}[htbp]
 \centering
 \begin{tikzpicture}[node distance=0.5cm and 0.9cm,font=\scriptsize,
   box/.style={draw,rounded corners,minimum height=0.8cm,minimum width=1.0cm,fill=black!4}]
@@ -384,7 +394,7 @@ Two datasets act as clients: CSE-CIC-IDS2018 (CIC) \cite{cicids} and UNSW-NB15
 (UNSW) \cite{unsw}, both mapped to the nine SFM features. Table~\ref{tab:data} summarizes the per-client
 statistics after a stratified subsample of CIC to balance client sizes.
 
-\begin{table}[h]
+\begin{table}[htbp]
 \centering\small
 \caption{Per-client dataset statistics (nine SFM features).}
 \label{tab:data}
@@ -435,7 +445,7 @@ numbers come from these real runs; no values are synthetic.
 
 Figure~\ref{fig:fl} shows the federated protocol used throughout.
 
-\begin{figure}[h]
+\begin{figure}[htbp]
 \centering
 \begin{tikzpicture}[node distance=1.0cm and 1.6cm,font=\small]
   \node[draw,rounded corners,fill=black!5,align=center,minimum height=1cm]
@@ -465,7 +475,7 @@ convergence curves rise smoothly without divergence. This establishes that the
 FL pipeline (MLP, FedAvg, SFM space) is valid: any later failure is attributable
 to heterogeneity, not to an implementation defect.
 
-\begin{table}[h]
+\begin{table}[htbp]
 \centering\small
 \caption{Homogeneous IID control (MCC, same-dataset test).}
 \label{tab:homo}
@@ -501,7 +511,7 @@ performs near chance. In short, a skewed base prior provides a shared anchor tha
 survives partitioning, whereas a balanced base prior does not --- which is why the
 break point appears for UNSW but not for CIC.
 
-\begin{table}[h]
+\begin{table}[htbp]
 \centering\small
 \caption{Graded non-IID sweep (federated MCC vs Dirichlet $\alpha$).}
 \label{tab:bridge}
@@ -525,7 +535,7 @@ federated-SFM is 0.229\(\pm\)0.184 versus local-only 0.612\(\pm\)0.003 (paired-$
 \(p=0.010\)), i.e.\ federated is \emph{significantly worse}. The cross-dataset
 case lies beyond the break point found in Table~\ref{tab:bridge}.
 
-\begin{table}[h]
+\begin{table}[htbp]
 \centering\small
 \caption{Cross-dataset CIC$\leftrightarrow$UNSW (MCC).}
 \label{tab:cross}
@@ -549,7 +559,7 @@ textbook signature of client drift: with two clients pulling the shared model
 toward incompatible optima, the size-weighted average cancels rather than
 combines.
 
-\begin{figure}[h]
+\begin{figure}[htbp]
 \centering
 \begin{tikzpicture}[font=\scriptsize]
   \draw[->] (0,0) -- (6.2,0) node[right]{round};
@@ -577,7 +587,7 @@ stability monotonically (final MCC rising from 0.075 at \(\mu=0\) to 0.187 at
 setting remains far below the local-only baseline (0.614). FedProx mitigates the
 symptom but does not cure the underlying heterogeneity.
 
-\begin{table}[h]
+\begin{table}[htbp]
 \centering\small
 \caption{FedAvg vs FedProx on the cross-dataset case (final global MCC and
 communication cost).}
@@ -616,7 +626,7 @@ projection cannot cleanly separate the classes. Individual features are only
 weakly discriminative --- per-feature AUCs range from about 0.56 to 0.78 --- so no
 feature isolates attacks on its own.
 
-\begin{table}[h]
+\begin{table}[htbp]
 \centering\small
 \caption{Separability of the nine SFM features (lower silhouette and higher
 overlap indicate poorer separability).}
@@ -643,13 +653,13 @@ limited attack \emph{separability}, which is adequate for a well-regularized
 supervised classifier (Tables~\ref{tab:homo}--\ref{tab:cross}) but insufficient for
 unsupervised reconstruction.
 
-\begin{figure}[h]
+\begin{figure}[htbp]
 \centering
-\includegraphics[width=0.48\columnwidth]{sep_pca_cic.png}\hfill
-\includegraphics[width=0.48\columnwidth]{sep_pca_unsw.png}\\[2pt]
-\includegraphics[width=0.48\columnwidth]{sep_tsne_cic.png}\hfill
-\includegraphics[width=0.48\columnwidth]{sep_tsne_unsw.png}\\[2pt]
-\includegraphics[width=0.92\columnwidth]{sep_overlap_hist.png}
+\includegraphics[width=0.44\columnwidth]{sep_pca_cic.png}\hfill
+\includegraphics[width=0.44\columnwidth]{sep_pca_unsw.png}\\[2pt]
+\includegraphics[width=0.44\columnwidth]{sep_tsne_cic.png}\hfill
+\includegraphics[width=0.44\columnwidth]{sep_tsne_unsw.png}\\[2pt]
+\includegraphics[width=0.80\columnwidth]{sep_overlap_hist.png}
 \caption{Low separability of the nine SFM features (real data). Top: PCA
 projections (CIC, UNSW); middle: t-SNE projections; bottom: LDA-1D class
 histograms. Normal (blue) and attack (red) overlap heavily, explaining the failure
@@ -657,7 +667,7 @@ of reconstruction-based detection.}
 \label{fig:sep}
 \end{figure}
 
-\begin{table}[h]
+\begin{table}[htbp]
 \centering\small
 \caption{One-class autoencoder, cross-dataset (MCC).}
 \label{tab:oc}
@@ -687,7 +697,7 @@ to a one-class paradigm does not recover performance, and critically the
 feature space rather than in the aggregation. Table~\ref{tab:summary} summarizes
 the progression.
 
-\begin{table}[h]
+\begin{table}[htbp]
 \centering\small
 \caption{Summary of the four experiments (increasing difficulty).}
 \label{tab:summary}
