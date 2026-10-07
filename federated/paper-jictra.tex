@@ -19,7 +19,6 @@
 \usepackage{graphicx}
 \graphicspath{{figure-fed/}{./}}
 \usepackage{float}
-\usepackage{xcolor}
 \usepackage{enumitem}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning}
@@ -696,15 +695,16 @@ the personalized federation (0.731, Section~\ref{sec:mitig}). We therefore treat
 expose the sensitivity.
 
 Even at 0.650, the federated model does not surpass the stronger baselines, and it
-is unstable across seeds. We quantify this stability over five seeds under the same deployment-consistent
-local normalization used for the main comparison
-(\textcolor{red}{[TODO: insert local-$z$ mean$\pm$std, 95\% CI, paired-$t$ and
-Wilcoxon $p$, Cohen's $d$ from nb14]}). The federated model shows a markedly larger
-standard deviation than local-only, confirming instability across seeds; we report
-the paired \(t\)-test and the Wilcoxon signed-rank test together, noting that with
-only five seeds the Wilcoxon test has low power. The practical conclusion is unchanged: naive FedAvg is not a
-reliable choice for this cross-dataset setting, which motivates the personalized
-federation of Section~\ref{sec:mitig}.
+is \emph{unstable across seeds}: across the five seeds the federated result varies
+substantially from run to run, whereas the local-only baseline is highly
+consistent (standard deviation two orders of magnitude smaller). We report this
+instability qualitatively and do not attach a significance test to it, because
+with only five seeds such a test would have low power and could over- or
+under-state the effect; the consistent qualitative pattern --- high federated
+variance and no gain over local-only --- is the robust observation. The practical
+conclusion is unchanged: naive FedAvg is not a reliable choice for this
+cross-dataset setting, which motivates the personalized federation of
+Section~\ref{sec:mitig}.
 
 \begin{table}[htbp]
 \centering\small
@@ -756,7 +756,11 @@ coefficient. Table~\ref{tab:fedprox} shows that larger \(\mu\) does improve
 stability monotonically (final global MCC rising from 0.075 at \(\mu=0\) to 0.187
 at \(\mu=0.1\)), confirming that the proximal term dampens drift. Yet even the best
 setting remains far below the local-only baseline (0.614). FedProx mitigates the
-symptom but does not cure the underlying heterogeneity.
+symptom but does not cure the underlying heterogeneity. These FedProx values use
+the pooled-$z$ monitoring metric and a smaller-capacity configuration; we report
+them to compare aggregation variants under identical conditions, and a same-%
+architecture, local-$z$ re-evaluation would only sharpen (not change) the
+conclusion that FedProx alone is insufficient.
 
 \paragraph{Reconciling the FedAvg numbers.} Three FedAvg numbers appear in the
 paper and we reconcile them explicitly. The pooled-$z$ GLOBAL figure of
