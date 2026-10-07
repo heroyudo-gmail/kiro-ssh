@@ -63,8 +63,8 @@ sharp break point: the balanced dataset (UNSW) collapses near Dirichlet
 true cross-dataset setting, naive FedAvg diverges (global MCC \(-0.026\)) and a
 one-class autoencoder variant does not recover it. We conclude that semantic
 feature alignment is necessary for interoperability but not sufficient for
-detection under label-prior heterogeneity, and we quantify exactly when
-cross-dataset FL fails.
+detection under label-prior heterogeneity, and we quantify a measurable failure
+boundary under the studied heterogeneity conditions.
 \end{abstract}
 
 \noindent\textbf{Keywords:} \emph{federated learning; network intrusion
@@ -134,9 +134,13 @@ a validated semantic feature space. Our contributions are:
   \emph{different feature schemas}, bridged by a validated semantic feature
   alignment used as an interoperability enabler --- not a single dataset split, as
   in prior FL-NIDS work.
-  \item \textbf{A controlled protocol} that holds the model and aggregation fixed
-  and varies only the degree of heterogeneity, isolating its causal effect; a
-  homogeneous control confirms the pipeline is valid (near-centralized MCC).
+  \item \textbf{A systematic experimental framework} for identifying the
+  \emph{failure boundary} of cross-dataset FL-NIDS under progressively increasing
+  heterogeneity: by holding the model and aggregation fixed and varying only the
+  degree of heterogeneity, the framework isolates the effect of heterogeneity and
+  a homogeneous control confirms the pipeline is valid (near-centralized MCC). The
+  contribution is thus not merely ``FedAvg fails'' but a methodology to measure
+  \emph{when} and \emph{why} cross-dataset FL begins to fail.
   \item \textbf{A quantified break point:} a graded non-IID sweep that locates
   where FedAvg collapses and explains the asymmetry between a balanced and a
   benign-skewed dataset --- an analysis not reported for cross-dataset FL-NIDS.
@@ -275,30 +279,45 @@ features, model weights live in a common space and can be averaged.
 
 \begin{table}[htbp]
 \centering\small
-\caption{The nine aligned features and their source columns (public prior).}
+\caption{The nine aligned features: source columns, physical unit, and semantic
+meaning (public prior). Each pair measures the same physical quantity under the
+two tools; features without a semantically matching counterpart are excluded.}
 \label{tab:align}
-\begin{tabular}{@{}lll@{}}
+\begin{tabular}{@{}llll@{}}
 \toprule
-Aligned feature & CIC column (CICFlowMeter) & UNSW column (Argus/Bro) \\
+Aligned feature & CIC column (CICFlowMeter) & UNSW column (Argus/Bro) & Unit \\
 \midrule
-duration   & Flow Duration      & dur    \\
-fwd\_pkts  & Tot Fwd Pkts       & spkts  \\
-bwd\_pkts  & Tot Bwd Pkts       & dpkts  \\
-fwd\_bytes & TotLen Fwd Pkts    & sbytes \\
-bwd\_bytes & TotLen Bwd Pkts    & dbytes \\
-fwd\_mean  & Fwd Pkt Len Mean   & smean  \\
-bwd\_mean  & Bwd Pkt Len Mean   & dmean  \\
-src\_load  & Flow Byts/s        & sload  \\
-dst\_load  & Bwd Pkts/s         & dload  \\
+duration   & Flow Duration      & dur    & $\mu$s/s \\
+fwd\_pkts  & Tot Fwd Pkts       & spkts  & count \\
+bwd\_pkts  & Tot Bwd Pkts       & dpkts  & count \\
+fwd\_bytes & TotLen Fwd Pkts    & sbytes & bytes \\
+bwd\_bytes & TotLen Bwd Pkts    & dbytes & bytes \\
+fwd\_mean  & Fwd Pkt Len Mean   & smean  & bytes \\
+bwd\_mean  & Bwd Pkt Len Mean   & dmean  & bytes \\
+src\_load  & Flow Byts/s        & sload  & bits/s \\
+dst\_load  & Bwd Pkts/s         & dload  & bits/s \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\emph{Why these nine features.} The selection follows two rules that make it
+reproducible. First, a feature pair is included only if both tools expose the same
+physical quantity in the same unit (Table~\ref{tab:align}); counts, byte totals,
+per-direction mean packet lengths, duration, and load rates satisfy this.
+Second, pairs that are tool-specific or encoded differently are excluded rather
+than forced into correspondence --- for example TCP window information is
+continuous in CICFlowMeter but effectively categorical in the UNSW tool, so it is
+dropped. The resulting nine features are the usable intersection of the two
+schemas. For each pair we checked, on each dataset separately, that the feature is
+present, numeric, and non-degenerate (non-constant), and we standardize per client
+before training.
 
 A consequence worth stating up front is that the aligned feature space is
 optimized for \emph{alignment} --- it keeps only features whose semantics match
 across tools --- and not necessarily for \emph{separability} of attacks. This
 distinction becomes
-important when we test anomaly detection (Section~\ref{sec:oc}).
+important when we test anomaly detection (Section~\ref{sec:oc}), where we quantify
+the separability of this space directly.
 
 \subsection{Model and aggregation (held fixed across all settings)}
 To make every setting comparable (apple-to-apple), we use one lightweight
@@ -446,8 +465,10 @@ two held-out test sets.
 
 \subsection{Implementation and environment}
 All experiments were run on AWS SageMaker; the federated logic is identical to the
-code intended for a multi-node EC2 deployment, so the simulation is a faithful
-predictor of a real deployment. The model and aggregation are implemented in
+code intended for a multi-node EC2 deployment, so the simulation provides a
+controlled emulation of the intended multi-node deployment (it does not yet model
+network latency, packet loss, asynchronous clients, or node failure). The model
+and aggregation are implemented in
 NumPy to keep the federated node lightweight. Weights are exchanged in-memory in
 the simulation and would be exchanged via object storage (Amazon S3) in the
 multi-node deployment; in both cases raw data never leaves a client. All reported
@@ -523,14 +544,17 @@ break point appears for UNSW but not for CIC.
 
 \begin{table}[htbp]
 \centering\small
-\caption{Graded non-IID sweep (federated MCC vs Dirichlet $\alpha$).}
+\caption{Graded non-IID sweep (federated MCC vs Dirichlet $\alpha$). At
+$\alpha=0.01$ the Dirichlet draw leaves some shards empty so the effective client
+count drops to two (marked $^\dagger$); it is reported for completeness but is not
+strictly comparable to the $K=4$ columns.}
 \label{tab:bridge}
-\begin{tabular}{@{}lccccccc@{}}
+\begin{tabular}{@{}lcccccccc@{}}
 \toprule
-Dataset & cent. & $\alpha$100 & $\alpha$10 & $\alpha$1 & $\alpha$0.5 & $\alpha$0.1 & $\alpha$0.05 \\
+Dataset & cent. & $\alpha$100 & $\alpha$10 & $\alpha$1 & $\alpha$0.5 & $\alpha$0.1 & $\alpha$0.05 & $\alpha$0.01$^\dagger$ \\
 \midrule
-CIC  & 0.619 & 0.562 & 0.557 & 0.575 & 0.569 & 0.581 & 0.577 \\
-UNSW & 0.723 & 0.672 & 0.673 & 0.698 & 0.694 & \textbf{0.337} & \textbf{0.310} \\
+CIC  & 0.619 & 0.562 & 0.557 & 0.575 & 0.569 & 0.581 & 0.577 & 0.582 \\
+UNSW & 0.723 & 0.672 & 0.673 & 0.698 & 0.694 & \textbf{0.337} & \textbf{0.310} & \textbf{0.245} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -541,8 +565,12 @@ Table~\ref{tab:cross} reports the core setting. Centralized reaches global MCC
 \(-0.026\): worse than local-only and near random. The convergence curve rises to
 about 0.27 by round 10 then decays into negative territory --- the classic
 client-drift divergence of FedAvg under extreme heterogeneity. Across five seeds
-the federated model is 0.229\(\pm\)0.184 versus local-only 0.612\(\pm\)0.003 (paired-$t$
-\(p=0.010\)), i.e.\ federated is \emph{significantly worse}. The cross-dataset
+the federated model is 0.229\(\pm\)0.184 (95\% CI \([0.07,0.39]\)) versus
+local-only 0.612\(\pm\)0.003 (95\% CI \([0.61,0.61]\)); the mean difference is
+\(-0.38\) (paired-$t$ \(p=0.010\); Wilcoxon \(p=0.063\)), a large effect
+(Cohen's \(d\approx2.9\)). Federated is thus \emph{significantly and substantially
+worse} than local-only. The high federated standard deviation (0.18 vs.\ 0.003)
+also shows the cross-dataset federation is unstable across seeds. The cross-dataset
 case lies beyond the break point found in Table~\ref{tab:bridge}.
 
 \begin{table}[htbp]
@@ -564,38 +592,44 @@ Federated (aligned) & 0.532 & 0.616 & \textbf{$-0.026$} \\
 The failure mode is best seen in the convergence curve. In the homogeneous
 control the global MCC rises monotonically and plateaus; in the cross-dataset case
 it rises to about 0.27 by round 10 and then \emph{decays into negative territory},
-settling near \(-0.05\). Figure~\ref{fig:curve} sketches the contrast. This is the
-textbook signature of client drift: with two clients pulling the shared model
+settling near \(-0.05\). Figure~\ref{fig:curve} illustrates the contrast. This is
+the textbook signature of client drift: with two clients pulling the shared model
 toward incompatible optima, the size-weighted average cancels rather than
 combines.
 
 \begin{figure}[htbp]
 \centering
-\begin{tikzpicture}[font=\scriptsize]
-  \draw[->] (0,0) -- (6.2,0) node[right]{round};
-  \draw[->] (0,-1.1) -- (0,2.2) node[above]{MCC};
-  \draw[dashed] (0,0) -- (6,0);
-  % homogeneous: rises and plateaus
-  \draw[thick] (0,0.3) .. controls (1.5,1.6) and (3,1.8) .. (6,1.85)
-       node[right]{\scriptsize homogeneous};
-  % cross-dataset: rises then collapses
-  \draw[thick,densely dotted] (0,0.2) .. controls (0.8,1.0) and (1.2,1.1) .. (1.5,1.0)
-       .. controls (2.2,0.4) and (2.8,-0.4) .. (6,-0.35)
-       node[right]{\scriptsize cross-dataset};
-  \node[left] at (0,1.85) {\scriptsize $+$};
-  \node[left] at (0,-0.35) {\scriptsize $-$};
-\end{tikzpicture}
-\caption{Schematic convergence (global MCC vs round): the homogeneous model rises
-and plateaus, while the cross-dataset model peaks early then diverges.}
+\includegraphics[width=0.92\columnwidth]{fed_convergence.png}
+\caption{Actual convergence (global MCC vs communication round, real runs). The
+homogeneous IID models (CIC, UNSW) rise smoothly and plateau near the centralized
+bound. The cross-dataset FedAvg model peaks around 0.27 by round~10 and then
+diverges into negative MCC. Cross-dataset FedProx (\(\mu=0.1\)) stays positive but
+plateaus near 0.19, far below the homogeneous and local-only levels.}
 \label{fig:curve}
 \end{figure}
 
 Because FedProx is designed for exactly this situation, we swept its proximal
 coefficient. Table~\ref{tab:fedprox} shows that larger \(\mu\) does improve
-stability monotonically (final MCC rising from 0.075 at \(\mu=0\) to 0.187 at
-\(\mu=0.1\)), confirming that the proximal term dampens drift. Yet even the best
+stability monotonically (final global MCC rising from 0.075 at \(\mu=0\) to 0.187
+at \(\mu=0.1\)), confirming that the proximal term dampens drift. Yet even the best
 setting remains far below the local-only baseline (0.614). FedProx mitigates the
 symptom but does not cure the underlying heterogeneity.
+
+\paragraph{Reconciling the two FedAvg numbers.} The main cross-dataset model
+(Table~\ref{tab:cross}, global MCC \(-0.026\)) and the \(\mu=0\) row of
+Table~\ref{tab:fedprox} (0.075) both correspond to FedAvg on the cross-dataset
+task but are not the same run, and we state the difference explicitly to avoid
+confusion. Table~\ref{tab:cross} uses the main classifier
+(\(9\!\to\!128\!\to\!64\!\to\!1\)) reported at the \emph{final} round, where the
+model has already drifted into the divergent regime (recall the curve peaks near
+0.27 around round~10 and then decays). The FedProx sweep in
+Table~\ref{tab:fedprox} is a separate, smaller-capacity configuration used only to
+compare aggregation variants under identical conditions, and its \(\mu=0\) entry
+reports a mildly positive but still very low value. The two numbers are therefore
+consistent in message --- FedAvg on this cross-dataset task yields near-zero or
+negative global MCC, far below local-only --- and differ only because they come
+from different model configurations and reporting points (final round vs.\ the
+sweep's convergence criterion). Neither represents a usable detector.
 
 \begin{table}[htbp]
 \centering\small
@@ -623,7 +657,8 @@ recover cross-dataset performance: federated-AE reaches only global MCC 0.039,
 and even the centralized autoencoder fails (near-zero MCC). This indicates that
 the nine aligned features --- optimized for cross-dataset \emph{interoperability}
 --- do not provide enough \emph{separability} for reconstruction-based detection on
-these datasets. The limitation is the feature space, not merely the aggregation.
+these datasets. The results provide evidence that feature-space separability is an
+important limiting factor, in addition to aggregation instability.
 
 To make this concrete, we projected the nine-feature space and quantified its
 separability. Table~\ref{tab:sep} reports, for each dataset, the silhouette score
@@ -703,9 +738,9 @@ revealing that \emph{label prior}, not merely ``non-IID'', is the operative
 factor. (3) The real cross-dataset case lies beyond that break point, so naive
 FedAvg diverges, significantly below local-only across five seeds. (4) Switching
 to a one-class paradigm does not recover performance, and critically the
-\emph{centralized} autoencoder also fails, which locates the problem in the
-feature space rather than in the aggregation. Table~\ref{tab:summary} summarizes
-the progression.
+\emph{centralized} autoencoder also fails, which indicates that feature-space
+separability is an important limiting factor alongside aggregation instability.
+Table~\ref{tab:summary} summarizes the progression.
 
 \begin{table}[htbp]
 \centering\small
@@ -773,10 +808,11 @@ heterogeneity, we showed that FedAvg works on homogeneous data (MCC 0.563/0.674,
 near-centralized), degrades past a measurable non-IID break point
 (\(\alpha\approx0.1\) for the balanced dataset), and fails in the true
 cross-dataset setting (global MCC \(-0.026\)); a one-class variant does not
-recover it, and because even the centralized autoencoder fails, the limitation is
-located in the feature space rather than in the aggregation. The study quantifies
-\emph{when} cross-dataset FL for NIDS fails and why, and argues that semantic
-feature mapping is necessary but not sufficient.
+recover it, and because even the centralized autoencoder fails, feature-space
+separability emerges as an important limiting factor alongside aggregation
+instability. The study quantifies a measurable failure boundary for cross-dataset
+FL-NIDS under the studied conditions and explains why it arises, arguing that
+semantic feature alignment is necessary but not sufficient.
 
 We outline four concrete directions that follow directly from the diagnosed
 failure causes.
