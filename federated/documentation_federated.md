@@ -17,8 +17,10 @@
 > HANYA di heterogenitas lintas-dataset". KEPUTUSAN: framing temuan-negatif terkontrol
 > (Opsi B diperkuat). JEMBATAN non-IID (nb09): titik putus FedAvg di α≈0,1 pada UNSW
 > (rapuh krn prior label seimbang 0,55), CIC tahan sampai α=0,01 (condong-benign 0,17)
-> -> asimetri ini menjelaskan penyebab kolaps lintas-dataset. BERIKUT: one-class (nb10).
-> Lihat Bagian D–J (TEMA 1 homogen, 1b jembatan non-IID, 2 heterogen).
+> -> asimetri ini menjelaskan penyebab kolaps lintas-dataset. ONE-CLASS (nb10): mitigasi
+> GAGAL juga (federated-AE 0,039; centralized-AE pun ~0) -> ruang SFM kurang separable
+> untuk deteksi anomali (keterbatasan FITUR, bukan agregasi). NASKAH: paper-jictra.tex (target Q4).
+> Lihat Bagian D–J (TEMA 1 homogen, 1b jembatan, 2 heterogen, 3 one-class) + RINGKASAN ALUR.
 > **JANGAN mengarang angka** — placeholder `[TBD]`/`--` sampai hasil nyata.
 >
 > **Prasyarat rilis:** Paper 4 di-submit SETELAH Paper 1 (SFM) accepted. Kita
@@ -443,6 +445,67 @@ yang bisa dicapai pun tetap < local-only".
 
 ---
 
+### TEMA 3 — MITIGASI one-class (autoencoder) lintas-dataset — nb10, HASIL NYATA
+
+> **Peringatan kejujuran:** angka NYATA dari `oneclass.csv` + `oneclass_curve.csv`
+> (S3 `unsw-far/federated/results/oneclass/`, diunduh 2026-10-07). Upaya MITIGASI
+> kasus tersulit (lintas-dataset, TEMA 2) dengan mengganti paradigma: dari supervised
+> ke **one-class anomaly detection** ala Fed-ANIDS — tiap klien latih autoencoder
+> HANYA pada trafik NORMAL (y=0), deteksi via reconstruction error > persentil-95.
+> Hipotesis: menghapus ketergantungan prior-label (akar divergence di TEMA 1b/2)
+> membuat FedAvg bobot AE lebih stabil.
+
+**Hasil (MCC):**
+
+| setting | CIC-test | UNSW-test | GLOBAL-test |
+|---|---:|---:|---:|
+| centralized-AE | −0,070 | −0,042 | −0,003 |
+| local-only-AE  | 0,153 | 0,014 | — |
+| federated-AE   | 0,150 | 0,002 | **0,039** |
+
+**TEMUAN (hipotesis mitigasi TIDAK terbukti):**
+1. federated-AE GLOBAL-test **0,039** — sedikit di atas supervised nb03 (−0,026)
+   tetapi **praktis setara nol**; jauh dari local-only supervised (0,614) atau
+   homogen (0,56). One-class **tidak menyelamatkan** federasi lintas-dataset.
+2. **centralized-AE pun gagal** (MCC ~0 di semua test). Ini sinyal kunci: kalau
+   upper-bound terpusat saja gagal, masalahnya **bukan di federasi** melainkan di
+   **autoencoder + ruang fitur** untuk tugas ini.
+3. **Diagnosa:** 9 fitur SFM dioptimalkan untuk **interoperabilitas lintas-dataset**
+   (Paper 1), BUKAN untuk **separabilitas anomali**. Pada 9 fitur flow dasar
+   (durasi/paket/byte), trafik serangan tampak mirip normal secara rekonstruksi →
+   reconstruction error tak membedakan. Keterbatasan ada di RUANG FITUR, bukan agregasi.
+
+**Implikasi untuk naskah (memperkuat framing):** menambah dimensi baru pada "SFM
+perlu tapi tak cukup" — ruang fitur yang bagus untuk ALIGNMENT (interoperabilitas)
+tidak otomatis bagus untuk DETECTION federated. Ada trade-off desain fundamental:
+alignment-oriented vs separability-oriented feature space. Arah future work: ruang
+fitur yang dirancang bersama untuk alignment DAN separabilitas.
+
+**Catatan jujur:** AE yang diuji sederhana (bukan VAE/USAD). Namun karena
+centralized-AE pun gagal, memperbesar/mengganti arsitektur AE kecil kemungkinan
+menolong selama ruang fiturnya tetap 9-SFM — akar masalah di separabilitas fitur.
+
+---
+
+## RINGKASAN ALUR PEMBUKTIAN (mudah → sulit, untuk naskah)
+
+Urutan naratif Paper 4 (meningkat), terlepas dari urutan waktu pengerjaan:
+
+| # | Tema | Setting | Hasil (GLOBAL/representatif) | Pesan |
+|---|---|---|---|---|
+| 1 | HOMOGEN (nb08) | 1 dataset, IID, K=4 | CIC 0,563 / UNSW 0,674 (≈ centralized) | FL **VALID** (pipeline benar) |
+| 2 | JEMBATAN non-IID (nb09) | 1 dataset, sweep α | UNSW putus α≈0,1; CIC tahan α=0,01 | titik putus **terukur** (prior-label) |
+| 3 | HETEROGEN (nb03) | 2 dataset lintas-sumber | federated −0,026 (kolaps) | di luar titik putus → **gagal** |
+| 4 | MITIGASI one-class (nb10) | lintas-dataset, AE normal | federated-AE 0,039 (gagal) | ganti paradigma **tak menolong** (fitur) |
+
+**Narasi tunggal:** FL bekerja saat homogen (1) → bertahan sampai titik putus terukur
+(2) → kolaps saat lintas-dataset karena di luar batas itu (3) → one-class pun gagal
+karena ruang SFM kurang separable untuk deteksi (4). Kesimpulan: **SFM perlu (enabler
+interoperabilitas) tetapi tidak cukup; FL-NIDS lintas-dataset butuh agregasi
+sadar-heterogenitas + ruang fitur berorientasi deteksi.**
+
+---
+
 # BAGIAN II — MEMORI OPERASIONAL
 
 ## K. Prinsip reproduksi
@@ -465,6 +528,7 @@ diwarisi dari `unswnb-15/notebooks/01,02,05`. JANGAN mengarang angka.
 | `07_multiseed_ci.ipynb` | Agregasi 5 seed + CI + signifikansi | fed_agg.csv, significance_fed.csv | semua tabel |
 | `08_fed_homogen_iid.ipynb` | KONTROL homogen IID per-dataset (CIC-only, UNSW-only) | homogen_iid.csv, homogen_iid_curve.csv | TEMA 1 (homogen) |
 | `09_fed_noniid_bridge.ipynb` | JEMBATAN non-IID: sweep Dirichlet alpha per-dataset, titik putus | noniid_bridge.csv, noniid_bridge_curve.csv | TEMA 1b (jembatan) |
+| `10_fed_oneclass.ipynb` | MITIGASI one-class (autoencoder, latih hanya normal) lintas-dataset | oneclass.csv, oneclass_curve.csv | TEMA 3 (one-class) |
 
 ## M. Status
 
@@ -480,7 +544,8 @@ diwarisi dari `unswnb-15/notebooks/01,02,05`. JANGAN mengarang angka.
 | 8 | Keputusan framing: temuan-negatif (Opsi B) | ✅ disepakati (Q.6); naskah belum ditulis |
 | 9 | Kontrol homogen IID (nb08) — baseline positif | ✅ selesai: CIC 0,563 / UNSW 0,674 (≈ centralized), FL VALID |
 | 10 | Jembatan non-IID bertingkat (nb09) — titik putus | ✅ selesai: UNSW putus α≈0,1; CIC tahan sampai α=0,01 (asimetri prior-label) |
-| 11 | Eksperimen one-class federated (nb10) — mitigasi | ◐ notebook DISUSUN; eksekusi SageMaker menunggu |
+| 11 | Eksperimen one-class federated (nb10) — mitigasi | ✅ selesai: federated-AE 0,039 (gagal); diagnosa = ruang SFM kurang separable |
+| 12 | Naskah JICTRA (target Scopus Q4 ITB) | ◐ draft `paper-jictra.tex` dibuat (controlled study + orisinalitas diperkuat) |
 
 ## N. ROADMAP BERTAHAP (langkah kerja)
 
