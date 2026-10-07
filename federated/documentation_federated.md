@@ -10,7 +10,7 @@
 > - **Bagian II — Memori Operasional** (K–P): peta notebook↔tabel, status, tugas,
 >   S3, konvensi.
 >
-> **STATUS: RUN-1 SELESAI (hasil nyata ada) — HIPOTESIS TIDAK TERDUKUNG; PERBAIKAN METODE SEDANG BERLANGSUNG.** Lihat Bagian D–J untuk angka & diagnosa run-1.
+> **STATUS: RUN-2 SELESAI (hasil nyata ada) — H2 TETAP GAGAL (federated KOLAPS), H1 hanya kualitatif. KEPUTUSAN: REFRAME ke studi temuan-negatif (Opsi B); opsional run-3 FedProx sebagai pelengkap.** Lihat Bagian D–J untuk angka & diagnosa run-1 DAN run-2.
 > **JANGAN mengarang angka** — placeholder `[TBD]`/`--` sampai hasil nyata.
 >
 > **Prasyarat rilis:** Paper 4 di-submit SETELAH Paper 1 (SFM) accepted. Kita
@@ -254,6 +254,100 @@ perbaiki keseimbangan klien + kapasitas model, lalu re-run sebelum menilai ulang
 
 ---
 
+### RUN-2 (SageMaker, SEED 13/42/101/202/303) — HASIL NYATA & DIAGNOSA
+
+> **Peringatan kejujuran:** angka di bawah adalah hasil eksperimen NYATA run KEDUA
+> (CSV di S3 `unsw-far/federated/results/run_2/`, diunduh 2026-10-07). Perbaikan yang
+> diterapkan: (i) subsample CIC train stratified → **100.000** (pos-rate 0,169 terjaga;
+> rasio ke UNSW turun dari 14:1 jadi ~1,2:1); (ii) MLP diperbesar (hidden (128,64),
+> max_iter 500, early_stopping); (iii) hyperparameter FedAvg dinaikkan (ROUNDS 100,
+> LOCAL_EPOCHS 5, LR 3e-3). **Hasil: H2 TETAP GAGAL, bahkan federated KOLAPS lebih
+> parah dari run-1.** Didokumentasikan apa adanya.
+
+**Statistik klien run-2** (dari `dataset_stats_fed.csv`): CIC train 100.000 (pos 0,169),
+UNSW train 82.332 (pos 0,551). Ketimpangan ukuran **teratasi** (1,2:1), tetapi
+ketimpangan **distribusi label/fitur tetap** (0,17 vs 0,55).
+
+**D2. Centralized / Local-only / Federated-SFM (MCC GLOBAL-test).** Dari `fedavg_sfm.csv`:
+- Centralized (upper bound): MCC **0,745** (naik dari 0,646 run-1 — perbaikan MLP berhasil).
+- Local-only[unsw]: MCC **0,614**; local-only[cic]: 0,284.
+- Federated-SFM: MCC **−0,026** ← **KOLAPS total** (di bawah tebakan acak).
+- **H2 GAGAL lebih parah:** urutan jadi centralized (0,745) > local-only (0,614) ≫
+  federated (−0,026). Federated bukan sekadar kalah, tapi hancur.
+
+**D2-kurva. Divergence FedAvg** (dari `fedavg_sfm_curve.csv`): MCC global naik ke
+puncak **0,275 di round ~10**, lalu **turun terus** dan menembus negatif di round ~25,
+mentok di −0,04…−0,05 sampai round 99. Pola **client-drift / oscillation** klasik
+FedAvg di non-IID. Menaikkan LR (1e-3→3e-3) + LOCAL_EPOCHS (1→5) **mempercepat
+kehancuran**: tiap klien menyimpang jauh dari global, rata-rata bobot saling meniadakan.
+
+**E2. Ablasi SFM (H1).** Dari `ablation_sfm.csv`, GLOBAL-test MCC:
+- Federated-SFM (9 selaras): **−0,026** (model divergen).
+- Naif-1 (by-position): **0,534** — varian "naif" MALAH MENANG (bukan karena naif lebih
+  baik, tapi karena model SFM-nya sendiri divergen dengan hyperparam baru).
+- Naif-2 (irisan nama): KOSONG → **argumen kualitatif H1 TETAP sah** (federasi mentah
+  tanpa SFM mustahil terbentuk). Tapi klaim kuantitatif H1 **gagal/terbalik**.
+
+**F2. non-IID / jumlah klien (H3).** Dari `noniid_scaling.csv`: hasil **tidak konsisten**
+— pada alpha=1,0 (lebih IID) MCC 0,16–0,29; pada alpha=100 (hampir IID) malah TURUN ke
+0,01–0,03. Ketidakkonsistenan ini menegaskan setup 2-dataset ini fundamental sulit untuk
+FedAvg; H3 **tak terbaca jelas**.
+
+**G2. FedAvg vs FedProx + biaya.** Dari `fedprox_comm.csv` — **satu-satunya sinyal
+positif**: FedProx proximal term membantu stabilitas secara monoton:
+- FedAvg (mu=0): MCC_final **0,075**
+- FedProx(mu=0,001): 0,082 · (mu=0,01): 0,130 · **(mu=0,1): 0,187**
+- Jadi mu lebih besar → lebih stabil. Tapi angkanya **masih jauh di bawah** local-only
+  (0,614). Biaya: 9.601 param, 460 KB/round, rounds-to-converge 82–97.
+
+**H2-seed. Multi-seed CI** (`fed_agg.csv`, `significance_fed.csv`):
+- Federated-SFM: **0,229 ± 0,184** (sangat tidak stabil; satu seed −0,026, satu 0,425).
+- Local-only: **0,612 ± 0,003** (stabil tinggi).
+- mean_diff **−0,382**, paired-t **p=0,0098**, Wilcoxon p=0,0625 → federated
+  **signifikan lebih buruk** dari local-only.
+
+**Jembatan backbone run-2 (nb02, `bridge_centralized.csv`), GLOBAL-test:** XGBoost
+**0,895** vs MLP **0,771** — gap mengecil sedikit vs run-1 (MLP 0,766), tapi MLP masih
+di bawah XGBoost. MLP centralized GLOBAL 0,771 membuktikan arsitektur MLP SENDIRI
+mampu; masalahnya murni **agregasi FedAvg**, bukan kapasitas model.
+
+**DIAGNOSA AKAR MASALAH (run-2) — berbeda dari run-1:**
+1. **Masalah run-1 (ketimpangan ukuran 14:1) SUDAH diperbaiki** (subsample → 1,2:1),
+   dan centralized MLP naik (0,646→0,745). Jadi perbaikan itu benar & berhasil untuk
+   centralized.
+2. **Tapi masalah sebenarnya BUKAN ukuran — melainkan FedAvg naif rapuh di non-IID
+   distribusi.** Dua klien dengan prior label 0,17 vs 0,55 + fitur dari jaringan beda
+   membuat FedAvg divergen. Ini masalah **ALGORITMA AGREGASI**, bukan setup data.
+3. **Hyperparameter run-2 (LR↑, epochs↑) memperburuk** karena memperbesar client drift.
+   Arah tuning kita keliru: untuk non-IID, LR/epochs harus LEBIH KECIL, bukan besar.
+4. **FedProx membantu tapi tak cukup** (0,187 ≪ 0,614). Proximal term meredam drift
+   sebagian, tak menutup gap.
+5. **Fakta kunci:** local-only[unsw] saja = 0,614 GLOBAL-test. Untuk problem 2-dataset
+   ini, **federasi tidak memberi nilai tambah** — satu klien yang distribusinya dekat
+   global sudah cukup. Ini temuan yang jujur dan penting.
+
+**Kesimpulan run-2 (jujur).** Dua kali run (run-1 H2 terbalik, run-2 federated kolaps)
+dengan pola kegagalan konsisten menunjukkan: **memaksakan klaim "FL menang" dari setup
+CIC↔UNSW ini tidak didukung data.** SFM terbukti **perlu** (irisan nama kosong → federasi
+mentah mustahil; H1 kualitatif sah) tetapi **tidak cukup**: heterogenitas distribusi
+label antar-klien membuat FedAvg/FedProx naif divergen. Ini **temuan negatif yang
+informatif**, bukan sekadar kegagalan teknis.
+
+**ARAH SETELAH RUN-2 (keputusan framing — Opsi B):**
+Alih-alih mengejar "FL menang" (dua run gagal), **reframe kontribusi** jadi pertanyaan
+yang jujur dan tetap bernilai ilmiah:
+> *Kapan dan mengapa FL cross-dataset NIDS gagal, dan mengapa SFM perlu-tapi-tak-cukup?*
+Narasi: (1) SFM menyelesaikan heterogenitas ruang-fitur (H1 kualitatif — enabler
+interoperabilitas); (2) namun heterogenitas DISTRIBUSI LABEL antar-dataset membuat
+FedAvg/FedProx naif divergen (bukti kuantitatif run-1+run-2); (3) FedProx meredam
+sebagian (mu=0,1 terbaik) tapi tak menutup gap; (4) implikasi: FL-NIDS lintas-dataset
+butuh agregasi yang sadar-heterogenitas (personalisasi/clustered-FL) — arah future work.
+**Opsional run-3** sebagai pelengkap temuan negatif: FedProx(mu=0,1) + LR kecil (1e-3) +
+LOCAL_EPOCHS=1 + early-stop di puncak (~round 10), untuk melaporkan "konfigurasi terbaik
+yang bisa dicapai pun tetap < local-only".
+
+---
+
 # BAGIAN II — MEMORI OPERASIONAL
 
 ## K. Prinsip reproduksi
@@ -283,9 +377,10 @@ diwarisi dari `unswnb-15/notebooks/01,02,05`. JANGAN mengarang angka.
 | 2 | Dataset = CIC2018 ↔ UNSW (pakai SFM Paper 1) | ✅ diputuskan |
 | 3 | Arsitektur = MLP pada 9 fitur SFM + jembatan XGBoost | ✅ diputuskan (Bagian B) |
 | 4 | Rapikan daftar referensi FL → federated_refs_clean.md (41 unik) | ✅ |
-| 5 | Implementasi partisi + baseline (Fase 1) | ◐ notebook DISUSUN (nb01,nb02); eksekusi SageMaker menunggu |
-| 6 | Eksperimen federated inti (Fase 2) | ◐ infra+skrip+runbook + nb03(FedAvg)+nb04(ablasi SFM) DISUSUN; eksekusi menunggu |
-| 7 | Validasi 5-seed + naskah ID → EN (Fase 3) | ◐ nb05–nb07 DISUSUN; eksekusi + naskah menunggu |
+| 5 | Implementasi partisi + baseline (Fase 1) | ✅ run-2 selesai (nb01,nb02); centralized MLP 0,745 |
+| 6 | Eksperimen federated inti (Fase 2) | ✅ run-2 selesai (nb03–nb06); H2 gagal (federated kolaps), FedProx mu=0,1 terbaik 0,187 |
+| 7 | Validasi 5-seed + naskah ID → EN (Fase 3) | ◐ nb07 run-2 selesai (fed 0,229±0,184 < local 0,612±0,003); naskah menunggu framing Opsi B |
+| 8 | Keputusan framing: temuan-negatif (Opsi B) | ✅ disepakati (Q.6); naskah belum ditulis |
 
 ## N. ROADMAP BERTAHAP (langkah kerja)
 
@@ -376,10 +471,45 @@ CIC → UNSW kolaps. Ini masalah METODE, bukan masalah KONSEP. Dapat diperbaiki
    skema-fitur' belum banyak digarap — ini kekuatan bila hasilnya mendukung.
 7. **Prasyarat rilis:** Paper 1 (SFM) accepted dulu (fondasi sitasi).
 
-### Q.5 Keputusan arah (disepakati)
+### Q.5 Keputusan arah (disepakati, pra-run-2)
 Lanjut **perbaikan metode → run-2** (subsample CIC ~100k + kapasitas MLP), nilai ulang
 berdasar DATA run-2, lalu tentukan framing final & kelayakan JISA. **Tidak** menyubmit
 hasil run-1. **Tidak** mengarang/menyetel angka demi lolos. Kejujuran data mutlak.
+
+### Q.6 Penilaian ULANG setelah RUN-2 (JUJUR)
+
+**Status kelayakan "FL menang" sebagai klaim Q1: JATUH.** Run-2 menolak jalur ini.
+Dua run gagal konsisten → memaksakan klaim FL-superior tidak jujur dan mudah dibantah.
+
+**Yang run-2 BUKTIKAN (positif untuk framing baru):**
+- Perbaikan ukuran berhasil untuk centralized (MLP 0,646→0,745) → metode partisi benar.
+- MLP centralized GLOBAL 0,771 → arsitektur mampu; kegagalan murni dari AGREGASI FedAvg.
+- FedProx mu=0,1 (0,187) > FedAvg (0,075) → proximal meredam drift (sinyal mekanistik).
+- Irisan nama kosong (naif-2) → SFM perlu sebagai enabler interoperabilitas (H1 kualitatif).
+
+**Keputusan framing final (Opsi B — temuan negatif informatif):**
+Paper 4 **tidak** mengklaim "FL menutup gap". Paper 4 mengklaim:
+1. **SFM = enabler interoperabilitas skema-fitur** (tanpa SFM, federasi lintas-tool
+   mustahil — bukti kualitatif kuat + analisis adapter A.1/A.2).
+2. **Temuan negatif terukur:** di bawah heterogenitas distribusi-label lintas-dataset,
+   FedAvg/FedProx naif **divergen** (kurva + 5-seed CI + uji signifikansi) — SFM
+   perlu-tapi-tak-cukup.
+3. **Arah mitigasi:** FL-NIDS lintas-dataset butuh agregasi sadar-heterogenitas
+   (personalized/clustered FL) — future work beralasan.
+
+**Peluang venue dengan framing baru:**
+- JISA (Q1): **sedang-rendah**. Temuan negatif bisa diterima Q1 bila analisisnya dalam
+  (mekanisme divergence + ablasi tegas + arah mitigasi konkret). Butuh pekerjaan analisis
+  tambahan, bukan sekadar lapor gagal.
+- Realistis: **Q2 (mis. venue FL/sekuriti terapan)** lebih cocok untuk studi temuan-negatif,
+  kecuali kita tambah kontribusi metodologis (mis. implementasi+evaluasi clustered-FL yang
+  memperbaiki divergence) → ini akan jadi run-3/paper lebih besar.
+
+**Opsi run-3 (opsional, pelengkap temuan negatif — BUKAN penyelamat klaim):**
+FedProx(mu=0,1) + LR 1e-3 + LOCAL_EPOCHS=1 + early-stop ~round 10. Ekspektasi jujur:
+federated ≈ puncak kurva (~0,27) namun **tetap < local-only 0,61**. Berguna untuk
+melaporkan "konfigurasi terbaik yang dapat dicapai pun tak menutup gap" → memperkuat
+temuan negatif, bukan membalikkannya.
 
 
 ---
