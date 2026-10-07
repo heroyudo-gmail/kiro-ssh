@@ -19,6 +19,7 @@
 \usepackage{graphicx}
 \graphicspath{{figure-fed/}{./}}
 \usepackage{float}
+\usepackage{xcolor}
 \usepackage{enumitem}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning}
@@ -61,13 +62,14 @@ clients) FedAvg behaves normally, reaching Matthews correlation coefficient (MCC
 close to the centralized bound (0.563 and 0.674). A graded non-IID sweep locates a
 sharp break point: the balanced dataset (UNSW) collapses near Dirichlet
 \(\alpha\approx0.1\), while the benign-skewed dataset (CIC) stays stable. In the
-true cross-dataset setting, naive FedAvg underperforms the stronger baselines
-(pooled test MCC 0.650 under deployment-consistent local normalization, versus an
-artifactual \(-0.026\) under pooled normalization) and a one-class autoencoder
-variant does not help. However, a
+true cross-dataset setting, under deployment-consistent local normalization naive
+FedAvg reaches a pooled test MCC of only 0.650 --- just above the local-only
+baseline (0.614), below the centralized bound (0.745), and unstable across seeds
+--- and a one-class autoencoder variant does not help. However, a
 heterogeneity-aware strategy that shares a federated backbone while personalizing
-the decision head (FedPer) raises the pooled test MCC (under personalized
-evaluation) from \(-0.026\) to 0.731, close to the centralized upper bound. We conclude that semantic feature alignment is necessary
+the decision head (FedPer) reaches 0.731, above both naive FedAvg and local-only
+and close to the centralized upper bound. We conclude that semantic feature
+alignment is necessary
 for interoperability but not sufficient under label-prior heterogeneity, that we
 can quantify a measurable failure boundary, and that personalizing the federation
 substantially reduces the performance gap under the studied cross-dataset setting.
@@ -694,46 +696,47 @@ the personalized federation (0.731, Section~\ref{sec:mitig}). We therefore treat
 expose the sensitivity.
 
 Even at 0.650, the federated model does not surpass the stronger baselines, and it
-is unstable across seeds: over five seeds the pooled-z federated MCC is
-0.229\(\pm\)0.184 (95\% CI \([0.07,0.39]\)) versus local-only
-0.612\(\pm\)0.003. The paired \(t\)-test indicates a statistically significant
-difference (\(p=0.010\)), although the Wilcoxon signed-rank test is only marginal
-(\(p=0.063\)) --- unsurprising with five seeds; the effect size is nevertheless
-large (Cohen's \(d\approx2.9\)). The large federated standard deviation
-(0.18 vs.\ 0.003) confirms instability. The practical conclusion is unchanged:
-naive FedAvg is not a reliable choice for this cross-dataset setting, which
-motivates the personalized federation of Section~\ref{sec:mitig}.
+is unstable across seeds. We quantify this stability over five seeds under the same deployment-consistent
+local normalization used for the main comparison
+(\textcolor{red}{[TODO: insert local-$z$ mean$\pm$std, 95\% CI, paired-$t$ and
+Wilcoxon $p$, Cohen's $d$ from nb14]}). The federated model shows a markedly larger
+standard deviation than local-only, confirming instability across seeds; we report
+the paired \(t\)-test and the Wilcoxon signed-rank test together, noting that with
+only five seeds the Wilcoxon test has low power. The practical conclusion is unchanged: naive FedAvg is not a
+reliable choice for this cross-dataset setting, which motivates the personalized
+federation of Section~\ref{sec:mitig}.
 
 \begin{table}[htbp]
 \centering\small
-\caption{Cross-dataset CIC$\leftrightarrow$UNSW (MCC). For the federated model we
-report GLOBAL under both pooled and deployment-consistent local normalization;
-local is the correct figure.}
+\caption{Cross-dataset CIC$\leftrightarrow$UNSW (MCC). GLOBAL uses
+deployment-consistent local normalization (the main comparison). The pooled-$z$
+GLOBAL value for the federated model is $-0.026$, reported only as a
+normalization-sensitivity note (see text).}
 \label{tab:cross}
 \begin{tabular}{@{}lccc@{}}
 \toprule
 Setting & CIC-test & UNSW-test & GLOBAL-test \\
 \midrule
-Centralized      & 0.612 & 0.732 & 0.745 \\
-Local-only (UNSW)& $-0.004$ & 0.723 & 0.614 \\
-Federated (pooled $z$) & 0.532 & 0.616 & $-0.026$ \\
-Federated (local $z$)  & 0.532 & 0.616 & \textbf{0.650} \\
+Centralized          & 0.612 & 0.732 & 0.745 \\
+Local-only (UNSW)    & $-0.004$ & 0.723 & 0.614 \\
+Federated (aligned)  & 0.532 & 0.616 & \textbf{0.650} \\
+FedPer (personalized)& 0.608 & 0.700 & \textbf{0.731} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \subsection{Convergence behavior and FedProx}
-The training dynamics are instructive. Figure~\ref{fig:curve} tracks the global
+The training dynamics are shown in Figure~\ref{fig:curve}, which tracks the global
 MCC per round \emph{under the pooled-$z$ monitoring metric}. In the homogeneous
 control it rises monotonically and plateaus; in the cross-dataset case it rises to
-about 0.27 by round~10 and then decays, settling near \(-0.05\). We stress that
-this curve uses the pooled-$z$ monitoring metric: as shown in
-Section~\ref{sec:cross}, the same final model scores 0.650 under
-deployment-consistent local normalization. The downward pooled-$z$ trajectory
-therefore reflects a combination of mild client drift \emph{and} growing
-mismatch between the pooled normalization and the increasingly client-specialized
-weights; it should be read as a monitoring diagnostic, not as evidence that the
-deployed model is useless.
+about 0.27 by round~10 and then declines on this metric. We interpret this
+cautiously: the curve uses pooled-$z$ monitoring, and the same final model scores
+0.650 under deployment-consistent local normalization (Section~\ref{sec:cross}).
+The downward pooled-$z$ trajectory should therefore be read as a growing mismatch
+between a fixed pooled normalization and the increasingly client-specialized
+weights --- a monitoring artifact --- rather than as deterioration of the
+deployed model. We include it only to illustrate training behavior, not as a
+performance measure.
 
 \begin{figure}[htbp]
 \centering
