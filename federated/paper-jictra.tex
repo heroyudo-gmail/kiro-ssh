@@ -63,11 +63,11 @@ sharp break point: the balanced dataset (UNSW) collapses near Dirichlet
 true cross-dataset setting, naive FedAvg diverges (global MCC \(-0.026\)) and a
 one-class autoencoder variant does not recover it. However, a
 heterogeneity-aware strategy that shares a federated backbone while personalizing
-the decision head (FedPer) restores the global MCC to 0.731, close to the
+the decision head (FedPer) raises the global MCC to 0.731, close to the
 centralized upper bound. We conclude that semantic feature alignment is necessary
 for interoperability but not sufficient under label-prior heterogeneity, that we
-can quantify a measurable failure boundary, and that this boundary can be largely
-mitigated by personalizing the federation.
+can quantify a measurable failure boundary, and that personalizing the federation
+substantially reduces the performance gap under the studied cross-dataset setting.
 \end{abstract}
 
 \noindent\textbf{Keywords:} \emph{federated learning; network intrusion
@@ -439,6 +439,57 @@ reconstruction error.}
 \label{fig:ae}
 \end{figure}
 
+\subsection{Personalized federation (FedPer)}
+\label{sec:fedper}
+As a heterogeneity-aware alternative to a single global model, we use FedPer. The
+same MLP is split into a \emph{shared backbone} (the two hidden layers,
+\(9\!\to\!128\!\to\!64\)) and a \emph{personalized head} (the output layer,
+\(64\!\to\!1\)); Figure~\ref{fig:fedper} illustrates the split. Only the backbone
+is federated: in each round, every client trains the whole network locally, but
+the server averages \emph{only} the backbone weights,
+\begin{equation}
+w_{\mathrm{backbone}}^{(t+1)} = \sum_{k=1}^{K}\frac{n_k}{n}\,
+w_{\mathrm{backbone},k}^{(t)},
+\label{eq:fedper}
+\end{equation}
+while each client keeps its own head \(w_{\mathrm{head},k}\) locally and never
+sends it to the server. Intuitively, the shared backbone learns a common
+representation of the aligned features, while each head adapts the decision
+boundary to the client's own label prior --- directly countering the gradient
+cancellation that sinks naive FedAvg (Section~\ref{sec:oc}). As a limiting case we
+also report \emph{clustered FL}, in which each client keeps a \emph{full} private
+model (no sharing); this coincides with local-only and serves only as an upper
+reference for complete personalization, not as a federated method.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[node distance=0.45cm and 0.8cm,font=\scriptsize,
+  box/.style={draw,rounded corners,minimum height=0.8cm,minimum width=1.1cm},
+  sh/.style={box,fill=blue!8}, hd/.style={box,fill=orange!12}]
+  \node[box] (i) {in 9};
+  \node[sh,right=of i] (h1) {128};
+  \node[sh,right=of h1] (h2) {64};
+  \node[hd,above right=0.3cm and 0.8cm of h2] (hc) {head CIC};
+  \node[hd,below right=0.3cm and 0.8cm of h2] (hu) {head UNSW};
+  \draw[-{Stealth}] (i)--(h1); \draw[-{Stealth}] (h1)--(h2);
+  \draw[-{Stealth}] (h2)--(hc); \draw[-{Stealth}] (h2)--(hu);
+  \node[below=0.1cm of h1,font=\scriptsize,text=blue!50!black] {shared (FedAvg)};
+  \node[right=0.1cm of hu,font=\scriptsize,text=orange!60!black] {local only};
+\end{tikzpicture}
+\caption{FedPer: the backbone (blue) is federated via Eq.~\ref{eq:fedper}; each
+client keeps a local, personalized head (orange) that is never shared.}
+\label{fig:fedper}
+\end{figure}
+
+\paragraph{Personalized evaluation protocol.} Because FedPer has no single global
+head, we state its evaluation explicitly. The shared backbone is identical across
+clients. For CIC-test we use the CIC head, for UNSW-test the UNSW head, and for the
+GLOBAL-test \emph{each sample is scored with the personalized head of its
+originating client} (CIC samples through the CIC head, UNSW samples through the
+UNSW head) on top of the common backbone. The GLOBAL-test number is therefore the
+performance of the \emph{personalized federation} as a whole, not of a single
+global classifier --- a distinction we make clear when interpreting the results.
+
 \subsection{Metric}
 We report the Matthews Correlation Coefficient (MCC) \cite{matthews} as the
 primary metric,
@@ -455,6 +506,19 @@ paired significance test for the main comparison.
 Two datasets act as clients: CSE-CIC-IDS2018 (CIC) \cite{cicids} and UNSW-NB15
 (UNSW) \cite{unsw}, both mapped to the nine aligned features. Table~\ref{tab:data} summarizes the per-client
 statistics after a stratified subsample of CIC to balance client sizes.
+
+This is a \emph{cross-silo} federated setting in the strict sense, not merely
+distributed training. Each client holds its own private dataset that never leaves
+the client: raw traffic and even per-client normalization statistics stay local,
+and only model weights (the whole model for FedAvg, or the backbone for FedPer)
+are exchanged with the server. The two clients deliberately differ in extraction
+tool, feature schema, and label prior --- this heterogeneity is the independent
+variable we study, not an artifact. Using exactly two silos is an intentional
+design choice that \emph{isolates} cross-dataset heterogeneity from the confounding
+effect of client count; the graded non-IID experiment (Section~\ref{sec:bridge})
+separately varies the number of clients within a single dataset. The setting thus
+mirrors two organizations that cannot share raw traffic but wish to train a common
+detector --- the motivating scenario for FL-NIDS.
 
 \begin{table}[htbp]
 \centering\small
@@ -554,7 +618,13 @@ UNSW-only & 0.723 & 0.674 & 0.671 \\
 \end{table}
 
 \subsection{Graded non-IID: locating the break point}
+\label{sec:bridge}
 Table~\ref{tab:bridge} sweeps the label-heterogeneity level on a single dataset.
+We take \(\alpha\approx0.1\) as the \emph{primary} break point, since it is the
+largest heterogeneity level at which all \(K=4\) clients remain well-defined; the
+\(\alpha=0.01\) column is an \emph{extreme-case diagnostic} only (the Dirichlet
+draw empties some shards, dropping the effective client count to two) and is not
+used to define the boundary.
 UNSW (balanced prior 0.55) shows a sharp break near \(\alpha\approx0.1\): MCC
 falls from 0.69 to 0.34. CIC (benign-skewed prior 0.17) stays stable down to
 \(\alpha=0.01\).
@@ -763,13 +833,13 @@ Federated-AE   & 0.150 & 0.002 & 0.039 \\
 \subsection{Mitigation with heterogeneity-aware federation}
 \label{sec:mitig}
 The failure of naive FedAvg raises the natural question: can a federation strategy
-that \emph{accounts for} client heterogeneity recover performance? We tested two
-standard approaches on the same cross-dataset task, keeping the backbone identical.
-In \textbf{FedPer}, the two hidden layers form a shared backbone that is averaged
-with FedAvg, while the output head is kept \emph{local} to each client so it can
-adapt to the client's own label prior. In \textbf{clustered FL}, each client keeps
-a full private model (the limit of personalization). Table~\ref{tab:mitig} shows
-the result.
+that \emph{accounts for} client heterogeneity recover performance? Our headline
+answer is \textbf{FedPer} (Section~\ref{sec:fedper}), which shares a federated
+backbone while personalizing the decision head, and is evaluated with the
+personalized protocol defined there. We also include \emph{clustered FL} --- each
+client keeps a full private model --- but only as an \emph{upper reference} for
+fully personalized/local specialization, not as a federated method (it coincides
+with local-only). Table~\ref{tab:mitig} shows the result.
 
 \begin{table}[htbp]
 \centering\small
@@ -782,31 +852,34 @@ Setting & CIC-test & UNSW-test & GLOBAL-test \\
 \midrule
 Naive FedAvg (ref.)      & 0.532 & 0.616 & $-0.026$ \\
 Local-only (ref.)        & 0.619 & 0.723 & 0.614 \\
-\textbf{FedPer}          & 0.608 & 0.700 & \textbf{0.731} \\
-\textbf{Clustered FL}    & 0.619 & 0.723 & \textbf{0.745} \\
+\textbf{FedPer (headline)} & 0.608 & 0.700 & \textbf{0.731} \\
+Clustered FL (upper ref.)& 0.619 & 0.723 & 0.745 \\
 Centralized (upper bound)& 0.612 & 0.732 & 0.745 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Both strategies recover the collapse: FedPer lifts the global MCC from $-0.026$ to
-\textbf{0.731}, and clustered FL reaches \textbf{0.745}, matching the centralized
-upper bound. This confirms that the failure boundary identified by our framework
-can be \emph{largely mitigated} once the federation accounts for client
-heterogeneity.
+The headline result is \textbf{FedPer}, which lifts the global MCC from
+\(-0.026\) (naive FedAvg) to \textbf{0.731}, close to the centralized bound of
+0.745 --- while still sharing a federated backbone and never pooling data. This is
+the key finding: the failure boundary identified by our framework can be
+\emph{substantially reduced} once the federation accounts for client heterogeneity.
 
-Two honest caveats keep this from being over-claimed. First, both methods abandon
-a single global model: FedPer keeps a per-client head and clustered FL keeps a
-full per-client model, so their gain comes from \emph{personalization}, not from a
-better global aggregate. Clustered FL in particular is local-only reframed as a
-heterogeneity-aware strategy, which is why its per-client columns coincide with
-local-only. Second, FedPer is the more interesting result because it still shares
-a federated backbone: it demonstrates that genuine federation is possible across
-schemas when only the decision head is personalized, yielding near-centralized
-global MCC without pooling data. The practical message is that the right question
-is not whether to federate, but \emph{what} to federate: sharing representation
-while personalizing the decision boundary overcomes the label-prior mismatch that
-sinks naive FedAvg.
+Two honest caveats keep this from being over-claimed. First, FedPer's GLOBAL-test
+number reflects the \emph{personalized} evaluation protocol
+(Section~\ref{sec:fedper}): each sample is scored with its originating client's
+head on top of the shared backbone, so this is the performance of the personalized
+federation, not of a single global classifier. Its value comes from
+\emph{personalization} of the head combined with a genuinely shared representation
+--- the backbone is still federated via Eq.~\ref{eq:fedper}, so meaningful
+cross-schema federation does occur without exchanging data. Second, clustered FL
+reaching 0.745 should \emph{not} be read as ``federation matches centralized'':
+clustered FL is local-only reframed (its per-client columns coincide with
+local-only), so we report it only as an upper reference for full personalization.
+The practical message is that the right question is not whether to federate but
+\emph{what} to federate: sharing representation while personalizing the decision
+boundary overcomes the label-prior mismatch that sinks naive FedAvg, under the
+studied cross-dataset setting.
 
 \subsection{Synthesis across the four experiments}
 Read together, the four experiments form a single, coherent narrative that
@@ -899,8 +972,9 @@ mitigated}: a heterogeneity-aware strategy that shares a federated backbone whil
 personalizing the decision head (FedPer) restores the global MCC to 0.731, close
 to the centralized bound. The study thus quantifies a measurable failure boundary
 for cross-dataset FL-NIDS, explains why it arises, and shows that personalizing
-the federation overcomes it --- so semantic feature alignment is necessary but not
-sufficient, while personalization closes most of the remaining gap.
+the federation substantially reduces the gap --- so semantic feature alignment is
+necessary but not sufficient, while personalization recovers much of the lost
+performance under the studied cross-dataset setting.
 
 We outline four concrete directions that follow directly from the diagnosed
 failure causes.
