@@ -20,7 +20,9 @@
 > -> asimetri ini menjelaskan penyebab kolaps lintas-dataset. ONE-CLASS (nb10): mitigasi
 > GAGAL (federated-AE 0,039) -> ruang fitur kurang separable. PERSONALIZED (nb12): mitigasi
 > BERHASIL -> FedPer 0,731, clustered 0,745 (~centralized) -> failure boundary dapat
-> DIMITIGASI dengan personalisasi. NASKAH: paper-jictra.tex (target Q4, 'semantic feature
+> DIMITIGASI dengan personalisasi. NORMALISASI (nb13): FedAvg cross-dataset local-z=0,650
+> vs pooled-z=−0,026 -> 'kolaps' sebagian ARTEFAK pooled-z; narasi direvisi jadi
+> 'underperform bukan collapse' (local-z angka utama). NASKAH: paper-jictra.tex (target Q4, 'semantic feature
 > alignment', self-contained). Lihat Bagian D–J (TEMA 1-4) + RINGKASAN ALUR 5 langkah.
 > **JANGAN mengarang angka** — placeholder `[TBD]`/`--` sampai hasil nyata.
 >
@@ -525,7 +527,7 @@ Urutan naratif Paper 4 (meningkat), terlepas dari urutan waktu pengerjaan:
 |---|---|---|---|---|
 | 1 | HOMOGEN (nb08) | 1 dataset, IID, K=4 | CIC 0,563 / UNSW 0,674 (≈ centralized) | FL **VALID** (pipeline benar) |
 | 2 | JEMBATAN non-IID (nb09) | 1 dataset, sweep α | UNSW putus α≈0,1; CIC tahan α=0,01 | titik putus **terukur** (prior-label) |
-| 3 | HETEROGEN (nb03) | 2 dataset lintas-sumber | federated −0,026 (kolaps) | di luar titik putus → **gagal** |
+| 3 | HETEROGEN (nb03/nb13) | 2 dataset lintas-sumber | federated 0,650 (local-z) / −0,026 (pooled-z) | **underperform + tak stabil** (bukan kolaps) |
 | 4 | MITIGASI one-class (nb10) | lintas-dataset, AE normal | federated-AE 0,039 (gagal) | ganti paradigma **tak menolong** (fitur) |
 | 5 | MITIGASI personalized (nb12) | lintas-dataset, FedPer/clustered | FedPer 0,731; clustered 0,745 | **berhasil** (personalisasi) |
 
@@ -563,6 +565,7 @@ diwarisi dari `unswnb-15/notebooks/01,02,05`. JANGAN mengarang angka.
 | `10_fed_oneclass.ipynb` | MITIGASI one-class (autoencoder, latih hanya normal) lintas-dataset | oneclass.csv, oneclass_curve.csv | TEMA 3 (one-class) |
 | `11_feature_separability.ipynb` | Separabilitas 9 fitur (t-SNE/PCA/LDA + metrik) | separability_metrics.csv, sep_*.png | §5.5 naskah |
 | `12_personalized_fl.ipynb` | MITIGASI heterogeneity-aware (FedPer + clustered) | personalized.csv, personalized_curve.csv | TEMA 4 (mitigasi) |
+| `13_local_norm_check.ipynb` | GLOBAL-test pooled-z vs local-z (konsistensi normalisasi) | local_norm_check.csv | §5.3 + Threats |
 
 ## M. Status
 

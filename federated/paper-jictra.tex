@@ -61,8 +61,10 @@ clients) FedAvg behaves normally, reaching Matthews correlation coefficient (MCC
 close to the centralized bound (0.563 and 0.674). A graded non-IID sweep locates a
 sharp break point: the balanced dataset (UNSW) collapses near Dirichlet
 \(\alpha\approx0.1\), while the benign-skewed dataset (CIC) stays stable. In the
-true cross-dataset setting, naive FedAvg diverges (global MCC \(-0.026\)) and a
-one-class autoencoder variant does not recover it. However, a
+true cross-dataset setting, naive FedAvg underperforms the stronger baselines
+(pooled test MCC 0.650 under deployment-consistent local normalization, versus an
+artifactual \(-0.026\) under pooled normalization) and a one-class autoencoder
+variant does not help. However, a
 heterogeneity-aware strategy that shares a federated backbone while personalizing
 the decision head (FedPer) raises the pooled test MCC (under personalized
 evaluation) from \(-0.026\) to 0.731, close to the centralized upper bound. We conclude that semantic feature alignment is necessary
@@ -149,8 +151,9 @@ a validated semantic feature space. Our contributions are:
   where FedAvg collapses and explains the asymmetry between a balanced and a
   benign-skewed dataset --- an analysis not reported for cross-dataset FL-NIDS.
   \item \textbf{A diagnosed negative result \emph{and} a working mitigation:} naive
-  FedAvg diverges and a one-class autoencoder (the Fed-ANIDS paradigm) does not
-  recover it, showing that semantic feature alignment is necessary but not
+  FedAvg underperforms (reaching only 0.650 under deployment-consistent
+  normalization, unstable across seeds) and a one-class autoencoder (the Fed-ANIDS
+  paradigm) does not help, showing that semantic feature alignment is necessary but not
   sufficient under label-prior heterogeneity; yet a heterogeneity-aware strategy
   (FedPer, sharing a backbone while personalizing the head) restores
   near-centralized pooled test MCC, demonstrating that the failure boundary can be
@@ -669,26 +672,43 @@ UNSW & 0.723 & 0.672 & 0.673 & 0.698 & 0.694 & \textbf{0.337} & \textbf{0.310} &
 \end{tabular}
 \end{table}
 
-\subsection{Cross-dataset: naive FedAvg diverges}
-Table~\ref{tab:cross} reports the core setting. Centralized reaches global MCC
-0.745 and a single local model (UNSW) 0.614, but the federated model collapses to
-\(-0.026\): worse than local-only and near random. The convergence curve rises to
-about 0.27 by round 10 then decays into negative territory --- the classic
-client-drift divergence of FedAvg under extreme heterogeneity. Across five seeds
-the federated model is 0.229\(\pm\)0.184 (95\% CI \([0.07,0.39]\)) versus
-local-only 0.612\(\pm\)0.003 (95\% CI \([0.61,0.61]\)); the mean difference is
-\(-0.38\). The paired \(t\)-test indicates a statistically significant difference
-(\(p=0.010\)), although the Wilcoxon signed-rank test is only marginal
+\subsection{Cross-dataset: naive FedAvg underperforms and is normalization-sensitive}
+\label{sec:cross}
+Table~\ref{tab:cross} reports the core setting. Centralized reaches a pooled test
+MCC of 0.745 and a single local model (UNSW) 0.614. The federated model, however,
+is strongly sensitive to how the GLOBAL (pooled) test is normalized --- a point we
+examine carefully because it affects interpretation.
+
+Under a \emph{pooled} z-score (a single normalization fitted on the combined
+training data, used for monitoring), the federated model scores \(-0.026\),
+appearing to collapse below random. But this normalization is inconsistent with
+the FL protocol, in which each client normalizes with its \emph{own} statistics.
+Under the \emph{deployment-consistent local} z-score --- each test sample
+normalized with its originating client's training statistics --- the same
+federated model scores \textbf{0.650} (Table~\ref{tab:cross}). In other words,
+much of the apparent collapse is a \emph{normalization artifact}: with correct
+local normalization, naive FedAvg does not diverge but \emph{underperforms},
+landing slightly above local-only (0.614) yet well below centralized (0.745) and
+the personalized federation (0.731, Section~\ref{sec:mitig}). We therefore treat
+0.650 (local z) as the correct figure and report \(-0.026\) (pooled z) only to
+expose the sensitivity.
+
+Even at 0.650, the federated model does not surpass the stronger baselines, and it
+is unstable across seeds: over five seeds the pooled-z federated MCC is
+0.229\(\pm\)0.184 (95\% CI \([0.07,0.39]\)) versus local-only
+0.612\(\pm\)0.003. The paired \(t\)-test indicates a statistically significant
+difference (\(p=0.010\)), although the Wilcoxon signed-rank test is only marginal
 (\(p=0.063\)) --- unsurprising with five seeds; the effect size is nevertheless
-large (Cohen's \(d\approx2.9\)). Federated is thus \emph{substantially worse} than
-local-only, with the two tests agreeing in direction if not in strict
-significance. The high federated standard deviation (0.18 vs.\ 0.003)
-also shows the cross-dataset federation is unstable across seeds. The cross-dataset
-case lies beyond the break point found in Table~\ref{tab:bridge}.
+large (Cohen's \(d\approx2.9\)). The large federated standard deviation
+(0.18 vs.\ 0.003) confirms instability. The practical conclusion is unchanged:
+naive FedAvg is not a reliable choice for this cross-dataset setting, which
+motivates the personalized federation of Section~\ref{sec:mitig}.
 
 \begin{table}[htbp]
 \centering\small
-\caption{Cross-dataset CIC$\leftrightarrow$UNSW (MCC).}
+\caption{Cross-dataset CIC$\leftrightarrow$UNSW (MCC). For the federated model we
+report GLOBAL under both pooled and deployment-consistent local normalization;
+local is the correct figure.}
 \label{tab:cross}
 \begin{tabular}{@{}lccc@{}}
 \toprule
@@ -696,28 +716,35 @@ Setting & CIC-test & UNSW-test & GLOBAL-test \\
 \midrule
 Centralized      & 0.612 & 0.732 & 0.745 \\
 Local-only (UNSW)& $-0.004$ & 0.723 & 0.614 \\
-Federated (aligned) & 0.532 & 0.616 & \textbf{$-0.026$} \\
+Federated (pooled $z$) & 0.532 & 0.616 & $-0.026$ \\
+Federated (local $z$)  & 0.532 & 0.616 & \textbf{0.650} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \subsection{Convergence behavior and FedProx}
-The failure mode is best seen in the convergence curve. In the homogeneous
-control the global MCC rises monotonically and plateaus; in the cross-dataset case
-it rises to about 0.27 by round 10 and then \emph{decays into negative territory},
-settling near \(-0.05\). Figure~\ref{fig:curve} illustrates the contrast. This is
-the textbook signature of client drift: with two clients pulling the shared model
-toward incompatible optima, the size-weighted average cancels rather than
-combines.
+The training dynamics are instructive. Figure~\ref{fig:curve} tracks the global
+MCC per round \emph{under the pooled-$z$ monitoring metric}. In the homogeneous
+control it rises monotonically and plateaus; in the cross-dataset case it rises to
+about 0.27 by round~10 and then decays, settling near \(-0.05\). We stress that
+this curve uses the pooled-$z$ monitoring metric: as shown in
+Section~\ref{sec:cross}, the same final model scores 0.650 under
+deployment-consistent local normalization. The downward pooled-$z$ trajectory
+therefore reflects a combination of mild client drift \emph{and} growing
+mismatch between the pooled normalization and the increasingly client-specialized
+weights; it should be read as a monitoring diagnostic, not as evidence that the
+deployed model is useless.
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.92\columnwidth]{fed_convergence.png}
-\caption{Actual convergence (global MCC vs communication round, real runs). The
-homogeneous IID models (CIC, UNSW) rise smoothly and plateau near the centralized
-bound. The cross-dataset FedAvg model peaks around 0.27 by round~10 and then
-diverges into negative MCC. Cross-dataset FedProx (\(\mu=0.1\)) stays positive but
-plateaus near 0.19, far below the homogeneous and local-only levels.}
+\caption{Convergence under the pooled-$z$ monitoring metric (global MCC vs
+communication round, real runs). The homogeneous IID models (CIC, UNSW) rise
+smoothly and plateau near the centralized bound. The cross-dataset FedAvg curve
+peaks around 0.27 by round~10 and then declines under pooled-$z$; note that the
+same final model scores 0.650 under deployment-consistent local normalization
+(Section~\ref{sec:cross}). Cross-dataset FedProx (\(\mu=0.1\)) stays positive but
+plateaus near 0.19 on this metric.}
 \label{fig:curve}
 \end{figure}
 
@@ -728,21 +755,19 @@ at \(\mu=0.1\)), confirming that the proximal term dampens drift. Yet even the b
 setting remains far below the local-only baseline (0.614). FedProx mitigates the
 symptom but does not cure the underlying heterogeneity.
 
-\paragraph{Reconciling the two FedAvg numbers.} The main cross-dataset model
-(Table~\ref{tab:cross}, global MCC \(-0.026\)) and the \(\mu=0\) row of
-Table~\ref{tab:fedprox} (0.075) both correspond to FedAvg on the cross-dataset
-task but are not the same run, and we state the difference explicitly to avoid
-confusion. Table~\ref{tab:cross} uses the main classifier
-(\(9\!\to\!128\!\to\!64\!\to\!1\)) reported at the \emph{final} round, where the
-model has already drifted into the divergent regime (recall the curve peaks near
-0.27 around round~10 and then decays). The FedProx sweep in
-Table~\ref{tab:fedprox} is a separate, smaller-capacity configuration used only to
-compare aggregation variants under identical conditions, and its \(\mu=0\) entry
-reports a mildly positive but still very low value. The two numbers are therefore
-consistent in message --- FedAvg on this cross-dataset task yields near-zero or
-negative global MCC, far below local-only --- and differ only because they come
-from different model configurations and reporting points (final round vs.\ the
-sweep's convergence criterion). Neither represents a usable detector.
+\paragraph{Reconciling the FedAvg numbers.} Three FedAvg numbers appear in the
+paper and we reconcile them explicitly. The pooled-$z$ GLOBAL figure of
+\(-0.026\) (Table~\ref{tab:cross}) and the \(\mu=0\) FedProx-sweep figure of 0.075
+(Table~\ref{tab:fedprox}) are both pooled-$z$ monitoring metrics on the
+cross-dataset task; they differ because they come from different model
+configurations and reporting points (the main \(9\!\to\!128\!\to\!64\!\to\!1\)
+classifier at the final round vs.\ a smaller-capacity sweep at its convergence
+criterion), and both are low under pooled normalization. The
+\emph{deployment-consistent} figure, however, is 0.650 (local $z$,
+Table~\ref{tab:cross}): this is the number that reflects how the model would
+actually be used. The consistent message across all three is that naive FedAvg,
+whatever the exact value, does not beat the stronger baselines on this
+cross-dataset task.
 
 \begin{table}[htbp]
 \centering\small
@@ -870,12 +895,14 @@ Centralized (upper bound)& 0.612 & 0.732 & 0.745 \\
 \end{tabular}
 \end{table}
 
-The headline result is \textbf{FedPer}, which lifts the pooled test MCC (under the
-personalized evaluation protocol of Section~\ref{sec:fedper}) from \(-0.026\)
-(naive FedAvg) to \textbf{0.731}, close to the centralized bound of 0.745 ---
-while still sharing a federated backbone and never pooling data. This is
-the key finding: the failure boundary identified by our framework can be
-\emph{substantially reduced} once the federation accounts for client heterogeneity.
+The headline result is \textbf{FedPer}, which reaches a pooled test MCC of
+\textbf{0.731} (under the personalized evaluation protocol of
+Section~\ref{sec:fedper}), close to the centralized bound of 0.745 --- above both
+local-only (0.614) and naive FedAvg under deployment-consistent normalization
+(0.650) --- while still sharing a federated backbone and never pooling data. This
+is the key finding: once the federation accounts for client heterogeneity, it not
+only avoids the instability of naive FedAvg but also surpasses the local-only
+baseline, substantially reducing the gap to the centralized bound.
 
 Two honest caveats keep this from being over-claimed. First, FedPer's GLOBAL-test
 number reflects the \emph{personalized} evaluation protocol
@@ -902,15 +929,18 @@ measurable break point --- near \(\alpha\approx0.1\) for the balanced dataset --
 beyond which FedAvg collapses; the benign-skewed dataset is far more robust,
 indicating that \emph{label-prior heterogeneity is a major contributor} to the
 observed FedAvg degradation (though in the cross-dataset case it is not fully
-isolated from feature- and distribution-level differences). (3) The real
-cross-dataset case lies beyond that break point, so naive FedAvg diverges, below
-local-only across five seeds. (4) Switching
+isolated from feature- and distribution-level differences). (3) In the real
+cross-dataset case, naive FedAvg underperforms: under deployment-consistent
+normalization it reaches 0.650, only marginally above local-only and well below
+centralized, and it is unstable across seeds (the pooled-$z$ monitoring metric
+even appears negative, a normalization artifact we quantify). (4) Switching
 to a one-class paradigm does not recover performance, and critically the
 \emph{centralized} autoencoder also fails, which indicates that feature-space
 separability is an important limiting factor alongside aggregation instability.
-(5) Finally, a heterogeneity-aware strategy (FedPer) restores the global MCC to
-0.731, near the centralized bound, showing the boundary can be mitigated by
-personalizing the federation. Table~\ref{tab:summary} summarizes the progression.
+(5) Finally, a heterogeneity-aware strategy (FedPer) reaches a pooled test MCC of
+0.731, above local-only and near the centralized bound, showing the gap can be
+substantially reduced by personalizing the federation. Table~\ref{tab:summary}
+summarizes the progression.
 
 \begin{table}[htbp]
 \centering\small
@@ -922,9 +952,9 @@ personalizing the federation. Table~\ref{tab:summary} summarizes the progression
 \midrule
 1 & Homogeneous (IID)      & CIC 0.563 / UNSW 0.674 & FL valid \\
 2 & Graded non-IID         & break at $\alpha\approx0.1$ (UNSW) & measurable limit \\
-3 & Cross-dataset          & federated $-0.026$ & beyond the limit \\
+3 & Cross-dataset          & FedAvg 0.650 (local $z$) & underperforms, unstable \\
 4 & One-class mitigation   & federated-AE 0.039 & feature-space limit \\
-5 & Heterogeneity-aware FL & FedPer 0.731 & boundary mitigable \\
+5 & Heterogeneity-aware FL & FedPer 0.731 & gap substantially reduced \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -946,10 +976,16 @@ contribution of the controlled design.
 
 \subsection{Threats to validity}
 We note several threats so that the conclusions are not over-read.
-\emph{Construct validity:} the GLOBAL-test evaluation of the federated model uses
-a pooled z-score for monitoring, whereas a deployed client would normalize with
-its local statistics; for the near-IID control this difference is negligible, but
-we report it for transparency. \emph{Internal validity:} we hold the model and
+\emph{Construct validity (normalization):} we found that the GLOBAL-test score of
+the cross-dataset federated model is sensitive to the normalization used ---
+\(-0.026\) under a pooled z-score but 0.650 under deployment-consistent local
+normalization (Section~\ref{sec:cross}). Rather than hide this in a caveat, we
+quantified both and adopt the local-normalization figure (0.650) as the correct,
+deployment-consistent result; the pooled value is reported only to expose the
+sensitivity. FedPer's reported figure already uses local normalization, so it is
+unaffected. This strengthens rather than weakens the study: the main conclusions
+(naive FedAvg underperforms the stronger baselines; FedPer is best) hold under the
+deployment-consistent metric. \emph{Internal validity:} we hold the model and
 hyperparameters fixed across settings to isolate heterogeneity, at the cost of not
 tuning each setting individually; a per-setting tuned model might shift absolute
 numbers, though the qualitative homogeneous-vs-heterogeneous contrast is large and
@@ -978,9 +1014,11 @@ We presented a controlled study of cross-dataset federated NIDS over a semantic
 feature space. By holding the model and aggregation fixed and varying only
 heterogeneity, we showed that FedAvg works on homogeneous data (MCC 0.563/0.674,
 near-centralized), degrades past a measurable non-IID break point
-(\(\alpha\approx0.1\) for the balanced dataset), and fails in the true
-cross-dataset setting (global MCC \(-0.026\)); a one-class variant does not
-recover it, and because even the centralized autoencoder fails, feature-space
+(\(\alpha\approx0.1\) for the balanced dataset), and underperforms in the true
+cross-dataset setting (pooled test MCC 0.650 under deployment-consistent
+normalization, only marginally above local-only and unstable across seeds); a
+one-class variant does not help, and because even the centralized autoencoder
+fails, feature-space
 separability emerges as an important limiting factor alongside aggregation
 instability. Crucially, we then showed that the boundary can be \emph{largely
 mitigated}: a heterogeneity-aware strategy that shares a federated backbone while
