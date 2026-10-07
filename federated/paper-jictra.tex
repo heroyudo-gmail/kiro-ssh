@@ -81,18 +81,35 @@ generalization \cite{paper1}. A natural question follows: can SFM also serve as 
 schemas, and how far does federated-SFM close the gap to a centralized model?
 
 This paper answers that question with a \emph{controlled} empirical study rather
-than a claim of superiority. Our contributions are:
+than a claim of superiority. Crucially, our setting departs from existing FL-NIDS
+work in a specific way. Prior studies --- including state-of-the-art systems such
+as Fed-ANIDS \cite{fedanids} --- partition a \emph{single} dataset across clients,
+so all clients share one feature schema and a near-identical distribution. We
+instead federate across \emph{two different-source datasets} (CIC and UNSW) whose
+feature-extraction tools, feature schemas, and label priors all differ. This is
+the harder, more realistic case that prior work avoids, and it is enabled only by
+a validated semantic feature space. Our contributions are:
 \begin{enumerate}[leftmargin=1.6em]
-  \item A controlled FL protocol that holds the model and aggregation fixed and
-  varies only the degree of data heterogeneity, isolating its causal effect.
-  \item Evidence that FedAvg over the SFM space works on homogeneous partitions
-  (near-centralized MCC), establishing pipeline validity.
-  \item A graded non-IID analysis that locates a \emph{break point} of FedAvg and
-  explains the asymmetry between a balanced dataset and a benign-skewed one.
-  \item An honest negative result for the cross-dataset case: naive FedAvg
-  diverges and a one-class autoencoder variant does not recover it, showing SFM is
-  necessary but not sufficient under label-prior heterogeneity.
+  \item \textbf{A new problem setting:} cross-dataset FL-NIDS across clients with
+  \emph{different feature schemas}, bridged by a validated Semantic Feature
+  Mapping used as an interoperability enabler --- not a single dataset split, as
+  in prior FL-NIDS work.
+  \item \textbf{A controlled protocol} that holds the model and aggregation fixed
+  and varies only the degree of heterogeneity, isolating its causal effect; a
+  homogeneous control confirms the pipeline is valid (near-centralized MCC).
+  \item \textbf{A quantified break point:} a graded non-IID sweep that locates
+  where FedAvg collapses and explains the asymmetry between a balanced and a
+  benign-skewed dataset --- an analysis not reported for cross-dataset FL-NIDS.
+  \item \textbf{An honest, diagnosed negative result:} naive FedAvg diverges and a
+  one-class autoencoder (the Fed-ANIDS paradigm) does not recover it; we show SFM
+  is necessary for schema interoperability but not sufficient for detection under
+  label-prior heterogeneity.
 \end{enumerate}
+To be explicit about scope: our novelty is in the \emph{problem framing, the
+cross-schema federation via SFM, and the controlled when-does-it-fail analysis},
+not in a new aggregation algorithm. We reuse standard FedAvg/FedProx deliberately,
+so that the observed behavior reflects the data heterogeneity we study rather than
+a bespoke optimizer.
 
 %==================================================================
 \section{Related Work}
@@ -107,9 +124,36 @@ state-of-the-art, combines FL with anomaly detection using autoencoders
 single-source data partitioned to clients. The limits of FL under heterogeneity
 are increasingly recognized \cite{ref-limits,ref-personalized}; proximal methods
 such as FedProx \cite{fedprox} and personalization mitigate client drift but do
-not eliminate it. Our work differs by targeting \emph{cross-dataset} FL, where
-both the feature schema and the label prior differ, and by framing the study
-around \emph{when} FL fails rather than asserting that it wins.
+not eliminate it.
+
+Table~\ref{tab:position} positions this work against representative FL-NIDS
+studies along three axes that matter for our question: whether clients share one
+feature schema, whether the data is single- or cross-source, and whether the
+study isolates \emph{when} FL fails. To our knowledge, no prior FL-NIDS study
+combines cross-schema federation (via a validated semantic mapping) with a
+controlled break-point analysis across the homogeneous-to-cross-dataset spectrum.
+That combination is the gap this paper fills.
+
+\begin{table}[h]
+\centering\small
+\caption{Positioning against representative FL-NIDS work.}
+\label{tab:position}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Study & Feature schema & Data source & Break-point analysis \\
+\midrule
+Fed-ANIDS \cite{fedanids}        & single & single-source split & no \\
+FL-NIDS surveys \cite{ref-fl-survey,ref-fl-review} & single & single-source & no \\
+Limits of FL \cite{ref-limits}   & single & single-source & partial \\
+Personalized FL \cite{ref-personalized} & single & single-source & no \\
+\textbf{This work}               & \textbf{different (SFM-bridged)} & \textbf{cross-dataset} & \textbf{yes (graded)} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Our work therefore differs on all three axes: clients use \emph{different}
+feature schemas reconciled by SFM, the federation is \emph{cross-dataset}, and we
+frame the study around \emph{when} FL fails rather than asserting that it wins.
 
 %==================================================================
 \section{Method}
