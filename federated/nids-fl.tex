@@ -165,7 +165,8 @@ Arsitektur sistem bersifat \emph{client--server} klasik FL:
   global baru. Diulang sampai konvergen.
 \end{itemize}
 Yang berpindah di jaringan hanyalah bobot model; data mentah tidak pernah
-meninggalkan klien.
+meninggalkan klien. Alur komunikasi antar-node ini diringkas pada
+Gambar~\ref{fig:fl-arsitektur}.
 
 \begin{figure}[h]
 \centering
@@ -259,7 +260,8 @@ s(x) = \alpha\,\lVert x - AE_1(x)\rVert_2
 \qquad \alpha+\beta = 1 .
 \end{equation}
 Jika $s(x) > \tau$ maka $x$ dinyatakan serangan. Ambang $\tau$ dikalibrasi dari
-distribusi skor data normal (mis. persentil tinggi).
+distribusi skor data normal (mis. persentil tinggi). Struktur encoder bersama dan
+dua decoder beserta jalur adversarial digambarkan pada Gambar~\ref{fig:usad}.
 
 \begin{figure}[h]
 \centering
@@ -320,7 +322,7 @@ Rancangan evaluasi dibuat sistematis sebagai \emph{faktorial}:
 \end{itemize}
 Metrik: \emph{accuracy, precision, recall, F1-score}. Pelatihan hanya memakai
 trafik normal (\emph{semi-supervised / one-class}); serangan hanya muncul saat
-evaluasi.
+evaluasi. Alur deteksi saat inferensi diringkas pada Gambar~\ref{fig:deteksi}.
 
 \begin{center}
 \footnotesize
