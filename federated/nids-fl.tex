@@ -16,8 +16,25 @@
 \usepackage{enumitem}
 \usepackage{xcolor}
 \usepackage{listings}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc,fit,backgrounds,shapes.geometric}
 \usepackage{hyperref}
 \hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue}
+
+% ----- Gaya node diagram -----
+\tikzset{
+  server/.style={rectangle,rounded corners,draw=black,fill=blue!12,
+                 minimum width=3.3cm,minimum height=1.0cm,align=center,font=\small},
+  client/.style={rectangle,rounded corners,draw=black,fill=green!12,
+                 minimum width=2.6cm,minimum height=1.0cm,align=center,font=\small},
+  store/.style={cylinder,shape border rotate=90,draw=black,fill=orange!15,
+                aspect=0.3,minimum width=2.2cm,minimum height=1.1cm,align=center,font=\footnotesize},
+  block/.style={rectangle,draw=black,fill=gray!8,minimum width=1.9cm,
+                minimum height=0.9cm,align=center,font=\footnotesize},
+  lat/.style={circle,draw=black,fill=purple!15,minimum size=0.9cm,font=\footnotesize},
+  flow/.style={-{Stealth[length=2.5mm]},thick},
+  flowb/.style={{Stealth[length=2.5mm]}-{Stealth[length=2.5mm]},thick},
+}
 
 % ----- Gaya listing kode Python -----
 \definecolor{codegray}{gray}{0.95}
@@ -150,6 +167,39 @@ Arsitektur sistem bersifat \emph{client--server} klasik FL:
 Yang berpindah di jaringan hanyalah bobot model; data mentah tidak pernah
 meninggalkan klien.
 
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[node distance=1.1cm and 1.9cm]
+  % server
+  \node[server] (srv) {\textbf{Server Agregator}\\ FedAvg / FedProx\\ model global $w^{(t)}$};
+  % clients
+  \node[client, below left=2.0cm and 1.6cm of srv] (c1)
+        {\textbf{Klien 1}\\ data lokal\\ (trafik normal)};
+  \node[client, below=2.0cm of srv] (c2)
+        {\textbf{Klien 2}\\ data lokal\\ (trafik normal)};
+  \node[client, below right=2.0cm and 1.6cm of srv] (c3)
+        {\textbf{Klien $K$}\\ data lokal\\ (trafik normal)};
+  % broadcast (down) : global weights
+  \draw[flow,blue!60!black] (srv.south) -- (c1.north)
+        node[midway,sloped,above,font=\scriptsize]{siar $w^{(t)}$};
+  \draw[flow,blue!60!black] (srv.south) -- (c2.north);
+  \draw[flow,blue!60!black] (srv.south) -- (c3.north)
+        node[midway,sloped,above,font=\scriptsize]{siar $w^{(t)}$};
+  % upload (up) : local weights
+  \draw[flow,red!70!black] ([xshift=6mm]c1.north) -- ([xshift=-10mm]srv.south)
+        node[midway,sloped,below,font=\scriptsize]{kirim $w_1^{(t)}$};
+  \draw[flow,red!70!black] ([xshift=8mm]c3.north) -- ([xshift=10mm]srv.south)
+        node[midway,sloped,below,font=\scriptsize]{kirim $w_K^{(t)}$};
+  % privacy note
+  \node[draw=none,below=0.5cm of c2,font=\scriptsize\itshape,text=gray!50!black]
+        {Data mentah TIDAK pernah keluar klien --- hanya bobot model dipertukarkan.};
+\end{tikzpicture}
+\caption{Arsitektur \emph{federated learning} client--server. Tiap \emph{round} $t$:
+server menyiarkan bobot global (panah biru, turun), klien melatih lokal lalu
+mengirim bobotnya (panah merah, naik), server mengagregasi menjadi $w^{(t+1)}$.}
+\label{fig:fl-arsitektur}
+\end{figure}
+
 \subsection{Model}
 Fed-ANIDS mengevaluasi tiga keluarga model rekonstruksi:
 \begin{itemize}[leftmargin=1.4em]
@@ -211,6 +261,38 @@ s(x) = \alpha\,\lVert x - AE_1(x)\rVert_2
 Jika $s(x) > \tau$ maka $x$ dinyatakan serangan. Ambang $\tau$ dikalibrasi dari
 distribusi skor data normal (mis. persentil tinggi).
 
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[node distance=1.0cm and 1.4cm]
+  \node[block] (x) {Input $x$};
+  \node[lat, right=of x] (z) {$z$};
+  \node[block, above right=0.6cm and 1.4cm of z] (d1) {$D_1$};
+  \node[block, below right=0.6cm and 1.4cm of z] (d2) {$D_2$};
+  \node[block, right=of d1] (w1) {$AE_1(x)$};
+  \node[block, right=of d2] (w2) {$AE_2(x)$};
+  \node[block, right=1.4cm of w1] (w3) {$AE_2(AE_1(x))$};
+  % encoder
+  \draw[flow] (x) -- (z) node[midway,above,font=\scriptsize]{Encoder $E$};
+  \draw[flow] (z) -- (d1);
+  \draw[flow] (z) -- (d2);
+  \draw[flow] (d1) -- (w1);
+  \draw[flow] (d2) -- (w2);
+  % adversarial path: w1 -> E -> D2 -> w3
+  \draw[flow,purple!70!black] (w1.north) to[out=60,in=120]
+        node[midway,above,font=\scriptsize]{$E$ lalu $D_2$ (jalur adversarial)} (w3.north);
+  % reconstruction targets
+  \draw[flowb,gray!60!black] (x.south) to[out=-70,in=180]
+        ([yshift=-6mm]w2.south) node[pos=0.5,below,font=\scriptsize]{rekonstruksi: $x \approx AE_1,\,AE_2$};
+  \node[draw=none,below=1.3cm of z,font=\scriptsize\itshape,text=gray!50!black,align=center]
+        {Encoder $E$ dipakai BERSAMA kedua decoder.\\
+         Fase 1: rekonstruksi ($AE_1,AE_2$). Fase 2: adversarial ($AE_2$ vs $AE_1$).};
+\end{tikzpicture}
+\caption{Arsitektur USAD: satu \emph{encoder} bersama $E$ dan dua \emph{decoder}
+$D_1,D_2$. Jalur ungu $AE_2(AE_1(x))$ adalah inti pelatihan adversarial yang
+mempertajam batas normal--anomali.}
+\label{fig:usad}
+\end{figure}
+
 \subsubsection*{(c) Alur lengkap pelatihan federated (pseudokode)}
 \begin{enumerate}[leftmargin=1.6em]
   \item Server inisialisasi bobot global $w^{(0)}$ (encoder + dua decoder).
@@ -253,6 +335,31 @@ Deteksi & Intrusion score dari reconstruction error + ambang $\tau$. \\
 \bottomrule
 \end{tabular}
 \end{center}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[node distance=0.9cm and 1.5cm]
+  \node[block,fill=green!10] (traf) {Trafik masuk $x$};
+  \node[block, right=of traf] (model) {Model USAD\\ global};
+  \node[block, right=of model] (err) {Hitung\\ \emph{recon. error}};
+  \node[block, right=of err] (score) {Intrusion\\ score $s(x)$};
+  \node[diamond,draw=black,fill=yellow!20,aspect=2,font=\scriptsize,
+        right=1.3cm of score] (dec) {$s(x) > \tau$?};
+  \node[block,fill=red!15, above right=0.4cm and 1.3cm of dec] (atk) {SERANGAN};
+  \node[block,fill=green!15, below right=0.4cm and 1.3cm of dec] (norm) {NORMAL};
+  \draw[flow] (traf) -- (model);
+  \draw[flow] (model) -- (err);
+  \draw[flow] (err) -- (score);
+  \draw[flow] (score) -- (dec);
+  \draw[flow] (dec) -- (atk) node[midway,sloped,above,font=\scriptsize]{ya};
+  \draw[flow] (dec) -- (norm) node[midway,sloped,below,font=\scriptsize]{tidak};
+\end{tikzpicture}
+\caption{Alur deteksi (inferensi): trafik direkonstruksi model global, kesalahan
+rekonstruksi diubah jadi \emph{intrusion score} $s(x)$, lalu dibandingkan dengan
+ambang $\tau$. Model dilatih hanya pada trafik normal, sehingga serangan muncul
+sebagai anomali berskor tinggi.}
+\label{fig:deteksi}
+\end{figure}
 
 \subsection{Keunggulan Sistem}
 \begin{enumerate}[leftmargin=1.4em]
