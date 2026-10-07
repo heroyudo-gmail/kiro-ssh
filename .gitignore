@@ -310,6 +310,9 @@ ransomware/aws/results-windows/aes_key.bin
 # Pengecualian: gambar Paper 2 (adversarial) dari hasil nyata notebook 11/12
 !unswnb-15/figure-p2/*.png
 
+# Pengecualian: gambar Paper 4 (federated) - t-SNE/PCA separabilitas (nb11), untuk Overleaf
+!federated/figure-fed/*.png
+
 # PDF files (papers/references, tidak perlu di-upload)
 *.pdf
 
