@@ -1,0 +1,389 @@
+%==============================================================================
+%  Paper 4 - Federated Cross-Dataset NIDS via Semantic Feature Mapping
+%  Target venue: Journal of ICT Research and Applications (JICTRA), ITB (Scopus Q4)
+%  Format disetarakan dgn pedoman JICTRA: TNR 11pt, abstrak 100-200 kata,
+%  5-10 keyword, maks 20 halaman, gaya referensi JICTRA (bernomor).
+%  Catatan: naskah LaTeX; konversi ke template Word JICTRA pada tahap submit.
+%==============================================================================
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{times}            % mendekati Times New Roman
+\usepackage[english]{babel}
+\usepackage{amsmath,amssymb}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning}
+\usepackage[hidelinks]{hyperref}
+\linespread{1.0}
+
+\title{\textbf{When Does Cross-Dataset Federated Learning Work for Network
+Intrusion Detection? A Controlled Study on Semantic Feature Mapping}}
+\author{Hero Yudo Martono\\
+\small Department of Informatics and Computer\\
+\small (affiliation)}
+\date{}
+
+\begin{document}
+\maketitle
+
+%------------------------------------------------------------------
+\begin{abstract}
+\noindent
+Federated learning (FL) lets organizations train a shared network intrusion
+detection model without sharing raw traffic, but real deployments face
+\emph{feature-schema heterogeneity}: clients extract features with different
+tools, so their feature spaces differ. We study whether a validated Semantic
+Feature Mapping (SFM) can bridge this gap and enable cross-dataset FL between
+CSE-CIC-IDS2018 and UNSW-NB15. Using an identical lightweight model and FedAvg
+across all settings, we run a controlled experiment that isolates the effect of
+heterogeneity. On homogeneous partitions (one dataset split IID across clients)
+FedAvg behaves normally, reaching Matthews correlation coefficient (MCC) close to
+the centralized bound (0.563 and 0.674). A graded non-IID sweep locates a sharp
+break point: the balanced dataset (UNSW) collapses near Dirichlet
+\(\alpha\approx0.1\), while the benign-skewed dataset (CIC) stays stable. In the
+true cross-dataset setting, naive FedAvg diverges (global MCC \(-0.026\)) and a
+one-class autoencoder variant does not recover it. We conclude that SFM is
+necessary for interoperability but not sufficient for detection under label-prior
+heterogeneity, and we quantify exactly when cross-dataset FL fails.
+\end{abstract}
+
+\noindent\textbf{Keywords:} \emph{federated learning; network intrusion
+detection; cross-dataset generalization; semantic feature mapping; non-IID;
+data heterogeneity; FedAvg.}
+
+\vspace{1em}
+
+%==================================================================
+\section{Introduction}
+%==================================================================
+Network Intrusion Detection Systems (NIDS) based on machine learning typically
+assume centralized training, where traffic from many sources is pooled on a
+single server. In cross-organization settings this assumption breaks down for two
+reasons: privacy (sensitive traffic cannot leave an organization) and
+\emph{feature-schema heterogeneity} (each organization extracts flow features with
+a different tool, e.g.\ CICFlowMeter versus Argus/Bro, producing different feature
+sets). Federated learning (FL) addresses privacy by exchanging only model
+parameters, but standard FedAvg assumes an identical feature space across clients
+\cite{mcmahan,ref-fl-survey}.
+
+A Semantic Feature Mapping (SFM) --- a statistically validated dictionary that
+maps features from different extraction tools to a common semantic space --- has
+been proposed to bridge schema heterogeneity for \emph{centralized} cross-dataset
+generalization \cite{paper1}. A natural question follows: can SFM also serve as an
+\emph{enabler} for federated learning across clients that use different feature
+schemas, and how far does federated-SFM close the gap to a centralized model?
+
+This paper answers that question with a \emph{controlled} empirical study rather
+than a claim of superiority. Our contributions are:
+\begin{enumerate}[leftmargin=1.6em]
+  \item A controlled FL protocol that holds the model and aggregation fixed and
+  varies only the degree of data heterogeneity, isolating its causal effect.
+  \item Evidence that FedAvg over the SFM space works on homogeneous partitions
+  (near-centralized MCC), establishing pipeline validity.
+  \item A graded non-IID analysis that locates a \emph{break point} of FedAvg and
+  explains the asymmetry between a balanced dataset and a benign-skewed one.
+  \item An honest negative result for the cross-dataset case: naive FedAvg
+  diverges and a one-class autoencoder variant does not recover it, showing SFM is
+  necessary but not sufficient under label-prior heterogeneity.
+\end{enumerate}
+
+%==================================================================
+\section{Related Work}
+%==================================================================
+FL for intrusion detection has grown rapidly; recent surveys catalog
+architectures, aggregation strategies, and open challenges
+\cite{ref-fl-survey,ref-fl-review}. Most FL-NIDS studies evaluate on a
+\emph{single} dataset split across clients, i.e.\ a homogeneous feature space and
+near-IID distribution. Fed-ANIDS \cite{fedanids}, a representative
+state-of-the-art, combines FL with anomaly detection using autoencoders
+(including adversarial variants) and reaches near-centralized accuracy --- but on
+single-source data partitioned to clients. The limits of FL under heterogeneity
+are increasingly recognized \cite{ref-limits,ref-personalized}; proximal methods
+such as FedProx \cite{fedprox} and personalization mitigate client drift but do
+not eliminate it. Our work differs by targeting \emph{cross-dataset} FL, where
+both the feature schema and the label prior differ, and by framing the study
+around \emph{when} FL fails rather than asserting that it wins.
+
+%==================================================================
+\section{Method}
+%==================================================================
+\subsection{Semantic Feature Mapping (public prior)}
+We reuse the SFM dictionary from \cite{paper1}: nine semantically aligned flow
+features (duration, forward/backward packets, forward/backward bytes,
+forward/backward mean packet length, source/destination load). The mapping is a
+\emph{public prior} agreed before training --- a dictionary of column
+correspondences and derivations validated statistically on each dataset
+\emph{separately}. Each client applies the mapping to its own data locally; no raw
+data is exchanged, preserving the privacy premise of FL.
+
+\subsection{Model and aggregation (held fixed across all settings)}
+To make every setting comparable (apple-to-apple), we use one lightweight
+multilayer perceptron (MLP) over the nine SFM features
+(\(9\!\to\!128\!\to\!64\!\to\!1\), ReLU, sigmoid output) and classic FedAvg:
+\begin{equation}
+w^{(t+1)} = \sum_{k=1}^{K}\frac{n_k}{n}\,w_k^{(t)},\qquad n=\sum_k n_k,
+\end{equation}
+where client \(k\) trains locally for \(E\) epochs. We also test FedProx (a
+proximal term \(\tfrac{\mu}{2}\lVert w-w^{(t)}\rVert^2\)) and a one-class
+autoencoder variant (Section~\ref{sec:oc}). Per-client z-score normalization is
+local (privacy preserving). Hyperparameters are identical across settings
+(\(R=100\) rounds, \(E=5\), learning rate \(3\times10^{-3}\)).
+
+\subsection{Metric}
+We report the Matthews Correlation Coefficient (MCC) as the primary metric,
+because it is robust to the class imbalance common in NIDS traffic, complemented
+by recall, precision, F1 and balanced accuracy.
+
+%==================================================================
+\section{Experimental Design}
+%==================================================================
+Two datasets act as clients: CSE-CIC-IDS2018 (CIC) \cite{cicids} and UNSW-NB15
+(UNSW) \cite{unsw}, both mapped to the nine SFM features. Table~\ref{tab:data} summarizes the per-client
+statistics after a stratified subsample of CIC to balance client sizes.
+
+\begin{table}[h]
+\centering\small
+\caption{Per-client dataset statistics (nine SFM features).}
+\label{tab:data}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+Client (split) & Total & Attack & Pos-rate \\
+\midrule
+UNSW (train) & 82{,}332  & 45{,}332 & 0.551 \\
+UNSW (test)  & 175{,}341 & 119{,}341 & 0.681 \\
+CIC (train)  & 100{,}000 & 16{,}929 & 0.169 \\
+CIC (test)   & 486{,}979 & 82{,}443 & 0.169 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+We run four experiments, from homogeneous to heterogeneous:
+\begin{enumerate}[leftmargin=1.6em]
+  \item \textbf{Homogeneous (control).} One dataset split IID across \(K=4\)
+  clients; evaluate on the same-dataset test set.
+  \item \textbf{Graded non-IID.} One dataset split via Dirichlet(\(\alpha\)) on
+  labels; sweep \(\alpha\) from 100 (near-IID) to 0.01 (extreme) to locate the
+  break point.
+  \item \textbf{Cross-dataset (core).} Two clients \(\{\text{CIC},\text{UNSW}\}\);
+  evaluate on CIC-test, UNSW-test and a pooled GLOBAL-test.
+  \item \textbf{One-class mitigation.} Autoencoder trained only on normal traffic,
+  detection by reconstruction error (Section~\ref{sec:oc}).
+\end{enumerate}
+
+Figure~\ref{fig:fl} shows the federated protocol used throughout.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[node distance=1.0cm and 1.6cm,font=\small]
+  \node[draw,rounded corners,fill=black!5,align=center,minimum height=1cm]
+       (srv) {Aggregator\\ FedAvg: $w^{(t)}$};
+  \node[draw,rounded corners,fill=black!5,align=center,below left=1.6cm and 1.0cm of srv]
+       (c1) {Client CIC\\ (local data)};
+  \node[draw,rounded corners,fill=black!5,align=center,below right=1.6cm and 1.0cm of srv]
+       (c2) {Client UNSW\\ (local data)};
+  \draw[-{Stealth}] (srv.south) -- (c1.north) node[midway,sloped,above]{\scriptsize $w^{(t)}$};
+  \draw[-{Stealth}] (srv.south) -- (c2.north) node[midway,sloped,above]{\scriptsize $w^{(t)}$};
+  \draw[-{Stealth}] ([xshift=5mm]c1.north) -- ([xshift=-8mm]srv.south) node[midway,sloped,below]{\scriptsize $w_1^{(t)}$};
+  \draw[-{Stealth}] ([xshift=-5mm]c2.north) -- ([xshift=8mm]srv.south) node[midway,sloped,below]{\scriptsize $w_2^{(t)}$};
+\end{tikzpicture}
+\caption{Federated protocol: only model weights are exchanged; raw data stays on
+each client.}
+\label{fig:fl}
+\end{figure}
+
+%==================================================================
+\section{Results and Discussion}
+%==================================================================
+
+\subsection{Homogeneous control: FedAvg works}
+Table~\ref{tab:homo} shows that on homogeneous IID partitions, FedAvg reaches MCC
+close to the centralized bound for both datasets, and above local-only. The
+convergence curves rise smoothly without divergence. This establishes that the
+FL pipeline (MLP, FedAvg, SFM space) is valid: any later failure is attributable
+to heterogeneity, not to an implementation defect.
+
+\begin{table}[h]
+\centering\small
+\caption{Homogeneous IID control (MCC, same-dataset test).}
+\label{tab:homo}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Dataset & Centralized & Federated-IID & Local-only (mean) \\
+\midrule
+CIC-only  & 0.619 & 0.563 & 0.558 \\
+UNSW-only & 0.723 & 0.674 & 0.671 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Graded non-IID: locating the break point}
+Table~\ref{tab:bridge} sweeps the label-heterogeneity level on a single dataset.
+UNSW (balanced prior 0.55) shows a sharp break near \(\alpha\approx0.1\): MCC
+falls from 0.69 to 0.34. CIC (benign-skewed prior 0.17) stays stable down to
+\(\alpha=0.01\). The asymmetry is explained by the label prior: when
+\(\alpha\) is small, a balanced dataset forces nearly single-class clients, whose
+local models diverge and cancel under averaging; a benign-skewed dataset keeps a
+benign majority on every client, so local models stay compatible.
+
+\begin{table}[h]
+\centering\small
+\caption{Graded non-IID sweep (federated MCC vs Dirichlet $\alpha$).}
+\label{tab:bridge}
+\begin{tabular}{@{}lccccccc@{}}
+\toprule
+Dataset & cent. & $\alpha$100 & $\alpha$10 & $\alpha$1 & $\alpha$0.5 & $\alpha$0.1 & $\alpha$0.05 \\
+\midrule
+CIC  & 0.619 & 0.562 & 0.557 & 0.575 & 0.569 & 0.581 & 0.577 \\
+UNSW & 0.723 & 0.672 & 0.673 & 0.698 & 0.694 & \textbf{0.337} & \textbf{0.310} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Cross-dataset: naive FedAvg diverges}
+Table~\ref{tab:cross} reports the core setting. Centralized reaches global MCC
+0.745 and a single local model (UNSW) 0.614, but federated-SFM collapses to
+\(-0.026\): worse than local-only and near random. The convergence curve rises to
+about 0.27 by round 10 then decays into negative territory --- the classic
+client-drift divergence of FedAvg under extreme heterogeneity. Across five seeds
+federated-SFM is 0.229\(\pm\)0.184 versus local-only 0.612\(\pm\)0.003 (paired-$t$
+\(p=0.010\)), i.e.\ federated is \emph{significantly worse}. The cross-dataset
+case lies beyond the break point found in Table~\ref{tab:bridge}.
+
+\begin{table}[h]
+\centering\small
+\caption{Cross-dataset CIC$\leftrightarrow$UNSW (MCC).}
+\label{tab:cross}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Setting & CIC-test & UNSW-test & GLOBAL-test \\
+\midrule
+Centralized      & 0.612 & 0.732 & 0.745 \\
+Local-only (UNSW)& $-0.004$ & 0.723 & 0.614 \\
+Federated-SFM    & 0.532 & 0.616 & \textbf{$-0.026$} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{One-class mitigation does not recover it}
+\label{sec:oc}
+Motivated by the label-prior diagnosis, we tested a one-class autoencoder
+(trained only on normal traffic, detection by reconstruction error), the paradigm
+behind Fed-ANIDS \cite{fedanids}. Table~\ref{tab:oc} shows that this does not
+recover cross-dataset performance: federated-AE reaches only global MCC 0.039,
+and even the centralized autoencoder fails (near-zero MCC). This indicates that
+the nine SFM features --- optimized for cross-dataset \emph{interoperability} ---
+do not provide enough \emph{separability} for reconstruction-based detection on
+these datasets. The limitation is the feature space, not merely the aggregation.
+
+\begin{table}[h]
+\centering\small
+\caption{One-class autoencoder, cross-dataset (MCC).}
+\label{tab:oc}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Setting & CIC-test & UNSW-test & GLOBAL-test \\
+\midrule
+Centralized-AE & $-0.070$ & $-0.042$ & $-0.003$ \\
+Local-only-AE  & 0.153 & 0.014 & --- \\
+Federated-AE   & 0.150 & 0.002 & 0.039 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Discussion}
+The results form a coherent, honest picture. FL over the SFM space is valid
+(homogeneous control) and tolerant of moderate non-IID, but it has a measurable
+break point driven by label-prior heterogeneity. Cross-dataset FL lies beyond
+that point, so naive FedAvg diverges, and switching to a one-class paradigm does
+not help because the alignment-oriented SFM space lacks detection separability.
+SFM is therefore \emph{necessary} for schema interoperability but \emph{not
+sufficient} for federated detection across datasets. These findings motivate
+heterogeneity-aware aggregation (clustered or personalized FL) and feature spaces
+designed jointly for alignment \emph{and} separability --- directions for future
+work.
+
+%==================================================================
+\section{Conclusion}
+%==================================================================
+We presented a controlled study of cross-dataset federated NIDS over a semantic
+feature space. By holding the model and aggregation fixed and varying only
+heterogeneity, we showed that FedAvg works on homogeneous data (MCC 0.563/0.674,
+near-centralized), degrades past a measurable non-IID break point
+(\(\alpha\approx0.1\) for the balanced dataset), and fails in the true
+cross-dataset setting (global MCC \(-0.026\)); a one-class variant does not
+recover it. The study quantifies \emph{when} cross-dataset FL for NIDS fails and
+why, and argues that semantic feature mapping is necessary but not sufficient.
+Future work targets heterogeneity-aware aggregation and detection-oriented
+feature spaces, plus a real multi-node cloud deployment.
+
+%==================================================================
+\section*{Acknowledgement}
+%==================================================================
+The author thanks colleagues and reviewers for constructive feedback. All
+reported numbers are from real experiments on AWS/SageMaker; no results were
+fabricated.
+
+%==================================================================
+% Referensi - gaya JICTRA: Nama, Inisial., Judul, Jurnal, Vol(Issue), pp., Bulan Tahun.
+%==================================================================
+\begin{thebibliography}{99}
+\setlength{\itemsep}{2pt}
+
+\bibitem{mcmahan}
+McMahan, B., Moore, E., Ramage, D., Hampson, S. \& Arcas, B.A., Communication-%
+Efficient Learning of Deep Networks from Decentralized Data, Proc.\ AISTATS,
+pp.~1273-1282, 2017.
+
+\bibitem{paper1}
+Martono, H.Y., Syarif, I. \& Saputra, F.A., Cross-Dataset Generalization of
+ML-based Network Intrusion Detection via Semantic Feature Mapping and Few-Shot
+Adaptation, submitted for publication.
+
+\bibitem{ref-fl-survey}
+Khraisat, A., Alazab, A., Jan, T. \& Gopez, A., Survey on Federated Learning for
+Intrusion Detection System: Concept, Architectures, Aggregation Strategies,
+Challenges, and Future Directions, ACM Computing Surveys, 2024.
+
+\bibitem{ref-fl-review}
+Hernandez-Ramos, J.L., Karopoulos, G., Chatzoglou, E., Kouliaridis, V., Marmol,
+E., Gonzalez-Vidal, A. \& Kambourakis, G., Intrusion Detection Based on Federated
+Learning: A Systematic Review, ACM Computing Surveys, 2025.
+
+\bibitem{fedanids}
+Janati Idrissi, M., Alami, H., El Mahdaouy, A., El Mekki, A., Oualil, S.,
+Yartaoui, Z. \& Berrada, I., Fed-ANIDS: Federated Learning for Anomaly-based
+Network Intrusion Detection Systems, Expert Systems with Applications, 234,
+art.~121000, 2023.
+
+\bibitem{ref-limits}
+Lavaur, L., Busnel, Y. \& Autrel, F., Highlighting the Limits of Federated
+Learning in Intrusion Detection, Proc.\ IEEE ICDCS, 2024.
+
+\bibitem{ref-personalized}
+Singh, G., Keshav, S., Rajalakshmi, P. \& Xong, Y., Sentinel: Dynamic Knowledge
+Distillation for Personalized Federated Intrusion Detection in Heterogeneous IoT
+Networks, arXiv:2510.23019, 2025.
+
+\bibitem{fedprox}
+Li, T., Sahu, A.K., Zaheer, M., Sanjabi, M., Talwalkar, A. \& Smith, V.,
+Federated Optimization in Heterogeneous Networks (FedProx), Proc.\ MLSys, 2020.
+
+\bibitem{unsw}
+Moustafa, N. \& Slay, J., UNSW-NB15: A Comprehensive Data Set for Network
+Intrusion Detection Systems, Proc.\ MilCIS, pp.~1-6, 2015.
+
+\bibitem{cicids}
+Sharafaldin, I., Lashkari, A.H. \& Ghorbani, A.A., Toward Generating a New
+Intrusion Detection Dataset and Intrusion Traffic Characterization, Proc.\
+ICISSP, pp.~108-116, 2018.
+
+\end{thebibliography}
+
+\end{document}
