@@ -61,10 +61,13 @@ close to the centralized bound (0.563 and 0.674). A graded non-IID sweep locates
 sharp break point: the balanced dataset (UNSW) collapses near Dirichlet
 \(\alpha\approx0.1\), while the benign-skewed dataset (CIC) stays stable. In the
 true cross-dataset setting, naive FedAvg diverges (global MCC \(-0.026\)) and a
-one-class autoencoder variant does not recover it. We conclude that semantic
-feature alignment is necessary for interoperability but not sufficient for
-detection under label-prior heterogeneity, and we quantify a measurable failure
-boundary under the studied heterogeneity conditions.
+one-class autoencoder variant does not recover it. However, a
+heterogeneity-aware strategy that shares a federated backbone while personalizing
+the decision head (FedPer) restores the global MCC to 0.731, close to the
+centralized upper bound. We conclude that semantic feature alignment is necessary
+for interoperability but not sufficient under label-prior heterogeneity, that we
+can quantify a measurable failure boundary, and that this boundary can be largely
+mitigated by personalizing the federation.
 \end{abstract}
 
 \noindent\textbf{Keywords:} \emph{federated learning; network intrusion
@@ -144,10 +147,13 @@ a validated semantic feature space. Our contributions are:
   \item \textbf{A quantified break point:} a graded non-IID sweep that locates
   where FedAvg collapses and explains the asymmetry between a balanced and a
   benign-skewed dataset --- an analysis not reported for cross-dataset FL-NIDS.
-  \item \textbf{An honest, diagnosed negative result:} naive FedAvg diverges and a
-  one-class autoencoder (the Fed-ANIDS paradigm) does not recover it; we show that
-  semantic feature alignment is necessary for schema interoperability but not
-  sufficient for detection under label-prior heterogeneity.
+  \item \textbf{A diagnosed negative result \emph{and} a working mitigation:} naive
+  FedAvg diverges and a one-class autoencoder (the Fed-ANIDS paradigm) does not
+  recover it, showing that semantic feature alignment is necessary but not
+  sufficient under label-prior heterogeneity; yet a heterogeneity-aware strategy
+  (FedPer, sharing a backbone while personalizing the head) restores
+  near-centralized global MCC, demonstrating that the failure boundary can be
+  largely mitigated.
 \end{enumerate}
 To be explicit about scope: our novelty is in the \emph{problem framing, the
 cross-schema federation via feature alignment, and the controlled
@@ -727,6 +733,54 @@ Federated-AE   & 0.150 & 0.002 & 0.039 \\
 \end{tabular}
 \end{table}
 
+\subsection{Mitigation with heterogeneity-aware federation}
+\label{sec:mitig}
+The failure of naive FedAvg raises the natural question: can a federation strategy
+that \emph{accounts for} client heterogeneity recover performance? We tested two
+standard approaches on the same cross-dataset task, keeping the backbone identical.
+In \textbf{FedPer}, the two hidden layers form a shared backbone that is averaged
+with FedAvg, while the output head is kept \emph{local} to each client so it can
+adapt to the client's own label prior. In \textbf{clustered FL}, each client keeps
+a full private model (the limit of personalization). Table~\ref{tab:mitig} shows
+the result.
+
+\begin{table}[htbp]
+\centering\small
+\caption{Heterogeneity-aware federation on the cross-dataset task (MCC). Naive
+FedAvg and local-only are repeated for reference.}
+\label{tab:mitig}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Setting & CIC-test & UNSW-test & GLOBAL-test \\
+\midrule
+Naive FedAvg (ref.)      & 0.532 & 0.616 & $-0.026$ \\
+Local-only (ref.)        & 0.619 & 0.723 & 0.614 \\
+\textbf{FedPer}          & 0.608 & 0.700 & \textbf{0.731} \\
+\textbf{Clustered FL}    & 0.619 & 0.723 & \textbf{0.745} \\
+Centralized (upper bound)& 0.612 & 0.732 & 0.745 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Both strategies recover the collapse: FedPer lifts the global MCC from $-0.026$ to
+\textbf{0.731}, and clustered FL reaches \textbf{0.745}, matching the centralized
+upper bound. This confirms that the failure boundary identified by our framework
+can be \emph{largely mitigated} once the federation accounts for client
+heterogeneity.
+
+Two honest caveats keep this from being over-claimed. First, both methods abandon
+a single global model: FedPer keeps a per-client head and clustered FL keeps a
+full per-client model, so their gain comes from \emph{personalization}, not from a
+better global aggregate. Clustered FL in particular is local-only reframed as a
+heterogeneity-aware strategy, which is why its per-client columns coincide with
+local-only. Second, FedPer is the more interesting result because it still shares
+a federated backbone: it demonstrates that genuine federation is possible across
+schemas when only the decision head is personalized, yielding near-centralized
+global MCC without pooling data. The practical message is that the right question
+is not whether to federate, but \emph{what} to federate: sharing representation
+while personalizing the decision boundary overcomes the label-prior mismatch that
+sinks naive FedAvg.
+
 \subsection{Synthesis across the four experiments}
 Read together, the four experiments form a single, coherent narrative that
 increases in difficulty. (1) On homogeneous data FL over the aligned feature space is valid:
@@ -740,11 +794,13 @@ FedAvg diverges, significantly below local-only across five seeds. (4) Switching
 to a one-class paradigm does not recover performance, and critically the
 \emph{centralized} autoencoder also fails, which indicates that feature-space
 separability is an important limiting factor alongside aggregation instability.
-Table~\ref{tab:summary} summarizes the progression.
+(5) Finally, a heterogeneity-aware strategy (FedPer) restores the global MCC to
+0.731, near the centralized bound, showing the boundary can be mitigated by
+personalizing the federation. Table~\ref{tab:summary} summarizes the progression.
 
 \begin{table}[htbp]
 \centering\small
-\caption{Summary of the four experiments (increasing difficulty).}
+\caption{Summary of the five experiments (increasing difficulty).}
 \label{tab:summary}
 \begin{tabular}{@{}llll@{}}
 \toprule
@@ -754,6 +810,7 @@ Table~\ref{tab:summary} summarizes the progression.
 2 & Graded non-IID         & break at $\alpha\approx0.1$ (UNSW) & measurable limit \\
 3 & Cross-dataset          & federated $-0.026$ & beyond the limit \\
 4 & One-class mitigation   & federated-AE 0.039 & feature-space limit \\
+5 & Heterogeneity-aware FL & FedPer 0.731 & boundary mitigable \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -810,9 +867,13 @@ near-centralized), degrades past a measurable non-IID break point
 cross-dataset setting (global MCC \(-0.026\)); a one-class variant does not
 recover it, and because even the centralized autoencoder fails, feature-space
 separability emerges as an important limiting factor alongside aggregation
-instability. The study quantifies a measurable failure boundary for cross-dataset
-FL-NIDS under the studied conditions and explains why it arises, arguing that
-semantic feature alignment is necessary but not sufficient.
+instability. Crucially, we then showed that the boundary can be \emph{largely
+mitigated}: a heterogeneity-aware strategy that shares a federated backbone while
+personalizing the decision head (FedPer) restores the global MCC to 0.731, close
+to the centralized bound. The study thus quantifies a measurable failure boundary
+for cross-dataset FL-NIDS, explains why it arises, and shows that personalizing
+the federation overcomes it --- so semantic feature alignment is necessary but not
+sufficient, while personalization closes most of the remaining gap.
 
 We outline four concrete directions that follow directly from the diagnosed
 failure causes.

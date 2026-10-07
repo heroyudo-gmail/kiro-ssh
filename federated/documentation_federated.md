@@ -18,9 +18,10 @@
 > (Opsi B diperkuat). JEMBATAN non-IID (nb09): titik putus FedAvg di α≈0,1 pada UNSW
 > (rapuh krn prior label seimbang 0,55), CIC tahan sampai α=0,01 (condong-benign 0,17)
 > -> asimetri ini menjelaskan penyebab kolaps lintas-dataset. ONE-CLASS (nb10): mitigasi
-> GAGAL juga (federated-AE 0,039; centralized-AE pun ~0) -> ruang SFM kurang separable
-> untuk deteksi anomali (keterbatasan FITUR, bukan agregasi). NASKAH: paper-jictra.tex (target Q4).
-> Lihat Bagian D–J (TEMA 1 homogen, 1b jembatan, 2 heterogen, 3 one-class) + RINGKASAN ALUR.
+> GAGAL (federated-AE 0,039) -> ruang fitur kurang separable. PERSONALIZED (nb12): mitigasi
+> BERHASIL -> FedPer 0,731, clustered 0,745 (~centralized) -> failure boundary dapat
+> DIMITIGASI dengan personalisasi. NASKAH: paper-jictra.tex (target Q4, 'semantic feature
+> alignment', self-contained). Lihat Bagian D–J (TEMA 1-4) + RINGKASAN ALUR 5 langkah.
 > **JANGAN mengarang angka** — placeholder `[TBD]`/`--` sampai hasil nyata.
 >
 > **Prasyarat rilis:** Paper 4 di-submit SETELAH Paper 1 (SFM) accepted. Kita
@@ -487,6 +488,35 @@ menolong selama ruang fiturnya tetap 9-SFM — akar masalah di separabilitas fit
 
 ---
 
+### TEMA 4 — MITIGASI heterogeneity-aware FL — nb12, HASIL NYATA
+
+> Angka NYATA dari `personalized.csv` (S3 `results/personalized/`). Menjawab:
+> apakah strategi FL yang SADAR-HETEROGENITAS bisa menyelamatkan kegagalan FedAvg
+> naif (TEMA 2)? Dua strategi diuji di kasus lintas-dataset, backbone sama (MLP 128,64).
+
+**Hasil (GLOBAL-test MCC):**
+
+| strategi | CIC-test | UNSW-test | GLOBAL-test |
+|---|---:|---:|---:|
+| FedAvg naif (acuan) | 0,532 | 0,616 | −0,026 |
+| local-only (acuan) | 0,619 | 0,723 | 0,614 |
+| **FedPer** (head personal, backbone di-FedAvg) | 0,608 | 0,700 | **0,731** |
+| **Clustered** (model penuh per-klien) | 0,619 | 0,723 | **0,745** |
+| centralized (batas atas) | — | — | 0,745 |
+
+**TEMUAN:** mitigasi BERHASIL. FedPer mengangkat GLOBAL dari −0,026 → **0,731**
+(dekat centralized); Clustered → **0,745** (setara centralized).
+
+**Catatan jujur:**
+1. Keduanya melepas model global tunggal → gain dari PERSONALISASI, bukan agregasi
+   yang lebih baik. Clustered = local-only yang dibingkai ulang (kolom per-klien identik).
+2. FedPer lebih bermakna: tetap berbagi backbone federated, hanya head yang personal
+   → federasi lintas-skema TETAP mungkin, tanpa pooling data, MCC ~centralized.
+3. Pesan: pertanyaannya bukan "apakah berfederasi" tapi "APA yang difederasi" —
+   berbagi representasi + personalisasi decision boundary mengatasi label-prior mismatch.
+
+---
+
 ## RINGKASAN ALUR PEMBUKTIAN (mudah → sulit, untuk naskah)
 
 Urutan naratif Paper 4 (meningkat), terlepas dari urutan waktu pengerjaan:
@@ -497,12 +527,14 @@ Urutan naratif Paper 4 (meningkat), terlepas dari urutan waktu pengerjaan:
 | 2 | JEMBATAN non-IID (nb09) | 1 dataset, sweep α | UNSW putus α≈0,1; CIC tahan α=0,01 | titik putus **terukur** (prior-label) |
 | 3 | HETEROGEN (nb03) | 2 dataset lintas-sumber | federated −0,026 (kolaps) | di luar titik putus → **gagal** |
 | 4 | MITIGASI one-class (nb10) | lintas-dataset, AE normal | federated-AE 0,039 (gagal) | ganti paradigma **tak menolong** (fitur) |
+| 5 | MITIGASI personalized (nb12) | lintas-dataset, FedPer/clustered | FedPer 0,731; clustered 0,745 | **berhasil** (personalisasi) |
 
 **Narasi tunggal:** FL bekerja saat homogen (1) → bertahan sampai titik putus terukur
 (2) → kolaps saat lintas-dataset karena di luar batas itu (3) → one-class pun gagal
-karena ruang SFM kurang separable untuk deteksi (4). Kesimpulan: **SFM perlu (enabler
-interoperabilitas) tetapi tidak cukup; FL-NIDS lintas-dataset butuh agregasi
-sadar-heterogenitas + ruang fitur berorientasi deteksi.**
+karena ruang fitur kurang separable (4) → TAPI strategi sadar-heterogenitas (FedPer)
+MEMULIHKAN performa ke ~centralized (5). Kesimpulan: **semantic feature alignment perlu
+(enabler interoperabilitas) tetapi tidak cukup; failure boundary dapat DIMITIGASI dengan
+personalisasi federasi (berbagi backbone + head personal), bukan agregasi global naif.**
 
 ---
 
@@ -529,6 +561,8 @@ diwarisi dari `unswnb-15/notebooks/01,02,05`. JANGAN mengarang angka.
 | `08_fed_homogen_iid.ipynb` | KONTROL homogen IID per-dataset (CIC-only, UNSW-only) | homogen_iid.csv, homogen_iid_curve.csv | TEMA 1 (homogen) |
 | `09_fed_noniid_bridge.ipynb` | JEMBATAN non-IID: sweep Dirichlet alpha per-dataset, titik putus | noniid_bridge.csv, noniid_bridge_curve.csv | TEMA 1b (jembatan) |
 | `10_fed_oneclass.ipynb` | MITIGASI one-class (autoencoder, latih hanya normal) lintas-dataset | oneclass.csv, oneclass_curve.csv | TEMA 3 (one-class) |
+| `11_feature_separability.ipynb` | Separabilitas 9 fitur (t-SNE/PCA/LDA + metrik) | separability_metrics.csv, sep_*.png | §5.5 naskah |
+| `12_personalized_fl.ipynb` | MITIGASI heterogeneity-aware (FedPer + clustered) | personalized.csv, personalized_curve.csv | TEMA 4 (mitigasi) |
 
 ## M. Status
 
@@ -545,7 +579,8 @@ diwarisi dari `unswnb-15/notebooks/01,02,05`. JANGAN mengarang angka.
 | 9 | Kontrol homogen IID (nb08) — baseline positif | ✅ selesai: CIC 0,563 / UNSW 0,674 (≈ centralized), FL VALID |
 | 10 | Jembatan non-IID bertingkat (nb09) — titik putus | ✅ selesai: UNSW putus α≈0,1; CIC tahan sampai α=0,01 (asimetri prior-label) |
 | 11 | Eksperimen one-class federated (nb10) — mitigasi | ✅ selesai: federated-AE 0,039 (gagal); diagnosa = ruang SFM kurang separable |
-| 12 | Naskah JICTRA (target Scopus Q4 ITB) | ◐ draft `paper-jictra.tex` dibuat (controlled study + orisinalitas diperkuat) |
+| 12 | Mitigasi heterogeneity-aware (nb12) — FedPer/clustered | ✅ selesai: FedPer 0,731 / clustered 0,745 (~centralized) — mitigasi BERHASIL |
+| 13 | Naskah JICTRA (target Scopus Q4 ITB) | ◐ draft `paper-jictra.tex` (self-contained, revisi 2 review, +mitigasi); kompilasi Overleaf |
 
 ## N. ROADMAP BERTAHAP (langkah kerja)
 
