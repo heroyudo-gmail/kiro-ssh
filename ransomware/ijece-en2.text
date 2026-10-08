@@ -77,12 +77,12 @@ data available and intact.
 
 Among cyber threats, ransomware is the most alarming: it encrypts victims' data and
 demands a ransom, and modern variants also target network-connected backup
-infrastructure [6], [7], [8]. Once backups are infected, recovery becomes
-impossible, causing operational, financial, and reputational damage [9]; Sophos
+infrastructure [3], [4], [5]. Once backups are infected, recovery becomes
+impossible, causing operational, financial, and reputational damage [6]; Sophos
 reports that about 43% of devices in financial organizations were affected in 2024.
 Conventional always-connected backups are therefore inadequate. A proven
 countermeasure is the air-gapped architecture, which isolates backup storage -
-physically or logically - from the primary network [10]. Because a fully physical
+physically or logically - from the primary network [7]. Because a fully physical
 air-gap is costly and complex for small and medium organizations, this study adopts
 a logical air-gap using controlled mounting and isolated media, prioritizing
 affordability, ease of deployment, and compatibility with common cloud
@@ -91,18 +91,18 @@ infrastructures.
 The scale of the threat has surged: a survey of 50+ articles (2020-2025) records
 global losses exceeding USD 30 billion in 2023 (approximately 900% rise from 2015),
 493 million attacks in 2022, an average ransom of USD 2.73 million in 2024, and 21
-days average disruption [41]. Ransomware has entered the data-exfiltration era with
+days average disruption [25]. Ransomware has entered the data-exfiltration era with
 double/triple extortion and a Ransomware-as-a-Service (RaaS) model, while academic
-research lags behind real attack patterns [23], [26]. Preventing infection alone is
-no longer sufficient [42], [46]. The literature organizes defenses via the
-Detection-Avoidance-Mitigation (DAM) framework [42]; within it, this study occupies
+research lags behind real attack patterns [14], [15]. Preventing infection alone is
+no longer sufficient [26], [30]. The literature organizes defenses via the
+Detection-Avoidance-Mitigation (DAM) framework [26]; within it, this study occupies
 the mitigation and recovery stage, ensuring data remain recoverable even when early
 detection fails, rather than competing on machine-learning detection accuracy.
 
 Storage efficiency is equally important. For rarely accessed data, organizations
 use cold cloud storage, where lossless compression trims cost without harming
-integrity [13]. However, prior work generally treats backup security, ransomware
-mitigation, or compression separately [14], and mostly relies on a single static
+integrity [8]. However, prior work generally treats backup security, ransomware
+mitigation, or compression separately [9], and mostly relies on a single static
 algorithm despite the non-uniform compression behavior of different file types.
 
 The link between compression and security stems from entropy. Shannon's theory sets
@@ -130,7 +130,7 @@ inspection - to separate ransomware encryption from legitimate AES-256 encryptio
 The contribution is thus an integrated approach that simultaneously addresses
 ransomware resilience, backup isolation, adaptive compression efficiency, and
 integrity verification within one framework for cloud-based financial data
-infrastructures [19], [20].
+infrastructures [10], [11].
 
 We therefore hypothesize that an entropy-aware adaptive selection does not maximize
 any single objective in isolation but instead trades a small, bounded loss in
@@ -160,24 +160,24 @@ No	Study	Research Focus	Methods	Limitations	Contribution of this study
 5	Sahu and Panda, 2025	Compression study	Snappy, Gzip, BZIP2	Limited efficiency analysis	Integrates efficiency and security
 6	NIST (2024) guideline	Secure offline backup	Physical/logical air-gapped	No storage optimization/compression	Combines air-gap + adaptive compression + detection
 
-Mazel et al. [36] and Jaranilla and Choi [37] evaluated lossless compression
+Mazel et al. [21] and Jaranilla and Choi [22] evaluated lossless compression
 algorithms and their trade-offs without any backup-security or ransomware context;
-Shynu et al. [38] reduced cloud storage through secure deduplication but did not
-address ransomware recovery; and Novak et al. [29] proposed malware detection for
+Shynu et al. [23] reduced cloud storage through secure deduplication but did not
+address ransomware recovery; and Novak et al. [17] proposed malware detection for
 backup systems without comprehensively optimizing storage. The novelty here is
 integrating air-gapped protection, adaptive multi-algorithm lossless compression,
 and hash/metadata anomaly detection in one architecture, improving resilience,
 efficiency, automated recovery, and practical deployment.
 
 To position this work against the ransomware-detection mainstream: classical ML
-achieves high accuracy with feature selection [31], deep models (CNN, LSTM,
-CNN-LSTM) reach 96-99% on balanced datasets [30], and real-time AES-NI monitoring
-can halt attacks after 10-15 files [32]. Yet these face outdated datasets,
-cross-platform difficulty, and evasion such as FPE [43], fileless, and
+achieves high accuracy with feature selection [19], deep models (CNN, LSTM,
+CNN-LSTM) reach 96-99% on balanced datasets [18], and real-time AES-NI monitoring
+can halt attacks after 10-15 files [20]. Yet these face outdated datasets,
+cross-platform difficulty, and evasion such as FPE [27], fileless, and
 Living-off-the-Land. This study does not compete on detection accuracy; it
 strengthens the mitigation/recovery layer, aligned with backup-strategy work (3-2-1,
-immutable/WORM, air-gapped) reporting high recovery without ransom [44] and
-structured incident response [45]. It is therefore complementary to ML detectors:
+immutable/WORM, air-gapped) reporting high recovery without ransom [28] and
+structured incident response [29]. It is therefore complementary to ML detectors:
 when detection fails, integrity checks and isolated recovery guarantee availability.
 
 Conceptually, an air-gapped backup differs from a conventional connected backup on
@@ -198,11 +198,11 @@ maintaining 100% recovery in simulation.
 3. METHOD
 ================================================================================
 This study uses a quantitative experimental design to evaluate a cloud backup
-system integrating multiple lossless compression algorithms [22]. Each algorithm is
+system integrating multiple lossless compression algorithms [13]. Each algorithm is
 tested independently, evaluating storage efficiency, processing time, and resilience
 to simulated ransomware. The system adopts a hybrid air-gapped architecture
-combining offline local and cloud storage [21], [27], in an environment resembling
-real financial information systems [29].
+combining offline local and cloud storage [12], [16], in an environment resembling
+real financial information systems [17].
 
 3.1 System architecture
 The architecture has three logical layers. The application layer manages upload,
@@ -212,7 +212,7 @@ legitimate modification from malicious alteration. The protection and compressio
 layer inspects metadata, then compresses first using one of five algorithms and only
 then encrypts with AES-256. This compress-then-encrypt order is essential: encrypted
 data has high entropy and cannot be compressed effectively, so compressing plaintext
-first yields genuine savings before confidentiality is applied [9]. The storage and
+first yields genuine savings before confidentiality is applied [6]. The storage and
 detection layer stores encrypted-compressed files in an air-gapped environment and
 synchronizes to cloud storage (Google Drive API or Amazon S3) for redundancy; on
 detecting ransomware, it auto-recovers from air-gapped storage via decryption and
@@ -228,7 +228,7 @@ Encryption -> Compression (5 algorithms) -> Ransomware Attack; then Retrieve Bac
 3.2 Dataset and data acquisition
 The dataset is synthetically generated to resemble enterprise/financial backup
 structures adapted from PT Equnix; no real production data were used, for privacy
-compliance [27]. Table 2 summarizes its 43 files.
+compliance [16]. Table 2 summarizes its 43 files.
 
 [TABLE 2] Characteristics of the dataset used in the experiments.
 No	Data Type	Format	Files	Size Range	Description
@@ -266,7 +266,7 @@ Snappy/LZ4 for speed; large text to Zstandard for ratio; already-compressed JPG 
 lightweight algorithms; XLSX to LZ4/Zstandard by size. A priority order with
 fallback (Gzip as final safety net) guarantees every file is backed up. Five
 open-source algorithms are implemented in Python and applied identically to each
-file, measuring compression ratio and processing time [36], [37], [38], [39], [22].
+file, measuring compression ratio and processing time [21], [22], [23], [24], [13].
 
 [TABLE 3] Compression algorithm selection rules by file type and size (priority
 order with fallback).
@@ -791,15 +791,8 @@ REFERENCES (IEEE style)
     of ransomware attacks, detection, countermeasures, and future prospects," Franklin
     Open, vol. 11, art. 102056, 2025, doi: 10.1016/j.fraope.2025.102056.
 
-NOTE on reference numbering: the LaTeX source still uses non-sequential \cite keys
-(e.g., [36],[37],[38],[39],[41],[43],[44],[45],[46] etc.) that LaTeX renumbers to
-1..30 at compile. In this plain-text version the reference LIST is already in final
-1..30 order, but the in-text [n] markers above still show the ORIGINAL LaTeX keys.
-Before finalizing in Word, renumber the in-text markers to match this 1..30 list
-(or let Word's reference tool do it). Mapping of original key -> final number:
-  1->1, 2->2, 6->3, 7->4, 8->5, 9->6, 10->7, 13->8, 14->9, 19->10, 20->11, 21->12,
-  22->13, 23->14, 26->15, 27->16, 29->17, 30->18, 31->19, 32->20, 36->21, 37->22,
-  38->23, 39->24, 41->25, 42->26, 43->27, 44->28, 45->29, 46->30.
+NOTE: all in-text citation markers [n] above and the reference list below are now
+in final sequential numbering [1]-[30]. No further renumbering is needed.
 
 
 BIOGRAPHIES OF AUTHORS  (exempt from APC page charge)
