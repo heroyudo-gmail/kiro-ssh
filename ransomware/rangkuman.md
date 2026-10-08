@@ -440,3 +440,121 @@ Teks lonjak tajam ke 8,0 saat dienkripsi = indikator. Tapi JPG/XLSX (sudah tingg
 | 1001,0 | 5,927 | 7,731 | 8/8 |
 
 RTO ~0,0073 s/MB (std 0,0005) = LINEAR. 1GB pulih dalam ~7,7s, integritas sempurna. Menjawab skala enterprise. Masuk ijece-id.tex subbab entropi (tab:entropy_type, tab:entropy_attack) & skalabilitas (tab:scalability).
+
+---
+
+## BAGIAN 10 — CAMERA-READY SETELAH ACCEPTED (file kerja final: `ijece-en2.tex`)
+
+> **Status:** Paper dinyatakan **initially ACCEPTED** oleh IJECE (Paper ID #42551, Editor Prof. Tole Sutikno). Jurnal Sinta Peringkat 1 / terakreditasi. Lisensi CC BY-SA 4.0. Biaya USD 215 (8 halaman pertama; +USD 40/halaman di atas 8). Deadline kirim final paper + similarity report (<25%) + bukti bayar: 8 minggu, satu email ke IJECE@iaesjournal.com.
+>
+> **File kerja final = `ijece-en2.tex`** (diambil dari Overleaf, lebih baru dari `ijece-en.tex`). Semua pekerjaan camera-ready di bawah dilakukan di file ini. Belum di-commit saat dokumentasi ini ditulis (atas permintaan: commit saat benar-benar final).
+>
+> **Authorship dikunci** sejak ACCEPTED: 4 penulis — Hero Yudo Martono, Nafisah Rahmadani Harahap, Iwan Syarif, Ferry Astika Saputra (semua PENS).
+
+### 10.1 Isi surat keputusan (inti)
+- Status: initially ACCEPTED; final hanya terbit setelah kirim final paper (MS Word) + similarity report (<25%, iThenticate/Turnitin) + bukti bayar.
+- Wajib: Method reproducible + gambar setup; lengkapi Funding (info grant/kontrak), Acknowledgement, CRediT, Data Availability, Conflict of Interest; biografi penulis sesuai template (dengan link profil ORCID/Scopus/WoS/Scholar, jangan hapus ikon); referensi IEEE selengkap mungkin (volume, number, pages, DOI); hindari self-citation penulis & citation ke jurnal/publisher IAES.
+- Reviewer A: cek typo/grammar/kapitalisasi/tanda baca.
+- Reviewer B: tambahkan kalimat hipotesis eksplisit di akhir Introduction tentang trade-off storage savings vs execution time vs recovery latency.
+
+### 10.2 Pekerjaan camera-ready yang SUDAH selesai (urut)
+1. **Hipotesis trade-off (Reviewer B)** — ditambahkan 2 kalimat di akhir Introduction: adaptif menukar sedikit storage demi kecepatan jauh lebih tinggi, recovery latency ~linear terhadap volume; menunjuk ke Section Results sebagai tempat pengujian.
+2. **Section wajib** — Acknowledgements BARU ditambahkan; Funding DIPERBARUI ke sumber dana resmi: **Kementerian Pendidikan Tinggi, Sains, dan Teknologi Republik Indonesia (2026)** + PENS + PT Equnix. CRediT / CoI / Data Availability sudah ada (tidak diubah).
+3. **Perkuat Method** — subsection baru "Experimental setup and reproducibility" di akhir Method: parameter konkret (PyCryptodome AES-256 256-bit, SHA-256 hashlib; level kompresi Gzip 6 / Zstd 3 / Brotli 11 / LZ4 fast / Snappy default; rule-based deterministik; 5x repeat + mean/std; psutil; definisi RTO; skrip regenerasi). Rujukan silang ke tabel setup. (CATATAN: level kompresi perlu dikonfirmasi ke kode asli bila beda.)
+4. **Audit referensi (Opsi A = ganti yang meragukan dgn referensi nyata ber-DOI):**
+   - Jumlah 46 ref (di atas syarat 25–30). Tidak ada self-citation penulis; tidak ada citation ke jurnal/publisher IAES.
+   - Diganti karena tidak terverifikasi/arXiv palsu: [36] → Mazel et al. (Springer, doi 10.1007/978-3-031-72284-4_24); [37] → Jaranilla & Choi (Electronics 12(20):4280, doi 10.3390/electronics12204280); [38] → Shynu et al. (J. Cloud Computing 9:61, doi 10.1186/s13677-020-00214-6); [39] → Vaidya et al. (Sensors 26(14):4582, doi 10.3390/s26144582).
+   - Dikoreksi: [2] Begović (nama penulis salah → K. Begović, A. Al-Ali, Q. Malluhi; venue Computers & Security art.103349, doi 10.1016/j.cose.2023.103349); [13] Sahu & Panda dilengkapi judul penuh + arXiv:2504.20747 + doi; [3] Mansfield-Devine +doi 10.1016/S1353-4858(16)30093-9; [8] (Al-Fuqaha/Egyptian Informatics J yang tak terverifikasi) → diganti H. Oz et al. "A survey on ransomware: evolution, taxonomy, and defense solutions," ACM Comput. Surv. 54(11s):238, doi 10.1145/3514229.
+   - CATATAN PENTING: [13] dan pengganti [39] awalnya sama-sama arXiv:2504.20747 (duplikat tak sengaja) → [39] diganti ke Sensors agar tidak dobel.
+   - Hasil: ~20 referensi ber-DOI. Semua `\cite` ter-taut, semua `\bibitem` ter-cite (tidak ada yatim/tak terpakai).
+5. **Author biographies** — `\orcidlink{0000-0000-0000-0000}` ditambahkan di 4 biografi + guard `\providecommand{\orcidlink}[1]{}` di preamble (aman bila class belum punya). **PERLU DIISI:** ORCID asli tiap penulis + ikon Scopus/WoS/Scholar di Overleaf.
+6. **Proofreading (Reviewer A)** — abstrak diubah ke **past tense** (syarat guide.text); italics 186→31 (hapus pembungkus istilah berulang: air-gapped/hash/lossless/dataset/dll, pertahankan nama khusus & "et al."); bold penekanan naratif dibersihkan (pertahankan bold header/sel tabel); konsistensi "non-air-gapped", RTO didefinisikan di pemunculan pertama.
+7. **Pemangkasan halaman (16→target 9/10 hal):**
+   - **Figure 16 → 4:** dihapus 11 figure screenshot/UI/terminal (fig 4,5,6,7,8,9,11,12,13,14,16) + Figure 3 flowchart (redundan dgn arsitektur). SISA 4 figure = arsitektur sistem, proses AES, grafik kompresi (fig10), arsitektur air-gap VHDX. Semua TikZ + 1 grafik PNG. Narasi disesuaikan tanpa menyebut gambar yang dihapus; tidak ada ref yatim.
+   - **Tabel 21→14 blok table (digabung/dihapus):** gabung 2 tabel entropy → 1 (`tab:entropy`); gabung 2 tabel hash before/after → 1 (`tab:hash`); tabel kriteria skor efisiensi → teks inline; Algorithm 1 & 2 (pseudocode) → deskripsi kalimat.
+8. **Pass final menyeluruh** — dicek otomatis: 0 dangling ref, 0 sitasi yatim, 0 referensi tak terpakai, 0 typo mekanis; `\begin`/`\end` seimbang. Dibaca manual: semua bagian mengalir koheren tanpa rujukan menggantung.
+
+### 10.3 Dari guide.text (Author Guidelines IJECE) — poin yang perlu diingat
+- **ORCID WAJIB** semua penulis (bukan opsional).
+- Abstrak **past tense**, 100–200 kata.
+- Paper **sebaiknya ≤4.000 kata** (naskah kita ~5.500 termasuk tabel/ref — bukan blocker, tapi berdampak biaya halaman).
+- **Hindari italics/bold berlebihan** (sudah dikerjakan).
+- Corresponding author perlu **alamat pos lengkap + telepon + fax** (sekarang baru email+kota) — **PERLU DIISI**.
+- Submit online + file MS Word; tapi camera-ready via email sesuai surat accept.
+
+### 10.4 Proofing galley (tahap NANTI, setelah layout)
+Di tahap galley HANYA boleh koreksi ejaan/grammar/formatting (bukan perubahan substansial). Format koreksi via "Proofreading Corrections box":
+```
+1. CHANGE...  [kata salah]  TO...  [kata benar]
+2. FORMATTING  [deskripsi lokasi & masalah]
+```
+Artinya: SEMUA perubahan besar (figure/tabel/referensi) harus tuntas di camera-ready SEKARANG, karena tidak bisa lagi di galley.
+
+### 10.5 Yang MASIH perlu diisi/diputuskan (TODO sebelum submit camera-ready)
+- [ ] ORCID asli 4 penulis (ganti placeholder `0000-0000-0000-0000`) + ikon Scopus/WoS/Scholar di Overleaf.
+- [ ] Alamat pos lengkap + telepon + fax corresponding author (Hero Yudo Martono).
+- [ ] Konfirmasi level kompresi di subsection reproducibility cocok dengan kode asli.
+- [ ] Jumlah halaman masih 15 (per compile terakhir) — target 9/10. Perlu pemangkasan tabel lanjutan (lihat 10.6).
+- [ ] Konversi ke template Word IJECE (ijece.docx) + similarity report <25% + bukti bayar.
+- [ ] Commit + push `ijece-en2.tex` saat final.
+
+### 10.6 Rencana pemangkasan halaman lanjutan (15→~10) — USULAN
+Analisis: 4 figure + 14 tabel. Penyumbang halaman terbesar sekarang = tabel. Rekomendasi (urut aman→berdampak):
+- Hapus **Tabel 2** (airgap_comparison, kualitatif/common-knowledge) → jadikan narasi singkat. [REKOMENDASI: ya]
+- Hapus **Tabel damage_simulation** (deskripsi 3 skenario, sudah tercakup di Tabel hash + narasi) → narasi. [REKOMENDASI: ya]
+- Hapus/gabung **Tabel scalability** (RTO linear sudah dinyatakan di teks) atau gabung dengan Tabel rto. [REKOMENDASI: gabung/hapus]
+- Padatkan **Tabel cross_platform** (buang baris yang mengulang saving/FPR, sisakan RTO per-OS).
+- Padatkan **Tabel 1 Related Work** (6→4 baris) — JANGAN dihapus (penting untuk novelty).
+- CATATAN: Tabel 1 (Related Work) sebaiknya DIPERTAHANKAN; jangan dihapus walau besar, karena menopang argumen novelty yang dicek reviewer IJECE.
+
+---
+
+## BAGIAN 11 — EKSEKUSI PEMADATAN HALAMAN (FINAL, menggantikan rencana 10.6)
+
+> Status akhir sesi: `ijece-en2.tex` dipadatkan dari **15 → 12 halaman** (biografi tidak dihitung ke APC per guide.text). Target ideal 9/10 halaman tidak tercapai sepenuhnya karena konten kaya-data (13 tabel hasil nyata); 12 halaman dinilai batas wajar tanpa membuang data. Semua perubahan menjaga klaim/angka tetap utuh. Belum di-commit.
+
+### 11.1 Figure: 16 → 4
+Dihapus 12 figure (11 screenshot/UI/terminal + 1 flowchart). SISA 4 figure:
+- fig:architecture (arsitektur sistem, TikZ)
+- fig:aes (proses AES, TikZ)
+- fig:overall_analysis (grafik analisis kompresi, PNG figure10)
+- fig:vhdx (arsitektur air-gap VHDX, TikZ)
+Figure yang dihapus: fig 4,5,6,7,8,9 (screenshot normal-conditions), 11,12,13 (storage/transfer/dashboard), 14 (UI restore), 16 (terminal restore), dan Figure 3 (flowchart backup/recovery — redundan dengan arsitektur). Narasi disesuaikan tanpa menyebut gambar; 0 ref yatim.
+
+### 11.2 Tabel: 21 → 13
+Digabung/dihapus/jadi-narasi:
+- Tabel 2 (airgap vs non-airgap, kualitatif) → narasi.
+- Tabel damage_simulation → narasi 3 skenario.
+- Tabel scalability (RTO vs ukuran) → narasi inline (angka 0.344s@51MB ... 7.731s@1GB, laju 0.0073 s/MB dipertahankan).
+- Tabel entropy_type + entropy_attack → 1 tabel `tab:entropy`.
+- Tabel hash_before + hash_after → 1 tabel `tab:hash`.
+- Tabel efficiency_criteria → teks inline (ambang excellent/good/fair/poor).
+- Tabel experimental_setup duplikat (ada 2x di Method & Results) → disatukan di Method; subsection "Experimental environment" di Results dihapus.
+- Algorithm 1 & 2 (pseudocode, dibungkus table) → deskripsi kalimat.
+- Tabel cross_platform dipadatkan (9 baris → 3 baris RTO per-OS).
+13 tabel SISA: related_work (Tabel 1, dipertahankan untuk novelty), dataset, rule_selection, experimental_setup, compression_results, comp_stats, baseline_comparison, entropy, rto, cross_platform, detection_accuracy, hash, + CRediT table.
+
+### 11.3 Referensi: 46 → 30 (tepat syarat IJECE 25-30)
+Dibuang 16 referensi tangensial (venue lemah / topik jauh dari inti backup-kompresi-ransomware): 3 (Network Security 2016), 4 (AD domain), 5 (encrypted files), 11 (MITRE ATT&CK), 12 (STRIDE), 15 (ESASCF), 16 (blockchain ABAC), 17 (NMAP/Metasploit), 18 (OWASP), 24 (hyperspectral), 25 (JPEG neural), 28 (transfer learning), 33 (pandemic ransomware), 34 (AutoML), 35 (LotL empirical), 40 (RaaS darknet). Semua `\cite`-nya dihapus dari teks + kalimat dirapikan. Verifikasi: 30 bibitem, 0 sitasi yatim, 0 referensi tak terpakai. (natbib numeric → nomor otomatis merapat [1]-[30] saat compile.)
+
+### 11.4 Perubahan format & bahasa (mempermudah Word + hemat ruang)
+- Semua float `[H]` → `[htbp]` (17 float) agar LaTeX menata tabel/figure fleksibel, mengisi whitespace. Tidak mengubah konten.
+- Subsection 3.7 "Performance evaluation metrics": SEMUA rumus matematika inline (CR, CF, SS, E=alpha(1-R)+beta(1/T), RTO, FPR, FNR) diganti deskripsi kata — supaya mudah diketik di Word tanpa Equation Editor. Makna/ambang tetap.
+- Subsection 3.6 "Ransomware attack simulation" dirapikan ringkas.
+- Acknowledgements vs Funding: redundansi dihilangkan (Ack = ucapan terima kasih PENS+PT Equnix; Funding = sumber dana Kemdiktisaintek 2026 saja).
+- Heading granular dikurangi: subsection 22→19, subsubsection 3→0 (dilebur jadi narasi).
+
+### 11.5 Catatan biaya halaman (dari guide.text)
+- APC: USD 215 untuk 8 halaman pertama; +USD 40/halaman di atas 8. Penulis Indonesia bayar dalam IDR.
+- **Biographies of authors EXEMPT dari APC.** Section wajib lain (Acknowledgements, Funding, CRediT, CoI, Data Availability) TIDAK exempt — tetapi WAJIB ada per instruksi editor, jadi tidak boleh dihapus.
+- 12 halaman → ~4 halaman di atas 8 (dikurangi porsi biografi yang exempt). Diterima sebagai konsekuensi paper kaya-data.
+
+### 11.6 Status akhir & sisa TODO (tetap, belum berubah)
+Belum di-commit. Sisa yang perlu diisi penulis sebelum submit camera-ready:
+- [ ] ORCID asli 4 penulis + ikon Scopus/WoS/Scholar di Overleaf.
+- [ ] Alamat pos lengkap + telepon + fax corresponding author.
+- [ ] Konfirmasi level kompresi (Gzip 6/Zstd 3/Brotli 11/LZ4 fast/Snappy default) cocok dengan kode asli.
+- [ ] Konversi ke template Word IJECE + similarity report <25% + bukti bayar.
+- [ ] Commit + push `ijece-en2.tex` + `rangkuman.md` saat final.
+
+> **CATATAN:** `rangkuman.md` adalah dokumen paling lengkap untuk paper ransomware ini (Bagian 1-11): isi paper, revisi reviewer, hasil eksperimen nyata (Bagian 5-9), camera-ready pasca-ACCEPTED (Bagian 10), dan pemadatan halaman final (Bagian 11). Rujuk ke sini bila perlu konteks lengkap di masa depan.
