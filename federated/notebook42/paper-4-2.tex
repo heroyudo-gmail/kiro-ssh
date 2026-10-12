@@ -126,6 +126,18 @@ beda berfederasi'', melainkan ``dapatkah federasi itu bertahan ketika sebagian
 klien jahat''. Paper~4 sendiri menyebut pertahanan \emph{poisoning} sebagai kerja
 mendatang; makalah ini mengisinya.
 
+\paragraph{Pembeda tajam terhadap Paper~2 (anti tumpang-tindih).} Paper~2 dan
+makalah ini sama-sama memakai kata ``adversarial'', tetapi \emph{jenis ancaman,
+tahap serangan, dan lokasi pertahanannya berbeda total}. Paper~2 mengkaji
+\emph{evasion} pada \emph{waktu-inferensi} (\emph{test-time}): musuh memodifikasi
+\emph{masukan} agar lolos deteksi, pada model \textbf{terpusat}; pertahanannya di
+sisi fitur/model. Makalah ini mengkaji \emph{poisoning}/\emph{backdoor} pada
+\emph{waktu-pelatihan} (\emph{training-time}): musuh adalah \textbf{klien}
+terdistribusi yang mengirim \emph{pembaruan model} beracun; pertahanannya di sisi
+\textbf{agregasi} (robust aggregation di server). Ringkasnya --- Paper~2: serang
+\emph{input}, model terpusat; Paper~4-2: serang \emph{update}, federasi
+terdistribusi. Keduanya ortogonal dan dapat dikombinasikan sebagai kerja lanjutan.
+
 % ============================================================
 \FloatBarrier
 \section{Karya Terkait}
@@ -262,6 +274,16 @@ tersebut dilaporkan apa adanya sebagai kontribusi tersendiri.
 \subsection{Kerentanan FedAvg terhadap fraksi penyerang (RQ1)}
 Tabel~\ref{tab:vuln} menunjukkan MCC GLOBAL-\emph{test} FedAvg seiring naiknya
 fraksi penyerang untuk tiap jenis serangan. Diharapkan MCC menurun saat fraksi naik.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.8\linewidth]{mcc_vs_fraction.png}
+\caption{MCC GLOBAL-\emph{test} terhadap fraksi penyerang untuk kelima aturan
+agregasi (serangan \emph{label-flipping}). Dihasilkan \texttt{42\_03}; gambar
+diisi setelah eksekusi. Diharapkan FedAvg menurun tajam sedangkan aturan tangguh
+bertahan.}
+\label{fig:curve}
+\end{figure}
 
 \begin{table}[t]
 \centering

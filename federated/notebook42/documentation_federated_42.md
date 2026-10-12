@@ -109,6 +109,7 @@ agar *fraksi penyerang* bermakna (f=10/20/30% → 1/2/3 penyerang pada K=10). KE
 | `robust_agg.py` | Modul: 5 aturan agregasi (FedAvg/Krum/Multi-Krum/Trimmed-Mean/Median) + 3 serangan (label-flip/scale/backdoor) + ASR | — | ✅ smoke-test |
 | `01_setup_partition.ipynb` | Partisi K=10 Dirichlet di ruang SFM + global-test; reuse partisi SFM Paper 4 | parts_K10.npz, global_test.npz, parts_stats.csv | ◐ disusun |
 | `02_attacks.ipynb` | Demo/verifikasi 3 serangan efektif (FedAvg f=20%) | attack_demo.csv | ◐ disusun |
+| `03_vuln_curve.ipynb` | Kurva MCC vs fraksi penyerang (5 aturan, label-flip) + grafik | vuln_curve.csv, figure-fed42/mcc_vs_fraction.png | ◐ disusun |
 | `04_vuln_fedavg.ipynb` | RQ1: kerentanan FedAvg vs fraksi penyerang (0/10/20/30%) | vuln_fedavg.csv | ◐ disusun |
 | `05_defense.ipynb` | RQ2: 5 aturan vs serangan (f=20%) + RQ3 harga ketahanan (f=0) | defense.csv, clean_cost.csv | ◐ disusun |
 | `06_backdoor_asr.ipynb` | RQ2: ASR backdoor FedAvg vs robust-agg (f=10/20/30%) | backdoor_asr.csv | ◐ disusun |
@@ -123,7 +124,7 @@ agar *fraksi penyerang* bermakna (f=10/20/30% → 1/2/3 penyerang pada K=10). KE
 | 3 | Keputusan jumlah klien K=10 (opsi 20) | ✅ final |
 | 4 | Implementasi notebook (robust_agg.py + 01/02/04/05/06/07) | ◐ DISUSUN (42_03 -> modul) |
 | 5 | Eksekusi SageMaker + isi angka nyata | ⏳ |
-| 6 | Naskah paper-4-2.tex (ID) + subbagian hipotesis ilustratif | ◐ ID draf; EN menunggu hasil |
+| 6 | Naskah paper-4-2.tex (ID): hipotesis ilustratif + pembeda tajam Paper 2 + figur kurva | ◐ ID draf; EN menunggu hasil |
 
 ## K. Konvensi kerja (warisi Paper 1–4)
 
