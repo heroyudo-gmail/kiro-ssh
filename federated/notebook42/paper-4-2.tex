@@ -1,0 +1,452 @@
+\documentclass[11pt,a4paper]{article}
+
+% ============================================================
+% Paper 4-2 (versi Bahasa Indonesia) --- draft kerja.
+% Judul: Robust Aggregation untuk Federated NIDS lintas-dataset melawan
+%        poisoning & backdoor, di atas ruang SFM (fondasi Paper 1, infra Paper 4).
+% CATATAN KEJUJURAN: seluruh ANGKA HASIL masih [TBD] -- diisi dari eksperimen NYATA
+%   (notebook notebook42/42_01..42_07 + eksekusi AWS). JANGAN mengarang angka.
+% ============================================================
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[bahasa]{babel}
+\usepackage{graphicx}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{booktabs}
+\usepackage{amsmath,amssymb}
+\usepackage{siunitx}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{caption}
+\usepackage{multirow}
+\usepackage{placeins}
+\geometry{margin=2.5cm}
+\graphicspath{{figure-fed42/}}
+\hypersetup{colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue}
+
+\newcommand{\TBD}{\textit{[TBD]}}
+
+\title{\textbf{Agregasi Tangguh untuk Sistem Deteksi Intrusi Jaringan Terfederasi
+Lintas-\emph{Dataset}: Pertahanan terhadap Serangan \emph{Poisoning} dan
+\emph{Backdoor} pada Ruang Fitur Semantik}}
+
+\author{Hero Yudo Martono\thanks{Penulis koresponden: \texttt{hero@pens.ac.id}},
+\quad Iwan Syarif, \quad Ferry Astika Saputra \\[0.3em]
+\textit{Departemen Teknik Informatika, Politeknik Elektronika Negeri Surabaya,
+Surabaya, Indonesia} \\
+\texttt{hero@pens.ac.id; iwanarif@pens.ac.id; ferryas@pens.ac.id}}
+
+\date{Draft --- \today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\emph{Federated learning} (FL) memungkinkan banyak organisasi melatih sistem
+deteksi intrusi jaringan (NIDS) secara kolaboratif tanpa memusatkan data trafik
+sensitif. Namun agregasi standar FedAvg mengasumsikan seluruh klien jujur ---
+asumsi yang berbahaya pada keamanan siber, karena sebagian klien dapat
+dikompromikan dan mengirim pembaruan model beracun (\emph{poisoning}) atau menanam
+\emph{backdoor} (pola pemicu yang memaksa label target). Makalah ini mengkaji
+\emph{robust aggregation} untuk FL-NIDS pada setting yang jarang diuji:
+\textbf{lintas-\emph{dataset}} (CSE-CIC-IDS2018 dan UNSW-NB15) yang disatukan dalam
+ruang \emph{Semantic Feature Mapping} (SFM) dari karya pendahulu kami \cite{sfm}.
+Kami membandingkan FedAvg terhadap empat aturan tangguh --- Krum, Multi-Krum,
+\emph{Trimmed-Mean}, dan \emph{Median} per-koordinat --- di bawah tiga model
+ancaman (\emph{label-flipping}, penskalaan bobot, dan \emph{backdoor}) dengan
+fraksi penyerang 0--30\%. Evaluasi memakai \emph{Matthews Correlation Coefficient}
+(MCC) untuk kualitas deteksi dan \emph{Attack Success Rate} (ASR) untuk efektivitas
+\emph{backdoor}, dengan protokol multi-\emph{seed}. \textbf{Catatan:} seluruh angka
+hasil pada draf ini masih \TBD{} karena eksperimen belum dieksekusi; nilai akan
+diisi dari hasil nyata sebelum diajukan untuk publikasi.
+
+\medskip
+\noindent\textbf{Kata kunci:} deteksi intrusi jaringan; \emph{federated learning};
+\emph{robust aggregation}; \emph{poisoning}; \emph{backdoor}; keamanan model.
+\end{abstract}
+
+% ============================================================
+\section{Pendahuluan}
+\label{sec:intro}
+
+\emph{Federated learning} telah menjadi arah penting untuk NIDS kolaboratif karena
+memungkinkan pelatihan model bersama tanpa memindahkan data mentah lintas-organisasi
+\cite{popoola,fsurvey1}. Namun kemampuan berbagi model ini membuka permukaan
+serangan baru: dalam FL, setiap klien menyumbang pembaruan parameter, dan klien
+yang dikompromikan dapat mengirim pembaruan yang dimanipulasi. Jika satu atau
+beberapa klien berperilaku jahat, model global dapat terdegradasi, atau --- lebih
+berbahaya --- tertanam \emph{backdoor} yang membuat trafik serangan tertentu lolos
+sebagai sah \cite{fbackdoor,fbagdasaryan}.
+
+FedAvg \cite{popoola}, sebagai agregasi baku, hanya merata-ratakan pembaruan
+berbobot ukuran data; ia tidak memiliki mekanisme untuk membedakan kontribusi jujur
+dari yang beracun. Pada NIDS, kerentanan ini kritis: data jaringan sangat
+heterogen dan tersebar, sehingga pembaruan yang menyimpang sulit dibedakan dari
+variasi wajar antar-klien. Kebutuhan akan \emph{robust aggregation} --- aturan
+agregasi yang menahan pengaruh klien jahat --- menjadi nyata.
+
+Makalah ini mengangkat satu celah spesifik. Mayoritas kajian \emph{robust
+aggregation} \cite{fkrum,ftrimmed} dievaluasi pada data IID atau \emph{benchmark}
+umum. Sementara itu, karya pendahulu kami pada Paper~4 menunjukkan bahwa FL-NIDS
+\textbf{lintas-\emph{dataset}} (klien dengan alat ekstraksi fitur berbeda, disatukan
+via SFM) sudah menantang bahkan \emph{tanpa} penyerang. Pertanyaan yang belum
+terjawab: bagaimana interaksi antara heterogenitas lintas-\emph{dataset} ini dengan
+kehadiran klien jahat, dan apakah \emph{robust aggregation} tetap efektif pada
+setting ini?
+
+\paragraph{Pertanyaan riset.}
+\begin{itemize}
+  \item \textbf{RQ1.} Seberapa rapuh FedAvg pada FL-NIDS lintas-\emph{dataset}
+  (ruang SFM) seiring naiknya fraksi penyerang?
+  \item \textbf{RQ2.} Sejauh mana \emph{robust aggregation} (Krum, Multi-Krum,
+  \emph{Trimmed-Mean}, \emph{Median}) memulihkan MCC dan menekan ASR \emph{backdoor}?
+  \item \textbf{RQ3.} Berapa ``harga ketahanan'' --- penurunan MCC \emph{robust
+  aggregation} ketika tidak ada serangan?
+\end{itemize}
+
+\paragraph{Kontribusi.}
+\begin{enumerate}
+  \item Evaluasi sistematis kerentanan FedAvg dan empat aturan \emph{robust
+  aggregation} pada FL-NIDS \textbf{lintas-\emph{dataset} di ruang SFM} --- setting
+  yang lebih realistis dan lebih sulit daripada \emph{benchmark} IID umum.
+  \item Tiga model ancaman konkret (\emph{label-flipping}, penskalaan bobot,
+  \emph{backdoor}) dengan metrik ganda: MCC untuk deteksi dan ASR untuk \emph{backdoor}.
+  \item Analisis jujur \emph{trade-off} ketahanan versus kualitas deteksi
+  (RQ3), dengan protokol multi-\emph{seed}.
+\end{enumerate}
+
+\paragraph{Posisi dalam silsilah riset kami.} Paper~1 memperkenalkan SFM
+(generalisasi lintas-jaringan, terpusat); Paper~2 ketahanan adversarial (terpusat);
+Paper~3 adaptasi \emph{online}; Paper~4 memindahkan SFM ke \emph{federated} dan
+mengkaji interoperabilitas skema-fitur. Makalah ini (Paper~4-2) membuka sumbu
+\textbf{keamanan/ketahanan} dalam federasi: bukan lagi ``dapatkah klien berskema
+beda berfederasi'', melainkan ``dapatkah federasi itu bertahan ketika sebagian
+klien jahat''. Paper~4 sendiri menyebut pertahanan \emph{poisoning} sebagai kerja
+mendatang; makalah ini mengisinya.
+
+% ============================================================
+\FloatBarrier
+\section{Karya Terkait}
+\label{sec:related}
+
+\paragraph{FL untuk NIDS.} FL-NIDS dikaji luas dari sisi privasi, efisiensi
+komunikasi, dan heterogenitas \cite{fsurvey1,fsurvey2,ftaxonomy}. Sebagian besar
+mengasumsikan klien tepercaya, sehingga aspek keamanan agregasi kurang tergarap.
+
+\paragraph{Serangan terhadap FL.} \emph{Poisoning} dan \emph{backdoor} pada FL
+telah ditunjukkan efektif \cite{fbackdoor,fbagdasaryan,ffung}: sedikit klien jahat
+dapat menggeser model global atau menanam pemicu tersembunyi. Pada NIDS, dampaknya
+berupa serangan yang lolos deteksi atau lonjakan \emph{false alarm}.
+
+\paragraph{Robust aggregation.} Aturan tangguh seperti Krum \cite{fkrum},
+\emph{Trimmed-Mean} dan \emph{Median} \cite{ftrimmed}, serta skema berbasis
+kepercayaan (\emph{trust}) ditawarkan untuk meredam \emph{outlier}. Namun sebagian
+besar dievaluasi pada data IID/\emph{benchmark} umum. Penerapan dan evaluasi
+spesifik pada FL-NIDS \textbf{lintas-\emph{dataset}} (klien berskema beda via SFM)
+masih tipis --- inilah ruang kontribusi kami.
+
+\paragraph{Set fitur bersama.} Upaya menuju ruang fitur NIDS bersama
+\cite{sarhan} dan SFM \cite{sfm} memungkinkan federasi lintas-\emph{tool}; makalah
+ini memeriksa keamanan federasi di ruang bersama tersebut.
+
+% ============================================================
+\FloatBarrier
+\section{Metode}
+\label{sec:method}
+
+\subsection{Basis: FL-NIDS di ruang SFM}
+\label{sec:base}
+Model lokal adalah \emph{multilayer perceptron} ringan $9\!\rightarrow\![128,64]\!\rightarrow\!1$
+pada sembilan fitur SFM, dengan normalisasi \emph{z-score} per-klien lokal
+(menjaga privasi; warisi Paper~4). Dataset CSE-CIC-IDS2018 \cite{cicids} dan
+UNSW-NB15 \cite{unsw} dipartisi menjadi $K{=}10$ klien melalui partisi non-IID
+berbasis Dirichlet; sebagian klien ditetapkan sebagai penyerang.
+
+\subsection{Model ancaman}
+\label{sec:threat}
+Kami mengasumsikan \emph{honest-but-curious} server dan hingga $f$ klien jahat
+($f \in \{0,1,2,3\}$ dari $K{=}10$, yakni 0--30\%). Tiga serangan:
+\begin{itemize}
+  \item \textbf{\emph{Label-flipping}:} klien jahat membalik label latih lokalnya
+  (attack$\leftrightarrow$benign) sebelum pelatihan.
+  \item \textbf{Penskalaan bobot:} klien jahat mengirim pembaruan yang diperbesar
+  faktor $\gamma>1$ untuk mendominasi rata-rata.
+  \item \textbf{\emph{Backdoor}:} klien jahat menyisipkan pola pemicu (\emph{trigger})
+  pada subset fitur dan memaksa label target (attack$\rightarrow$benign), diukur
+  dengan \emph{Attack Success Rate} (ASR).
+\end{itemize}
+
+\subsection{Aturan agregasi yang dibandingkan}
+\label{sec:agg}
+\begin{itemize}
+  \item \textbf{FedAvg} \eqref{eq:fedavg}: rata-rata berbobot (baseline rentan).
+  \item \textbf{Krum / Multi-Krum} \cite{fkrum}: pilih pembaruan yang paling dekat
+  ke mayoritas (jumlah jarak kuadrat ke $K{-}f{-}2$ tetangga terdekat minimum).
+  \item \textbf{\emph{Trimmed-Mean}} \cite{ftrimmed}: per-koordinat, buang $\beta$
+  nilai terkecil dan terbesar, rata-ratakan sisanya.
+  \item \textbf{\emph{Median}} per-koordinat \cite{ftrimmed}.
+\end{itemize}
+
+\begin{align}
+  w_{t+1}^{\text{FedAvg}} &= \sum_{k} \tfrac{n_k}{n}\, w_k^{(t)} \label{eq:fedavg}\\[2pt]
+  \mathrm{Krum} &= \arg\min_{i}\ \textstyle\sum_{j \in \mathcal{N}_i} \lVert w_i - w_j \rVert^2 \label{eq:krum}
+\end{align}
+
+\noindent dengan $\mathcal{N}_i$ himpunan $K{-}f{-}2$ tetangga terdekat dari
+pembaruan~$i$. Metrik utama MCC \eqref{eq:mcc}:
+\begin{equation}
+  \mathrm{MCC} = \frac{TP\cdot TN - FP\cdot FN}
+  {\sqrt{(TP{+}FP)(TP{+}FN)(TN{+}FP)(TN{+}FN)}}, \label{eq:mcc}
+\end{equation}
+dan untuk \emph{backdoor}, $\mathrm{ASR} = N_{\text{trigger}\rightarrow\text{target}} / N_{\text{trigger}}$.
+
+\subsection{Protokol evaluasi}
+\label{sec:protocol}
+Lima \emph{seed} $\{13,42,101,202,303\}$; rerata $\pm$ simpangan baku dan selang
+kepercayaan 95\% (pola Paper~2/4). Untuk tiap kombinasi (serangan $\times$ fraksi
+$\times$ aturan agregasi) dicatat MCC GLOBAL-\emph{test}, \emph{recall}/\emph{precision}/F1,
+\emph{balanced accuracy}, dan ASR (khusus \emph{backdoor}). Logika agregasi
+diimplementasikan di atas \texttt{aws/fed\_node.py} agar simulasi konsisten dengan
+penggelaran EC2.
+
+% ============================================================
+\FloatBarrier
+\section{Hasil}
+\label{sec:results}
+
+\begin{quote}
+\small\itshape Catatan kejujuran: seluruh \emph{tabel} hasil (Tabel~\ref{tab:vuln}--\ref{tab:clean})
+berisi sel \TBD{} dan akan diisi HANYA dari eksperimen nyata (notebook
+\texttt{42\_01--42\_07} + eksekusi AWS). Subbagian \ref{sec:expected} di bawah memuat
+\textbf{hipotesis kuantitatif ilustratif} --- angka yang kami \emph{harapkan}, bukan
+hasil pengukuran --- semata untuk menjelaskan arah dan bentuk kontribusi. Angka
+ilustratif TIDAK muncul di tabel hasil dan akan dikonfirmasi/dikoreksi oleh data.
+\end{quote}
+
+\subsection{Hipotesis kuantitatif (ILUSTRATIF --- bukan hasil pengukuran)}
+\label{sec:expected}
+
+\begin{quote}
+\small\itshape Peringatan: seluruh angka pada subbagian ini adalah \textbf{ekspektasi
+hipotetis} untuk memberi gambaran arah paper. Bukan hasil eksperimen. Nilai nyata
+akan menggantikannya setelah run.
+\end{quote}
+
+\noindent Berdasarkan rancangan dan temuan Paper~4 (FedAvg lintas-\emph{dataset}
+mencapai MCC sekitar $0{,}65$ pada kondisi jujur), kami merumuskan pola yang
+\emph{diharapkan}:
+
+\begin{itemize}
+  \item \textbf{RQ1 (kerentanan FedAvg).} Kami \emph{menduga} MCC FedAvg menurun
+  monoton seiring naiknya fraksi penyerang: dari acuan $\sim\!0{,}65$ ($f{=}0$)
+  menjadi $\sim\!0{,}45$ ($f{=}10\%$), $\sim\!0{,}25$ ($f{=}20\%$), hingga $<\!0{,}15$
+  ($f{=}30\%$). Penskalaan bobot diduga paling merusak, \emph{label-flipping} paling ringan.
+  \item \textbf{RQ2 (pemulihan oleh robust aggregation).} Pada $f{=}20\%$, kami
+  \emph{menduga} Krum/Multi-Krum/\emph{Trimmed-Mean}/\emph{Median} mempertahankan MCC
+  di kisaran $\sim\!0{,}55$--$0{,}62$ (dekat kondisi jujur), jauh di atas FedAvg
+  ($\sim\!0{,}25$). Untuk \emph{backdoor}, aturan tangguh diharapkan menekan ASR dari
+  $\sim\!80$--$95\%$ (FedAvg) menjadi $<\!10\%$.
+  \item \textbf{RQ3 (harga ketahanan).} Pada $f{=}0$, kami \emph{menduga} aturan
+  tangguh membayar \emph{clean cost} kecil: MCC turun $\sim\!0{,}02$--$0{,}05$
+  dibanding FedAvg (mis.\ $0{,}65 \rightarrow 0{,}60$--$0{,}63$). Krum diduga membayar
+  paling mahal (membuang satu klien penuh), \emph{Trimmed-Mean}/\emph{Median} paling murah.
+\end{itemize}
+
+\noindent Pola di atas adalah \emph{kriteria keberhasilan} yang akan diuji: bila data
+nyata mendukungnya, kontribusi paper menguat; bila tidak (mis.\ heterogenitas
+lintas-\emph{dataset} membuat aturan tangguh keliru membuang klien jujur), temuan
+tersebut dilaporkan apa adanya sebagai kontribusi tersendiri.
+
+\subsection{Kerentanan FedAvg terhadap fraksi penyerang (RQ1)}
+Tabel~\ref{tab:vuln} menunjukkan MCC GLOBAL-\emph{test} FedAvg seiring naiknya
+fraksi penyerang untuk tiap jenis serangan. Diharapkan MCC menurun saat fraksi naik.
+
+\begin{table}[t]
+\centering
+\caption{MCC FedAvg vs fraksi penyerang (GLOBAL-\emph{test}, rerata 5 \emph{seed}).
+Dari \texttt{42\_04}.}
+\label{tab:vuln}
+\begin{tabular}{lcccc}
+\toprule
+Serangan & $f{=}0\%$ & $f{=}10\%$ & $f{=}20\%$ & $f{=}30\%$ \\
+\midrule
+\emph{Label-flipping} & \TBD & \TBD & \TBD & \TBD \\
+Penskalaan bobot      & \TBD & \TBD & \TBD & \TBD \\
+\emph{Backdoor}       & \TBD & \TBD & \TBD & \TBD \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Pemulihan oleh robust aggregation (RQ2)}
+Tabel~\ref{tab:defense} membandingkan MCC lima aturan agregasi pada fraksi penyerang
+tetap (mis.\ 20\%) untuk tiap serangan. Diharapkan aturan tangguh mempertahankan MCC
+jauh di atas FedAvg.
+
+\begin{table}[t]
+\centering
+\caption{MCC per aturan agregasi pada $f{=}20\%$ (GLOBAL-\emph{test}). Dari \texttt{42\_05}.}
+\label{tab:defense}
+\begin{tabular}{lccc}
+\toprule
+Agregasi & \emph{Label-flip} & Penskalaan & \emph{Backdoor} \\
+\midrule
+FedAvg (rentan) & \TBD & \TBD & \TBD \\
+Krum            & \TBD & \TBD & \TBD \\
+Multi-Krum      & \TBD & \TBD & \TBD \\
+\emph{Trimmed-Mean} & \TBD & \TBD & \TBD \\
+\emph{Median}   & \TBD & \TBD & \TBD \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Efektivitas backdoor: ASR (RQ2)}
+Tabel~\ref{tab:asr} melaporkan \emph{Attack Success Rate} \emph{backdoor}. Aturan
+tangguh diharapkan menekan ASR mendekati nol, sedangkan FedAvg tinggi.
+
+\begin{table}[t]
+\centering
+\caption{ASR \emph{backdoor} per aturan agregasi vs fraksi penyerang. Dari \texttt{42\_06}.}
+\label{tab:asr}
+\begin{tabular}{lccc}
+\toprule
+Agregasi & $f{=}10\%$ & $f{=}20\%$ & $f{=}30\%$ \\
+\midrule
+FedAvg      & \TBD & \TBD & \TBD \\
+Krum        & \TBD & \TBD & \TBD \\
+\emph{Trimmed-Mean} & \TBD & \TBD & \TBD \\
+\emph{Median} & \TBD & \TBD & \TBD \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Harga ketahanan tanpa serangan (RQ3)}
+Tabel~\ref{tab:clean} membandingkan MCC tiap aturan saat $f{=}0\%$ (tanpa penyerang).
+Selisih terhadap FedAvg = \emph{clean cost} (harga ketahanan).
+
+\begin{table}[t]
+\centering
+\caption{MCC saat $f{=}0\%$ (harga ketahanan). Dari \texttt{42\_05}/\texttt{42\_07}.}
+\label{tab:clean}
+\begin{tabular}{lcc}
+\toprule
+Agregasi & MCC GLOBAL ($f{=}0$) & $\Delta$ vs FedAvg \\
+\midrule
+FedAvg      & \TBD & --- \\
+Krum        & \TBD & \TBD \\
+Multi-Krum  & \TBD & \TBD \\
+\emph{Trimmed-Mean} & \TBD & \TBD \\
+\emph{Median} & \TBD & \TBD \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ============================================================
+\FloatBarrier
+\section{Diskusi}
+\label{sec:discussion}
+
+Jika hipotesis terkonfirmasi, kontribusi utama bukanlah ``robust aggregation
+bekerja'' --- itu diketahui pada data IID --- melainkan \emph{karakterisasi}
+perilakunya pada FL-NIDS lintas-\emph{dataset} yang sudah menantang bahkan tanpa
+penyerang (temuan Paper~4). Pertanyaan menarik: apakah heterogenitas lintas-\emph{dataset}
+memperburuk kerentanan (penyerang lebih mudah bersembunyi di antara variasi wajar),
+dan apakah aturan tangguh yang membuang \emph{outlier} justru keliru membuang klien
+jujur yang distribusinya ekstrem. Hasil nyata akan menjawabnya; kami laporkan apa
+adanya, termasuk bila ada aturan yang gagal pada setting ini.
+
+% ============================================================
+\FloatBarrier
+\section{Keterbatasan}
+\label{sec:limitations}
+
+Pertama, model ancaman terbatas pada tiga serangan representatif; serangan adaptif
+yang mengetahui aturan agregasi tidak dicakup. Kedua, eksperimen memakai dua
+\emph{dataset}/sepuluh klien sebagai instansiasi konkret; generalisasi ke lebih
+banyak klien/alat adalah kerja lanjutan. Ketiga, aturan berbasis \emph{trust}
+(mis.\ FLTrust) yang memerlukan \emph{root-set} tepercaya di server tidak menjadi
+fokus utama. Keempat, seluruh angka akan berasal dari eksperimen nyata; sebelum itu
+tidak ada klaim kuantitatif.
+
+% ============================================================
+\FloatBarrier
+\section{Kesimpulan dan Kerja Mendatang}
+\label{sec:conclusion}
+
+Makalah ini merancang evaluasi \emph{robust aggregation} untuk FL-NIDS
+lintas-\emph{dataset} di ruang SFM, melawan \emph{poisoning} dan \emph{backdoor}.
+Draf ini memaparkan model ancaman, aturan agregasi, dan protokol evaluasi; seluruh
+angka hasil akan diisi dari eksperimen nyata sebelum publikasi. Kerja mendatang
+meliputi serangan adaptif, aturan berbasis \emph{trust}, dan kombinasi dengan
+personalisasi (temuan mitigasi Paper~4).
+
+% ============================================================
+\section*{Ketersediaan Kode dan Data}
+Implementasi node federasi dan aturan agregasi (\texttt{aws/fed\_node.py} +
+\texttt{notebook42/}), serta \emph{notebook} eksperimen (\texttt{42\_01--42\_07})
+disertakan pada repositori proyek. Ruang SFM diwarisi dari Paper~1. Dataset bersifat
+publik \cite{cicids,unsw}.
+
+\section*{Pernyataan Etika}
+Seluruh serangan disimulasikan dalam lingkungan riset terkontrol memakai
+\emph{dataset} publik, bertujuan memperkuat pertahanan NIDS. Tidak ada data pribadi
+yang dikumpulkan dan tidak ada sistem produksi yang diserang.
+
+% ============================================================
+\begin{thebibliography}{99}
+% Format IEEE. Nomor urut sesuai kemunculan.
+
+\bibitem{sfm} H.~Y.~Martono, I.~Syarif, and F.~A.~Saputra, ``Cross-dataset
+generalization of ML-based network intrusion detection via semantic feature
+mapping and few-shot adaptation, validated on real cloud traffic,'' \emph{status
+terbit diisi saat accepted}.
+
+\bibitem{popoola} S.~I.~Popoola, G.~Gui, B.~Adebisi, M.~Hammoudeh, and
+H.~Gacanin, ``Federated deep learning for collaborative intrusion detection in
+heterogeneous networks,'' in \emph{Proc. IEEE 94th Veh. Technol. Conf.
+(VTC-Fall)}, 2021, pp.~1--6.
+
+\bibitem{fsurvey1} A.~Khraisat, A.~Alazab, T.~Jan, and A.~Gopez, ``Survey on
+federated learning for intrusion detection system,'' \emph{ACM Comput. Surv.},
+2024.
+
+\bibitem{fsurvey2} J.~L.~Hern\'andez-Ramos \emph{et~al.}, ``Intrusion detection
+based on federated learning: A systematic review,'' \emph{ACM Comput. Surv.}, 2025.
+
+\bibitem{ftaxonomy} A.~A.~Wardana and P.~Sukarno, ``Taxonomy and survey of
+collaborative intrusion detection system using federated learning,'' \emph{ACM
+Comput. Surv.}, 2024.
+
+\bibitem{fbackdoor} Z.~Sun, P.~Kairouz, A.~T.~Suresh, and H.~B.~McMahan, ``Can you
+really backdoor federated learning?'' \emph{arXiv:1911.07963}, 2019.
+
+\bibitem{fbagdasaryan} E.~Bagdasaryan, A.~Veit, Y.~Hua, D.~Estrin, and
+V.~Shmatikov, ``How to backdoor federated learning,'' in \emph{Proc. AISTATS},
+2020, pp.~2938--2948.
+
+\bibitem{ffung} C.~Fung, C.~J.~M.~Yoon, and I.~Beschastnikh, ``Mitigating sybils
+in federated learning poisoning,'' \emph{arXiv:1808.04866}, 2018.
+
+\bibitem{fkrum} P.~Blanchard, E.~M.~El~Mhamdi, R.~Guerraoui, and J.~Stainer,
+``Machine learning with adversaries: Byzantine tolerant gradient descent,'' in
+\emph{Proc. NeurIPS}, 2017, pp.~119--129.
+
+\bibitem{ftrimmed} D.~Yin, Y.~Chen, R.~Kannan, and P.~Bartlett, ``Byzantine-robust
+distributed learning: Towards optimal statistical rates,'' in \emph{Proc. ICML},
+2018, pp.~5650--5659.
+
+\bibitem{sarhan} M.~Sarhan, S.~Layeghy, and M.~Portmann, ``Towards a standard
+feature set for network intrusion detection system datasets,'' \emph{Mobile Netw.
+Appl.}, vol.~27, no.~1, pp.~357--370, 2022.
+
+\bibitem{cicids} I.~Sharafaldin, A.~H.~Lashkari, and A.~A.~Ghorbani, ``Toward
+generating a new intrusion detection dataset and intrusion traffic
+characterization,'' in \emph{Proc. 4th ICISSP}, 2018, pp.~108--116.
+
+\bibitem{unsw} N.~Moustafa and J.~Slay, ``UNSW-NB15: A comprehensive data set for
+network intrusion detection systems,'' in \emph{Proc. MilCIS}, 2015, pp.~1--6.
+
+\end{thebibliography}
+
+\end{document}
