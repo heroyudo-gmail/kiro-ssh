@@ -35,6 +35,26 @@
 
 ---
 
+# PETA FILE `.tex` DI FOLDER INI (ringkasan isi)
+
+> Tiga berkas `.tex` ada di `federated/`. Dua membahas riset Paper 4 (versi berbeda),
+> satu adalah materi kuliah yang tidak terkait langsung. Baca ringkasan ini sebelum
+> menyentuh salah satunya agar tidak salah file.
+
+| File | Ukuran | Bahasa | Status | Isi singkat |
+|---|---|---|---|---|
+| **`paper-jictra.tex`** | ~70 KB | Inggris | **NASKAH AKTIF — siap submit** | Versi FINAL Paper 4 untuk JICTRA (ITB, Scopus Q4). Judul: *"When Does Cross-Dataset Federated Learning Work for Network Intrusion Detection? A Controlled Study with Semantic Feature Alignment."* Angka hasil NYATA sudah terisi (homogen MCC 0,563/0,674; cross-dataset FedAvg 0,650; FedPer 0,731; centralized 0,745). Framing temuan-terkontrol: SFM perlu tapi tak cukup; FedPer menutup gap. Gaya referensi IEEE, TNR 11pt, maks 20 hlm. |
+| **`paper-4.tex`** | ~28 KB | Indonesia | Draft lama (arsip) | Draft kerja awal untuk promotor. Judul: *"NIDS Terfederasi Lintas-Jaringan melalui Pemetaan Fitur Semantik."* Topik SAMA dengan `paper-jictra.tex`, tetapi **semua angka hasil masih `[TBD]`** (eksperimen belum dieksekusi saat ditulis). Rencana metode FedAvg + FedProx, framing optimis ("SFM menyelesaikan heterogenitas"). Sudah digantikan oleh `paper-jictra.tex`. |
+| **`nids-fl.tex`** | ~25 KB | Indonesia | TIDAK terkait Paper 4 | Materi kuliah MK Cyber Security: *review paper state-of-the-art* FL untuk NIDS, studi kasus metode **Fed-ANIDS** (Expert Systems with Applications, 2023). Bukan naskah riset kita; sekadar bahan ajar/telaah literatur yang kebetulan satu folder. |
+
+**Kesimpulan hubungan:** `paper-jictra.tex` adalah evolusi final dari `paper-4.tex`
+(riset sama, Paper 4). `paper-4.tex` disimpan sebagai jejak draft awal (Indonesia,
+angka kosong). `nids-fl.tex` berdiri sendiri (materi kuliah, bukan Paper 4). **Untuk
+submit, pakai `paper-jictra.tex`.** Versi plain-text untuk transfer ke Word JICTRA ada
+di `paper-jictra.txt`.
+
+---
+
 # BAGIAN I — LAPORAN HASIL (baca runut)
 
 > Angka: titik desimal di sini (markdown), koma di `.tex`. Semua `[TBD]` sampai nyata.
