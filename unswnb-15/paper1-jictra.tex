@@ -203,29 +203,38 @@ formal hypothesis test; it screens candidate pairs by order-of-magnitude agreeme
 robust summary statistics. Each candidate pair is not accepted on name similarity but
 screened in three steps: (i) match semantics from each tool's official documentation;
 (ii) return CIC features to original scale via Eq.~\eqref{eq:unscale} (our CIC release
-is z-scored); (iii) compute, on the original scale, the between-tool ratios of the
-median and the 99th percentile (p99), $r_{\mathrm{med}}=\mathrm{med}_{\mathrm{CIC}}/\mathrm{med}_{\mathrm{UNSW}}$
-and $r_{\mathrm{p99}}=\mathrm{p99}_{\mathrm{CIC}}/\mathrm{p99}_{\mathrm{UNSW}}$, and
-classify by the order-of-magnitude rule in Eq.~\eqref{eq:verdict}.
+is z-scored); (iii) apply any \emph{documented unit conversion} between the two tools
+(e.g., duration $\mu$s-vs-s, IAT $\mu$s-vs-ms, rate byte/s-vs-bit/s), then compute on
+the unit-corrected scale the between-tool ratios of the median and 99th percentile
+(p99), $r_{\mathrm{med}}=\mathrm{med}_{\mathrm{CIC}}/\mathrm{med}_{\mathrm{UNSW}}$ and
+$r_{\mathrm{p99}}=\mathrm{p99}_{\mathrm{CIC}}/\mathrm{p99}_{\mathrm{UNSW}}$, and classify
+by the two-stage rule in Eq.~\eqref{eq:verdict}.
 
 \begin{equation}
   x_{\mathrm{orig}} = x_{\mathrm{scaled}} \cdot \sigma + \mu
   \label{eq:unscale}
 \end{equation}
 \begin{equation}
-  \text{verdict}(r) =
+  \text{verdict} =
   \begin{cases}
-    \text{aligned} & \text{if } |\log_{10} r| \le 1,\\
-    \text{scale-mismatch} & \text{if } 1 < |\log_{10} r| \le 3,\\
-    \text{different-feature} & \text{if } |\log_{10} r| > 3,
+    \text{aligned} & \text{if a documented unit map exists and } |\log_{10} r'| \le 1,\\
+    \text{scale-mismatch} & \text{if a documented unit map exists and } |\log_{10} r'| > 1,\\
+    \text{different-feature} & \text{if no documented unit map exists,}
   \end{cases}
   \label{eq:verdict}
 \end{equation}
 
-\noindent where $r$ denotes $r_{\mathrm{med}}$ or $r_{\mathrm{p99}}$. These thresholds
-are decision-rule heuristics applied uniformly to all pairs (an exploratory audit, not
-a confirmatory statistical test), and are reported here in full so the procedure is
-reproducible. \emph{Scale-mismatch} pairs are retained (their unit/scale difference is
+\noindent where $r$ (and the unit-corrected $r'$) denotes $r_{\mathrm{med}}$ or
+$r_{\mathrm{p99}}$. The audit is \emph{two-stage}: a pair is admissible only if the two
+tools \emph{document} the same underlying quantity (differing at most by a known unit
+convention); such pairs are then graded \emph{aligned} vs \emph{scale-mismatch} by the
+unit-corrected ratio $r'$, while pairs without a documented common quantity are
+\emph{different-feature} and rejected regardless of raw ratio. This is why
+\texttt{Flow Duration}$\leftrightarrow$\texttt{dur} and the IAT pairs---whose
+\emph{raw} ratios are large purely due to $\mu$s-vs-s/ms units---are retained, whereas
+the TCP-window pair, which has \emph{no} consistent unit map (continuous vs binary),
+is rejected. These are decision-rule heuristics applied uniformly (an exploratory
+audit, not a confirmatory statistical test), reported in full for reproducibility. \emph{Scale-mismatch} pairs are retained (their unit/scale difference is
 resolved by per-dataset z-score normalization), whereas \emph{different-feature} pairs
 are rejected. One caveat applies to the two rate features: \texttt{Flow Byts/s}$\leftrightarrow$\texttt{sload}
 is a byte/s-vs-bit/s unit convention (a constant factor, resolved by z-score), but

@@ -182,9 +182,10 @@ EXPLORATORY, statistics-based audit of semantic and scale equivalence, NOT a for
 hypothesis test; it screens candidate pairs by order-of-magnitude agreement of robust
 summary statistics. Steps: (i) match semantics from each tool's official
 documentation; (ii) return CIC features to original scale (Eq. 1, as CIC release is
-z-scored); (iii) on the original scale, compute the between-tool ratios of the median
-and the 99th percentile (p99): r_med = med_CIC / med_UNSW and r_p99 = p99_CIC /
-p99_UNSW, then classify by the order-of-magnitude rule (Eq. 2). The thresholds are
+z-scored); (iii) apply any DOCUMENTED unit conversion between the two tools (e.g.,
+duration us-vs-s, IAT us-vs-ms, rate byte/s-vs-bit/s), then on the unit-corrected scale
+compute the between-tool ratios of the median and 99th percentile (p99): r_med =
+med_CIC/med_UNSW and r_p99 = p99_CIC/p99_UNSW, then classify by the TWO-STAGE rule (Eq. 2). The thresholds are
 decision-rule heuristics applied uniformly to all pairs (exploratory audit, not a
 confirmatory test), reported in full for reproducibility. Scale-mismatch pairs are
 RETAINED (unit/scale difference resolved by per-dataset z-score); different-feature
@@ -203,13 +204,21 @@ mismatch (continuous in CICFlowMeter, effectively binary in Argus/Bro).
   (b) kode LaTeX (paste ke Equation Word, mode LaTeX):
       x_{\mathrm{orig}} = x_{\mathrm{scaled}} \cdot \sigma + \mu
 
-[RUMUS 2 - aturan verdict audit kesetaraan skala (r = r_med atau r_p99)]
+[RUMUS 2 - aturan verdict DUA-TAHAP (r' = ratio setelah koreksi unit)]
   (a) notasi terbaca:
-      aligned           jika |log10(r)| <= 1
-      scale-mismatch    jika 1 < |log10(r)| <= 3
-      different-feature jika |log10(r)| > 3
+      aligned           jika ADA pemetaan unit terdokumentasi DAN |log10(r')| <= 1
+      scale-mismatch    jika ADA pemetaan unit terdokumentasi DAN |log10(r')| > 1
+      different-feature jika TIDAK ada pemetaan unit terdokumentasi (ditolak)
   (b) kode LaTeX (paste ke Equation Word, mode LaTeX):
-      \text{verdict}(r)=\begin{cases}\text{aligned}&|\log_{10}r|\le 1\\\text{scale-mismatch}&1<|\log_{10}r|\le 3\\\text{different-feature}&|\log_{10}r|>3\end{cases}
+      \text{verdict}=\begin{cases}\text{aligned}&\text{unit map ada, }|\log_{10}r'|\le 1\\\text{scale-mismatch}&\text{unit map ada, }|\log_{10}r'|>1\\\text{different-feature}&\text{tak ada unit map}\end{cases}
+
+The audit is TWO-STAGE: a pair is admissible only if both tools DOCUMENT the same
+underlying quantity (differing at most by a known unit convention); such pairs are then
+graded aligned vs scale-mismatch by the unit-corrected ratio r', while pairs with no
+documented common quantity are different-feature and rejected regardless of raw ratio.
+This is why Flow Duration<->dur and the IAT pairs - whose RAW ratios look large purely
+due to us-vs-s/ms units - are retained, whereas the TCP-window pair (continuous vs
+binary, no consistent unit map) is rejected.
 
 TABLE 1. SFM equivalence audit (original scale; CIC un-scaled first). r_med, r_p99 =
 between-tool ratios used by the verdict rule (Eq. 2). Scale-mismatch retained (z-score);
