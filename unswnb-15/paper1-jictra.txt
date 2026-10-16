@@ -40,8 +40,8 @@ generalization with a lightweight XGBoost model. Although in-domain performance
 reaches Matthews correlation coefficients (MCC) of 0.91 and 0.74, single-source
 cross-network performance collapses to approximately zero. Controlled experiments
 show the shared features retain discriminative information under joint training,
-while a domain-classifier accuracy of about 0.99 evidences substantial distribution
-shift. We further evaluate the approach on real AWS traffic - a field validation step
+while a domain-classifier accuracy of about 0.99 indicates the domains are highly
+separable, consistent with a substantial distribution shift. We further evaluate the approach on real AWS traffic - a field validation step
 rarely included among the cross-dataset NIDS studies we surveyed (Table 5). Zero-shot transfer performs poorly,
 whereas calibration with 1% of target labels raises MCC to 0.49, and 10-20% to about
 0.59, comparable to the AWS-only reference (0.598). AWS gains remain dependent on the
@@ -68,24 +68,25 @@ This paper targets two deployment-facing gaps that, among the works we surveyed
 
 (1) Feature-extractor mismatch. Different flow exporters compute the same nominal
 feature differently; a name-based unified schema silently admits non-comparable
-pairs. We detect and reject such pairs by statistical validation.
+pairs. We detect and reject such pairs by a statistics-based scale-equivalence audit.
 
 (2) No validation on a real new network. Cross-dataset papers measure
 dataset-to-dataset drops; the surveyed studies do not deploy the mapped model on live traffic to measure
 false-alarm behavior and repair cost.
 
-Core novelty (what is new here). The combination that is absent from prior work: a
+Core novelty (what is new here). The novelty is the COMBINATION of three complementary
+pieces, which among the studies we surveyed (Table 5) are seldom brought together: a
 statistically audited cross-tool Semantic Feature Mapping carried end-to-end to a
 live cloud network (AWS) - measuring false-alarm rate under benign traffic,
 quantifying a three-domain distribution shift, and restoring detection with a few
 local labels. Unified-feature-set work [4] standardizes schemas but neither
-validates each pair statistically nor tests on live traffic; cross-dataset studies
+audits each pair for scale-equivalence nor tests on live traffic; cross-dataset studies
 [1,2,3] document the drop but offer no field validation or low-cost repair. We
 bridge both.
 
 Contributions.
-(1) A cross-tool SFM with per-pair statistical validation, including a concrete
-feature-extractor mismatch finding (TCP-window features).
+(1) A cross-tool SFM with a per-pair statistics-based scale-equivalence audit, including
+a concrete feature-extractor mismatch finding (TCP-window features).
 (2) Quantitative evidence of cross-network collapse, and a controlled diagnosis
 separating feature insufficiency from distribution shift.
 (3) A low-cost repair (1% target labels, or cross-dataset mixup) with multi-seed
@@ -145,22 +146,25 @@ precisely what we add to the nearest studies (TABLE 5). We make comparative clai
 only against the studies we surveyed, not as an absolute first.
 
 TABLE 5. Positioning vs closest work (Y=addressed, -=not addressed). "Stat. audit" =
-statistics-based scale-equivalence audit incl. rejecting mismatched pairs; "Shift
-diagnosis" = joint-training + domain-classifier separation of insufficiency vs shift;
+statistics-based scale-equivalence audit incl. rejecting mismatched pairs; "Shift diag." = CONTROLLED diagnosis separating feature insufficiency from
+distribution shift (joint-training AND domain-classifier), not merely measuring that a
+shift exists;
 "Live traffic" = deployment + FAR on real cloud traffic; "Low-label repair" = few-shot
 recovery with a small target-label budget.
   Work                          Stat.audit  Shift-diag.  Live-traffic  Low-label
   Sarhan et al. [4,5]           - (name)    -            -             -
   Cantone et al. [1]            -           partial      -             -
   D'Hooge [2] / Verkerken [3]   -           partial      -             -
-  Layeghy et al. [8,11]         -           Y (measures) -             -
+  Layeghy et al. [11]           -           -*           -             -
   This work                     Y           Y            Y             Y
+  * Layeghy et al. [11] MEASURE distribution shift between synthetic and real traffic
+    but do not perform the controlled insufficiency-vs-shift diagnosis defined here.
 
 What we add, stated specifically: (i) vs unified feature sets [4,5] - we add a
 statistics-based compatibility audit that rejects same-named but non-comparable pairs
 (TCP-window), not only a shared schema; (ii) vs cross-dataset studies [1,2,3] - we add
 a controlled diagnosis (insufficiency vs shift) and a low-label repair, not only
-documenting the drop; (iii) vs domain-shift measurement [8,11] - we carry the recipe
+documenting the drop; (iii) vs domain-shift measurement [11] - we carry the recipe
 end-to-end onto live cloud traffic (FAR, three-domain shift, few-shot repair).
 
 
@@ -184,7 +188,13 @@ p99_UNSW, then classify by the order-of-magnitude rule (Eq. 2). The thresholds a
 decision-rule heuristics applied uniformly to all pairs (exploratory audit, not a
 confirmatory test), reported in full for reproducibility. Scale-mismatch pairs are
 RETAINED (unit/scale difference resolved by per-dataset z-score); different-feature
-pairs are REJECTED. Nine retained strong pairs form Model A; two inter-arrival-time
+pairs are REJECTED. One caveat applies to the two RATE features: Flow Byts/s<->sload
+and Bwd Pkts/s<->dload. For sload the difference is a byte/s-vs-bit/s unit convention
+(a constant factor, resolved by z-score). For Bwd Pkts/s<->dload, however, the match
+is only an APPROXIMATE rate PROXY: packets/s and bits/s are not inter-convertible by a
+constant (the per-flow packet size varies), so we do NOT claim exact semantic
+equivalence for this pair; we retain it as a standardized rate proxy and flag it in
+the Limitations. Nine retained strong pairs form Model A; two inter-arrival-time
 pairs form optional Model B; two TCP-window pairs are discarded as a feature-extractor
 mismatch (continuous in CICFlowMeter, effectively binary in Argus/Bro).
 
@@ -212,13 +222,15 @@ different-feature rejected.
   TotLen Bwd Pkts    dbytes      101       164        0.62      0.05     Model A; scale
   Fwd Pkt Len Mean   smean       36        73         0.49      0.17     Model A; aligned
   Bwd Pkt Len Mean   dmean       66        44         1.5       0.67     Model A; aligned
-  Flow Byts/s        sload       787.5     8.8e5      0.001     0.001    Model A; scale*
-  Bwd Pkts/s         dload       3.70      1447       0.003     0.03     Model A; scale*
+  Flow Byts/s        sload       787.5     8.8e5      0.001     0.001    Model A; rate (byte/s~bit/s)*
+  Bwd Pkts/s         dload       3.70      1447       0.003     0.03     Model A; rate PROXY (pkt/s vs bit/s)#
   Fwd IAT Mean       sinpkt      3544      0.28       1.3e4     1.4e3    Model B (us/ms)+
   Bwd IAT Mean       dinpkt      0         0.006      ---       2.4e4    Model B; optional
   Init Fwd Win Byts  swin        953       0          inf       257      DISCARDED bin/cont
   Init Bwd Win Byts  dwin        -1        0          inf       250      DISCARDED bin/cont
-  * rate features: byte/pkt-per-s vs bit-per-s unit convention, corrected before eval.
+  * sload: byte/s vs bit/s = constant-factor unit convention (resolved by z-score).
+  # dload: packets/s vs bits/s are NOT inter-convertible by a constant; retained as an
+    approximate standardized rate proxy, not an exact semantic equivalence (see Limitations).
   + duration/IAT: us-vs-s/ms unit difference; retained after unit correction + z-score.
 
 Key finding (TCP-window mismatch): UNSW swin/dwin are practically binary ({0,255})
@@ -318,7 +330,7 @@ universal prescription. The most robust evidence for low-cost adaptation remains
 offline cross-network experiments (Section 5).
 
 
-6B. EXPERIMENTAL SETUP AND REPRODUCIBILITY
+6.1 EXPERIMENTAL SETUP AND REPRODUCIBILITY
 ------------------------------------------
 Model and training. XGBoost (max_depth=8, learning_rate=0.1, n_estimators=200,
 subsample=colsample_bytree=0.8), scikit-learn with stratified train/test splits.
@@ -376,9 +388,18 @@ dispersion measure, distinct from the per-dataset-train z-score used for modelin
 The findings form a coherent narrative: single-source NIDS collapse cross-network;
 a directly measured distribution shift is a major contributor (not feature
 insufficiency alone, though other dataset-specific factors may also contribute); and minimal calibration or mixup recovers performance, confirmed on
-live AWS traffic. Limitations: the direction asymmetry is not fully resolved; using
+live AWS traffic. Limitations: (a) one SFM pair, Bwd Pkts/s<->dload, matches a PACKET-rate feature to a
+BIT-rate feature; these are not inter-convertible by a constant, so it is retained as
+an approximate rate proxy rather than an exact semantic equivalence - a threat to the
+SFM equivalence claim that should be resolved by dropping or replacing the pair and
+re-running the affected experiments in future work. (b) the direction asymmetry is not
+fully resolved; using
 a single XGBoost is a deliberate edge-efficiency choice (2.9 MB, sub-millisecond
-inference) rather than a limitation
+inference) rather than a limitation, but a head-to-head against deep
+domain-invariant baselines (DI-NIDS, DANN) needs a different stack and is future work.
+Adversarial robustness is deliberately scoped out: preliminary results show adversarial
+training improves in-domain evasion robustness but does not close the cross-network gap -
+confirming the two problems need different solutions.
 
 TABLE 4. Domain-dispersion (variance in joint z-space per SFM feature). UNSW far more
 dispersed, explaining the adaptation-direction asymmetry.
@@ -392,18 +413,14 @@ dispersed, explaining the adaptation-direction asymmetry.
   Bwd Pkt Len Mean   0.87       2.17
   Flow Byts/s        0.00       9.00
   Bwd Pkts/s         0.01       9.50
-  Mean               0.68       3.64, but a head-to-head against deep
-domain-invariant baselines (DI-NIDS, DANN) needs a different stack and is future
-work. Adversarial robustness is deliberately scoped out: preliminary results show
-adversarial training improves in-domain evasion robustness but does not close the
-cross-network gap - confirming the two problems need different solutions.
+  Mean               0.68       3.64
 
 
 8. CONCLUSION AND FUTURE WORK
 -----------------------------
-We presented a statistically audited cross-tool Semantic Feature Mapping and,
-among the cross-dataset NIDS studies we surveyed, among the few to validate the full recipe on live AWS
-traffic: stable false-alarm behavior, a quantified three-domain distribution shift,
+We presented a statistically audited cross-tool Semantic Feature Mapping. Among the
+cross-dataset NIDS studies we surveyed, this work is one of the few to validate the full
+recipe on live AWS traffic: stable false-alarm behavior, a quantified three-domain distribution shift,
 and few-shot recovery at minimal labeling cost. Future work: online/streaming
 continuous adaptation with drift detection; automated few-shot labeling (active
 learning, SIEM/SOC integration) with a trusted-holdout guardrail; robust ensembles
@@ -414,7 +431,7 @@ robustness is pursued in a separate study.
 ACKNOWLEDGEMENTS
 ----------------
 The authors thank Politeknik Elektronika Negeri Surabaya (PENS) for computing
-support. (Lengkapi sumber dana/hibah bila ada sebelum submit.)
+support.
 
 
 NOMENCLATURE
@@ -436,9 +453,6 @@ mixup    supervised cross-dataset interpolation using target train labels
 
 REFERENCES
 ----------
-(Gaya JICTRA: nomor berurutan sesuai kemunculan. Lengkapi detail yang bertanda
-[lengkapi] sebelum submit.)
-
 [1]  Cantone, M., Marrocco, C. & Bria, A., Machine Learning in Network Intrusion Detection: A Cross-Dataset Generalization Study, IEEE Access, 12, pp. 144491-144509, 2024.
 [2]  D'Hooge, L., Wauters, T., Volckaert, B. & De Turck, F., Inter-dataset Generalization Strength of Supervised Machine Learning Methods for Intrusion Detection, Journal of Information Security and Applications, 54, art. 102564, 2020.
 [3]  Verkerken, M., D'Hooge, L., Wauters, T., Volckaert, B. & De Turck, F., Towards Model Generalization for Intrusion Detection: Unsupervised Machine Learning Techniques, Journal of Network and Systems Management, 30(1), pp. 1-25, 2022.
