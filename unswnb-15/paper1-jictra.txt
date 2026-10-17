@@ -735,6 +735,16 @@ ACKNOWLEDGEMENTS
 The authors thank Politeknik Elektronika Negeri Surabaya (PENS) for computing
 support.
 
+DECLARATION OF GENERATIVE AI AND AI-ASSISTED TECHNOLOGIES
+---------------------------------------------------------
+During the preparation of this work, the authors used AI-assisted tools to help with
+English language editing and LaTeX/formatting. All research design, experiments, data
+analysis, and interpretation were performed by the authors. All reported numbers are
+obtained from the authors' own executed, reproducible experiments (code and notebooks
+are available from the authors). After using these tools, the authors reviewed and
+edited the content as needed and take full responsibility for the content of the
+publication.
+
 NOMENCLATURE
 ------------
 NIDS     Network Intrusion Detection System
