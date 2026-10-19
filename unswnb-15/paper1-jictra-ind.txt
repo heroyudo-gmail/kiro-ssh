@@ -1,0 +1,551 @@
+================================================================
+PAPER 1 - VERSI INDONESIA (untuk dibaca/review internal Pak Hero)
+----------------------------------------------------------------
+CATATAN: JICTRA terbit dalam BAHASA INGGRIS. Berkas ini adalah terjemahan
+Indonesia dari paper1-jictra.txt untuk memudahkan pembacaan/telaah; naskah
+yang disubmit tetap versi Inggris. Semua angka identik dengan versi Inggris
+(dari eksperimen nyata). Istilah teknis dibiarkan apa adanya bila lebih umum
+dikenal dalam Inggris.
+================================================================
+
+
+JUDUL
+-----
+Pemetaan Fitur Semantik untuk Deteksi Intrusi Lintas-Jaringan: Validasi pada
+Testbed Cloud Nyata (Live Cloud Testbed)
+
+
+PENULIS
+-------
+Hero Yudo Martono (penulis koresponden), Iwan Syarif, Ferry Astika Saputra
+Afiliasi: Departemen Teknik Informatika dan Komputer, Politeknik Elektronika Negeri
+Surabaya (PENS), Surabaya, Indonesia
+Surel: hero@pens.ac.id; iwanarif@pens.ac.id; ferryas@pens.ac.id
+
+
+ABSTRAK
+-------
+Sistem deteksi intrusi jaringan (NIDS) berbasis pembelajaran mesin bekerja baik di
+jaringan tempat ia dilatih, tetapi sering gagal pada jaringan lain. Satu penyebabnya
+mudah terabaikan: alat ekspor-flow yang berbeda menghitung fitur bernama sama dengan
+cara berbeda, sehingga model yang dilatih dengan satu alat bisa salah membaca keluaran
+alat lain. Kami menyebutnya ketidakcocokan alat-ekstraksi-fitur. Untuk menanganinya,
+kami membangun Semantic Feature Mapping (SFM): audit berbasis statistik yang memeriksa
+apakah fitur dari satu alat benar-benar setara dengan fitur alat lain dalam makna dan
+skala. Pasangan yang tak cocok, seperti fitur TCP-window, ditolak, menyisakan ruang
+sembilan fitur yang berlaku lintas-alat. Dengan dua dataset publik (CSE-CIC-IDS2018 dan
+UNSW-NB15) serta detektor XGBoost ringan, model sumber-tunggal yang akurat di
+jaringannya sendiri runtuh ketika dipindah ke jaringan lain; menambahkan hanya 1% label
+target memulihkan sebagian besar akurasi yang hilang. Pada testbed cloud AWS kecil yang
+terkontrol, laju false-alarm tetap rendah, dan kalibrasi few-shot memulihkan deteksi
+selama data kalibrasinya mewakili trafik uji. Jadi, celah lintas-jaringan sebagian besar
+adalah masalah pergeseran-distribusi yang dapat ditutup dengan murah begitu ruang fitur
+dibuat sebanding: MCC lintas-jaringan terbaik naik dari mendekati nol ke 0,659 dan 0,900
+dengan 1% label target.
+
+Kata kunci: deteksi intrusi jaringan; generalisasi lintas-jaringan; pemetaan fitur
+semantik; feature-extractor mismatch; validasi trafik nyata; kalibrasi few-shot;
+deployment edge.
+
+
+NOTASI DAN PERSAMAAN KUNCI
+--------------------------
+Seluruh persamaan dikumpulkan di sini; narasi merujuknya dengan nomor.
+
+Pers. 1  Un-scaling (mengembalikan fitur CIC ke satuan asli; rilis CIC sudah z-scored):
+         x_orig = x_scaled * sigma + mu
+
+Pers. 2  Rasio antar-alat (median dan persentil-99) dan koreksi satuan:
+         r_med = med_CIC / med_UNSW ,  r_p99 = p99_CIC / p99_UNSW
+         r'_med = c * r_med ,          r'_p99 = c * r_p99
+         dengan c = faktor satuan konstan terdokumentasi (Tabel 2): c=10^-6 (durasi
+         us->s), c=10^-3 (IAT us->ms), c=8 (laju byte->bit), c=1 (satuan sudah sama).
+
+Pers. 3  Verdict SFM dua-tahap (diterapkan pada rasio terkoreksi-satuan):
+         aligned        bila ada c konstan DAN max(|log10 r'_med|, |log10 r'_p99|) <= 1
+         scale-mismatch bila ada c konstan DAN maksimum tsb > 1
+         rate-proxy     bila besaran laju dgn cakupan arah berbeda atau tanpa c konstan
+         different-feat bila tak ada representasi kompatibel (ditolak)
+
+Pers. 4  Matthews Correlation Coefficient (metrik utama; tahan terhadap imbalance):
+         MCC = (TP*TN - FP*FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN))
+
+Pers. 5  Batas galat lintas-domain Ben-David (motivasi konseptual):
+         eps_T(h) <= eps_S(h) + d_HdH(S,T) + lambda
+
+
+1. PENDAHULUAN
+--------------
+Serangan siber menimbulkan kerugian ekonomi besar dan terus bertumbuh [1], menjadikan
+NIDS berbasis ML sebagai garis pertahanan penting [2,3]. NIDS semacam ini lazim
+melaporkan akurasi di atas 99% pada tolok ukur publik, namun hal itu jarang terwujud
+sebagai detektor yang bekerja pada jaringan lain yang belum pernah dilihat. Celahnya
+berakar pada asumsi yang jarang diuji: bahwa trafik pelatihan dan operasional berasal
+dari distribusi yang sama. Studi lintas-dataset terdahulu [4,5,6] mengonfirmasi
+keruntuhan ini - rerata MCC turun dari 0,946 (dalam-dataset) menjadi 0,294
+(lintas-dataset) [4] - tetapi umumnya berhenti pada pengamatan, dan hanya menguji
+dataset-ke-dataset, tanpa pengujian pada testbed jaringan nyata.
+
+Dua celah berorientasi-deployment terdapat pada karya yang kami telaah (Tabel 1).
+Keduanya jarang ditangani bersamaan.
+
+Celah pertama adalah ketidakcocokan alat-ekstraksi-fitur. Alat ekspor-flow yang berbeda
+menghitung fitur bernama sama dengan cara berbeda. Skema terpadu yang memadankan fitur
+berdasarkan nama pun menerima pasangan yang sebenarnya tak sebanding. Kami mendeteksi
+pasangan demikian lewat audit kesetaraan-skala berbasis statistik yang eksploratif, lalu
+menolaknya. Ketika kesetaraan eksak tak mungkin antar-skema, pasangan tetap dipakai
+tetapi proksi arah atau satuannya didokumentasikan secara terbuka.
+
+Celah kedua adalah ketiadaan validasi pada jaringan nyata. Makalah lintas-dataset
+mengukur penurunan dari satu dataset ke dataset lain. Studi yang kami telaah tidak
+menggelar model terpetakan pada testbed cloud nyata, sehingga perilaku false-alarm dan
+syarat kalibrasinya tak pernah teramati.
+
+Yang baru di sini adalah kombinasinya. Kami membawa SFM lintas-alat yang diaudit secara
+statistik sepenuhnya ke testbed cloud nyata terkontrol di AWS. Di sana kami mengukur
+laju false-alarm pada trafik benign, mengkuantifikasi pergeseran distribusi tiga-domain,
+dan menguji kapan kalibrasi few-shot dalam jumlah kecil memulihkan deteksi. Tiap bagian
+sudah berpreseden secara terpisah. Karya himpunan-fitur-terpadu [7] menstandarkan skema
+tetapi tidak mengaudit satu pun pasangan untuk kesetaraan-skala dan tidak berjalan pada
+testbed nyata. Studi lintas-dataset [4,5,6] mendokumentasikan keruntuhan tetapi tak
+menyediakan validasi nyata maupun perbaikan berbiaya-rendah. Kami menyatukan kedua jalur
+tersebut.
+
+Kami memberi empat kontribusi. Pertama, SFM lintas-alat yang auditnya per-pasangan dan
+terkoreksi-satuan memisahkan tujuh padanan semantik eksak, dua proksi laju terdokumentasi
+dengan beda definisi terbatas (src_load dan dst_load), serta fitur TCP-window tak-kompatibel
+yang dibuang. Kedua, bukti kuantitatif keruntuhan lintas-jaringan, dengan diagnosis
+terkontrol yang memisahkan insufisiensi-fitur dari pergeseran-distribusi. Ketiga, perbaikan
+berbiaya-rendah memakai 1% label target, dilaporkan dengan selang kepercayaan 5-seed dan
+perbandingan indikatif seed-tunggal terhadap mixup lintas-dataset. Keempat, validasi
+menyeluruh pada testbed AWS nyata: laju false-alarm benign, pergeseran tiga-domain
+terkuantifikasi, dan evaluasi few-shot dua-protokol (flow-level stratified versus
+episode-level serangan tak-terlihat) yang menunjukkan bahwa nilai kalibrasi bergantung pada
+seberapa mewakili label targetnya.
+
+Pertanyaan penelitian. RQ1: dapatkah fitur-flow yang setara secara semantik dari alat
+heterogen diidentifikasi dengan andal? RQ2: seberapa jauh NIDS sumber-tunggal
+menggeneralisasi setelah penyelarasan semantik? RQ3: apa yang membedakan insufisiensi
+representasi dari pergeseran distribusi? RQ4: seberapa banyak pelabelan target
+diperlukan untuk memulihkan performa? RQ5: apakah resep ini berpindah ke testbed AWS nyata?
+
+Transparansi & reproduksibilitas. Semua nilai yang dilaporkan berasal dari eksperimen
+yang dieksekusi; tidak ada nilai ilustratif yang disajikan sebagai hasil, dan hasil
+negatif/non-monoton dilaporkan apa adanya.
+
+
+2. KARYA TERKAIT
+----------------
+NIDS berbasis ML mencakup ensembel pohon dan model dalam (mis. detektor berbasis deep
+dan transformer [8,9], serta varian XGBoost pada UNSW-NB15 [10]), yang sebagian besar
+melaporkan hasil dalam-domain kuat namun tak menjamin ketahanan lintas-jaringan.
+
+Generalisasi lintas-dataset. D'Hooge dkk. [5] menunjukkan NIDS tersupervisi gagal pada
+jaringan tak-terlihat; Verkerken dkk. [6] melaporkan penurunan AUROC ~30% dengan model
+tak-tersupervisi; Cantone dkk. [4] mendokumentasikan MCC turun dari 0,946 (dalam)
+menjadi 0,294 (lintas) pada empat dataset. Karya-karya ini mengonfirmasi keruntuhan
+tetapi berhenti pada pengamatan - tanpa memisahkan insufisiensi-fitur dari
+pergeseran-distribusi dan tanpa pemulihan berbiaya-rendah atau validasi testbed nyata.
+
+Himpunan fitur terpadu. Sarhan dkk. [7,11] mengusulkan himpunan fitur NetFlow
+terstandar untuk memungkinkan perbandingan lintas-dataset. Kami melangkah lebih jauh:
+tiap pasangan terpetakan diaudit dengan pemeriksaan kesetaraan-skala berbasis statistik
+pada skala aslinya, dan padanan yang mirip-nama-saja ditolak (kasus TCP-window) -
+persis yang diterima diam-diam oleh skema berbasis-nama.
+
+Integritas dataset. Rekonstruksi menemukan >20% flow CIC-IDS2017 perlu pelabelan ulang
+[12], galat fitur CICFlowMeter [13,14], dan laju galat-label 6-7% pada dataset
+CIC/CSE-CIC [15]. Catillo dkk. [16] mempertanyakan apakah kemajuan pada tolok ukur
+mencerminkan kemajuan nyata. Layeghy dkk. [17] menunjukkan trafik benign sintetis
+berbeda secara statistik (jarak Wasserstein besar) dari jaringan nyata - memotivasi
+pemetaan lintas-alat sekaligus validasi testbed cloud nyata kami.
+
+Adaptasi domain. CORAL [18] menyelaraskan kovarians; metode few-shot menyasar NIDS
+dengan label terbatas. NIDS domain-invariant berbasis deep mempelajari representasi
+invarian secara adversarial namun butuh tumpukan deep yang berat dan data target
+melimpah - tak praktis untuk edge. Kami mempertahankan backbone XGBoost ringan [19] dan
+memulihkan performa dengan kalibrasi murah per-deployment, sebuah titik-operasi
+berorientasi-edge yang berbeda. Perbandingan langsung melawan deep DA butuh tumpukan
+berbeda dan ditinggalkan sebagai kerja mendatang (lingkup dinyatakan eksplisit, bukan
+klaim keunggulan yang tak terukur).
+
+Posisi terhadap karya terdekat. Kami tidak mengklaim ada komponen tunggal yang baru.
+Kami mengklaim kombinasinya, dan kami menyatakan apa yang kami tambahkan terhadap studi
+terdekat (Tabel 1). Perbandingan dibuat terhadap studi yang kami telaah, bukan sebagai
+yang-pertama secara absolut.
+
+TABEL 1. Posisi terhadap karya terdekat (Y=ditangani, -=tidak). Stat.audit = audit
+kesetaraan-skala berbasis statistik termasuk menolak pasangan tak-cocok; Shift-diag =
+diagnosis TERKONTROL memisahkan insufisiensi-fitur dari pergeseran-distribusi
+(joint-training DAN domain-classifier), bukan sekadar mengukur adanya pergeseran;
+Live-testbed = deployment + FAR pada testbed cloud nyata; Low-label = pemulihan few-shot.
+  Karya                          Stat.audit  Shift-diag.  Live-testbed  Low-label
+  Sarhan dkk. [7,11]             - (nama)    -            -             -
+  Cantone dkk. [4]               -           parsial      -             -
+  D'Hooge [5] / Verkerken [6]    -           parsial      -             -
+  Layeghy dkk. [17]              -           -*           -             -
+  Karya ini                      Y           Y            Y             Y
+  * Layeghy dkk. [17] MENGUKUR pergeseran distribusi sintetis-vs-nyata tetapi tidak
+    melakukan diagnosis terkontrol insufisiensi-vs-pergeseran seperti di sini.
+
+Apa yang kami tambahkan, secara spesifik: (i) vs himpunan-fitur-terpadu [7,11] - audit
+kompatibilitas berbasis statistik yang menolak pasangan bernama-sama tapi tak-sebanding
+(TCP-window), bukan sekadar skema bersama; (ii) vs studi lintas-dataset [4,5,6] -
+diagnosis terkontrol (insufisiensi vs pergeseran) dan perbaikan berbiaya-rendah, bukan
+sekadar mendokumentasikan penurunan; (iii) vs pengukuran pergeseran-domain [17] -
+membawa resep menyeluruh ke testbed cloud nyata (FAR, pergeseran tiga-domain, perbaikan
+few-shot).
+
+
+3. DATA DAN SEMANTIC FEATURE MAPPING
+------------------------------------
+Dataset (sengaja lintas-sumber). CSE-CIC-IDS2018 [20] (CICFlowMeter, 68 fitur bersih)
+dan UNSW-NB15 [21,22] (Argus dan Bro/Zeek, 42 fitur; 175.341 latih dan 82.332 uji). Beda
+alat ekstraksi ini adalah prasyarat untuk menguji feature-extractor mismatch secara
+realistis, bukan kelemahan. Semua jenis serangan diringkas ke satu kelas "attack"
+(pengaturan biner terkontrol).
+
+Konstruksi SFM: audit kesetaraan berbasis statistik yang eksploratif. SFM memetakan
+fitur yang kompatibel secara fungsional antar alat ekspor-flow meski nama kolom berbeda
+(mis. Flow Duration <-> dur). Ini adalah audit eksploratif berbasis statistik atas
+kesetaraan semantik dan skala, BUKAN uji hipotesis formal. Dalam empat langkah: (i)
+verifikasi semantik, cakupan arah, dan satuan tiap fitur dari dokumentasi resmi alat;
+(ii) kembalikan fitur CIC ke satuan aslinya (Pers. 1); (iii) hitung rasio median dan
+p99 antar-alat dan, bila ada faktor satuan konstan terdokumentasi, versi
+terkoreksi-satuannya (Pers. 2); (iv) berikan verdict dengan aturan dua-tahap (Pers. 3).
+Pasangan aligned dan scale-mismatch dipertahankan (beda skala tersisa kelak dihapus
+z-score per-dataset), bersama dua proksi laju terdokumentasi ketika skema tak punya
+padanan eksak; pasangan different-feature yang tak-kompatibel ditolak. Ambang adalah
+heuristik aturan-keputusan yang diterapkan seragam ke semua pasangan dan dilaporkan
+penuh untuk reproduksibilitas; angka per-pasangan ada di Tabel 2.
+
+Dasar pemilihan dua proksi laju (src_load dan dst_load) dan evaluasi dampaknya. Kami
+TIDAK mengklaim bahwa kesembilan fitur di Model A memiliki kesetaraan semantik eksak di
+seluruh CSE-CIC-IDS2018, UNSW-NB15, dan ekstraktor AWS NFStream. Model A terdiri atas
+TUJUH padanan semantik eksak (dur, spkts, dpkts, sbytes, dbytes, smean, dmean - mengukur
+besaran dan arah flow yang sama persis di ketiga domain) ditambah DUA proksi laju
+terdokumentasi yang menjembatani beda skema: (1) proksi laju-byte maju (src_load: Flow
+Byts/s <-> sload) - di UNSW sload (bit/s) dan AWS (byte/s) mengukur laju-byte arah-maju,
+sedangkan CIC Flow Byts/s menjumlah byte dua-arah; dikelompokkan sebagai proksi laju
+cakupan-arah dan dinyatakan sebagai keterbatasan metodologis eksplisit. (2) proksi laju
+mundur (dst_load: Bwd Pkts/s <-> dload) - CIC/AWS mengukur paket/s mundur sedangkan UNSW
+mengukur bit/s mundur; dipertahankan sebagai proksi laju karena arah-mundur penting
+memisahkan trafik asimetris dari banjir searah.
+
+Evaluasi dampak proksi (sensitivitas subset, non-kausal): ablasi jumlah-fitur (Tabel 3)
+menunjukkan performa transfer sensitif terhadap komposisi subset; dst_load peringkat
+kedua terpenting (masuk di k=3) dan src_load kedelapan (masuk di k=9). Keruntuhan
+lintas-jaringan pada k di {5,7,9} tidak semata disebabkan salah satu proksi laju.
+Keduanya menunjukkan varians UNSW terbesar di ruang-z gabungan (9,00 dan 9,50 vs 0,00
+dan 0,01 pada CIC, Tabel 9), yang kemudian diredam ketika 1% label target
+mengkalibrasi ulang scaler dan ambang pohon (mengangkat MCC ke 0,659 dan 0,900).
+
+Sembilan fitur yang dipertahankan (7 padanan eksak + 2 proksi laju) membentuk Model A;
+dua pasangan inter-arrival-time membentuk Model B opsional; dua pasangan TCP-window
+ditolak sebagai feature-extractor mismatch (kontinu di CICFlowMeter, praktis biner di
+Argus/Bro).
+
+Audit dua-tahap (Pers. 3): Tahap 1 memeriksa apakah kedua alat mengukur besaran fisik
+yang sama sampai faktor satuan konstan (atau memenuhi syarat proksi laju terdokumentasi);
+Tahap 2 menilai pasangan satuan-eksak sebagai aligned atau scale-mismatch dari rasio
+terkoreksi-satuannya. Secara intuitif, pasangan aligned hanya bila rasio median dan p99
+tetap dalam satu orde besaran setelah koreksi satuan. Ini menuntaskan pencilan semu:
+begitu satuan dikoreksi, Flow Duration<->dur dan pasangan IAT - yang rasio mentahnya
+tampak ekstrem semata karena satuan us-vs-s/ms - kembali ke rentang wajar dan
+dipertahankan, sedangkan pasangan TCP-window (kontinu 0-65535 vs biner {0,255}) tak
+punya pemetaan satuan sah dan ditolak. Tabel 2 memuat rasio mentah dan terkoreksi-satuan
+per pasangan.
+
+TABEL 2. Audit kesetaraan SFM (skala asli; CIC di-un-scale via Pers. 1). r_med, r_p99 =
+rasio mentah; r'_med, r'_p99 = terkoreksi-satuan. scale-mismatch dipertahankan (z-score);
+different-feature ditolak.
+  Fitur CIC          UNSW    med CIC  med UNSW  r_med   r_p99   Unit c   r'_med  r'_p99  Verdict
+  Flow Duration      dur     20761    0.0016    1.3e7   2.6e6   10^-6    13,1    2,60    Model A; scale
+  Tot Fwd Pkts       spkts   2        2         1,00    0,13    1        1,00    0,13    Model A; aligned
+  Tot Bwd Pkts       dpkts   1        2         0,50    0,09    1        0,50    0,09    Model A; scale
+  TotLen Fwd Pkts    sbytes  43       430       0,10    0,03    1        0,10    0,03    Model A; scale
+  TotLen Bwd Pkts    dbytes  101      164       0,62    0,05    1        0,62    0,05    Model A; scale
+  Fwd Pkt Len Mean   smean   36       73        0,49    0,17    1        0,49    0,17    Model A; aligned
+  Bwd Pkt Len Mean   dmean   66       44        1,50    0,67    1        1,50    0,67    Model A; aligned
+  Flow Byts/s        sload   787,5    8,8e5     0,0009  0,0014  8        0,007   0,011   Model A; proksi-arah*
+  Bwd Pkts/s         dload   3,70     1447      0,003   0,03    proxy    ---     ---     Model A; proksi-laju#
+  Fwd IAT Mean       sinpkt  3544     0,28      1,3e4   1,4e3   10^-3    12,7    1,44    Model B; scale
+  Bwd IAT Mean       dinpkt  0        0,006     ---     2,4e4   10^-3    ---     24,0    Model B; scale
+  Init Fwd Win Byts  swin    953      0         inf     257     none     ---     ---     DITOLAK (diff-feat)
+  Init Bwd Win Byts  dwin    -1       0         inf     250     none     ---     ---     DITOLAK (diff-feat)
+  * src_load: proksi laju cakupan-arah (CIC byte/s dua-arah vs UNSW/AWS maju); koinsiden
+    hanya pada banjir searah. # dst_load: paket/s (CIC/AWS) vs bit/s (UNSW), tak ada c konstan.
+
+Temuan kunci (TCP-window mismatch): UNSW swin/dwin praktis biner ({0,255}) sedangkan CIC
+Init Fwd/Bwd Win Byts kontinu (0-65535). Meski sama-sama bernama "TCP window", datanya
+tak sebanding, sehingga pasangan dibuang sebagai feature-extractor mismatch. Model A
+final (9 fitur: 7 padanan eksak + 2 proksi laju): dur, spkts, dpkts, sbytes, dbytes,
+smean, dmean, sload, dload; z-score fit hanya pada train (tanpa kebocoran).
+
+TABEL 3. Ablasi jumlah-fitur SFM menurut peringkat kepentingan joint-model. Performa
+transfer sensitif terhadap komposisi subset.
+  k   Fitur ditambah            In-CIC  In-UNSW  Joint-CIC  Joint-UNSW  CIC->UNSW  UNSW->CIC
+  3   fwd_bytes, dst_load, dur  0,900   0,702    0,899      0,646       +0,377     +0,065
+  5   + fwd_mean, fwd_pkts      0,912   0,728    0,911      0,719       -0,009     -0,057
+  7   + bwd_pkts, bwd_mean      0,913   0,739    0,913      0,728       -0,014     -0,023
+  9   + src_load, bwd_bytes     0,913   0,744    0,913      0,731       -0,032     -0,031
+
+
+4. BASELINE DAN DIAGNOSIS LINTAS-JARINGAN
+-----------------------------------------
+Keruntuhan (RQ2). Satu XGBoost unggul dalam-domain (MCC 0,91 pada CIC, 0,74 pada UNSW)
+tetapi runtuh lintas-jaringan (MCC mendekati 0, Gambar 1) - konsisten dengan literatur
+namun di sini diukur pada ruang fitur ter-SFM, menyingkirkan mismatch skema sepele
+sebagai penyebab. Kami memakai MCC sebagai metrik utama (Pers. 4) karena tahan terhadap
+imbalance kelas berat.
+
+TABEL 4. Baseline lintas-dataset (MCC). Kolom melaporkan satu run representatif (seed 42)
+per model untuk membandingkan himpunan fitur Model A vs B. Baseline lintas-jaringan
+rerata-5-seed (seed {42,1,7,123,2024}, selang-t 95%, df=4) ada di TABEL 5 (baris 0%):
+CIC->UNSW rerata -0,074 (SD 0,089, CI95% [-0,184, 0,037]) melintasi nol (tak dapat
+dibedakan dari tebakan acak), sedangkan UNSW->CIC rerata -0,094 (SD 0,030, CI95%
+[-0,130, -0,057]) tegas di bawah nol. Keduanya: transfer sumber-tunggal gagal total.
+  Skenario                        Model A    Model B
+  Same-CIC (latih & uji CIC)      0,913      0,914
+  Same-UNSW (latih & uji UNSW)    0,745      0,743
+  CIC -> UNSW                     -0,072     0,004
+  UNSW -> CIC                     -0,061     -0,046
+  Celah generalisasi              0,81-0,99  0,79-0,91
+
+Diagnosis: pergeseran, bukan (hanya) insufisiensi (RQ3). Joint training pada sembilan
+fitur SFM bekerja baik di kedua domain (rerata-5-seed MCC 0,913 CIC; 0,730 UNSW),
+menunjukkan fitur bersama membawa informasi diskriminatif cukup - jadi insufisiensi
+fitur bukan satu-satunya penjelasan (Gambar 2). Sebaliknya, penyelarasan kovarians tak
+tersupervisi via CORAL [18] gagal memulihkan deteksi lintas-jaringan secara andal
+(CIC->UNSW rerata -0,118; UNSW->CIC -0,032), karena mencocokkan momen tanpa label target
+tak menyelaraskan batas keputusan kelas di bawah pergeseran komposisi-serangan parah.
+Pengklasifikasi-domain memisahkan CIC dari UNSW dengan akurasi ~0,990 (Proxy A-distance
+= 1,961) dan jarak 1-Wasserstein antar-domain besar (rerata W1 = 0,317 pada ruang-z
+bersama terkoreksi-satuan, Tabel 7), langsung mengukur pergeseran distribusi sebagai
+kontributor utama. Ini dimotivasi secara konseptual oleh batas Ben-David (Pers. 5).
+Akurasi domain-classifier tinggi menunjukkan domain mudah dipisah tetapi tidak dengan
+sendirinya membuktikan pergeseran sebagai satu-satunya sebab; eksperimen terkontrol
+mengindikasikan pergeseran distribusi adalah kontributor UTAMA kegagalan lintas-jaringan,
+meski faktor lain spesifik-dataset (beda taksonomi label, komposisi serangan, artefak
+dataset, dan dua pendekatan proksi-laju) mungkin ikut berperan.
+
+5. PEMULIHAN BERBIAYA-RENDAH (RQ4)
+----------------------------------
+Kalibrasi minimal memulihkan deteksi lintas-jaringan: hanya 1% label target-network
+memulihkan MCC lintas-jaringan ke rentang 0,65-0,91 pada lima seed (Tabel 5, Gambar 3).
+Sementara CORAL (0% label) tetap mendekati nol, 1% label target mengangkat rerata-5-seed
+MCC dari -0,074 ke 0,659 (CI95% [0,640, 0,677]) pada CIC->UNSW dan dari -0,094 ke 0,900
+(CI95% [0,898, 0,902]) pada UNSW->CIC, menangkap 90,3% dan 98,6% acuan joint-training.
+Menaikkan anggaran ke 5% dan 10% memberi tambahan yang mengecil. Sebagai pembanding
+tambahan, mixup lintas-dataset (seed 42 saja) mencapai 0,680 (CIC->UNSW) dan 0,798
+(UNSW->CIC); karena hanya satu seed, perbandingan mixup bersifat indikatif.
+
+Asimetri arah-adaptasi teramati: CIC->UNSW pulih lebih rendah (~0,66-0,69) daripada
+UNSW->CIC (~0,90), dijelaskan oleh dispersi domain UNSW yang lebih besar (rerata varians
+fitur-SFM 3,64 vs 0,68 CIC, ~5,3x, Tabel 9), terkonsentrasi pada fitur laju/ukuran-paket.
+Kami laporkan ini sebagai interpretasi konsisten-bukti, bukan bukti kausal.
+
+TABEL 5. Adaptasi few-shot target dan perbandingan alignment (MCC lintas-jaringan;
+RERATA, SD, selang-t 95% atas 5 seed {42,1,7,123,2024}). Baris 0% = baseline
+rerata-5-seed. Mixup dievaluasi seed 42 saja (indikatif).
+  Label target / strategi    CIC->UNSW (rerata +/- SD [CI95%])    UNSW->CIC (rerata +/- SD [CI95%])
+  0% (baseline)              -0,074 +/- 0,089 [-0,184, 0,037]     -0,094 +/- 0,030 [-0,130, -0,057]
+  CORAL (0% label target)    -0,118 +/- 0,147 [-0,300, 0,064]     -0,032 +/- 0,156 [-0,225, 0,162]
+  1% few-shot                0,659  +/- 0,015 [0,640, 0,677]      0,900  +/- 0,002 [0,898, 0,902]
+  5% few-shot                0,689  +/- 0,015 [0,670, 0,708]      0,909  +/- 0,001 [0,909, 0,910]
+  10% few-shot               0,691  +/- 0,018 [0,669, 0,714]      0,911  +/- 0,001 [0,910, 0,913]
+  Mixup (target train)*      0,680  (seed 42)                     0,798  (seed 42)
+  Joint training (acuan)     0,730  +/- 0,004 [0,726, 0,735]      0,913  +/- 0,001 [0,912, 0,914]
+
+6. VALIDASI TESTBED CLOUD NYATA PADA AWS (RQ5)
+----------------------------------------------
+Kami mengevaluasi detektor ter-SFM pada testbed cloud AWS nyata terkontrol (dua instans
+EC2 di ap-southeast-1 dalam VPC privat terisolasi, menangkap paket mentah via tcpdump ke
+NFStream untuk mengekstrak 9 fitur SFM) - langkah yang diabaikan studi lintas-dataset yang
+kami telaah (Tabel 1). Kami membingkai eksperimen ini eksplisit sebagai validasi testbed
+cloud nyata terkontrol, bukan deployment produksi multi-jaringan luas. Dua titik
+penyelarasan penting: pertama, satuan - durasi dinyatakan dalam mikrodetik (menyamai
+CICFlowMeter) dan fitur laju dihitung dengan penyebut per-detik (menghindari bagi-nol),
+diterapkan sekali tanpa penskalaan ulang; kedua, cakupan arah - tujuh fitur berdefinisi
+identik di CIC/UNSW/AWS, sedangkan dua proksi laju membawa perbedaan terbatas (Bagian 3),
+khususnya src_load AWS yang mengukur laju-byte maju sedangkan CIC Flow Byts/s dua-arah,
+sehingga src_load tak persis identik di ketiga domain (diperlakukan sebagai keterbatasan
+metodologis). Tiga temuan:
+
+(1) Fase 1: stabilitas operasional awal pada trafik benign. Pada tiga jendela pemantauan
+kumulatif (3 mnt, 1 jam, 6 jam; Tabel 6), laju false-alarm tetap di bawah 0,5% tanpa drift
+(0,00% pada 3 mnt / 203 flow; 0,38% pada 1 jam / 3.687 flow; 0,42% pada 6 jam / 22.644
+flow, Wilson CI95% [0,34%, 0,51%]). Meski run 6-jam satu-VPC ini tak mewakili keragaman
+produksi multi-jaringan, FAR benign yang teramati mendukung efektivitas penyelarasan
+satuan-durasi dan satuan-laju pada setup testbed AWS yang dievaluasi.
+
+TABEL 6. FAR trafik benign testbed AWS Fase 1 + selang Wilson 95% lintas durasi pemantauan.
+  Skenario / Jendela   Durasi   Flow benign   False alarm (FP)   FAR (%)   Wilson CI95% (%)
+  S0 (cek singkat)     3 mnt    203           0                  0,0000    [0,00, 1,86]
+  D1 (jendela sedang)  1 jam    3.687         14                 0,3797    [0,23, 0,64]
+  D2 (jendela panjang) 6 jam    22.644        94                 0,4152    [0,34, 0,51]
+
+(2) Fase 2: zero-shot tidak transfer, dijelaskan pergeseran tiga-domain. Saat serangan
+terkontrol diluncurkan (profil "clean" 200 pps; 434 flow, dan "volumetric" 5.000 pps;
+17.319 flow; total 17.753 flow), model zero-shot yang dilatih hanya pada tolok ukur
+offline gagal mendeteksi serangan nyata ("clean" MCC=0,0265; "volumetric" MCC=0,0007;
+held-out split zero-shot MCC=0,074 untuk UNSW dan -0,217 untuk CIC). Akar fisiknya: sesi
+serangan AWS (Slowloris/SSH brute-force yang terbuka melintasi timeout NFStream) punya
+median durasi flow 64,03 s vs rerata latih offline 12,18 s, menekan fitur laju arah
+tiga-empat orde besaran, sementara respons HTTP cloud menghasilkan ukuran-paket-mundur
+jauh lebih besar (bwd_mean median 351 B di AWS vs 66 B CIC dan 44 B UNSW, W1 satu-fitur
+1,16). Analisis tiga-domain (Tabel 7, Gambar 4) atas 1,62 jt CIC, 172.684 UNSW, 44.287
+flow AWS nyata - setelah penyelarasan satuan lintas-ekstraktor eksplisit - mengonfirmasi
+ketiga domain terpisah berpasangan dengan akurasi domain-classifier >= 0,990 dan Proxy
+A-distance >= 1,961.
+
+TABEL 7. Pergeseran tiga-domain berpasangan (CIC 1,62jt, UNSW 172.684, AWS-nyata 44.287
+flow) di ruang-z bersama terkoreksi-satuan (rerata W1 1D atas 9 fitur SFM).
+  Pasangan domain      Rerata W1 (ruang-z)   Akurasi domain-clf   Proxy A-distance
+  CIC vs UNSW          0,317                 0,990                1,961
+  CIC vs AWS-nyata     0,230                 0,994                1,975
+  UNSW vs AWS-nyata    0,372                 0,998                1,993
+
+(3) Kalibrasi few-shot pada testbed AWS: lintasan non-monoton dan ketergantungan pada
+keterwakilan label-target. Dua protokol split (Tabel 8, Gambar 5):
+- Split flow-level stratified 60/40 (held-out: 7.049 attack, 53 benign; kalibrasi
+  mencakup semua jenis serangan sesi): mencampur 1% label AWS-train (~107 flow) dengan
+  UNSW mengangkat MCC dari 0,074 (zero-shot) ke 0,490, sedikit turun 0,479 di 5%, naik
+  0,588 di 10% dan 0,596 di 20% (menyamai acuan AWS-only 0,598). Lintasan CIC+AWS lebih
+  non-monoton (-0,217 -> 0,132 -> 0,370 -> 0,207 -> 0,456).
+- Split episode-level lebih ketat (kalibrasi hanya pada episode {BruteForce, DoS} + benign
+  paruh-awal, uji pada episode {DDoS} tak-terlihat; 121 attack + 83 benign, bootstrap CI95%
+  1.000-resample): UNSW zero-shot sudah MCC=0,579 [0,46, 0,70] (CIC zero-shot -0,220),
+  dan menambah label few-shot dari {BruteForce, DoS} justru menurunkan MCC ke 0,523 di 5%
+  dan 0,420 di 20% - karena kalibrasi pada flow laju-rendah durasi-panjang menggeser split
+  pohon menjauh dari rezim DDoS laju-tinggi tak-terlihat.
+Kedua protokol menunjuk pada syarat yang sama. Kalibrasi few-shot membantu bila sampel
+kalibrasi menyerupai kondisi uji target. Bila tidak, kalibrasi itu malah dapat
+memperburuk transfer ke rezim serangan tak-terlihat.
+
+TABEL 8. Kalibrasi domain few-shot pada testbed AWS (MCC). Panel atas: split flow-level
+stratified (uji: 7.049 attack, 53 benign; kalibrasi representatif). Panel bawah: split
+episode-level lebih ketat (latih {BruteForce, DoS}, uji {DDoS} tak-terlihat: 121 attack,
+83 benign; bootstrap CI95% 1.000-resample; kalibrasi non-representatif).
+  [Panel A - flow-level]  0%:0,074  1%:0,490  5%:0,479  10%:0,588  20%:0,596  (AWS-only 0,598)
+  [Panel A - CIC+AWS]     0%:-0,217 1%:0,132  5%:0,370  10%:0,207  20%:0,456
+  [Panel B - episode UNSW] 0%:0,579  5%:0,523  20%:0,420  (AWS-only episode 0,418)
+  [Panel B - episode CIC]  0%:-0,220
+
+6.1 PENGATURAN EKSPERIMEN DAN REPRODUKSIBILITAS
+-----------------------------------------------
+Model & pelatihan. XGBoost (max_depth=8, learning_rate=0,1, n_estimators=200,
+subsample=colsample_bytree=0,8), scikit-learn dengan split stratified. Metrik utama MCC.
+Model A = 9 fitur SFM; model biner final 2,9 MB (200 pohon, kedalaman 8).
+
+Penanganan imbalance (tanpa resampling). (i) metrik MCC; (ii) pembobotan biaya:
+scale_pos_weight = rasio negatif/positif; hindari SMOTE agar perbandingan lintas-jaringan
+bebas confound resampling.
+
+Protokol tanpa-kebocoran per eksperimen. Baseline: z-score fit pada train SUMBER saja,
+transform ke uji target. Joint training: z-score fit pada train gabungan. Few-shot:
+scaler fit HANYA pada kumpulan augmented (sumber + fraksi k target-train), evaluasi
+SEKALI pada T_test tetap; k=0 = zero-shot. Mixup: interpolasi-Beta pakai label target-train
+saja (seed 42 saja).
+
+Multi-seed & CI. Hasil offline: rerata, SD, selang-t 95% (df=4) atas 5 seed. FAR AWS:
+Wilson 95%; split episode-level AWS: bootstrap 95% (1.000 resample).
+
+Verifikasi label. Pada CIC, Benign=0; konversi biner menghasilkan tepat 1.348.453 normal
+dan 274.808 attack, jadi MCC lintas-jaringan negatif itu asli, bukan artefak pelabelan.
+
+Protokol testbed AWS (transparan). Region ap-southeast-1, 2 EC2 dalam VPC privat
+terisolasi. Capture via tcpdump -> NFStream (9 fitur SFM), durasi dalam mikrodetik dan
+dua fitur laju dihitung sekali dengan penyebut per-detik (lihat Bagian 6). Pemantauan
+benign hingga 22.644 flow pada 6 jam. Sesi serangan 17.753 flow berlabel (17.620 attack,
+133 benign) sepanjang timeline terjadwal, dilabeli DARI TIMELINE. Split uji AWS: 7.049
+attack, 53 benign (held-out). KETERBATASAN VALIDITAS EKSTERNAL TESTBED: (i) trafik dari
+satu VPC terkontrol dengan label dari timeline, bukan jaringan produksi multi-tenant;
+(ii) sampel benign pada uji sesi-serangan kecil (53 flow, ~99% attack), jadi kami lapor
+MCC (bukan F1); (iii) pemulihan few-shot bergantung keterwakilan sampel kalibrasi (Tabel
+8A vs 8B).
+
+7. DISKUSI DAN KETERBATASAN
+---------------------------
+Tiga temuan berjalan beriringan. NIDS sumber-tunggal runtuh lintas-jaringan. Pergeseran
+distribusi yang terukur langsung adalah kontributor utama, meski insufisiensi fitur dan
+faktor lain spesifik-dataset mungkin ikut berperan. Kalibrasi minimal memulihkan performa,
+tetapi hanya bila label kalibrasi mewakili lingkungan target. Keterbatasan:
+(a) Beda definisi proksi-laju (src_load dan dst_load): Model A memadukan tujuh padanan
+eksak dengan dua proksi laju yang tak persis identik di ketiga domain; keduanya menunjukkan
+varians UNSW terbesar di ruang-z (9,00 dan 9,50, Tabel 9). Kerja mendatang: mengekstrak
+ulang PCAP mentah lintas-domain dengan satu ekstraktor terpadu untuk menyeragamkan definisi.
+(b) Non-monotonisitas & keterwakilan few-shot: kalibrasi tak monoton pada split flow-level
+(Tabel 8A) dan menurun pada split episode-level saat dikalibrasi hanya pada {BruteForce,
+DoS} dan diuji pada {DDoS} tak-terlihat (0,579 -> 0,420); mixup hanya seed 42.
+(c) Validitas eksternal testbed & lingkup model: eksperimen AWS di testbed dua-instans
+satu-region dengan label-timeline, bukan trafik produksi multi-organisasi. Asimetri arah
+belum tuntas; satu XGBoost adalah pilihan efisiensi-edge (2,9 MB, latensi 439,3 us pada
+1 vCPU), bukan klaim model universal; perbandingan langsung melawan DI-NIDS/DANN perlu
+tumpukan berbeda (kerja mendatang). Ketahanan adversarial sengaja di luar lingkup: hasil
+awal menunjukkan adversarial training memperbaiki ketahanan evasion dalam-domain tetapi
+tak menutup celah lintas-jaringan - menegaskan kedua masalah butuh solusi berbeda.
+
+TABEL 9. Dispersi domain (varians di ruang-z gabungan per fitur SFM). UNSW jauh lebih
+tersebar, menjelaskan asimetri arah-adaptasi.
+  Fitur SFM          var CIC   var UNSW
+  Flow Duration      1,11      0,00
+  Tot Fwd Pkts       1,11      0,01
+  Tot Bwd Pkts       1,05      0,51
+  TotLen Fwd Pkts    0,47      5,90
+  TotLen Bwd Pkts    1,06      0,42
+  Fwd Pkt Len Mean   0,45      5,23
+  Bwd Pkt Len Mean   0,87      2,17
+  Flow Byts/s        0,00      9,00
+  Bwd Pkts/s         0,01      9,50
+  Rerata             0,68      3,64
+
+8. KESIMPULAN DAN KERJA MENDATANG
+---------------------------------
+Kami menyajikan Semantic Feature Mapping lintas-alat berbasis statistik yang eksploratif
+(7 padanan semantik eksak dan 2 proksi laju terdokumentasi) dan mengevaluasinya pada tolok
+ukur offline serta testbed cloud AWS nyata terkontrol. Model sumber-tunggal runtuh
+lintas-jaringan (rerata-5-seed MCC -0,074 dan -0,094) terutama akibat pergeseran distribusi
+(akurasi domain-classifier >= 0,990), sedangkan 1% label target memulihkan MCC
+lintas-jaringan offline ke 0,659 dan 0,900. Pada testbed AWS, FAR benign tetap di bawah
+0,5% selama 6 jam, dan kalibrasi few-shot memulihkan deteksi dari 0,074 ke 0,490-0,596 bila
+label kalibrasi mewakili trafik uji (split flow-level), sedangkan evaluasi episode-level
+pada DDoS tak-terlihat menunjukkan kalibrasi non-representatif tak memperbaiki transfer.
+Kerja mendatang: ekstraksi ulang PCAP dengan ekstraktor terpadu untuk menghapus beda
+definisi proksi-laju; adaptasi online/streaming dengan deteksi drift lintas jaringan
+produksi multi-tenant; pelabelan otomatis active-learning/SIEM dengan guardrail holdout
+tepercaya; dan perluasan multi-kelas. Ketahanan adversarial dikaji dalam studi terpisah.
+
+PENGHARGAAN
+-----------
+Penulis berterima kasih kepada Politeknik Elektronika Negeri Surabaya (PENS) atas dukungan
+komputasi.
+
+DEKLARASI AI GENERATIF DAN TEKNOLOGI BERBANTUAN-AI
+--------------------------------------------------
+Dalam menyiapkan karya ini, penulis menggunakan alat berbantuan-AI untuk membantu
+penyuntingan bahasa Inggris dan pemformatan. Seluruh desain penelitian, eksperimen,
+analisis data, dan interpretasi dilakukan oleh penulis. Semua angka yang dilaporkan
+diperoleh dari eksperimen penulis sendiri yang dieksekusi dan dapat direproduksi (kode dan
+notebook tersedia dari penulis). Setelah memakai alat tersebut, penulis meninjau dan
+menyunting konten seperlunya serta bertanggung jawab penuh atas isi publikasi.
+
+NOMENKLATUR
+-----------
+NIDS     Network Intrusion Detection System
+SFM      Semantic Feature Mapping (audit kesetaraan lintas-alat berbasis statistik)
+MCC      Matthews Correlation Coefficient
+FAR      False-Alarm Rate (laju false-alarm)
+IAT      Inter-Arrival Time (fitur flow)
+CORAL    CORrelation ALignment (adaptasi domain)
+DANN     Domain-Adversarial Neural Network
+DI-NIDS  Domain-Invariant NIDS
+W1       jarak 1-Wasserstein antar distribusi domain
+sigma,mu simpangan baku dan rerata (penskalaan z-score)
+few-shot kalibrasi memakai sebagian kecil label target-network
+mixup    interpolasi lintas-dataset tersupervisi memakai label target-train
+
+REFERENSI
+---------
+(Gaya nomor; sama persis dengan versi Inggris - lihat paper1-jictra.txt untuk daftar
+lengkap 22 entri [1]-[22]. Tidak diterjemahkan karena judul karya tetap dalam Inggris.)

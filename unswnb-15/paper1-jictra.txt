@@ -34,23 +34,21 @@ Email: hero@pens.ac.id; iwanarif@pens.ac.id; ferryas@pens.ac.id
 
 ABSTRACT
 --------
-Machine-learning network intrusion detection systems (NIDS) perform well within a
-training network but often fail to generalize to unseen networks. One overlooked
-obstacle is feature-extractor mismatch, where different flow-export tools compute
-nominally equivalent features differently. We propose a statistically audited Semantic
-Feature Mapping (SFM) that pairs semantic verification with unit-corrected
-scale-distribution checks, rejecting incompatible pairs (e.g., TCP-window) and yielding
-a nine-feature space (seven exact equivalents, two documented rate proxies). Using
-CSE-CIC-IDS2018 and UNSW-NB15 with a lightweight XGBoost detector, in-domain MCC reaches
-0.91 and 0.74 but single-source cross-network MCC collapses to near zero (5-seed means
--0.074 and -0.094). Joint training shows the shared features remain discriminative,
-while a 0.99 domain-classifier accuracy indicates substantial distribution shift. Our
-central positive result: this shift is cheaply repairable - 1% of target labels restores
-cross-network MCC to 0.659 and 0.900. We then stress-test on a controlled live AWS cloud
-testbed: benign false-alarm rate stays below 0.5% over six hours, and representative
-few-shot calibration lifts MCC from 0.074 to 0.596 (matching the 0.598 in-domain
-reference), whereas a stricter unseen-attack test shows no gain - delineating the method's
-key condition: calibration labels must represent the target traffic.
+Machine-learning network intrusion detection systems (NIDS) work well on their training network but often fail on a different one. One cause is easy
+to overlook: different flow-export tools compute nominally identical features
+differently, so a model trained on one tool can misread another tool's output. We call this a
+feature-extractor mismatch. To handle it, we build a Semantic Feature Mapping (SFM): a
+statistics-based audit that checks whether a feature from one tool truly matches a
+feature from another in meaning and in scale. Mismatched pairs, such as the TCP-window
+features, are rejected, leaving a nine-feature space shared across tools. Using two
+public datasets (CSE-CIC-IDS2018 and UNSW-NB15) with a lightweight XGBoost detector, a
+single-source model that is accurate within its own network collapses across networks;
+adding only 1% of labelled target data restores most of the lost accuracy. On a small,
+controlled AWS cloud testbed the false-alarm rate stays low, and few-shot calibration
+recovers detection provided the calibration data reflect the test traffic. The
+cross-network gap is thus largely a distribution-shift problem that can be closed cheaply
+once the feature space is made comparable: the best cross-network MCC rises from near
+zero to 0.659 and 0.900 with 1% target labels.
 
 Keywords: network intrusion detection; cross-network generalization; semantic
 feature mapping; feature-extractor mismatch; cloud testbed validation; few-shot
@@ -90,51 +88,51 @@ Eq. 5  Ben-David cross-domain error bound (conceptual motivation):
 
 1. INTRODUCTION
 ---------------
-Cyberattacks impose major and growing economic losses [1], making ML-based NIDS a
-critical line of defense [2,3]. Such NIDS routinely report over 99% accuracy on
-public benchmarks, yet this rarely materializes as a working detector on a different,
-previously unseen network. The gap stems from a seldom-tested assumption: that
-training and operational traffic share the same distribution. Prior cross-dataset
-studies [4,5,6] confirm the collapse - average MCC falling from 0.946 within-dataset
-to 0.294 cross-dataset [4] - but they generally stop at observing it, and they
-evaluate only dataset-to-dataset, without testing on a live network testbed.
+Cyberattacks cause large and growing economic losses [1], so machine-learning NIDS have
+become an important line of defence [2,3]. On public benchmarks these detectors often
+report accuracy above 99%. In practice, however, a detector that is excellent on its
+training network frequently fails on a network it has never seen. The reason is a
+training assumption that is rarely tested: that the training traffic and the operational
+traffic follow the same distribution. Several cross-dataset studies have measured this
+drop - for example, the average MCC falls from 0.946 within a dataset to 0.294 across
+datasets [4,5,6]. Those studies, however, mostly stop at reporting the drop, and they
+compare one dataset against another rather than against a live network.
 
-This paper targets two deployment-facing gaps that, among the works we surveyed
-(Table 1), are seldom addressed together:
+Two deployment-facing gaps run through the studies we surveyed (Table 1). They are
+rarely addressed together.
 
-(1) Feature-extractor mismatch. Different flow exporters compute the same nominal
-feature differently; a name-based unified schema silently admits non-comparable
-pairs. We detect and reject such pairs by an exploratory, statistics-based
-scale-equivalence audit, and explicitly document directional/unit proxies where exact
-equivalence is not possible across schemas.
+The first is feature-extractor mismatch. Different flow exporters compute the same
+nominal feature in different ways. A unified schema that matches features by name
+therefore admits pairs that are not comparable. We detect such pairs with an
+exploratory, statistics-based scale-equivalence audit and reject them. Where exact
+equivalence is not possible across schemas, we keep the pair but document the
+directional or unit proxy openly.
 
-(2) No validation on a live network environment. Cross-dataset papers measure
-dataset-to-dataset drops; the surveyed studies do not deploy the mapped model on a
-live cloud testbed to measure false-alarm behavior and calibration conditions.
+The second gap is the absence of validation on a live network. Cross-dataset papers
+measure drops from one dataset to another. The surveyed studies do not deploy the
+mapped model on a live cloud testbed, so they never observe its false-alarm behaviour
+or the conditions under which calibration helps.
 
-Core novelty (what is new here). The novelty is the COMBINATION of three complementary
-pieces, which among the studies we surveyed (Table 1) are seldom brought together: a
-statistically audited cross-tool Semantic Feature Mapping carried end-to-end to a
-controlled live cloud testbed (AWS) - measuring false-alarm rate under benign traffic,
-quantifying a three-domain distribution shift, and evaluating when few-shot calibration
-restores detection. Unified-feature-set work [7] standardizes schemas but neither
-audits each pair for scale-equivalence nor tests on a live testbed; cross-dataset
-studies [4,5,6] document the drop but offer no live testbed validation or low-cost
-repair analysis. We bridge both.
+What is new here is the combination. We carry a statistically audited cross-tool
+Semantic Feature Mapping all the way to a controlled live cloud testbed on AWS. There
+we measure the false-alarm rate under benign traffic, quantify a three-domain
+distribution shift, and test when a small amount of few-shot calibration restores
+detection. Each piece has precedent on its own. Unified-feature-set work [7]
+standardises schemas but audits no pair for scale-equivalence and runs on no live
+testbed. Cross-dataset studies [4,5,6] document the collapse but offer neither live
+validation nor a low-cost repair. We join the two lines of work.
 
-Contributions.
-(1) A cross-tool SFM with a per-pair unit-corrected exploratory scale-equivalence audit
-that distinguishes exact semantic equivalents (7 pairs), documented rate proxies with
-bounded definitional differences (2 pairs: src_load and dst_load), and incompatible
-feature-extractor mismatches (TCP-window features).
-(2) Quantitative evidence of cross-network collapse, and a controlled diagnosis
-separating feature insufficiency from distribution shift.
-(3) A low-cost repair (1% target labels, plus an indicative single-seed comparison with
-cross-dataset mixup) evaluated with 5-seed confidence intervals.
-(4) End-to-end validation on a controlled live AWS cloud testbed: benign false-alarm
-rate, a quantified three-domain shift, and a two-protocol few-shot evaluation
-(stratified flow-level vs unseen-attack episode-level) showing that calibration
-effectiveness depends on target-label representativeness.
+We make four contributions. First, a cross-tool SFM whose per-pair, unit-corrected
+audit separates seven exact semantic equivalents, two documented rate proxies with
+bounded definitional differences (src_load and dst_load), and the incompatible
+TCP-window features it discards. Second, quantitative evidence of cross-network
+collapse, with a controlled diagnosis that separates feature insufficiency from
+distribution shift. Third, a low-cost repair using 1% target labels, reported with
+5-seed confidence intervals and an indicative single-seed comparison against
+cross-dataset mixup. Fourth, end-to-end validation on the live AWS testbed: a benign
+false-alarm rate, a quantified three-domain shift, and a two-protocol few-shot
+evaluation (stratified flow-level versus unseen-attack episode-level) showing that the
+value of calibration depends on how representative the target labels are.
 
 Research questions. RQ1: can compatible flow features (exact semantic equivalents and
 documented rate proxies) from heterogeneous tools be reliably audited and separated
@@ -181,10 +179,9 @@ per-deployment calibration, a different edge-oriented operating point. A head-to
 against deep DA needs a different stack and is left as future work (scope stated
 explicitly, not an unmeasured superiority claim).
 
-Positioning against closest work (what we add). Rather than claim each component is
-new, we position this work as the COMBINATION of three complementary pieces and state
-precisely what we add to the nearest studies (TABLE 1). We make comparative claims
-only against the studies we surveyed, not as an absolute first.
+Positioning against the closest work. We do not claim that any single component is
+new. We claim the combination, and we state what we add to the nearest studies
+(Table 1). The comparison is against the studies we surveyed, not an absolute first.
 
 TABLE 1. Positioning vs closest work (Y=addressed, -=not addressed). "Stat. audit" =
 exploratory statistics-based scale-equivalence audit incl. rejecting mismatched pairs;
@@ -559,9 +556,9 @@ are representative of the test traffic:
   decline occurs because calibrating exclusively on low-rate, long-duration
   BruteForce/Slowloris flows shifts tree splits away from the high-rate unseen DDoS
   regime.
-Together, these two protocols show that few-shot calibration is effective when the
-calibration sample is representative of the target evaluation conditions, whereas
-non-representative calibration can degrade transfer to unseen attack regimes.
+The two protocols point to the same condition. Few-shot calibration helps when the
+calibration sample resembles the target evaluation conditions. When it does not, it can
+even degrade transfer to unseen attack regimes.
 
 TABLE 8. Few-shot domain calibration on live AWS testbed traffic (MCC). Top panel:
 stratified flow-level split (held-out test: 7,049 attack, 53 benign; representative
@@ -659,11 +656,11 @@ dispersion measure, distinct from the per-dataset-train z-score used for modelin
 
 7. DISCUSSION AND LIMITATIONS
 -----------------------------
-The findings form a coherent narrative: single-source NIDS collapse cross-network;
-a directly measured distribution shift is a major contributor (not feature
-insufficiency alone, though other dataset-specific factors may also contribute); and
-minimal calibration recovers performance when the calibration labels are representative
-of the target environment, as evaluated across offline benchmarks and a controlled AWS
+Three findings run together. Single-source NIDS collapse across networks. A directly
+measured distribution shift is a major contributor, though feature insufficiency and
+other dataset-specific factors may also play a part. Minimal calibration recovers
+performance, but only when the calibration labels are representative of the target
+environment. We observed this pattern across offline benchmarks and a controlled AWS
 cloud testbed. Limitations:
 (a) Rate-proxy definitional differences (src_load and dst_load): Model A combines seven
 exact semantic equivalents with two documented rate proxies that are not strictly
