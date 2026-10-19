@@ -36,26 +36,22 @@ Validation on a Live Cloud Testbed}}
 \maketitle
 
 \begin{abstract}
-\noindent Machine-learning-based network intrusion detection systems (NIDS) perform well
-within a training network but often fail to generalize to unseen networks. One
-overlooked obstacle is \emph{feature-extractor mismatch}, where different flow-export
-tools compute nominally equivalent features differently. This study proposes a
-statistically audited \emph{Semantic Feature Mapping} (SFM) that combines semantic
-verification with unit-corrected scale-distribution checks, rejecting incompatible pairs
-(including TCP-window features) and constructing a nine-feature space comprising seven
-exact semantic equivalents and two documented rate proxies. Using CSE-CIC-IDS2018 and
-UNSW-NB15, we evaluate cross-network generalization with a lightweight XGBoost detector.
-Although in-domain Matthews correlation coefficients (MCC) reach 0.91 and 0.74,
-single-source cross-network performance collapses to near zero (5-seed mean MCC of
-$-0.074$ and $-0.094$). Controlled experiments show that the shared features retain
-discriminative capacity under joint training, whereas a domain-classifier accuracy of
-0.99 indicates substantial inter-domain distribution shift. We further evaluate the
-recipe on a controlled live AWS cloud testbed. While zero-shot transfer fails on the
-testbed, few-shot calibration under a stratified flow-level split lifts MCC to 0.490
-(1\% labels) and 0.596 (20\%, matching the 0.598 in-domain reference), whereas
-episode-level calibration on non-representative attack types does not improve
-unseen-attack detection, showing that calibration effectiveness depends on target-label
-representativeness.
+\noindent Machine-learning network intrusion detection systems (NIDS) work well on their
+training network but often fail on a different one. One cause is easy to overlook:
+different flow-export tools compute nominally identical features differently, so a model
+trained on one tool can misread another tool's output. We call this a
+\emph{feature-extractor mismatch}. To handle it, we build a \emph{Semantic Feature
+Mapping} (SFM): a statistics-based audit that checks whether a feature from one tool
+truly matches a feature from another in meaning and in scale. Mismatched pairs, such as
+the TCP-window features, are rejected, leaving a nine-feature space shared across tools.
+Using two public datasets (CSE-CIC-IDS2018 and UNSW-NB15) with a lightweight XGBoost
+detector, a single-source model that is accurate within its own network collapses across
+networks; adding only 1\% of labelled target data restores most of the lost accuracy. On
+a small, controlled AWS cloud testbed the false-alarm rate stays low, and few-shot
+calibration recovers detection provided the calibration data reflect the test traffic.
+The cross-network gap is thus largely a distribution-shift problem that can be closed
+cheaply once the feature space is made comparable: the best cross-network MCC rises from
+near zero to 0.659 and 0.900 with 1\% target labels.
 
 \medskip
 \noindent\textbf{Keywords:} network intrusion detection; cross-network
@@ -74,45 +70,43 @@ the collapse---average MCC falling from 0.946 within-dataset to 0.294 cross-data
 \cite{cantone}---but they generally stop at observing it, and they evaluate only
 dataset-to-dataset, without testing on a live network testbed.
 
-This paper targets two deployment-facing gaps that, among the works we surveyed
-(Table~\ref{tab:related}), are seldom addressed together:
-\begin{enumerate}
-  \item \textbf{Feature-extractor mismatch.} Different flow exporters compute the
-  same nominal feature differently; a name-based unified schema silently admits
-  non-comparable pairs. We detect and reject such pairs by an exploratory,
-  statistics-based scale-equivalence audit, and explicitly document directional/unit
-  proxies where exact equivalence is not possible across schemas.
-  \item \textbf{No validation on a live network environment.} Cross-dataset papers
-  measure dataset-to-dataset drops; the surveyed studies do not deploy the mapped model
-  on a live cloud testbed to measure false-alarm behavior and calibration conditions.
-\end{enumerate}
+Two deployment-facing gaps run through the studies we surveyed
+(Table~\ref{tab:related}). They are rarely addressed together.
 
-\paragraph{Core novelty.} The novelty is the \emph{combination} of three complementary
-pieces, which among the studies we surveyed (Table~\ref{tab:related}) are seldom brought
-together: a statistically audited cross-tool Semantic Feature Mapping carried
-\emph{end-to-end to a controlled live cloud testbed (AWS)}---measuring false-alarm rate
-under benign traffic, quantifying a three-domain distribution shift, and evaluating when
-few-shot calibration restores detection. Unified-feature-set work \cite{sarhan}
-standardizes schemas but neither audits each pair for scale-equivalence nor tests on a
-live testbed; cross-dataset studies \cite{cantone,dhooge,verkerken} document the drop
-but offer no live testbed validation or low-cost repair analysis. We bridge both.
+The first is \textbf{feature-extractor mismatch}. Different flow exporters compute the
+same nominal feature in different ways. A unified schema that matches features by name
+therefore admits pairs that are not comparable. We detect such pairs with an exploratory,
+statistics-based scale-equivalence audit and reject them. Where exact equivalence is not
+possible across schemas, we keep the pair but document the directional or unit proxy
+openly.
 
-\paragraph{Contributions.}
-\begin{enumerate}
-  \item A cross-tool SFM with a per-pair unit-corrected exploratory scale-equivalence
-  audit that distinguishes exact semantic equivalents (7 pairs), documented rate proxies
-  with bounded definitional differences (2 pairs: \texttt{src\_load} and
-  \texttt{dst\_load}), and incompatible feature-extractor mismatches (TCP-window
-  features).
-  \item Quantitative evidence of cross-network collapse, and a controlled diagnosis
-  separating feature insufficiency from distribution shift.
-  \item A low-cost repair (1\% target labels, plus an indicative single-seed comparison
-  with cross-dataset mixup) evaluated with 5-seed confidence intervals.
-  \item End-to-end validation on a controlled live AWS cloud testbed: benign false-alarm
-  rate, a quantified three-domain shift, and a two-protocol few-shot evaluation
-  (stratified flow-level vs unseen-attack episode-level) showing that calibration
-  effectiveness depends on target-label representativeness.
-\end{enumerate}
+The second gap is the \textbf{absence of validation on a live network}. Cross-dataset
+papers measure drops from one dataset to another. The surveyed studies do not deploy the
+mapped model on a live cloud testbed, so they never observe its false-alarm behaviour or
+the conditions under which calibration helps.
+
+\paragraph{Core novelty.} What is new here is the \emph{combination}. We carry a
+statistically audited cross-tool Semantic Feature Mapping all the way to a controlled
+live cloud testbed on AWS. There we measure the false-alarm rate under benign traffic,
+quantify a three-domain distribution shift, and test when a small amount of few-shot
+calibration restores detection. Each piece has precedent on its own. Unified-feature-set
+work \cite{sarhan} standardises schemas but audits no pair for scale-equivalence and runs
+on no live testbed. Cross-dataset studies \cite{cantone,dhooge,verkerken} document the
+collapse but offer neither live validation nor a low-cost repair. We join the two lines
+of work.
+
+\paragraph{Contributions.} We make four contributions. First, a cross-tool SFM whose
+per-pair, unit-corrected audit separates seven exact semantic equivalents, two documented
+rate proxies with bounded definitional differences (\texttt{src\_load} and
+\texttt{dst\_load}), and the incompatible TCP-window features it discards. Second,
+quantitative evidence of cross-network collapse, with a controlled diagnosis that
+separates feature insufficiency from distribution shift. Third, a low-cost repair using
+1\% target labels, reported with 5-seed confidence intervals and an indicative
+single-seed comparison against cross-dataset mixup. Fourth, end-to-end validation on the
+live AWS testbed: a benign false-alarm rate, a quantified three-domain shift, and a
+two-protocol few-shot evaluation (stratified flow-level versus unseen-attack
+episode-level) showing that the value of calibration depends on how representative the
+target labels are.
 
 \paragraph{Research questions.} RQ1: can compatible flow features (exact semantic
 equivalents and documented rate proxies) from heterogeneous tools be reliably audited and
@@ -160,10 +154,10 @@ with cheap per-deployment calibration, a different edge-oriented operating point
 head-to-head against deep DA needs a different stack and is left as future work
 (scope stated explicitly, not an unmeasured superiority claim).
 
-\paragraph{Positioning against closest work.} Rather than claim each component is new,
-we position this work as the \emph{combination} of three complementary pieces and
-state precisely what we add to the nearest studies (Table~\ref{tab:related}); we make
-comparative claims only against the studies we surveyed, not as an absolute first.
+\paragraph{Positioning against closest work.} We do not claim that any single component
+is new. We claim the \emph{combination}, and we state what we add to the nearest studies
+(Table~\ref{tab:related}). The comparison is against the studies we surveyed, not an
+absolute first.
 
 \begin{table}[htbp]
 \centering
@@ -830,25 +824,29 @@ $1.62$M CIC and $175{,}341$ UNSW flows. This is a descriptive dispersion measure
 distinct from the per-dataset-train z-score used for modeling.
 
 \section{Discussion and Limitations}
-The findings form a coherent narrative: single-source NIDS collapse cross-network; a
-directly measured distribution shift is a major contributor (not feature insufficiency
-alone, though other dataset-specific factors may also contribute); and minimal
-calibration or mixup recovers performance, confirmed on live AWS traffic.
-\textbf{Limitations:} (a) Model~A combines eight exact semantic equivalents with one
-directional rate proxy (\texttt{Bwd Pkts/s}$\leftrightarrow$\texttt{dload}, matching
-packet-rate to bit-rate because CICFlowMeter omits backward byte/s and UNSW-NB15 omits
-backward packet/s; additionally, in the live AWS extractor, \texttt{src\_load} uses
-unidirectional forward byte/s $\texttt{src2dst\_bytes}/\texttt{dur\_s}$ matching UNSW
-$\texttt{sload}/8$ whereas CIC \texttt{Flow Byts/s} sums bidirectional byte/s). Because
-per-flow packet sizes vary, the \texttt{Bwd Pkts/s}$\leftrightarrow$\texttt{dload} proxy
-cannot be aligned by a constant unit factor and exhibits the largest UNSW variance in
-joint z-space ($9.50$, Table~\ref{tab:dispersion}). While our subset ablation (Section~3,
+Three findings run together. Single-source NIDS collapse across networks. A directly
+measured distribution shift is a major contributor, though feature insufficiency and
+other dataset-specific factors may also play a part. Minimal calibration recovers
+performance, but only when the calibration labels are representative of the target
+environment; we observed this across offline benchmarks and a controlled live AWS cloud
+testbed.
+\textbf{Limitations:} (a) Model~A combines seven exact semantic equivalents with two
+documented rate proxies that are not strictly identical across all three domains. For
+\texttt{src\_load} (\texttt{Flow Byts/s}$\leftrightarrow$\texttt{sload}), UNSW
+$\texttt{sload}/8$ and the live AWS extractor $\texttt{src2dst\_bytes}/\texttt{dur\_s}$
+measure unidirectional forward byte/s, whereas CIC \texttt{Flow Byts/s} sums
+bidirectional byte/s (coinciding only on unidirectional floods). For \texttt{dst\_load}
+(\texttt{Bwd Pkts/s}$\leftrightarrow$\texttt{dload}), CIC and AWS measure backward
+packet/s while UNSW measures backward bit/s, coupled by variable per-flow packet size
+rather than a constant factor. These two proxies exhibit the largest UNSW variances in
+joint z-space ($9.00$ and $9.50$, Table~\ref{tab:dispersion}), and we bound our
+feature-equivalence claims accordingly. While our subset ablation (Section~3,
 Table~\ref{tab:ablation}) shows that transfer performance is sensitive to feature
 composition---with partial positive transfer at $k=3$ ($+0.377$ on CIC$\rightarrow$UNSW,
 where \texttt{dst\_load} is already included) and near-zero transfer across expanded
 subsets $k \in \{5, 7, 9\}$---and 1\% target calibration absorbs the scale discrepancy,
-future work should evaluate a strict eight-feature exact-equivalence subset or re-extract
-raw PCAPs with a unified exporter.
+future work should re-extract raw PCAPs across all domains with a single unified exporter
+to enforce identical directional rate definitions.
 (b) the direction asymmetry is not fully resolved; using a single XGBoost is a deliberate
 edge-efficiency choice (2.9~MB, $439~\mu$s per-flow inference latency on 1~vCPU) rather
 than a limitation, but a head-to-head against deep domain-invariant baselines (DI-NIDS,
