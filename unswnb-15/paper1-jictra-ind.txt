@@ -596,5 +596,28 @@ mixup    interpolasi lintas-dataset tersupervisi memakai label target-train
 
 REFERENSI
 ---------
-(Gaya nomor; sama persis dengan versi Inggris - lihat paper1-jictra.txt untuk daftar
-lengkap 22 entri [1]-[22]. Tidak diterjemahkan karena judul karya tetap dalam Inggris.)
+(Gaya nomor; judul karya tetap dalam bahasa Inggris, identik dengan versi Inggris.)
+
+[1]  Cremer, F., Sheehan, B., Fortmann, M., Kia, A.N., Mullins, M., Murphy, F. & Materne, S., Cyber Risk and Cybersecurity: A Systematic Review of Data Availability, Geneva Papers on Risk and Insurance - Issues and Practice, 47(3), pp. 698-736, 2022.
+[2]  Khraisat, A., Gondal, I., Vamplew, P. & Kamruzzaman, J., Survey of Intrusion Detection Systems: Techniques, Datasets and Challenges, Cybersecurity, 2(1), pp. 1-22, 2019.
+[3]  Buczak, A.L. & Guven, E., A Survey of Data Mining and Machine Learning Methods for Cyber Security Intrusion Detection, IEEE Communications Surveys and Tutorials, 18(2), pp. 1153-1176, 2016.
+[4]  Cantone, M., Marrocco, C. & Bria, A., Machine Learning in Network Intrusion Detection: A Cross-Dataset Generalization Study, IEEE Access, 12, pp. 144491-144509, 2024.
+[5]  D'Hooge, L., Wauters, T., Volckaert, B. & De Turck, F., Inter-dataset Generalization Strength of Supervised Machine Learning Methods for Intrusion Detection, Journal of Information Security and Applications, 54, art. 102564, 2020.
+[6]  Verkerken, M., D'Hooge, L., Wauters, T., Volckaert, B. & De Turck, F., Towards Model Generalization for Intrusion Detection: Unsupervised Machine Learning Techniques, Journal of Network and Systems Management, 30(1), pp. 1-25, 2022.
+[7]  Sarhan, M., Layeghy, S. & Portmann, M., Towards a Standard Feature Set for Network Intrusion Detection System Datasets, Mobile Networks and Applications, 27(1), pp. 357-370, 2022.
+[8]  Shone, N., Ngoc, T.N., Phai, V.D. & Shi, Q., A Deep Learning Approach to Network Intrusion Detection, IEEE Trans. Emerging Topics in Computational Intelligence, 2(1), pp. 41-50, 2018.
+[9]  Wu, Z., Zhang, H., Wang, P. & Sun, Z., RTIDS: A Robust Transformer-based Approach for Intrusion Detection System, IEEE Access, 10, pp. 64375-64387, 2022.
+[10] Husain, A., Salem, A., Jim, C. & Dimitoglou, G., Development of an Efficient Network Intrusion Detection Model Using XGBoost on the UNSW-NB15 Dataset, Proc. IEEE ISSPIT, pp. 1-7, 2019.
+[11] Sarhan, M., Layeghy, S., Moustafa, N. & Portmann, M., NetFlow Datasets for Machine Learning-based Network Intrusion Detection Systems, in Big Data Technologies and Applications, Springer, 2021.
+[12] Engelen, G., Rimmer, V. & Joosen, W., Troubleshooting an Intrusion Detection Dataset: The CICIDS2017 Case Study, Proc. IEEE Security and Privacy Workshops (SPW), pp. 7-12, 2021.
+[13] Rosay, A., Cheval, E., Carlier, F. & Leroux, P., Network Intrusion Detection: A Comprehensive Analysis of CIC-IDS2017, Proc. 8th ICISSP, pp. 25-36, 2022.
+[14] Lanvin, M., Gimenez, P.-F., Han, Y., Majorczyk, F., Me, L. & Totel, E., Errors in the CICIDS2017 Dataset and the Significant Differences in Detection Performances It Makes, Proc. Int. Conf. Risks and Security of Internet and Systems (CRiSIS), pp. 18-33, 2022.
+[15] Liu, L., Engelen, G., Lynar, T., Essam, D. & Joosen, W., Error Prevalence in NIDS Datasets: A Case Study on CIC-IDS-2017 and CSE-CIC-IDS-2018, Proc. IEEE Conf. Communications and Network Security (CNS), pp. 254-262, 2022.
+[16] Catillo, M., Pecchia, A. & Villano, U., Machine Learning on Public Intrusion Datasets: Academic Hype or Concrete Advances in NIDS?, Proc. 53rd IEEE/IFIP Int. Conf. Dependable Systems and Networks (DSN-S), pp. 132-136, 2023.
+[17] Layeghy, S., Gallagher, M. & Portmann, M., Benchmarking the Benchmark - Comparing Synthetic and Real-World Network IDS Datasets, Journal of Information Security and Applications, 80, art. 103689, 2024.
+[18] Sun, B. & Saenko, K., Deep CORAL: Correlation Alignment for Deep Domain Adaptation, Proc. ECCV Workshops, pp. 443-450, 2016.
+[19] Chen, T. & Guestrin, C., XGBoost: A Scalable Tree Boosting System, Proc. 22nd ACM SIGKDD Int. Conf. Knowledge Discovery and Data Mining, pp. 785-794, 2016.
+[20] Sharafaldin, I., Lashkari, A.H. & Ghorbani, A.A., Toward Generating a New Intrusion Detection Dataset and Intrusion Traffic Characterization, Proc. 4th ICISSP, pp. 108-116, 2018.
+[21] Moustafa, N. & Slay, J., UNSW-NB15: A Comprehensive Data Set for Network Intrusion Detection Systems, Proc. Military Communications and Information Systems Conf. (MilCIS), pp. 1-6, 2015.
+[22] Moustafa, N. & Slay, J., The Evaluation of Network Anomaly Detection Systems: Statistical Analysis of the UNSW-NB15 Data Set and the Comparison with the KDD99 Data Set, Information Security Journal, 25(1-3), pp. 18-31, 2016.
+
