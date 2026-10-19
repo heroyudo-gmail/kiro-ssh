@@ -561,57 +561,40 @@ performance.}
 \label{fig:fewshot}
 \end{figure}
 
-\section{Real-Traffic Validation on AWS (RQ5)}
-We deploy the SFM-aligned detector on live AWS cloud traffic (two EC2 instances in
-\texttt{ap-southeast-1} inside a private VPC, capturing raw packets via
-\texttt{tcpdump} into NFStream to extract the 9 SFM features), the step prior
-cross-dataset work omits. During live pipeline engineering and code verification
-(\texttt{aws/unsw\_extract\_infer.py}, lines 46--65), we audited how each of the 9 SFM
-features is constructed from NFStream outputs to match the CIC-trained deployment scaler
-(\texttt{deploy\_meta\_9feat.json}):
-(i) \emph{Duration vs rate-denominator units:} NFStream reports flow duration as
-\texttt{bidirectional\_duration\_ms} in milliseconds and exports raw directional byte and
-packet counters (\texttt{src2dst\_bytes}, \texttt{dst2src\_bytes},
-\texttt{src2dst\_packets}, \texttt{dst2src\_packets}) rather than pre-computed
-CIC-equivalent rate columns. Because the offline CIC scaler expects \texttt{duration}
-(\texttt{Flow Duration}) in microseconds but rate features with a per-second denominator,
-the script explicitly constructs two separate duration variables:
-$\texttt{dur\_feat\_us} = \texttt{dur\_ms} \times 1000.0$ (microseconds) for the
-\texttt{duration} feature, and $\texttt{dur\_s} = \texttt{dur\_ms} / 1000.0$ (seconds,
-mapping $0$ to $\mathrm{NaN}/0$ to avoid division by zero) as the divisor for
-$\texttt{src\_load} = \texttt{src2dst\_bytes} / \texttt{dur\_s}$ and
-$\texttt{dst\_load} = \texttt{dst2src\_packets} / \texttt{dur\_s}$.
-(ii) \emph{Verification against double conversion and directional definitions:} Direct
-inspection of the exported capture files (e.g.,
-\texttt{notebooks/aws\_labeled/detect\_clean\_flows.csv}, row~1:
-$\texttt{dur\_ms} = 60{,}058\text{ ms} \rightarrow \texttt{duration} = 60{,}058{,}000.0\ \mu\text{s}$,
-$\texttt{fwd\_bytes} = 912 \rightarrow \texttt{src\_load} = 912 / 60.058 = 15.1853\text{ B/s}$,
-$\texttt{bwd\_pkts} = 9 \rightarrow \texttt{dst\_load} = 9 / 60.058 = 0.1499\text{ pkts/s}$;
-and downstream scripts \texttt{21\_dataset\_shift.ipynb} and
-\texttt{22\_aws\_fewshot.ipynb}) confirms that these columns are ingested directly without
-any secondary unit conversion. Directionally, \texttt{dst\_load}
-($\texttt{dst2src\_packets} / \texttt{dur\_s}$) matches CIC \texttt{Bwd Pkts/s} in both
-unit (packets/s) and backward direction; for \texttt{src\_load},
-\texttt{unsw\_extract\_infer.py} computes unidirectional forward byte rate
-($\texttt{src2dst\_bytes} / \texttt{dur\_s}$ in bytes/s), which matches UNSW
-$\texttt{sload} / 8$ in both unit and direction, whereas CICFlowMeter's
-\texttt{Flow Byts/s} (used because the 68-feature CSE-CIC-IDS2018 schema omits a separate
-\texttt{Fwd Byts/s} column) sums bidirectional bytes/s
-($(\texttt{TotLen Fwd Pkts} + \texttt{TotLen Bwd Pkts}) / \texttt{Flow Duration}$). On
-unidirectional floods (e.g., SYN/UDP floods where backward bytes are zero) the two
-coincide, whereas on bidirectional flows $\texttt{src2dst\_bytes} / \texttt{dur\_s}$
-represents the forward component. Across the two-phase field evaluation, we establish
-three consistent findings:
+\section{Live Cloud Testbed Validation on AWS (RQ5)}
+We evaluate the SFM-aligned detector on a controlled live AWS cloud testbed (two EC2
+instances in \texttt{ap-southeast-1} inside an isolated private VPC, capturing raw
+packets via \texttt{tcpdump} into NFStream to extract the 9 SFM features), a live-testbed
+step omitted by the surveyed cross-dataset studies (Table~\ref{tab:related}). We frame
+this experiment explicitly as a controlled live cloud testbed validation rather than a
+broad multi-network production deployment: all traffic is generated between two instances
+in a single VPC, and attack ground truth is assigned from the scheduled execution
+timeline. During pipeline engineering, we aligned each of the 9 SFM features extracted
+from NFStream to the CIC-trained deployment scaler. Two alignment points matter. First,
+units: NFStream reports duration in milliseconds and raw directional byte/packet
+counters, so we express duration in microseconds (to match CICFlowMeter) and compute the
+rate features with a per-second denominator (guarding against division by zero), applied
+once with no secondary rescaling downstream. Second, directional scope: seven features
+(\texttt{duration}, \texttt{fwd\_pkts}, \texttt{bwd\_pkts}, \texttt{fwd\_bytes},
+\texttt{bwd\_bytes}, \texttt{fwd\_mean}, \texttt{bwd\_mean}) are defined identically
+across CIC, UNSW, and AWS, whereas the two rate proxies carry the bounded differences
+documented in Section~3---notably, AWS \texttt{src\_load} measures forward byte-rate while
+CICFlowMeter \texttt{Flow Byts/s} is bidirectional, so \texttt{src\_load} is not strictly
+identical across all three domains (coinciding only on unidirectional floods). We treat
+this as a methodological limitation when interpreting zero-shot and CIC+AWS transfer.
+Across the two-phase testbed evaluation, we establish three findings:
 
 \begin{enumerate}
-  \item \textbf{Phase 1: Stable under benign traffic.} Across three cumulative monitoring
-  windows on the live target server (3~min, 1~h, and 6~h; Table~\ref{tab:far}),
-  false-alarm rate stays below 0.5\% without temporal drift ($0.00\%$ at 3~min over $203$
-  flows; $0.38\%$ at 1~h over $3{,}687$ flows; $0.42\%$ over $22{,}644$ flows at 6~h,
-  Wilson CI$_{95\%}$ $[0.34\%, 0.51\%]$). While a low benign FAR does not by itself prove
-  the absence of all scaling or directional discrepancies across every feature or attack
-  regime, the observed benign-traffic FAR supports the effectiveness of the duration- and
-  rate-unit alignment in the evaluated AWS setup.
+  \item \textbf{Phase 1: Initial operational stability under benign testbed traffic.}
+  Across three cumulative monitoring windows on the live target server (3~min, 1~h, and
+  6~h; Table~\ref{tab:far}), false-alarm rate stays below 0.5\% without temporal drift
+  ($0.00\%$ at 3~min over $203$ flows; $0.38\%$ at 1~h over $3{,}687$ flows; $0.42\%$ over
+  $22{,}644$ flows at 6~h, Wilson CI$_{95\%}$ $[0.34\%, 0.51\%]$). While this 6-hour
+  single-VPC testbed run does not represent the application diversity of multi-network
+  production traffic and does not by itself prove the absence of all scaling or
+  directional discrepancies across every feature, the observed benign-traffic FAR
+  supports the effectiveness of the duration- and rate-unit alignment in the evaluated
+  AWS testbed setup.
 
   \item \textbf{Phase 2: Zero-shot does not transfer, explained by three-domain shift.}
   When controlled attacks are launched from the attacker instance under two traffic
@@ -642,21 +625,40 @@ three consistent findings:
   three domains are pairwise separable with domain-classifier accuracy $\ge 0.990$ and
   Proxy $\mathcal{A}$-distance $\ge 1.961$.
 
-  \item \textbf{Cheaply repairable via few-shot calibration.} On the stratified 60\%/40\%
-  live evaluation split (held-out AWS-test: $7{,}049$ attack and $53$ benign flows),
-  mixing just 1\% of target AWS-train labels (approximately $107$ flows) with UNSW-NB15
-  lifts MCC from $0.074$ (zero-shot) to $0.490$, and 10--20\% target labels reaches
-  $0.588$--$0.596$, matching the AWS-only in-domain upper reference of $0.598$
-  (Table~\ref{tab:rtfewshot}, Figure~\ref{fig:awsfewshot}). Consistent with the offline
-  asymmetry, UNSW+AWS adapts faster than CIC+AWS (which rises from $-0.217$ to $0.132$ at
-  1\% and $0.456$ at 20\%) because UNSW's broader feature support better covers the live
-  cloud traffic. We report MCC because AWS-test is approximately 99\% attack, where F1
-  ($>0.99$) would be misleadingly high.
+  \item \textbf{Few-shot calibration on the AWS testbed: non-monotonic trajectories and
+  dependence on target-label representativeness.} Evaluating two distinct splitting
+  protocols (Table~\ref{tab:rtfewshot}, Figure~\ref{fig:awsfewshot}) reveals that adding
+  target labels does not monotonically improve generalization; instead, calibration
+  effectiveness depends critically on whether the calibration samples are representative
+  of the test traffic. Under the stratified 60\%/40\% flow-level split
+  (Table~\ref{tab:rtfewshot}a, held-out AWS-test: $7{,}049$ attack and $53$ benign flows,
+  where calibration samples cover all attack types present in the session), mixing 1\% of
+  target AWS-train labels ($\sim 107$ flows) with UNSW-NB15 lifts MCC from $0.074$
+  (zero-shot) to $0.490$, dips slightly to $0.479$ at 5\% ($\sim 532$ flows), and rises to
+  $0.588$ at 10\% and $0.596$ at 20\%, matching the AWS-only in-domain reference of
+  $0.598$. The CIC+AWS trajectory is more strongly non-monotonic ($-0.217$ at 0\%
+  $\rightarrow 0.132$ at 1\% $\rightarrow 0.370$ at 5\% $\rightarrow 0.207$ at 10\%
+  $\rightarrow 0.456$ at 20\%), reflecting competition between the large, poorly aligned
+  CIC source mass (including the bidirectional vs forward \texttt{src\_load} difference)
+  and small target sample variance under heavy test imbalance ($\sim 99\%$ attack, which
+  is why we report MCC rather than F1). Under the stricter episode-level split
+  (Table~\ref{tab:rtfewshot}b, calibrating solely on early \{\texttt{BruteForce, DoS}\}
+  episodes plus first-half benign flows, and testing on the unseen late \{\texttt{DDoS}\}
+  episode of $121$ attack $+ 83$ benign $= 204$ flows, with 1{,}000-resample bootstrap
+  95\% CIs), UNSW zero-shot already achieves $\mathrm{MCC} = 0.579\ [0.46, 0.70]$ (whereas
+  CIC zero-shot remains at $-0.220\ [-0.34, -0.08]$), and adding few-shot labels from
+  \{\texttt{BruteForce, DoS}\} reduces MCC to $0.523\ [0.40, 0.64]$ at 5\% and
+  $0.420\ [0.29, 0.54]$ at 20\% (converging to the episode-trained AWS-only bound of
+  $0.418\ [0.29, 0.54]$). This decline occurs because calibrating exclusively on low-rate,
+  long-duration BruteForce/Slowloris flows shifts tree splits away from the high-rate
+  unseen DDoS regime. The two protocols point to the same condition. Few-shot calibration
+  helps when the calibration sample resembles the target evaluation conditions. When it
+  does not, it can even degrade transfer to unseen attack regimes.
 \end{enumerate}
 
 \begin{table}[htbp]
 \centering
-\caption{Phase~1 live AWS benign-traffic false-alarm rate (FAR) and Wilson-score 95\%
+\caption{Phase~1 live AWS testbed benign-traffic false-alarm rate (FAR) and Wilson-score 95\%
 confidence intervals across cumulative monitoring durations.}
 \label{tab:far}
 \footnotesize
@@ -674,7 +676,7 @@ D2 (long window)   & 6 h   & $22{,}644$& $94$ & $0.4152$ & $[0.34, 0.51]$ \\
 \begin{table}[htbp]
 \centering
 \caption{Pairwise three-domain distribution shift across CSE-CIC-IDS2018 ($1.62$M flows),
-UNSW-NB15 ($172{,}684$ flows), and live AWS traffic ($44{,}287$ flows) in the
+UNSW-NB15 ($172{,}684$ flows), and live AWS testbed traffic ($44{,}287$ flows) in the
 unit-corrected pooled (shared) $z$-space (arithmetic mean of 1D $W_1$ across the 9 SFM
 features).}
 \label{tab:rtshift}
@@ -694,28 +696,14 @@ UNSW vs AWS-real & $0.372$ & $0.998$ & $1.993$ \\
 \centering
 \includegraphics[width=0.68\textwidth]{figure-q1/fig_shift_wasserstein.png}
 \caption{Mean pairwise 1-Wasserstein distance ($W_1$) across the nine SFM features among
-CSE-CIC-IDS2018, UNSW-NB15, and live AWS traffic after unit correction, highlighting
+CSE-CIC-IDS2018, UNSW-NB15, and live AWS testbed traffic after unit correction, highlighting
 substantial three-way domain divergence.}
 \label{fig:wass}
 \end{figure}
 
-To test robustness against temporal adjacency and unseen attack categories, we also
-evaluate a stricter episode-level split (training on early \{\texttt{BruteForce, DoS}\}
-episodes plus first-half benign flows; testing on unseen late \{\texttt{DDoS}\} episode of
-$121$ attack $+ 83$ benign $= 204$ flows, with 1{,}000-resample bootstrap 95\% CIs;
-Table~\ref{tab:rtfewshot} bottom panel). Under this stricter split, UNSW zero-shot already
-achieves $\mathrm{MCC} = 0.579\ [0.46, 0.70]$ (whereas CIC zero-shot remains at
-$-0.220\ [-0.34, -0.08]$), and adding few-shot labels from \{\texttt{BruteForce, DoS}\}
-yields $0.523\ [0.40, 0.64]$ at 5\% and $0.420\ [0.29, 0.54]$ at 20\% (matching AWS-only
-at $0.418\ [0.29, 0.54]$), because adapting solely on low-rate BruteForce/Slowloris pulls
-tree thresholds away from high-rate DDoS. We therefore present the flow-level operating
-point as practical when representative target samples are included, while the offline
-cross-network experiments (Section~5) provide the primary multi-seed proof of low-cost
-adaptation.
-
 \begin{table}[htbp]
 \centering
-\caption{Few-shot domain calibration on live AWS traffic (MCC). Top panel: stratified
+\caption{Few-shot domain calibration on live AWS testbed traffic (MCC). Top panel: stratified
 flow-level split (held-out test: $7{,}049$ attack, $53$ benign). Bottom panel: stricter
 episode-level split (train \{\texttt{BruteForce, DoS}\} $\rightarrow$ test unseen
 \{\texttt{DDoS}\}: $121$ attack, $83$ benign, with 1{,}000-resample bootstrap 95\% CIs).}
@@ -747,7 +735,7 @@ AWS-only (episode train)    & $0.418$  & $[0.29, 0.54]$   & Trained on BruteForc
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.72\textwidth]{figure-q1/aws_fewshot_curve.png}
-\caption{Few-shot domain calibration curve on live AWS traffic (MCC vs percentage of
+\caption{Few-shot domain calibration curve on the live AWS testbed (stratified flow-level split, MCC vs percentage of
 target AWS training flows) for UNSW+AWS and CIC+AWS compared against the in-domain
 AWS-only upper reference ($0.598$).}
 \label{fig:awsfewshot}
@@ -757,17 +745,11 @@ AWS-only upper reference ($0.598$).}
 \paragraph{Model, training, and edge efficiency profile.} XGBoost (\texttt{max\_depth}=8,
 \texttt{learning\_rate}=0.1, \texttt{n\_estimators}=200,
 \texttt{subsample}=\texttt{colsample\_bytree}=0.8), scikit-learn with stratified
-train/test splits. Primary metric MCC (robust to class imbalance). Model~A uses the 9 SFM
-features (8 exact semantic equivalents $+$ 1 directional rate proxy). Benchmarked on a
-single CPU core (1~vCPU, single-thread, batch size $= 1$ over $2{,}000$ flows) to reflect
-an edge sensor or lightweight VM budget, the serialized 9-feature binary model occupies
-2.9~MB, achieves a per-flow inference latency of $439~\mu$s mean ($434~\mu$s median, SD
-$23~\mu$s), and sustains an incremental single-core throughput of approximately
-$2{,}276$~flows/s (scaling near-linearly to $18{,}000$--$35{,}000$~flows/s across 8--16
-cores).
+train/test splits. Primary metric MCC (robust to class imbalance). Model~A uses the 9 SFM features (7 exact semantic equivalents $+$ 2 documented rate proxies). Benchmarked on a
+single CPU core (1~vCPU, single-thread \texttt{nthread}=1, batch size $= 1$ over $1{,}980$ flows; \texttt{model\_efficiency.json}) to reflect an edge sensor or lightweight VM budget, the serialized 9-feature binary model occupies 2.9~MB ($2{,}961.8$~KB), achieves a per-flow inference latency of $439.3~\mu$s mean ($434.2~\mu$s median, SD $22.9~\mu$s), and sustains a directly measured incremental single-core throughput of $2{,}276$~flows/s. Because per-flow tree scoring is independent across flows, multi-core throughput is estimated via linear extrapolation at approximately $18{,}000$--$35{,}000$~flows/s across 8--16 cores (an analytical scaling estimate rather than a direct multi-core measurement).
 
 \paragraph{Class-imbalance handling (no resampling).} (i) metric: MCC throughout;
-(ii) cost weighting: real-traffic few-shot models set \texttt{scale\_pos\_weight} to
+(ii) cost weighting: live-testbed few-shot models set \texttt{scale\_pos\_weight} to
 the negative/positive ratio. We avoid SMOTE/oversampling to keep the cross-network
 comparison free of resampling confounds.
 
@@ -797,24 +779,22 @@ Wilson-score 95\% CIs; the stricter episode-level AWS split uses bootstrap 95\% 
 exactly $1{,}348{,}453$ normal and $274{,}808$ attack, so the negative cross-network
 MCC is genuine, not a labeling artifact.
 
-\paragraph{AWS real-traffic protocol.} Region \texttt{ap-southeast-1}, 2 EC2 in a
-private VPC (attacker + target/analyzer); capture via \texttt{tcpdump}$\to$NFStream
-(9 SFM features; in \texttt{aws/unsw\_extract\_infer.py} lines 46--65, NFStream's
-\texttt{bidirectional\_duration\_ms} is multiplied by $1{,}000$ to \texttt{dur\_feat\_us}
-for the \texttt{duration} feature to match CICFlowMeter microseconds, while
-$\texttt{dur\_s} = \texttt{bidirectional\_duration\_ms} / 1{,}000$ in seconds is used once
-as the divisor for $\texttt{src\_load} = \texttt{src2dst\_bytes} / \texttt{dur\_s}$ in
-bytes/s and $\texttt{dst\_load} = \texttt{dst2src\_packets} / \texttt{dur\_s}$ in
-packets/s, with no secondary rescaling in downstream evaluation scripts). Benign-only
-monitoring accumulates up to $22{,}644$ flows at 6~h (FAR drift, Table~\ref{tab:far}). The
-attack session yields $17{,}753$ labeled flows ($17{,}620$ attack, $133$ benign) across a
-scheduled timeline (benign$\to$BruteForce$\to$Slowloris$\to$SYN flood$\to$benign), labeled
-from the timeline. AWS-test split: $7{,}049$ attack and $53$ benign (held-out, never
-trained). \emph{Limitation:} the benign sample on the attack-session test is small ($53$
-flows), so AWS-test is $\approx 99\%$ attack; we therefore report MCC (not F1) and treat
-AWS few-shot gains as protocol-dependent. The episode-level split (train
-\{\texttt{BruteForce, DoS}\}, test \{\texttt{DDoS}\}) uses $204$ flows ($121$ DDoS, $83$
-benign).
+\paragraph{AWS cloud testbed protocol (stated transparently).} Region
+\texttt{ap-southeast-1}, 2 EC2 instances in an isolated private VPC (attacker +
+target/analyzer). Capture via \texttt{tcpdump}$\to$NFStream (9 SFM features), with
+duration expressed in microseconds and the two rate features computed once with a
+per-second denominator to match the CIC-trained scaler (no secondary rescaling
+downstream; see Section~6). Benign-only monitoring accumulates up to $22{,}644$ flows at
+6~h (for FAR drift, Table~\ref{tab:far}). The attack session yields $17{,}753$ labeled
+flows ($17{,}620$ attack, $133$ benign) across a scheduled timeline
+(benign$\to$BruteForce$\to$Slowloris$\to$SYN flood$\to$benign), labeled from the timeline.
+AWS-test split: $7{,}049$ attack and $53$ benign (held-out, never trained).
+\emph{Limitations of testbed external validity:} (i) traffic is generated within a single
+controlled VPC (2 EC2 instances) with timeline-derived labels rather than multi-tenant
+production networks; (ii) the benign sample on the attack-session test is small ($53$
+flows, $\approx 99\%$ attack), so we report MCC (not F1); and (iii) few-shot recovery
+depends on whether calibration samples represent the test attack regime
+(Table~\ref{tab:rtfewshot}a vs \ref{tab:rtfewshot}b).
 
 \paragraph{Domain-variance computation (context for Table~\ref{tab:dispersion}).} The
 per-feature variances are computed in a \emph{single joint} z-score space (both
@@ -847,13 +827,23 @@ where \texttt{dst\_load} is already included) and near-zero transfer across expa
 subsets $k \in \{5, 7, 9\}$---and 1\% target calibration absorbs the scale discrepancy,
 future work should re-extract raw PCAPs across all domains with a single unified exporter
 to enforce identical directional rate definitions.
-(b) the direction asymmetry is not fully resolved; using a single XGBoost is a deliberate
-edge-efficiency choice (2.9~MB, $439~\mu$s per-flow inference latency on 1~vCPU) rather
-than a limitation, but a head-to-head against deep domain-invariant baselines (DI-NIDS,
-DANN) needs a different stack and is future work. Adversarial robustness is deliberately
-scoped out: preliminary results show adversarial training improves in-domain evasion
-robustness but does not close the cross-network gap---confirming the two problems need
-different solutions.
+(b) Non-monotonicity and representativeness of few-shot calibration: on the AWS testbed,
+few-shot calibration is not strictly monotonic on the flow-level split
+(Table~\ref{tab:rtfewshot}a) and declines on the episode-level split when calibrated
+solely on \{\texttt{BruteForce, DoS}\} and tested on unseen \{\texttt{DDoS}\}
+(Table~\ref{tab:rtfewshot}b, $0.579 \rightarrow 0.420$); furthermore, offline mixup was
+evaluated only on seed 42, limiting multi-seed comparisons to the few-shot, CORAL, and
+baseline runs.
+(c) External validity of the cloud testbed and model scope: the live AWS experiments were
+conducted in a controlled two-instance single-region testbed with timeline-based labeling
+rather than diverse multi-organization production traffic. Finally, the direction
+asymmetry is not fully resolved, and using a single XGBoost is a deliberate
+edge-efficiency choice (2.9~MB, $439.3~\mu$s measured single-core latency on 1~vCPU)
+rather than a universal model claim; a head-to-head against deep domain-invariant
+baselines (DI-NIDS, DANN) needs a different stack and is future work. Adversarial
+robustness is deliberately scoped out: preliminary results show adversarial training
+improves in-domain evasion robustness but does not close the cross-network gap---confirming
+the two problems need different solutions.
 
 \begin{table}[htbp]
 \centering
@@ -881,14 +871,21 @@ Bwd Pkts/s       & $0.01$ & $9.50$ \\
 \end{table}
 
 \section{Conclusion and Future Work}
-We presented a statistically audited cross-tool Semantic Feature Mapping. Among the
-cross-dataset NIDS studies we surveyed, this work is one of the few to validate the full
-recipe on live AWS traffic: stable false-alarm behavior, a quantified three-domain
-distribution shift, and few-shot recovery at minimal labeling cost. Future work:
-online/streaming continuous adaptation with drift detection; automated few-shot labeling
-(active learning, SIEM/SOC integration) with a trusted-holdout guardrail; robust
-ensembles under edge budgets; and multi-class attack-category extension. Adversarial
-robustness is pursued in a separate study.
+We presented an exploratory, statistics-based cross-tool Semantic Feature Mapping
+(7 exact semantic equivalents and 2 documented rate proxies) and evaluated it across
+offline benchmarks and a controlled live AWS cloud testbed. Single-source models collapse
+cross-network (5-seed mean MCC $-0.074$ and $-0.094$) primarily due to distribution shift
+(domain-classifier accuracy $\ge 0.990$), while 1\% target labels restores offline
+cross-network MCC to $0.659$ and $0.900$. On the AWS cloud testbed, benign false-alarm
+rate remains below 0.5\% over 6 hours, and few-shot calibration restores detection from
+$0.074$ to $0.490$--$0.596$ when calibration labels are representative of the test traffic
+(stratified flow-level split), whereas episode-level evaluation on unseen DDoS shows that
+calibrating on non-representative attack types does not improve transfer. Future work:
+re-extracting benchmark PCAPs with a unified flow exporter to eliminate rate-proxy
+definitional differences; online/streaming adaptation with drift detection across
+multi-tenant production networks; automated active-learning/SIEM labeling with a
+trusted-holdout guardrail; and multi-class extensions. Adversarial robustness is pursued
+in a separate study.
 
 \section*{Acknowledgements}
 The authors thank Politeknik Elektronika Negeri Surabaya (PENS) for computing

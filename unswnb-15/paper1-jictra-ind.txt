@@ -299,6 +299,15 @@ namun di sini diukur pada ruang fitur ter-SFM, menyingkirkan mismatch skema sepe
 sebagai penyebab. Kami memakai MCC sebagai metrik utama (Pers. 4) karena tahan terhadap
 imbalance kelas berat.
 
+[GAMBAR 1 - Keruntuhan Generalisasi Dalam-Domain vs Lintas-Dataset]
+  File sumber : d:\coding\kiro-ssh\unswnb-15\figure-q1\fig1_generalization_gap.png
+                (opsional matriks konfusi pendukung di figure-q1/confusion_CIC.png dan
+                figure-q1/confusion_UNSW.png)
+  Caption     : Gambar 1. Performa deteksi (MCC) dalam-domain versus lintas-dataset untuk
+                Model A (9 fitur SFM) dan Model B (11 fitur). Performa dalam-domain tinggi
+                (0,913 pada CSE-CIC-IDS2018; 0,745 pada UNSW-NB15) runtuh mendekati nol
+                ketika dievaluasi lintas-jaringan di kedua arah.
+
 TABEL 4. Baseline lintas-dataset (MCC). Kolom melaporkan satu run representatif (seed 42)
 per model untuk membandingkan himpunan fitur Model A vs B. Baseline lintas-jaringan
 rerata-5-seed (seed {42,1,7,123,2024}, selang-t 95%, df=4) ada di TABEL 5 (baris 0%):
@@ -329,6 +338,12 @@ mengindikasikan pergeseran distribusi adalah kontributor UTAMA kegagalan lintas-
 meski faktor lain spesifik-dataset (beda taksonomi label, komposisi serangan, artefak
 dataset, dan dua pendekatan proksi-laju) mungkin ikut berperan.
 
+[GAMBAR 2 - Perbandingan Strategi Penyelarasan Lintas-Jaringan]
+  File sumber : d:\coding\kiro-ssh\unswnb-15\figure-q1\fig3_alignment.png
+  Caption     : Gambar 2. Perbandingan strategi penyelarasan lintas-jaringan (MCC):
+                baseline lintas-dataset sumber-tunggal, penyelarasan kovarians CORAL tak
+                tersupervisi, dan joint training tersupervisi pada ruang SFM 9-fitur.
+
 5. PEMULIHAN BERBIAYA-RENDAH (RQ4)
 ----------------------------------
 Kalibrasi minimal memulihkan deteksi lintas-jaringan: hanya 1% label target-network
@@ -356,6 +371,13 @@ rerata-5-seed. Mixup dievaluasi seed 42 saja (indikatif).
   10% few-shot               0,691  +/- 0,018 [0,669, 0,714]      0,911  +/- 0,001 [0,910, 0,913]
   Mixup (target train)*      0,680  (seed 42)                     0,798  (seed 42)
   Joint training (acuan)     0,730  +/- 0,004 [0,726, 0,735]      0,913  +/- 0,001 [0,912, 0,914]
+
+[GAMBAR 3 - Kurva Kalibrasi Few-Shot Target Offline]
+  File sumber : d:\coding\kiro-ssh\unswnb-15\figure-q1\fig2_fewshot_curve.png
+  Caption     : Gambar 3. Kurva kalibrasi few-shot lintas-jaringan offline (MCC vs
+                persentase label latih target) untuk CIC->UNSW dan UNSW->CIC atas lima
+                seed acak. Bahkan 1% label target memulihkan sebagian besar performa
+                deteksi dalam-domain yang dapat dicapai.
 
 6. VALIDASI TESTBED CLOUD NYATA PADA AWS (RQ5)
 ----------------------------------------------
@@ -386,15 +408,19 @@ TABEL 6. FAR trafik benign testbed AWS Fase 1 + selang Wilson 95% lintas durasi 
   D2 (jendela panjang) 6 jam    22.644        94                 0,4152    [0,34, 0,51]
 
 (2) Fase 2: zero-shot tidak transfer, dijelaskan pergeseran tiga-domain. Saat serangan
-terkontrol diluncurkan (profil "clean" 200 pps; 434 flow, dan "volumetric" 5.000 pps;
-17.319 flow; total 17.753 flow), model zero-shot yang dilatih hanya pada tolok ukur
-offline gagal mendeteksi serangan nyata ("clean" MCC=0,0265; "volumetric" MCC=0,0007;
-held-out split zero-shot MCC=0,074 untuk UNSW dan -0,217 untuk CIC). Akar fisiknya: sesi
-serangan AWS (Slowloris/SSH brute-force yang terbuka melintasi timeout NFStream) punya
-median durasi flow 64,03 s vs rerata latih offline 12,18 s, menekan fitur laju arah
-tiga-empat orde besaran, sementara respons HTTP cloud menghasilkan ukuran-paket-mundur
-jauh lebih besar (bwd_mean median 351 B di AWS vs 66 B CIC dan 44 B UNSW, W1 satu-fitur
-1,16). Analisis tiga-domain (Tabel 7, Gambar 4) atas 1,62 jt CIC, 172.684 UNSW, 44.287
+terkontrol diluncurkan dari instans penyerang di bawah dua profil trafik - "clean" (SSH
+brute-force intensitas-rendah, Slowloris, SYN flood 200 pps; 434 flow: 333 attack, 101
+benign) dan "volumetric" (SYN flood laju-tinggi 5.000 pps plus HTTP dan UDP flood; 17.319
+flow: 17.287 attack, 32 benign; sesi gabungan 17.753 flow) - model zero-shot yang dilatih
+hanya pada tolok ukur offline gagal mendeteksi serangan nyata ("clean" MCC=0,0265,
+Recall=0,003, F1=0,006; "volumetric" MCC=0,0007, Recall=0,0003, F1=0,0006; held-out split
+zero-shot MCC=0,074 untuk UNSW dan -0,217 untuk CIC). Akar fisiknya: sesi serangan AWS
+(Slowloris/SSH brute-force yang terbuka melintasi timeout NFStream) punya median durasi
+flow 64,03 s vs rerata latih offline 12,18 s, yang menekan fitur laju arah tiga-empat
+orde besaran (src_load nyata median 15,58 vs rerata latih offline 255.117; dst_load nyata
+median 0,12 vs rerata latih offline 15.260), sementara respons HTTP cloud menghasilkan
+ukuran-paket-mundur jauh lebih besar (bwd_mean median 351 B di AWS vs 66 B CIC dan 44 B
+UNSW, W1 satu-fitur 1,16). Analisis tiga-domain (Tabel 7, Gambar 4) atas 1,62 jt CIC, 172.684 UNSW, 44.287
 flow AWS nyata - setelah penyelarasan satuan lintas-ekstraktor eksplisit - mengonfirmasi
 ketiga domain terpisah berpasangan dengan akurasi domain-classifier >= 0,990 dan Proxy
 A-distance >= 1,961.
@@ -405,6 +431,13 @@ flow) di ruang-z bersama terkoreksi-satuan (rerata W1 1D atas 9 fitur SFM).
   CIC vs UNSW          0,317                 0,990                1,961
   CIC vs AWS-nyata     0,230                 0,994                1,975
   UNSW vs AWS-nyata    0,372                 0,998                1,993
+
+[GAMBAR 4 - Perbandingan Pergeseran 1-Wasserstein Tiga-Domain]
+  File sumber : d:\coding\kiro-ssh\unswnb-15\figure-q1\fig_shift_wasserstein.png
+  Caption     : Gambar 4. Rerata jarak 1-Wasserstein berpasangan (W1) atas sembilan fitur
+                SFM di antara CSE-CIC-IDS2018, UNSW-NB15, dan trafik testbed AWS nyata
+                setelah koreksi satuan, menyoroti divergensi domain tiga-arah yang
+                substansial.
 
 (3) Kalibrasi few-shot pada testbed AWS: lintasan non-monoton dan ketergantungan pada
 keterwakilan label-target. Dua protokol split (Tabel 8, Gambar 5):
@@ -432,11 +465,27 @@ episode-level lebih ketat (latih {BruteForce, DoS}, uji {DDoS} tak-terlihat: 121
   [Panel B - episode UNSW] 0%:0,579  5%:0,523  20%:0,420  (AWS-only episode 0,418)
   [Panel B - episode CIC]  0%:-0,220
 
+[GAMBAR 5 - Kurva Kalibrasi Domain Few-Shot pada Testbed AWS Nyata]
+  File sumber : d:\coding\kiro-ssh\unswnb-15\figure-q1\aws_fewshot_curve.png
+                (opsional diagram arsitektur deployment di
+                figure-q1/fig6_deployment_blueprint.png)
+  Caption     : Gambar 5. Kurva kalibrasi domain few-shot pada testbed AWS nyata (split
+                flow-level stratified, MCC vs persentase flow latih target AWS) untuk
+                UNSW+AWS dan CIC+AWS dibandingkan terhadap acuan atas dalam-domain
+                AWS-only (0,598).
+
 6.1 PENGATURAN EKSPERIMEN DAN REPRODUKSIBILITAS
 -----------------------------------------------
 Model & pelatihan. XGBoost (max_depth=8, learning_rate=0,1, n_estimators=200,
 subsample=colsample_bytree=0,8), scikit-learn dengan split stratified. Metrik utama MCC.
-Model A = 9 fitur SFM; model biner final 2,9 MB (200 pohon, kedalaman 8).
+Model A = 9 fitur SFM (7 padanan semantik eksak + 2 proksi laju terdokumentasi). Diukur
+langsung pada satu inti CPU (1 vCPU, single-thread nthread=1, batch=1 atas 1.980 flow;
+model_efficiency.json) untuk mencerminkan anggaran sensor edge/VM ringan, model biner
+9-fitur terserialisasi menempati 2,9 MB (2.961,8 KB), mencapai latensi inferensi per-flow
+439,3 us rerata (434,2 us median, SD 22,9 us), dan mempertahankan throughput inti-tunggal
+inkremental terukur 2.276 flow/s. Karena skoring pohon per-flow independen antar-flow,
+throughput multi-inti diestimasi via ekstrapolasi linear sekitar 18.000-35.000 flow/s pada
+8-16 inti (estimasi penskalaan analitis, bukan pengukuran multi-inti langsung).
 
 Penanganan imbalance (tanpa resampling). (i) metrik MCC; (ii) pembobotan biaya:
 scale_pos_weight = rasio negatif/positif; hindari SMOTE agar perbandingan lintas-jaringan
