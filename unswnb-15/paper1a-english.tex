@@ -54,43 +54,31 @@ Intrusion Detection}
 
 \begin{abstract}
 Machine-learning-based network intrusion detection systems (NIDS) attain
-near-perfect accuracy when trained and tested on the same network, yet their
-ability to generalize across networks is rarely evaluated systematically. The
-contribution of this paper is \emph{not} another off-the-shelf classifier on a
-benchmark, but a \emph{methodology} for diagnosing and repairing cross-network
-generalization, together with its validation on real cloud traffic. This paper
-investigates two intertwined problems in practical NIDS: (1) the failure to
-generalize across networks, and (2) \emph{feature-extractor mismatch} --- the
-often-overlooked but operationally common situation where the same nominal feature
-is computed differently by different flow-export tools (e.g., CICFlowMeter vs.\
-Argus/Bro), a real obstacle whenever a model trained on one tool's output is
-deployed behind another. Using a deliberately cross-source dataset pair ---
-CSE-CIC-IDS2018 (68 features, CICFlowMeter) and UNSW-NB15 (42 features, Argus/Bro)
---- we construct a statistically validated \emph{Semantic Feature Mapping} (SFM)
-that yields a truly comparable intersection feature set and, in the process,
-exposes a concrete extractor mismatch on the TCP-window features (continuous in
-CICFlowMeter, effectively binary in Argus/Bro) that we discard rather than
-fabricate an equivalence. A single XGBoost model is used only as a
-\emph{controlled backbone} to isolate the effect of the methodology, not as the
-contribution. We find that a single XGBoost model
-excelling in-domain (MCC $0.91$ on CIC; $0.74$ on UNSW) \emph{collapses}
-cross-network (MCC $\approx 0$). Through controlled experiments we show that
-(i) joint training shows that the nine SFM features carry \emph{sufficient
-discriminative information} for both domains --- so the single-source failure
-cannot be explained by a lack of discriminative information in the shared feature
-space alone --- while the combined evidence identifies a directly measured
-\emph{distribution shift} (large inter-domain Wasserstein distance and a
-$\approx 0.99$ domain-classifier accuracy) as the \emph{major contributor}; and
-(ii) minimal calibration --- only $1\%$ of
-target-network labels, or supervised cross-dataset \emph{mixup} that uses only
-target \emph{train} labels --- recovers cross-network MCC to the $0.65$--$0.91$
-range. We validate these findings on real AWS cloud traffic: zero-shot deployment
-fails (MCC $\approx 0$) but few-shot calibration with a small amount of domain
-labels restores detection, although a stricter episode-level split shows that the
-magnitude of the field benefit depends on the attack episode and the evaluation
-protocol. All
-numbers are drawn from real, reproducible experiments, providing deployment-oriented
-evidence for designing and evaluating cross-network NIDS under distribution shift.
+near-perfect accuracy within a single network, yet their ability to generalize
+across networks is rarely evaluated systematically. Our contribution is \emph{not}
+another classifier on a benchmark, but a \emph{methodology} for diagnosing and
+repairing cross-network generalization, validated on real cloud traffic. We address
+two intertwined problems: (1) the failure to generalize across networks, and
+(2) \emph{feature-extractor mismatch} --- the operationally common case where the
+same nominal feature is computed differently by different flow-export tools (e.g.,
+CICFlowMeter vs.\ Argus/Bro), an obstacle whenever a model trained on one tool's
+output is deployed behind another. Using a deliberately cross-source pair,
+CSE-CIC-IDS2018 (CICFlowMeter) and UNSW-NB15 (Argus/Bro), we build a statistically
+validated \emph{Semantic Feature Mapping} (SFM) that yields a truly comparable
+feature set and exposes a concrete mismatch on TCP-window features (continuous vs.\
+effectively binary) that we discard rather than force an equivalence. A single
+XGBoost model serves only as a \emph{controlled backbone}, not the contribution.
+It excels in-domain (MCC $0.91$ on CIC; $0.74$ on UNSW) but \emph{collapses}
+cross-network (MCC $\approx 0$). Controlled experiments show that (i) joint training
+confirms the nine SFM features carry \emph{sufficient discriminative information}
+for both domains, so the failure is not merely a lack of shared information, while
+a directly measured \emph{distribution shift} (large Wasserstein distance;
+$\approx 0.99$ domain-classifier accuracy) is the major contributor; and
+(ii) minimal calibration --- only $1\%$ of target labels, or cross-dataset
+\emph{mixup} --- recovers MCC to the $0.65$--$0.91$ range. On real AWS traffic,
+zero-shot deployment fails (MCC $\approx 0$) while few-shot calibration restores
+detection, though a stricter episode-level split shows the field benefit depends on
+the attack episode. All numbers come from real, reproducible experiments.
 \end{abstract}
 
 \begin{keyword}
@@ -1362,6 +1350,10 @@ Investigation, Data curation, Writing --- original draft. \textbf{Iwan Syarif}:
 Supervision, Methodology, Writing --- review \& editing. \textbf{Ferry Astika
 Saputra}: Supervision, Validation, Writing --- review \& editing.
 
+\section*{Funding}
+This research did not receive any specific grant from funding agencies in the
+public, commercial, or not-for-profit sectors.
+
 \section*{Declaration of competing interest}
 The authors declare that they have no known competing financial interests or
 personal relationships that could have appeared to influence the work reported in
@@ -1383,7 +1375,7 @@ respective official providers. The real-traffic AWS validation flows were
 generated by the authors in a controlled environment. The code, configuration,
 notebooks, and compact result artifacts (feature-mapping tables, extracted flow
 features, and analysis notebooks) that support the findings are publicly available
-at \url{https://github.com/heroyudo-gmail/kiro-ssh} (subfolder \texttt{unswnb-15/}).
+at \url{https://github.com/heroyudo-gmail/-sfm-cross-nids}.
 
 \section*{Ethics statement}
 All attack traffic was generated by the authors within a self-contained, isolated

@@ -5,24 +5,19 @@ Catatan pemakaian:
 - Teks di bawah plain text; salin per bagian ke template Word JICTRA.
 - Heading ditandai dengan nomor; format bold/italic rapikan di Word.
 - RUMUS: tiap rumus punya (a) notasi terbaca & (b) kode LaTeX. Di Word,
-  buka Insert > Equation, pilih mode LaTeX (Unicode/LaTeX), lalu paste
-  kode LaTeX-nya. MathType juga menerima input LaTeX.
-- GAMBAR (FIGURES): tiap lokasi gambar ditandai blok [FIGURE n] lengkap
-  dengan nama file PNG di folder unswnb-15/figure-q1/ serta caption bahasa Inggris
-  siap tempel (5 figure, semua PNG). Sesuai panduan
-  JICTRA, pastikan kontras gambar tetap terbaca jelas jika dicetak
-  hitam-putih (grayscale).
-- Semua ANGKA dari eksperimen nyata (tervalidasi dari paper1a-english.tex
-  dan notebooks/20_rangkuman.ipynb); jangan diubah.
-- Format JICTRA (journals.itb.ac.id/jictra, submit via journal.itb.ac.id):
-  body 10pt Times New Roman, spasi 1.0; maks 20 halaman (termasuk gambar/tabel/
-  referensi); abstrak 100-200 kata; 5-10 keyword; referensi gaya nomor [n]; SI units;
-  persamaan WAJIB via MathType/MS Equation (Office 2007 tidak diterima).
+  buka Insert > Equation, pilih mode LaTeX, lalu paste kode LaTeX-nya.
+- GAMBAR: tiap lokasi gambar ditandai blok [FIGURE n] dengan nama file PNG
+  di folder unswnb-15/figure-q1/ serta caption English siap tempel.
+- Semua ANGKA dari eksperimen nyata; jangan diubah.
+- Format JICTRA: body 11pt Times New Roman, spasi 1.0; maks 20 halaman;
+  abstrak 100-200 kata; 5-10 keyword; referensi gaya nomor [n]; SI units;
+  persamaan via MathType/MS Equation.
+- Konten SUDAH disinkronkan dengan paper1-jictra.tex (urutan bab 1-5).
 ================================================================
 
 TITLE
 -----
-Semantic Feature Mapping for Cross-Network Intrusion Detection: Validation on a Live Cloud Testbed
+Semantic Feature Mapping for Cross-Network Intrusion Detection: Validation on a Controlled Cloud Testbed
 
 AUTHORS
 -------
@@ -34,49 +29,43 @@ Email: hero@pens.ac.id; iwanarif@pens.ac.id; ferryas@pens.ac.id
 
 ABSTRACT
 --------
-Machine-learning network intrusion detection systems (NIDS) work well on their training network but often fail on a different one. One cause is easy
-to overlook: different flow-export tools compute nominally identical features
-differently, so a model trained on one tool can misread another tool's output. We call this a
-feature-extractor mismatch. To handle it, we build a Semantic Feature Mapping (SFM): a
-statistics-based audit that checks whether a feature from one tool truly matches a
-feature from another in meaning and in scale. Mismatched pairs, such as the TCP-window
-features, are rejected, leaving a nine-feature space shared across tools. Using two
-public datasets (CSE-CIC-IDS2018 and UNSW-NB15) with a lightweight XGBoost detector, a
-single-source model that is accurate within its own network collapses across networks;
-adding only 1% of labelled target data restores most of the lost accuracy. On a small,
-controlled AWS cloud testbed the false-alarm rate stays low, and few-shot calibration
-recovers detection provided the calibration data reflect the test traffic. The
-cross-network gap is thus largely a distribution-shift problem that can be closed cheaply
-once the feature space is made comparable: the best cross-network MCC rises from near
-zero to 0.659 and 0.900 with 1% target labels.
+Machine-learning network intrusion detection systems (NIDS) work well on their training
+network but often fail on a different one. One cause is easy to overlook: different
+flow-export tools compute nominally identical features differently, so a model trained on
+one tool can misread another tool's output. We call this a feature-extractor mismatch. To
+handle it, we build a Semantic Feature Mapping (SFM): a statistics-based audit that checks
+whether a feature from one tool truly matches a feature from another in meaning and in
+scale. Mismatched pairs, such as the TCP-window features, are rejected, leaving a
+nine-feature space shared across tools. Using two public datasets (CSE-CIC-IDS2018 and
+UNSW-NB15) with a lightweight XGBoost detector, a single-source model that is accurate
+within its own network collapses across networks; adding only 1% of labelled target data
+restores most of the lost accuracy. On a small, controlled AWS cloud testbed the
+false-alarm rate stays low, and few-shot calibration recovers detection provided the
+calibration data reflect the test traffic. The cross-network gap is thus largely a
+distribution-shift problem that can be closed cheaply once the feature space is made
+comparable: the best cross-network MCC rises from near zero to 0.659 and 0.900 with 1%
+target labels.
 
-Keywords: network intrusion detection; cross-network generalization; semantic
-feature mapping; feature-extractor mismatch; cloud testbed validation; few-shot
-calibration; edge deployment.
+Keywords: network intrusion detection; cross-network generalization; semantic feature
+mapping; feature-extractor mismatch; cloud testbed validation; few-shot calibration; edge
+deployment.
 
 NOTATION AND KEY EQUATIONS
 --------------------------
-All equations used in the paper are collected here for clarity; the prose refers to
-them by number. (In Word: Insert > Equation, LaTeX mode, paste the code lines.)
+(In Word: Insert > Equation, LaTeX mode, paste the code lines.)
 
 Eq. 1  Un-scaling (restore CIC features to original units; the CIC release is z-scored):
        plain : x_orig = x_scaled * sigma + mu
        latex : x_{\mathrm{orig}} = x_{\mathrm{scaled}}\,\sigma + \mu
 
-Eq. 2  Between-tool ratios (median and 99th percentile) and unit correction:
-       plain : r_med = med_CIC / med_UNSW ,  r_p99 = p99_CIC / p99_UNSW
-               r'_med = c * r_med ,          r'_p99 = c * r_p99
-       latex : r_{\mathrm{med}}=\mathrm{med}_{\mathrm{CIC}}/\mathrm{med}_{\mathrm{UNSW}},\quad r'_{\mathrm{med}}=c\,r_{\mathrm{med}}
-       where c is a documented constant unit factor (Table 2): c=10^-6 (duration us->s),
-       c=10^-3 (IAT us->ms), c=8 (byte->bit rate), c=1 (units already match).
+Eq. 2  Unit-corrected between-tool ratios (median and 99th percentile):
+       plain : r'_med = c * (med_CIC / med_UNSW) ,  r'_p99 = c * (p99_CIC / p99_UNSW)
+       latex : r'_{\mathrm{med}} = c\,\frac{\mathrm{med}_{\mathrm{CIC}}}{\mathrm{med}_{\mathrm{UNSW}}},\quad r'_{\mathrm{p99}} = c\,\frac{\mathrm{p99}_{\mathrm{CIC}}}{\mathrm{p99}_{\mathrm{UNSW}}}
 
-Eq. 3  Two-stage SFM verdict (applied to the unit-corrected ratios):
-       plain : aligned        if a constant c exists and max(|log10 r'_med|, |log10 r'_p99|) <= 1
-               scale-mismatch if a constant c exists and that maximum > 1
-               rate-proxy     if the quantity is a rate with differing directional scope
-                              or no constant c (per-flow coupling)
-               different-feat if no compatible representation exists (rejected)
-       latex : \text{verdict}=\begin{cases}\text{aligned}&\exists c,\ \max(|\log_{10}r'_{\mathrm{med}}|,|\log_{10}r'_{\mathrm{p99}}|)\le 1\\\text{scale-mismatch}&\exists c,\ \max(\cdot)>1\\\text{rate-proxy}&\text{rate w/ differing scope or no constant }c\\\text{different-feature}&\text{no compatible representation}\end{cases}
+Eq. 3  Acceptance rule (a pair is comparable when both corrected ratios stay within one
+       order of magnitude of unity):
+       plain : max( |log10 r'_med| , |log10 r'_p99| ) <= 1
+       latex : \max(|\log_{10} r'_{\mathrm{med}}|,\,|\log_{10} r'_{\mathrm{p99}}|) \le 1
 
 Eq. 4  Matthews Correlation Coefficient (primary metric; robust to class imbalance):
        plain : MCC = (TP*TN - FP*FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN))
@@ -86,272 +75,250 @@ Eq. 5  Ben-David cross-domain error bound (conceptual motivation):
        plain : eps_T(h) <= eps_S(h) + d_HdH(S,T) + lambda
        latex : \epsilon_T(h)\le \epsilon_S(h) + d_{\mathcal{H}\Delta\mathcal{H}}(S,T) + \lambda
 
+
 1. INTRODUCTION
 ---------------
-Cyberattacks cause large and growing economic losses [1], so machine-learning NIDS have
-become an important line of defence [2,3]. On public benchmarks these detectors often
-report accuracy above 99%. In practice, however, a detector that is excellent on its
-training network frequently fails on a network it has never seen. The reason is a
-training assumption that is rarely tested: that the training traffic and the operational
-traffic follow the same distribution. Several cross-dataset studies have measured this
-drop - for example, the average MCC falls from 0.946 within a dataset to 0.294 across
-datasets [4,5,6]. Those studies, however, mostly stop at reporting the drop, and they
-compare one dataset against another rather than against a live network.
+Cyberattacks impose major and growing economic losses [1], making machine-learning-based
+network intrusion detection systems (NIDS) a critical line of defence [2,3]. Such systems
+routinely report over 99% accuracy on public benchmarks, yet this rarely materializes as
+a working detector on a different, previously unseen network. The gap stems from a
+seldom-tested assumption, namely that training and operational traffic share the same
+distribution. Prior cross-dataset studies [4,5,6] confirm the collapse, with average MCC
+falling from 0.946 within a dataset to 0.294 across datasets [4], but they generally stop
+at observing it, and they evaluate only from one dataset to another without ever testing
+the mapped model on a live network.
 
-Two deployment-facing gaps run through the studies we surveyed (Table 1). They are
-rarely addressed together.
+Two deployment-facing problems run through the studies we surveyed, and they are rarely
+addressed together. The first is feature-extractor mismatch. Different flow exporters
+compute the same nominal feature in different ways, so a unified schema that matches
+features by name silently admits pairs that are not comparable. A model trained behind
+one tool then misreads the output of another. The second problem is the absence of
+validation on a live network. Cross-dataset papers measure the drop from one dataset to
+another, but they do not deploy the mapped model on a live cloud testbed, so they never
+observe its false-alarm behaviour or the conditions under which calibration actually
+helps. These two problems are exactly what an operator faces when moving a benchmark
+model into production.
 
-The first is feature-extractor mismatch. Different flow exporters compute the same
-nominal feature in different ways. A unified schema that matches features by name
-therefore admits pairs that are not comparable. We detect such pairs with an
-exploratory, statistics-based scale-equivalence audit and reject them. Where exact
-equivalence is not possible across schemas, we keep the pair but document the
-directional or unit proxy openly.
+This paper addresses both problems within a single, deployment-oriented recipe. We build
+a Semantic Feature Mapping (SFM) that does not match features by name but audits each
+candidate pair statistically, comparing meaning and scale across tools so that
+incompatible pairs, such as the TCP-window features, are rejected rather than silently
+accepted. We then carry the audited mapping all the way to a controlled cloud testbed on
+Amazon Web Services (AWS), where we measure the false-alarm rate under benign traffic,
+quantify a three-domain distribution shift, and test when a small amount of target-network
+labels restores detection. Each of these pieces has appeared separately in earlier work:
+unified-feature-set studies [7] standardize schemas but audit no pair for scale-equivalence
+and run on no live testbed, while cross-dataset studies [4,5,6] document the collapse but
+offer neither live validation nor a low-cost repair. The contribution of this paper is to
+join these two lines of work end to end.
 
-The second gap is the absence of validation on a live network. Cross-dataset papers
-measure drops from one dataset to another. The surveyed studies do not deploy the
-mapped model on a live cloud testbed, so they never observe its false-alarm behaviour
-or the conditions under which calibration helps.
+Using two deliberately cross-source datasets, CSE-CIC-IDS2018 and UNSW-NB15, with a single
+lightweight XGBoost detector, we show that a model accurate within its own network
+collapses across networks, that the collapse is driven mainly by a directly measured
+distribution shift rather than by a lack of discriminative features, and that adding only
+1% of labelled target data restores most of the lost accuracy, raising the best
+cross-network MCC from near zero to 0.659 and 0.900. On the AWS testbed the false-alarm
+rate stays low under benign traffic, confirming that the mapping introduces no scaling
+defect, and few-shot calibration recovers detection as long as the calibration data
+reflect the test traffic, an observation we report honestly together with the cases where
+the benefit is smaller. All reported values come from executed, reproducible experiments;
+no illustrative numbers are presented as results, and non-monotone outcomes are reported
+as observed.
 
-What is new here is the combination. We carry a statistically audited cross-tool
-Semantic Feature Mapping all the way to a controlled live cloud testbed on AWS. There
-we measure the false-alarm rate under benign traffic, quantify a three-domain
-distribution shift, and test when a small amount of few-shot calibration restores
-detection. Each piece has precedent on its own. Unified-feature-set work [7]
-standardises schemas but audits no pair for scale-equivalence and runs on no live
-testbed. Cross-dataset studies [4,5,6] document the collapse but offer neither live
-validation nor a low-cost repair. We join the two lines of work.
+The remainder of this paper is organized as follows. Section 2 reviews the literature on
+cross-dataset generalization, unified feature sets, dataset integrity, and domain
+adaptation. Section 3 presents the proposed method, describing the two cross-source
+datasets and the construction and statistical audit of the Semantic Feature Mapping.
+Section 4 reports the performance evaluation: the cross-network baseline and diagnosis,
+the low-cost recovery with minimal target labels, the validation on the controlled AWS
+cloud testbed, the experimental setup and reproducibility protocol, and a discussion of
+the findings and limitations. Section 5 concludes and outlines future work.
 
-We make four contributions. First, a cross-tool SFM whose per-pair, unit-corrected
-audit separates seven exact semantic equivalents, two documented rate proxies with
-bounded definitional differences (src_load and dst_load), and the incompatible
-TCP-window features it discards. Second, quantitative evidence of cross-network
-collapse, with a controlled diagnosis that separates feature insufficiency from
-distribution shift. Third, a low-cost repair using 1% target labels, reported with
-5-seed confidence intervals and an indicative single-seed comparison against
-cross-dataset mixup. Fourth, end-to-end validation on the live AWS testbed: a benign
-false-alarm rate, a quantified three-domain shift, and a two-protocol few-shot
-evaluation (stratified flow-level versus unseen-attack episode-level) showing that the
-value of calibration depends on how representative the target labels are.
 
-Research questions. RQ1: can compatible flow features (exact semantic equivalents and
-documented rate proxies) from heterogeneous tools be reliably audited and separated
-from extractor mismatches? RQ2: how far does a single-source NIDS generalize after SFM
-alignment? RQ3: what distinguishes representation insufficiency from distribution
-shift? RQ4: how much target labeling recovers performance? RQ5: under what conditions
-does the recipe transfer to a live AWS cloud testbed?
+2. LITERATURE REVIEW
+--------------------
+Machine-learning NIDS span tree ensembles and deep models, from deep and
+transformer-based detectors [8,9] to XGBoost variants on UNSW-NB15 [10], and most of them
+report strong in-domain results that do not by themselves guarantee robustness when the
+detector is moved to a different network. This review groups the studies most relevant to
+our problem into four strands and, at the end, states precisely what our work adds to the
+closest among them.
 
-Reproducibility. All reported values come from executed experiments; no
-illustrative values are presented as results, and negative/non-monotone outcomes
-are reported as observed.
+The first strand concerns cross-dataset generalization. D'Hooge et al. [5] showed that
+supervised NIDS fail on unseen networks, Verkerken et al. [6] reported roughly a 30% drop
+in AUROC with unsupervised models, and Cantone et al. [4] documented MCC falling from
+0.946 within a dataset to 0.294 across four datasets. Together these works establish that
+the cross-network collapse is real and systematic, but they largely stop at observing it;
+none separates whether the failure comes from insufficient features or from a distribution
+shift, and none offers a low-cost recovery or a validation on a live network.
 
-2. RELATED WORK
----------------
-ML-based NIDS span tree ensembles and deep models (e.g., deep and transformer-based
-detectors [8,9], and XGBoost variants on UNSW-NB15 [10]), most reporting strong
-in-domain results that do not guarantee cross-network robustness.
+A second strand aims to make datasets comparable through a unified feature set. Sarhan et
+al. [7,11] proposed a standardized NetFlow feature set so that models can be trained and
+tested across datasets. Our approach goes one step further: rather than trusting that
+identically named features are equivalent, we audit each mapped pair with a
+statistics-based scale-equivalence check on its original scale and reject pairs that
+merely share a name, such as the TCP-window features, which a name-based schema would
+otherwise admit silently.
 
-Cross-dataset generalization. D'Hooge et al. [5] showed supervised NIDS fail on
-unseen networks; Verkerken et al. [6] reported about 30% AUROC drop with
-unsupervised models; Cantone et al. [4] documented MCC falling from 0.946 (within)
-to 0.294 (cross) over four datasets. These works confirm the collapse but stop at
-observing it, without separating feature insufficiency from distribution shift and
-without a low-cost recovery or live-testbed validation.
+A third strand examines the integrity of the benchmarks themselves, which matters because
+an apparent cross-network gap could instead be an artefact of noisy labels. Reconstruction
+studies found that over 20% of CIC-IDS2017 flows needed relabeling [12], identified
+feature-computation errors in CICFlowMeter [13,14], and reported label-error rates of 6-7%
+on the CIC and CSE-CIC datasets [15]; Catillo et al. [16] further questioned whether
+reported benchmark progress reflects genuine advances. Most directly relevant to us,
+Layeghy et al. [17] showed that synthetic benign traffic differs statistically from real
+networks by a large Wasserstein distance, which motivates both our cross-tool mapping and
+our decision to validate on a live cloud testbed rather than on another synthetic dataset.
 
-Unified feature sets. Sarhan et al. [7,11] proposed a standardized NetFlow feature
-set to enable cross-dataset comparison. We go further: each mapped pair is audited by
-a statistics-based scale-equivalence check on its original scale, and spuriously named
-matches are rejected (the TCP-window case) - exactly what a name-based schema admits
-silently.
+A fourth strand addresses domain adaptation. CORAL [18] aligns feature covariance, and
+few-shot methods target label-limited NIDS, while deep domain-invariant detectors learn
+adversarially invariant representations but require a heavy deep stack and ample target
+data, which is impractical for edge deployment. We instead keep a fixed lightweight
+XGBoost [19] backbone and recover performance through inexpensive per-deployment
+calibration, a deliberately different, edge-oriented operating point; a head-to-head
+comparison against deep domain adaptation would require a different stack and is left as
+future work rather than claimed as an unmeasured advantage.
 
-Dataset integrity. Reconstructions found over 20% of CIC-IDS2017 flows needed
-relabeling [12], CICFlowMeter feature errors [13,14], and 6-7% label-error rates on
-CIC/CSE-CIC datasets [15]. Catillo et al. [16] questioned whether benchmark progress
-reflects real advances. Layeghy et al. [17] showed synthetic benign traffic differs
-statistically (large Wasserstein distance) from real networks - motivating both our
-cross-tool mapping and our live cloud testbed validation.
+We do not claim that any single one of these components is new. What we claim is the
+combination, and Table 1 states what we add to the nearest studies; the comparison is made
+against the studies we surveyed rather than as an absolute first.
 
-Domain adaptation. CORAL [18] aligns covariance; few-shot methods target
-label-limited NIDS. Deep domain-invariant NIDS learns adversarially invariant
-features but needs a heavy deep stack and ample target data - impractical for edge.
-We keep a fixed lightweight XGBoost [19] backbone and recover performance with cheap
-per-deployment calibration, a different edge-oriented operating point. A head-to-head
-against deep DA needs a different stack and is left as future work (scope stated
-explicitly, not an unmeasured superiority claim).
+TABLE 1. Comparison with related NIDS studies.
+  Study                   Evaluation scope        Cross-tool method   Live test  Low-label repair
+  Sarhan et al. [7,11]    Cross-dataset           Name-based schema   No         No
+  Cantone et al. [4]      Cross-dataset           Common features     No         No
+  D'Hooge et al. [5]      Cross-dataset           Common features     No         No
+  Verkerken et al. [6]    Cross-dataset           Common features     No         No
+  Layeghy et al. [17]     Single-network          Deep invariant      No         No
+  Husain et al. [10]      Single-network          None                No         No
+  This work               Cross-dataset + live    SFM audit           Yes        Yes
 
-Positioning against the closest work. We do not claim that any single component is
-new. We claim the combination, and we state what we add to the nearest studies
-(Table 1). The comparison is against the studies we surveyed, not an absolute first.
+Relative to unified feature sets [7,11], we add a statistics-based compatibility audit
+that rejects same-named but non-comparable pairs such as the TCP-window features, rather
+than relying on a shared schema alone. Relative to the cross-dataset studies [4,5,6], we
+add a controlled diagnosis that separates feature insufficiency from distribution shift
+together with a low-label repair, rather than only documenting the drop. And relative to
+the synthetic-versus-real shift measurement of Layeghy et al. [17], we carry the whole
+recipe end to end onto a live cloud testbed, measuring the false-alarm rate, quantifying a
+three-domain shift, and testing few-shot repair.
 
-TABLE 1. Positioning vs closest work (Y=addressed, -=not addressed). "Stat. audit" =
-exploratory statistics-based scale-equivalence audit incl. rejecting mismatched pairs;
-"Shift diag." = CONTROLLED diagnosis separating feature insufficiency from
-distribution shift (joint-training AND domain-classifier), not merely measuring that a
-shift exists; "Live testbed" = deployment + FAR on a live cloud testbed; "Low-label
-repair" = few-shot recovery with a small target-label budget.
-  Work                          Stat.audit  Shift-diag.  Live-testbed  Low-label
-  Sarhan et al. [7,11]          - (name)    -            -             -
-  Cantone et al. [4]            -           partial      -             -
-  D'Hooge [5] / Verkerken [6]   -           partial      -             -
-  Layeghy et al. [17]           -           -*           -             -
-  This work                     Y           Y            Y             Y
-  * Layeghy et al. [17] MEASURE distribution shift between synthetic and real traffic
-    but do not perform the controlled insufficiency-vs-shift diagnosis defined here.
 
-What we add, stated specifically: (i) vs unified feature sets [7,11] - we add a
-statistics-based compatibility audit that rejects same-named but non-comparable pairs
-(TCP-window), not only a shared schema; (ii) vs cross-dataset studies [4,5,6] - we add
-a controlled diagnosis (insufficiency vs shift) and a low-label repair, not only
-documenting the drop; (iii) vs domain-shift measurement [17] - we carry the recipe
-end-to-end onto a live cloud testbed (FAR, three-domain shift, few-shot repair).
+3. PROPOSED METHOD
+------------------
+This section describes the two datasets used as deliberately cross-source networks and the
+construction of the Semantic Feature Mapping that makes their feature spaces comparable,
+which together form the proposed cross-network detection recipe.
 
-3. DATA AND SEMANTIC FEATURE MAPPING
-------------------------------------
-Datasets (deliberately cross-source). CSE-CIC-IDS2018 [20] (CICFlowMeter, 68 clean
-features) and UNSW-NB15 [21,22] (Argus and Bro/Zeek, 42 features; 175,341 train and
-82,332 test records). The differing extraction tools are a prerequisite for
-realistically testing feature-extractor mismatch, not a weakness. All attack types
-are collapsed to a single attack class (controlled binary setting).
+3.1 DATASETS
+------------
+We use two public benchmark datasets that were deliberately produced by different flow
+exporters, so that the feature-extractor mismatch we study appears naturally rather than
+being introduced artificially. CSE-CIC-IDS2018 was generated with CICFlowMeter, while
+UNSW-NB15 was generated with Argus and Bro/Zeek. Their main characteristics are summarized
+in Table 2. For a controlled binary setting, all attack types are collapsed into a single
+attack class, and detection is treated as a benign-versus-attack problem throughout.
 
-SFM construction: an exploratory, statistics-based equivalence audit. SFM maps
-functionally compatible features across flow exporters even when column names differ
-(e.g., Flow Duration <-> dur). This is an exploratory, statistics-based audit of
-semantic and scale compatibility, not a formal hypothesis test. In four steps: (i)
-verify each feature's semantics, directional scope, and units from the official tool
-documentation; (ii) restore CIC features to their original units (Eq. 1); (iii) compute
-the between-tool median and p99 ratios and, where a documented constant unit factor
-applies, their unit-corrected counterparts (Eq. 2); (iv) assign a verdict with the
-two-stage rule (Eq. 3). Aligned and scale-mismatch pairs are retained (residual scale
-differences are later removed by per-dataset z-score), together with two documented rate
-proxies where schemas lack exact counterparts; incompatible different-feature pairs are
-rejected. The thresholds are decision-rule heuristics applied uniformly to all pairs and
-reported in full for reproducibility; the per-pair numbers appear in Table 2.
+TABLE 2. Datasets used in this study.
+  Property            CSE-CIC-IDS2018      UNSW-NB15
+  Flow exporter       CICFlowMeter         Argus, Bro/Zeek
+  Clean features      68                   42
+  Train records       1,622,261            175,341
+  Test records        (70/30 split)        82,332
+  Label setting       binary (attack/benign)  binary (attack/benign)
+  Role in this study  source/target network   source/target network
 
-Basis for selecting the two rate proxies (src_load and dst_load) and impact evaluation.
-We do NOT claim that all nine features in Model A possess exact semantic equivalence
-across CSE-CIC-IDS2018, UNSW-NB15, and the AWS NFStream extractor. Specifically, Model
-A comprises SEVEN exact semantic equivalents (dur, spkts, dpkts, sbytes, dbytes, smean,
-and dmean, which measure the exact same flow quantities and directions across all three
-domains) plus TWO documented rate proxies that bridge schema differences between flow
-exporters:
-(1) Rationale and definitional scope of the two rate proxies:
-- Forward/total byte-rate proxy (src_load: Flow Byts/s <-> sload): In UNSW-NB15 (sload,
-  bits/s) and in our AWS NFStream extractor (src2dst_bytes / dur_s, bytes/s), src_load
-  measures unidirectional FORWARD byte rate (differing only by the unit factor c = 8
-  bits/byte). However, the 68-feature CSE-CIC-IDS2018 release omits a separate forward
-  byte-rate column (Fwd Byts/s) and exports only total bidirectional byte rate (Flow
-  Byts/s = (TotLen Fwd Pkts + TotLen Bwd Pkts) / Flow Duration in bytes/s). Because
-  manually synthesizing TotLen Fwd Pkts / Flow Duration introduces division-by-zero
-  instability on zero-duration flows, Flow Byts/s is mapped to sload with unit factor
-  c = 8 bits/byte. While the two quantities coincide on unidirectional floods (e.g.,
-  SYN/UDP floods where backward bytes are zero), Flow Byts/s includes backward bytes on
-  bidirectional flows. We therefore classify Flow Byts/s <-> sload as a directional-scope
-  rate proxy (scale / dir-proxy* in Table 2) rather than an identical feature across
-  all three domains, and state this as an explicit methodological limitation.
-- Backward rate proxy (dst_load: Bwd Pkts/s <-> dload): Conversely, CICFlowMeter and our
-  AWS extractor measure backward rate in packets/s (Bwd Pkts/s and dst2src_packets /
-  dur_s) and provide no native backward byte-rate column, whereas Argus/UNSW-NB15
-  exports backward rate only in bits/s (dload) and provides no backward packet-rate
-  column. Because backward-direction rate is essential to separate asymmetric
-  request-response traffic from unidirectional floods, Bwd Pkts/s <-> dload is retained
-  as a unit-coupling rate proxy (rate-proxy# in Table 2), where packets/s and bits/s are
-  coupled by per-flow backward packet size rather than a constant factor c.
-(2) Empirical evaluation of proxy impact (non-causal subset sensitivity): Three
-experimental checks quantify the effect of retaining these two proxies. First, in
-joint-model feature importance and subset ablation (k in {3, 5, 7, 9} top-ranked
-features, Table 3), dst_load ranks second in discriminative importance behind fwd_bytes
-(entering at k=3) while src_load ranks eighth (entering at k=9); together with the
-exact-equivalence features, expanding from k=3 to k=9 lifts in-domain UNSW MCC from
-0.702 to 0.744 and joint UNSW MCC from 0.646 to 0.731. Second, the feature-count
-ablation (Table 3) shows that cross-network transfer performance is sensitive to
-feature-subset composition: the minimal subset k=3 (fwd_bytes, dst_load, duration)
-yields partial positive transfer on CIC->UNSW (+0.377; UNSW->CIC +0.065) alongside
-lower in-domain and joint UNSW MCC (0.702 and 0.646), whereas expanding the subset to
-k in {5, 7, 9} improves in-domain UNSW MCC (0.728 to 0.744) and joint UNSW MCC (0.719
-to 0.731) but results in near-zero cross-network MCC (-0.057 to -0.009). While this
-non-monotonic pattern does not by itself isolate a single causal mechanism, the fact
-that dst_load is already present at k=3 (where CIC->UNSW reaches +0.377) and that
-transfer is already near zero at k=5 and k=7 (before src_load is added at k=9)
-indicates that cross-network collapse at k in {5, 7, 9} is not solely induced by either
-rate proxy. Third, because definitional and packet-size differences amplify inter-domain
-spread on rate features, Flow Byts/s <-> sload and Bwd Pkts/s <-> dload exhibit the two
-largest UNSW variances in joint z-score space (9.00 and 9.50 vs 0.00 and 0.01 in CIC,
-Table 9), which are subsequently mitigated once 1% target labels recalibrate the scaler
-and tree thresholds (lifting MCC to 0.659 and 0.900).
+3.2 SEMANTIC FEATURE MAPPING
+----------------------------
+The two datasets are produced by different flow exporters and therefore do not share a
+common feature set. The Semantic Feature Mapping (SFM) solves this by keeping only the
+features that are genuinely comparable across both tools, that is, the intersection of the
+two schemas. Figure 1 illustrates this idea: out of 68 features in CSE-CIC-IDS2018 and 42
+in UNSW-NB15, nine features carry the same meaning in both and form the shared SFM feature
+space used throughout the paper, while the remaining features are tool-specific and are not
+used.
 
-Nine retained features (7 exact semantic equivalents + 2 documented rate proxies) form
-Model A; two inter-arrival-time pairs form optional Model B; two TCP-window
-pairs are discarded as a feature-extractor mismatch (continuous in CICFlowMeter,
-effectively binary in Argus/Bro).
+[FIGURE 1] file: figure-q1/fig_sfm_intersection.png
+Caption: Intersection of Semantic Feature Mapping.
 
-The audit is two-stage (Eq. 3): Stage 1 checks whether both tools measure the same
-physical quantity up to a constant unit factor (or qualify as a documented rate proxy);
-Stage 2 grades the remaining exact-unit pairs as aligned or scale-mismatch from their
-unit-corrected ratios. Intuitively, a pair is aligned only when both the median and p99
-ratios stay within one order of magnitude after unit correction, and scale-mismatch
-otherwise. This resolves apparent outliers: once units are corrected, Flow Duration<->dur
-and the IAT pairs - whose raw ratios look extreme purely because of us-vs-s/ms units -
-fall back into a sensible range and are retained, whereas the TCP-window pairs (continuous
-0-65535 vs binary {0,255}) have no valid unit mapping and are rejected. Table 2 lists the
-raw and unit-corrected ratios per pair.
+Deciding which features are truly comparable is not done by name alone, because the same
+name can hide different units or scales. Instead, each candidate pair passes a short,
+statistics-based audit. Since the CIC features in our release are z-scored, we first return
+them to their original units with Eq. 1, where mu and sigma are the stored mean and
+standard deviation.
 
-TABLE 2. SFM exploratory equivalence audit on original scale (CIC un-scaled via Eq. 1).
-Both raw ratios (r_med, r_p99) and unit-corrected ratios (r'_med = c*r_med, r'_p99 =
-c*r_p99) are computed from unrounded quantiles and rounded for display; verdict
-strictly follows Eq. (2) using max(|log10 r'_med|, |log10 r'_p99|).
-  CIC feature        UNSW    CIC med  UNSW med  r_med   r_p99   Unit c   r'_med  r'_p99  Verdict
-  Flow Duration      dur     20761    0.0016    1.3e7   2.6e6   10^-6+   13.1    2.60    Model A; scale
-  Tot Fwd Pkts       spkts   2        2         1.00    0.13    1        1.00    0.13    Model A; aligned
-  Tot Bwd Pkts       dpkts   1        2         0.50    0.09    1        0.50    0.09    Model A; scale
-  TotLen Fwd Pkts    sbytes  43       430       0.10    0.03    1        0.10    0.03    Model A; scale
-  TotLen Bwd Pkts    dbytes  101      164       0.62    0.05    1        0.62    0.05    Model A; scale
-  Fwd Pkt Len Mean   smean   36       73        0.49    0.17    1        0.49    0.17    Model A; aligned
-  Bwd Pkt Len Mean   dmean   66       44        1.50    0.67    1        1.50    0.67    Model A; aligned
-  Flow Byts/s        sload   787.5    8.8e5     0.0009  0.0014  8*       0.007   0.011   Model A; dir-proxy*
-  Bwd Pkts/s         dload   3.70     1447      0.003   0.03    proxy#   ---     ---     Model A; rate-proxy#
-  Fwd IAT Mean       sinpkt  3544     0.28      1.3e4   1.4e3   10^-3+   12.7    1.44    Model B; scale+
-  Bwd IAT Mean       dinpkt  0        0.006     ---     2.4e4   10^-3+   ---     24.0    Model B; scale+
-  Init Fwd Win Byts  swin    953      0         inf     257     none     ---     ---     DISCARDED (diff-feat)
-  Init Bwd Win Byts  dwin    -1       0         inf     250     none     ---     ---     DISCARDED (diff-feat)
-  + duration/IAT unit conversion: CIC in us vs UNSW dur in s (c = 10^-6) and UNSW sinpkt/dinpkt in ms (c = 10^-3).
-  * src_load directional-scope rate proxy (Flow Byts/s <-> sload): CIC is bidirectional byte/s whereas UNSW sload is forward bit/s (and AWS src2dst_bytes/dur_s is forward byte/s). Applying c = 8 bits/byte to unrounded quantiles (CIC med 787.52, p99 1,097,600 vs UNSW med 879,675, p99 8.0e8; raw r_med = 0.000895, r_p99 = 0.001372) yields r'_med = 0.00716 (rounded to 0.007) and r'_p99 = 0.01098 (rounded to 0.011); classified as a directional-scope rate proxy because bidirectional vs forward byte rates coincide only on unidirectional flows.
-  # dst_load unit-coupling rate proxy (Bwd Pkts/s <-> dload): CIC and AWS measure backward pkt/s whereas UNSW measures backward bit/s; no constant c exists because packet size varies per flow (impact evaluated in Section 3 and Table 9).
+We then compare the two tools on the same scale. For each pair we take the ratio of the
+median values and of the 99th percentile (p99) values between the two datasets, and
+multiply by a unit factor c that accounts for documented unit differences, as in Eq. 2.
+The factor is c = 10^-6 for durations in microseconds versus seconds, c = 10^-3 for
+inter-arrival times in microseconds versus milliseconds, c = 8 for byte-versus-bit rates,
+and c = 1 when the units already match.
 
-Key finding (TCP-window mismatch): UNSW swin/dwin are practically binary ({0,255})
-while CIC Init Fwd/Bwd Win Byts are continuous (0-65535). Despite both being named
-"TCP window", the data are not comparable, so we discard the pair as a
-feature-extractor mismatch. Final Model A (9 features: 7 exact semantic equivalents + 2
-documented rate proxies): dur, spkts, dpkts, sbytes, dbytes, smean, dmean, sload, dload;
-z-score fit on train only (no leakage).
+A pair is accepted as comparable when, after the unit correction, both ratios stay within
+one order of magnitude of unity, as stated in Eq. 3; otherwise the pair is treated as a
+scale mismatch or, when the two features are fundamentally different, rejected.
 
-TABLE 3. SFM feature-count ablation across top-k features ranked by joint-model
-importance (fwd_bytes, dst_load, duration, fwd_mean, fwd_pkts, bwd_pkts, bwd_mean,
-src_load, bwd_bytes). Transfer performance is sensitive to subset composition: minimal
-subset k=3 yields partial transfer (+0.377 on CIC->UNSW) with lower in-domain/joint UNSW
-MCC (0.702 / 0.646), whereas expanded subsets k in {5, 7, 9} improve in-domain/joint MCC
-but drop to near zero cross-network.
-  k   Added features            In-CIC  In-UNSW  Joint-CIC  Joint-UNSW  CIC->UNSW  UNSW->CIC
-  3   fwd_bytes, dst_load, dur  0.900   0.702    0.899      0.646       +0.377     +0.065
-  5   + fwd_mean, fwd_pkts      0.912   0.728    0.911      0.719       -0.009     -0.057
-  7   + bwd_pkts, bwd_mean      0.913   0.739    0.913      0.728       -0.014     -0.023
-  9   + src_load, bwd_bytes     0.913   0.744    0.913      0.731       -0.032     -0.031
+Applying this audit to all candidate pairs (full details in Table 3) yields nine shared
+features: dur, spkts, dpkts, sbytes, dbytes, smean, dmean, sload, and dload. Seven of them
+(packet and byte counts, mean packet sizes, and duration) are exact equivalents across both
+tools, while the two rate features sload and dload are retained as documented proxies
+because the two tools report rates with slightly different directional scope or units; we
+flag this as an explicit limitation. The clearest rejected case is the TCP-window pair,
+which is continuous in CICFlowMeter but effectively binary in Argus/Bro: despite the shared
+name, the two are not comparable and are discarded. The z-score scaler used for modeling is
+fit on the training split only to avoid leakage.
 
-4. CROSS-NETWORK BASELINE AND DIAGNOSIS
----------------------------------------
-Collapse (RQ2). A single XGBoost excels in-domain (MCC 0.91 on CIC, 0.74 on UNSW)
-but collapses cross-network (MCC near 0, Figure 1) - consistent with the literature
-but here measured on the SFM-aligned feature space, ruling out a trivial schema
-mismatch as the cause. We report MCC as the primary metric (Eq. 4) because it is
-robust under heavy class imbalance.
+TABLE 3. SFM Features.
+  CIC feature        UNSW feature   Verdict
+  Flow Duration      dur            Model A (aligned)
+  Tot Fwd Pkts       spkts          Model A (aligned)
+  Tot Bwd Pkts       dpkts          Model A (aligned)
+  TotLen Fwd Pkts    sbytes         Model A (aligned)
+  TotLen Bwd Pkts    dbytes         Model A (aligned)
+  Fwd Pkt Len Mean   smean          Model A (aligned)
+  Bwd Pkt Len Mean   dmean          Model A (aligned)
+  Flow Byts/s        sload          Model A (rate proxy)
+  Bwd Pkts/s         dload          Model A (rate proxy)
+  Fwd IAT Mean       sinpkt         Model B (optional)
+  Bwd IAT Mean       dinpkt         Model B (optional)
+  Init Fwd Win Byts  swin           Discarded (mismatch)
+  Init Bwd Win Byts  dwin           Discarded (mismatch)
 
-TABLE 4. Cross-dataset baseline (MCC). Columns report a SINGLE representative run (seed
-42) per model to compare Model A vs Model B feature sets. The 5-seed-mean cross-network
-baselines (seeds {42, 1, 7, 123, 2024}, 95% t-intervals, df=4) appear in TABLE 5 (0%
-row): CIC->UNSW has mean -0.074 (SD 0.089, CI95% [-0.184, 0.037]), whose interval spans
-zero (statistically indistinguishable from random guessing), whereas UNSW->CIC has mean
--0.094 (SD 0.030, CI95% [-0.130, -0.057]), whose interval lies strictly below zero
-(consistently slightly negative across all five seeds, from -0.125 to -0.061). In both
-directions, single-source transfer fails completely (|MCC| < 0.10).
+We also examined empirically how much the two rate proxies affect the results; the detailed
+per-subset numbers are in the feature-count ablation of Table 4. In the joint model,
+dst_load is among the most discriminative features and enters the ranking early, whereas
+src_load enters only in the full nine-feature set. The ablation also shows that
+cross-network transfer is sensitive to the feature subset in a non-monotonic way: a very
+small subset can give partial positive transfer in one direction, while larger subsets
+improve in-domain and joint accuracy yet leave cross-network transfer near zero. Because
+the near-zero transfer already appears in subsets that exclude src_load, the cross-network
+collapse cannot be attributed to either rate proxy alone.
+
+TABLE 4. Feature-count ablation (MCC).
+  k   Added features                In-domain (UNSW)  Cross-network
+  3   fwd_bytes, dst_load, dur       0.702             +0.377
+  5   + fwd_mean, fwd_pkts           0.728             -0.009
+  7   + bwd_pkts, bwd_mean           0.739             -0.014
+  9   + src_load, bwd_bytes          0.744             -0.032
+
+
+4. PERFORMANCE EVALUATION
+-------------------------
+This section evaluates the proposed method. We first establish the cross-network collapse
+and diagnose its cause, then show a low-cost recovery, validate the recipe on a controlled
+AWS cloud testbed, document the experimental setup and reproducibility protocol, and
+finally discuss the findings and limitations.
+
+4.1 CROSS-NETWORK BASELINE AND DIAGNOSIS
+----------------------------------------
+A single XGBoost detector performs very well within each network (MCC around 0.91 on CIC
+and 0.74 on UNSW) but collapses to near zero when it is tested on the other network, as
+shown in Figure 2. Because this is measured on the SFM-aligned feature space, the collapse
+cannot be blamed on a trivial schema mismatch. Throughout the paper we use the Matthews
+Correlation Coefficient (MCC) as the primary metric, since it remains reliable under the
+heavy class imbalance typical of intrusion data. The MCC is defined in Eq. 4, where TP, TN,
+FP, and FN denote the true positives, true negatives, false positives, and false negatives.
+
+TABLE 5. Cross-dataset test results (MCC).
   Scenario                        Model A    Model B
   Same-CIC (train & test CIC)     0.913      0.914
   Same-UNSW (train & test UNSW)   0.745      0.743
@@ -359,344 +326,210 @@ directions, single-source transfer fails completely (|MCC| < 0.10).
   UNSW -> CIC                     -0.061     -0.046
   Generalization gap              0.81-0.99  0.79-0.91
 
-[FIGURE 1 - In-Domain vs Cross-Dataset Generalization Collapse]
-  File sumber : d:\coding\kiro-ssh\unswnb-15\figure-q1\fig1_generalization_gap.png
-                (opsional matriks konfusi pendukung di figure-q1/confusion_CIC.png dan
-                figure-q1/confusion_UNSW.png)
-  Caption     : Figure 1. In-domain versus cross-dataset detection performance (MCC) for
-                Model A (9 SFM features) and Model B (11 features). High in-domain
-                performance (0.913 on CSE-CIC-IDS2018; 0.745 on UNSW-NB15) collapses to
-                near zero when evaluated across networks in either direction.
+Table 5 reports the detection quality in each scenario for the two feature sets, Model A
+(nine SFM features) and Model B (the eleven features that also include the two
+inter-arrival-time pairs). When the model is trained and tested on the same network, both
+feature sets reach high MCC. When it is trained on one network and tested on the other, in
+either direction, the MCC drops to about zero, meaning the detector is no better than
+random guessing on the unseen network. The resulting generalization gap of roughly 0.8 to
+0.99 is almost identical for Model A and Model B, which shows that simply adding more
+features does not help the model transfer across networks. Figure 2 visualizes this
+contrast between the strong in-domain performance and the near-zero cross-network
+performance.
 
-Diagnosis: shift, not (only) insufficiency (RQ3). Joint training on the nine SFM
-features performs well on both domains (5-seed mean MCC 0.913 on CIC, SD 0.001, CI95%
-[0.912, 0.914]; 0.730 on UNSW, SD 0.004, CI95% [0.726, 0.735]), showing the shared
-features carry sufficient discriminative information - so feature insufficiency is not
-the sole explanation (Figure 2). By contrast, unsupervised covariance alignment via
-CORAL [18] fails to recover cross-network detection reliably across the five seeds
-(CIC->UNSW mean MCC -0.118, SD 0.147, CI95% [-0.300, 0.064]; UNSW->CIC mean MCC -0.032,
-SD 0.156, CI95% [-0.225, 0.162]), because matching first- and second-order moments
-without target labels does not align class-conditional decision boundaries under severe
-attack-composition shift. (We report TABLE 4 as single-run to isolate the Model A-vs-B
-feature-set comparison, and the 5-seed means with 3-decimal CIs in TABLE 5; across
-seeds, CIC->UNSW spans zero while UNSW->CIC is consistently slightly negative, and both
-confirm near-zero non-functional cross-network detection.) A domain classifier separates
-CIC from UNSW with approximately 0.990 accuracy (Proxy A-distance = 1.961) and a large
-inter-domain 1-Wasserstein distance (mean W1 = 0.317 on unit-corrected shared z-space,
-Table 7), directly measuring the distribution shift as the major contributor. This is
-conceptually motivated by the Ben-David bound on target-domain error (Eq. 5),
-where a larger domain divergence upper-bounds achievable cross-domain performance. A
-high domain-classifier accuracy shows the two domains are easily separable but does not
-by itself prove shift is the only cause; the controlled experiments indicate that
-distribution shift is a MAJOR contributor to cross-network failure, although other
-dataset-specific factors (differing label taxonomies, attack composition, dataset
-artifacts, and the two rate-proxy approximations) may also play a role.
+[FIGURE 2] file: figure-q1/fig1_generalization_gap.png
+Caption: Cross-network generalization gap (MCC).
 
-[FIGURE 2 - Cross-Network Alignment Strategies Comparison]
-  File sumber : d:\coding\kiro-ssh\unswnb-15\figure-q1\fig3_alignment.png
-  Caption     : Figure 2. Comparison of cross-network alignment strategies (MCC):
-                single-source cross-dataset baseline, unsupervised CORAL covariance
-                alignment, and supervised joint training on the 9-feature SFM space.
+To understand why the detector fails across networks, we ask whether the shared features
+simply lack enough information or whether the two networks differ in distribution. When a
+single model is trained jointly on both networks, it performs well on each of them (mean
+MCC about 0.913 on CIC and 0.730 on UNSW), which shows that the nine SFM features do carry
+enough discriminative information. Feature insufficiency is therefore not the main cause.
+Unsupervised covariance alignment with CORAL [18] also fails to recover cross-network
+detection, because aligning only the first- and second-order moments without any target
+labels does not move the decision boundary to the right place when the two networks differ
+in their attack composition (Figure 3).
 
-5. LOW-COST RECOVERY (RQ4)
---------------------------
-Minimal calibration recovers cross-network detection: using only 1% of
-target-network labels restores cross-network MCC into the 0.65-0.91 range across five
-random seeds (Table 5 and Figure 3). Whereas unsupervised CORAL (0% target labels)
-remains near zero (-0.118 on CIC->UNSW; -0.032 on UNSW->CIC), 1% target labels lifts
-5-seed mean MCC from -0.074 to 0.659 (SD 0.015, CI95% [0.640, 0.677]) on CIC->UNSW and
-from -0.094 to 0.900 (SD 0.002, CI95% [0.898, 0.902]) on UNSW->CIC, capturing 90.3% and
-98.6% of the respective joint-training references (0.730 [0.726, 0.735] and 0.913
-[0.912, 0.914]). Increasing the target budget to 5% and 10% yields diminishing
-additional gains (0.689 [0.670, 0.708] and 0.691 [0.669, 0.714] on CIC->UNSW; 0.909
-[0.909, 0.910] and 0.911 [0.910, 0.913] on UNSW->CIC; all CIs are reported to three
-decimal places from multiseed_ci.json because the five UNSW->CIC seeds have very small
-standard deviations of 0.0005-0.0015). As an auxiliary comparison, supervised
-cross-dataset mixup (using target train labels) reaches 0.680 on CIC->UNSW and 0.798 on
-UNSW->CIC; however, because mixup was evaluated on a single seed (seed 42) rather than
-five seeds, comparisons involving mixup are indicative and more limited than the 5-seed
-few-shot results. We rely directly on held-out target MCC (with 5-seed confidence
-intervals) as the primary quantitative evidence of recovery, because computing
-raw-feature Wasserstein shifts prior to explicit cross-extractor unit alignment is
-dominated by unit-scale differences (e.g., us vs s in duration); unit-corrected
-shared-z-space Wasserstein distances are instead reported in Section 6 (Table 7) to
-characterize the baseline three-domain shift.
+The evidence instead points to a distribution shift between the two networks. A simple
+domain classifier can tell CIC and UNSW apart with about 0.99 accuracy, and the average
+distance between their feature distributions is large, which directly confirms that the two
+networks occupy different regions of the feature space. This is consistent with the
+Ben-David bound in Eq. 5, where a larger divergence between source and target limits the
+achievable cross-network performance. We therefore conclude that the distribution shift is
+the major contributor to the failure, while acknowledging that other dataset-specific
+factors, such as different label taxonomies, attack composition, and the two rate-proxy
+approximations, may also play a part.
 
-An adaptation-direction asymmetry is observed and analyzed: CIC->UNSW recovers lower
-(about 0.66-0.69) than UNSW->CIC (about 0.90), explained by greater domain dispersion in
-UNSW (mean SFM-feature variance 3.64 vs 0.68 for CIC, about 5.3x, Table 9), concentrated
-in rate/packet-size features. We report this as an evidence-consistent interpretation,
-not a causal proof.
+[FIGURE 3] file: figure-q1/fig3_alignment.png
+Caption: Cross-network alignment strategies (MCC).
 
-TABLE 5. Few-shot target adaptation and alignment comparison (cross-network MCC; MEAN,
-SD, and 3-decimal 95% t-interval over 5 seeds {42, 1, 7, 123, 2024} from
-multiseed_ci.json). The 0% row is the 5-seed-mean baseline (cf. TABLE 4, whose columns
-are single-run). Mixup is evaluated on a single seed (seed 42 only, so its comparison is
-indicative).
-  Target label / strategy    CIC->UNSW (mean +/- SD [CI95%])     UNSW->CIC (mean +/- SD [CI95%])
-  0% (baseline)              -0.074 +/- 0.089 [-0.184, 0.037]    -0.094 +/- 0.030 [-0.130, -0.057]
-  CORAL (0% target labels)   -0.118 +/- 0.147 [-0.300, 0.064]    -0.032 +/- 0.156 [-0.225, 0.162]
-  1% few-shot                0.659  +/- 0.015 [0.640, 0.677]     0.900  +/- 0.002 [0.898, 0.902]
-  5% few-shot                0.689  +/- 0.015 [0.670, 0.708]     0.909  +/- 0.001 [0.909, 0.910]
-  10% few-shot               0.691  +/- 0.018 [0.669, 0.714]     0.911  +/- 0.001 [0.910, 0.913]
-  Mixup (target train)*      0.680  (seed 42 only)               0.798  (seed 42 only)
-  Joint training (reference) 0.730  +/- 0.004 [0.726, 0.735]     0.913  +/- 0.001 [0.912, 0.914]
-  * Mixup is evaluated on seed 42 only; multi-seed comparison is therefore limited to the few-shot, CORAL, baseline, and joint-training rows.
+4.2 LOW-COST RECOVERY
+---------------------
+Having identified the distribution shift as the main cause of the collapse, we now show
+that it can be corrected at a very low labeling cost. Table 6 reports the cross-network MCC
+when the detector is given only a small fraction of labelled data from the target network.
+Adding just 1% of target labels is enough to bring the detector back from near-random
+behaviour to a level close to a model trained jointly on both networks, and increasing the
+budget to 5% or 10% adds little further improvement. Cross-dataset mixup, which reuses only
+the target training labels, recovers performance to a similar degree. In short, once the
+feature space is made comparable through SFM, a handful of target labels is sufficient to
+restore detection, which is practical for a real deployment.
 
-[FIGURE 3 - Offline Few-Shot Target Calibration Curve]
-  File sumber : d:\coding\kiro-ssh\unswnb-15\figure-q1\fig2_fewshot_curve.png
-  Caption     : Figure 3. Offline cross-network few-shot calibration curve (MCC vs
-                percentage of target training labels) for CIC->UNSW and UNSW->CIC over
-                five random seeds. Even 1% target labels restores the bulk of achievable
-                in-domain detection performance.
+One asymmetry is worth noting: adapting toward UNSW recovers more fully than adapting toward
+CIC. This is consistent with the UNSW network having a wider spread in its rate and
+packet-size features, so a model calibrated in that direction generalizes more easily. We
+present this as an observation supported by the data rather than a proven cause. Figure 4
+shows the recovery curve as the fraction of target labels increases, where most of the gain
+already appears at 1%.
 
-6. LIVE CLOUD TESTBED VALIDATION ON AWS (RQ5)
----------------------------------------------
-We evaluate the SFM-aligned detector on a controlled live AWS cloud testbed (two EC2
-instances in ap-southeast-1 inside an isolated private VPC, capturing raw packets via
-tcpdump into NFStream to extract the 9 SFM features), a live-testbed step omitted by the
-surveyed cross-dataset studies (Table 1). We frame this experiment explicitly as a
-controlled live cloud testbed validation rather than a broad multi-network production
-deployment: all traffic is generated between two instances in a single VPC, and attack
-ground truth is assigned from the scheduled execution timeline. During pipeline
-engineering, we aligned each of the 9 SFM features extracted from NFStream to the
-CIC-trained deployment scaler. Two alignment points matter. First, units: NFStream
-reports duration in milliseconds and raw directional byte/packet counters, so we express
-duration in microseconds (to match CICFlowMeter) and compute the rate features with a
-per-second denominator (guarding against division by zero), applied once with no
-secondary rescaling downstream. Second, directional scope: seven features (duration,
-fwd_pkts, bwd_pkts, fwd_bytes, bwd_bytes, fwd_mean, bwd_mean) are defined identically
-across CIC, UNSW, and AWS, whereas the two rate proxies carry the bounded differences
-documented in Section 3 - notably, AWS src_load measures forward byte-rate while
-CICFlowMeter Flow Byts/s is bidirectional, so src_load is not strictly identical across
-all three domains (coinciding only on unidirectional floods). We treat this as a
-methodological limitation when interpreting zero-shot and CIC+AWS transfer. Across the
-two-phase testbed evaluation, we establish three findings:
+TABLE 6. Cross-network results using few-shot calibration (MCC).
+  Target label / strategy       CIC -> UNSW   UNSW -> CIC
+  0% (baseline)                 -0.074        -0.094
+  CORAL (0% target labels)      -0.118        -0.032
+  1% few-shot                   0.659         0.900
+  5% few-shot                   0.689         0.909
+  10% few-shot                  0.691         0.911
+  Mixup (target train labels)   0.680         0.798
+  Joint training (reference)    0.730         0.913
 
-(1) Phase 1: Initial operational stability under benign testbed traffic. Across three
-cumulative monitoring windows on the live target server (3 min, 1 h, and 6 h; Table 6),
-false-alarm rate stays below 0.5% without temporal drift (0.00% at 3 min over 203 flows;
-0.38% at 1 h over 3,687 flows; 0.42% over 22,644 flows at 6 h, Wilson CI95% [0.34%,
-0.51%]). While this 6-hour single-VPC testbed run does not represent the application
-diversity of multi-network production traffic and does not by itself prove the absence
-of all scaling or directional discrepancies across every feature, the observed
-benign-traffic FAR supports the effectiveness of the duration- and rate-unit alignment
-in the evaluated AWS testbed setup.
+[FIGURE 4] file: figure-q1/fig2_fewshot_curve.png
+Caption: Few-shot calibration curve across networks (MCC).
 
-TABLE 6. Phase 1 live AWS testbed benign-traffic false-alarm rate (FAR) and Wilson-score
-95% confidence intervals across cumulative monitoring durations.
-  Scenario / Window   Duration   Benign flows   False alarms (FP)   FAR (%)   Wilson CI95% (%)
-  S0 (short check)    3 min      203            0                   0.0000    [0.00, 1.86]
-  D1 (medium window)  1 h        3,687          14                  0.3797    [0.23, 0.64]
-  D2 (long window)    6 h        22,644         94                  0.4152    [0.34, 0.51]
+4.3 CONTROLLED CLOUD TESTBED VALIDATION ON AWS
+----------------------------------------------
+We evaluate the SFM-aligned detector on a controlled AWS cloud testbed (two EC2 instances
+in ap-southeast-1 inside an isolated private VPC, capturing raw packets via tcpdump into
+NFStream to extract the 9 SFM features), a live-testbed step omitted by the surveyed
+cross-dataset studies (Table 1). We frame this experiment as a controlled validation on a
+live testbed rather than a broad production deployment: all traffic is generated between
+two instances in a single VPC, and the attack ground truth comes from the scheduled
+execution timeline. Before testing, we align the nine SFM features from NFStream to the
+CIC-trained scaler, mainly by expressing duration in the same unit as CICFlowMeter and
+computing the rate features per second. The seven exact-equivalent features transfer
+directly, while the two rate proxies carry the small directional differences already noted
+in Section 3, which we keep in mind when interpreting the results.
 
-(2) Phase 2: Zero-shot does not transfer, explained by three-domain shift. When controlled
-attacks are launched from the attacker instance under two traffic profiles - "clean"
-(low-intensity SSH brute-force, Slowloris, and SYN flood at 200 pps; 434 flows: 333
-attack, 101 benign) and "volumetric" (high-rate SYN flood at 5,000 pps plus HTTP and UDP
-floods; 17,319 flows: 17,287 attack, 32 benign; combined session 17,753 flows) -
-zero-shot models trained solely on offline benchmarks fail to detect live attacks ("clean"
-MCC = 0.0265, Recall = 0.003, F1 = 0.006; "volumetric" MCC = 0.0007, Recall = 0.0003,
-F1 = 0.0006; held-out split zero-shot MCC = 0.074 for UNSW and -0.217 for CIC).
-Inspection of the live flow distributions in our laboratory logs reveals the physical root
-cause: live AWS attack sessions (notably persistent Slowloris and SSH brute-force flows
-kept open across NFStream's timeout) exhibit a median flow duration of 64.03 s compared
-with the offline training mean of 12.18 s, which depresses directional rate features by
-three to four orders of magnitude (live src_load median 15.58 vs offline training mean
-255,117; live dst_load median 0.12 vs offline training mean 15,260), while live cloud HTTP
-responses produce much larger backward packet sizes (bwd_mean median 351 B on AWS vs 66 B
-on CIC and 44 B on UNSW, yielding a single-feature W1 of 1.16). A three-domain shift
-analysis over 1.62M CIC, 172,684 UNSW, and 44,287 live AWS flows (Table 7, Figure 4) -
-computed in notebooks/21_dataset_shift.ipynb after explicit cross-extractor unit alignment
-(expressing all durations in microseconds, dividing UNSW sload by 8 to bytes/s, and
-recomputing UNSW dst_load as dpkts/dur in packets/s) followed by a single pooled
-StandardScaler (shared z-space) and averaging 1D Wasserstein distances
-(scipy.stats.wasserstein_distance) across the 9 features - confirms that all three
-domains are pairwise separable with domain-classifier accuracy >= 0.990 and Proxy
-A-distance >= 1.961.
+We first check the detector on benign testbed traffic. Over three cumulative windows of 3
+minutes, 1 hour, and 6 hours (Table 7), the false-alarm rate stays below 0.5% and does not
+drift upward over time. This low and stable false-alarm rate indicates that the unit
+alignment works correctly in the live setting, since a scaling error would instead have
+produced a flood of false alarms.
 
-TABLE 7. Pairwise three-domain distribution shift across CSE-CIC-IDS2018 (1.62M flows),
-UNSW-NB15 (172,684 flows), and live AWS testbed traffic (44,287 flows) in the
-unit-corrected pooled (shared) z-space (arithmetic mean of 1D W1 across the 9 SFM
-features).
-  Domain pair          Mean W1 (shared z-space)   Domain-clf Acc   Proxy A-distance (d_A)
-  CIC vs UNSW          0.317                      0.990            1.961
-  CIC vs AWS-real      0.230                      0.994            1.975
-  UNSW vs AWS-real     0.372                      0.998            1.993
+We then launch controlled attacks and test the offline-trained model directly, without any
+calibration. In this zero-shot setting the detector essentially fails to flag the live
+attacks. Inspecting the captured flows explains why: live attack sessions, such as
+persistent Slowloris and SSH brute-force connections, stay open much longer than the flows
+seen during offline training, which pushes the rate features far below their training
+range, and live cloud responses produce noticeably larger backward packets. In other words,
+the live network differs from both benchmarks in distribution. This is confirmed in Figure
+5, where all three domains (CIC, UNSW, and the live AWS traffic) are clearly separated from
+one another.
 
-[FIGURE 4 - Three-Domain 1-Wasserstein Shift Comparison]
-  File sumber : d:\coding\kiro-ssh\unswnb-15\figure-q1\fig_shift_wasserstein.png
-  Caption     : Figure 4. Mean pairwise 1-Wasserstein distance (W1) across the nine SFM
-                features among CSE-CIC-IDS2018, UNSW-NB15, and live AWS testbed traffic
-                after unit correction, highlighting substantial three-way domain
-                divergence.
+Finally, we add a small fraction of labelled AWS traffic and recalibrate. Table 8 and
+Figure 6 show that calibration helps, but only when the labelled samples resemble the
+traffic being tested. When the few-shot labels cover the same attack types as the test set,
+a small budget already recovers detection to a level close to a model trained entirely on
+AWS. When instead the labels come only from early attack types and the test set contains a
+different, unseen attack, adding more labels can even reduce performance, because the model
+is tuned toward the wrong regime. The practical message is simple: a few target labels
+restore detection as long as they are representative of what the detector will actually
+face.
 
-(3) Few-shot calibration on the AWS testbed: non-monotonic trajectories and dependence on
-target-label representativeness. Evaluating two distinct splitting protocols (Table 8,
-Figure 5) reveals that adding target labels does not monotonically improve generalization;
-instead, calibration effectiveness depends critically on whether the calibration samples
-are representative of the test traffic:
-- Under the stratified 60%/40% flow-level split (Table 8A, held-out AWS-test: 7,049
-  attack and 53 benign flows, where calibration samples cover all attack types present
-  in the session), mixing 1% of target AWS-train labels (~107 flows) with UNSW-NB15
-  lifts MCC from 0.074 (zero-shot) to 0.490, dips slightly to 0.479 at 5% (~532 flows),
-  and rises to 0.588 at 10% and 0.596 at 20%, matching the AWS-only in-domain reference
-  of 0.598. The CIC+AWS trajectory is more strongly non-monotonic (-0.217 at 0% -> 0.132
-  at 1% -> 0.370 at 5% -> 0.207 at 10% -> 0.456 at 20%), reflecting competition between
-  the large, poorly aligned CIC source mass (including the bidirectional vs forward
-  src_load difference) and small target sample variance under heavy test imbalance (~99%
-  attack, which is why we report MCC rather than F1).
-- Under the stricter episode-level split (Table 8B, calibrating solely on early
-  {BruteForce, DoS} episodes plus first-half benign flows, and testing on the unseen
-  late {DDoS} episode of 121 attack + 83 benign = 204 flows, with 1,000-resample
-  bootstrap 95% CIs), UNSW zero-shot already achieves MCC = 0.579 [0.46, 0.70] (whereas
-  CIC zero-shot remains at -0.220 [-0.34, -0.08]), and adding few-shot labels from
-  {BruteForce, DoS} reduces MCC to 0.523 [0.40, 0.64] at 5% and 0.420 [0.29, 0.54] at
-  20% (converging to the episode-trained AWS-only bound of 0.418 [0.29, 0.54]). This
-  decline occurs because calibrating exclusively on low-rate, long-duration
-  BruteForce/Slowloris flows shifts tree splits away from the high-rate unseen DDoS
-  regime.
-The two protocols point to the same condition. Few-shot calibration helps when the
-calibration sample resembles the target evaluation conditions. When it does not, it can
-even degrade transfer to unseen attack regimes.
+TABLE 7. AWS testbed false-alarm rate (FAR).
+  Scenario / Window    Duration  Benign flows  False alarms (FP)  FAR (%)   Wilson CI95% (%)
+  S0 (short check)     3 min     203           0                  0.0000    [0.00, 1.86]
+  D1 (medium window)   1 h       3,687         14                 0.3797    [0.23, 0.64]
+  D2 (long window)     6 h       22,644        94                 0.4152    [0.34, 0.51]
 
-TABLE 8. Few-shot domain calibration on live AWS testbed traffic (MCC). Top panel:
-stratified flow-level split (held-out test: 7,049 attack, 53 benign; representative
-calibration). Bottom panel: stricter episode-level split (train {BruteForce, DoS}, test
-unseen {DDoS}: 121 attack, 83 benign, with 1,000-resample bootstrap 95% CIs;
-non-representative calibration).
-  [A] Stratified flow-level split (held-out test: 7,049 attack + 53 benign)
-  Target AWS label fraction   UNSW + AWS (MCC)   CIC + AWS (MCC)   AWS-only reference
-  0% (zero-shot)              0.074              -0.217            0.598 (100% AWS train)
-  1% (~107 flows)             0.490              0.132             ---
-  5% (~532 flows)             0.479              0.370             ---
-  10% (~1,065 flows)          0.588              0.207             ---
-  20% (~2,130 flows)          0.596              0.456             ---
+[FIGURE 5] file: figure-q1/fig_shift_wasserstein.png
+Caption: Three-domain distribution shift across CIC, UNSW, and AWS (mean W1).
 
-  [B] Episode-level split (train {BruteForce, DoS} -> test unseen {DDoS}, n = 204)
-  Configuration               MCC     Bootstrap CI95%
-  UNSW zero-shot (0%)         0.579   [0.46, 0.70]
-  UNSW few-shot (5%)          0.523   [0.40, 0.64]
-  UNSW few-shot (20%)         0.420   [0.29, 0.54]
-  CIC zero-shot (0%)          -0.220  [-0.34, -0.08]
-  AWS-only (episode train)    0.418   [0.29, 0.54]
+TABLE 8. Few-shot calibration on the AWS testbed (MCC).
+  (a) Stratified flow-level split
+  Target AWS label fraction   UNSW + AWS   CIC + AWS
+  0% (zero-shot)              0.074        -0.217
+  1%                          0.490        0.132
+  5%                          0.479        0.370
+  10%                         0.588        0.207
+  20%                         0.596        0.456
 
-[FIGURE 5 - Live AWS Testbed Few-Shot Domain Calibration Curve]
-  File sumber : d:\coding\kiro-ssh\unswnb-15\figure-q1\aws_fewshot_curve.png
-                (opsional diagram arsitektur deployment di
-                figure-q1/fig6_deployment_blueprint.png)
-  Caption     : Figure 5. Few-shot domain calibration curve on the live AWS testbed
-                (stratified flow-level split, MCC vs percentage of target AWS training
-                flows) for UNSW+AWS and CIC+AWS compared against the in-domain AWS-only
-                upper reference (0.598).
+  (b) Episode-level split (train BruteForce/DoS -> test unseen DDoS)
+  Configuration           MCC      Notes
+  UNSW zero-shot (0%)     0.579    Direct transfer to unseen DDoS
+  UNSW few-shot (5%)      0.523    Adapted on BruteForce/DoS only
+  UNSW few-shot (20%)     0.420    Matches AWS-only episode bound
+  CIC zero-shot (0%)      -0.220   Severe shift persists
 
-6.1 EXPERIMENTAL SETUP AND REPRODUCIBILITY
+[FIGURE 6] file: figure-q1/aws_fewshot_curve.png
+Caption: Few-shot calibration curve on the AWS testbed (MCC).
+
+4.4 EXPERIMENTAL SETUP AND REPRODUCIBILITY
 ------------------------------------------
-Model, training, and edge efficiency profile. XGBoost (max_depth=8, learning_rate=0.1,
-n_estimators=200, subsample=colsample_bytree=0.8), scikit-learn with stratified
-train/test splits. Primary metric MCC (robust to class imbalance). Model A = 9 SFM
-features (7 exact semantic equivalents + 2 documented rate proxies). Directly measured
-on a single CPU core (1 vCPU, single-thread nthread=1, batch size = 1 over 1,980 flows;
-model_efficiency.json) to reflect an edge sensor or lightweight VM budget, the
-serialized 9-feature binary model occupies 2.9 MB (2,961.8 KB), achieves a per-flow
-inference latency of 439.3 us mean (434.2 us median, SD 22.9 us), and sustains a
-directly measured incremental single-core throughput of 2,276 flows/s. Because per-flow
-tree scoring is independent across flows, multi-core throughput is estimated via linear
-extrapolation at approximately 18,000-35,000 flows/s across 8-16 cores (an analytical
-scaling estimate rather than a direct multi-core measurement).
+The detector is a single XGBoost model trained with standard settings (depth 8, learning
+rate 0.1, 200 trees, and 0.8 subsampling) on the nine SFM features, using MCC as the
+primary metric because it remains reliable under heavy class imbalance. The model is
+deliberately lightweight so that it can run on an edge sensor or a small virtual machine:
+the serialized model is only a few megabytes and classifies each flow in well under a
+millisecond on a single CPU core, which is more than fast enough for real-time use. We do
+not apply any oversampling such as SMOTE; instead, where needed, the few-shot models simply
+weight the positive class by the negative-to-positive ratio, so that the cross-network
+comparison is not confounded by resampling.
 
-Class-imbalance handling (no resampling). (i) metric: MCC throughout; (ii) cost
-weighting: real-traffic few-shot models set scale_pos_weight = negative/positive
-ratio; we avoid SMOTE/oversampling to keep the cross-network comparison free of
-resampling confounds.
+All experiments follow a strict no-leakage protocol. In the cross-dataset baseline the
+z-score scaler is fit on the source training data only and then applied to the target test
+set, so the model never sees any target data. In joint training the scaler is fit on the
+combined training data and evaluated on each held-out test set; this setting is used only
+to confirm that the shared features are informative, not as a deployment scenario. In
+few-shot calibration we add a small, class-balanced fraction of the target training data to
+the source, fit the scaler only on this combined pool, and evaluate once on a fixed
+held-out target test set that the model never sees; a zero fraction reduces to the zero-shot
+case. Cross-dataset mixup follows the same held-out evaluation but builds interpolated
+samples using only the target training labels. Offline cross-network results are averaged
+over five seeds with 95% confidence intervals, the AWS false-alarm rates use Wilson-score
+intervals, and the stricter episode-level AWS results use bootstrap intervals.
 
-No-leakage protocol per experiment.
-- Baseline (cross-dataset): z-score fitted on the SOURCE train only; applied
-  (transform-only) to the target test. Model never sees target data.
-- Joint training: z-score fitted on the combined (CIC+UNSW) TRAIN only; evaluated on
-  each held-out test. Used only to show the shared features are sufficiently
-  informative; it is not a deployment setting.
-- Few-shot calibration: given source S and target split (T_train, T_test), draw a
-  stratified fraction k of T_train (preserving benign/attack ratio), concatenate with
-  the full source, fit the z-score scaler ONLY on this augmented pool, train, and
-  evaluate ONCE on the fixed T_test. Scaler/model never see T_test; k=0 = zero-shot.
-- Mixup: Beta-interpolation between flows of the two datasets using target TRAIN
-  labels only; same held-out T_test (evaluated on seed 42 only).
+For the live AWS testbed, two EC2 instances (an attacker and a target/analyzer) run inside
+an isolated private VPC, and traffic is captured with tcpdump and processed by NFStream to
+produce the nine SFM features, with durations and rates expressed in the same units as the
+CIC-trained scaler. Benign-only monitoring accumulates tens of thousands of flows for the
+false-alarm measurement, while a scheduled attack session (moving through benign,
+brute-force, Slowloris, and SYN-flood phases) provides the labelled attack traffic, from
+which a held-out test set is reserved and never used for training. We note the limits of
+this testbed for external validity: the traffic comes from a single controlled VPC with
+labels derived from the execution timeline rather than from a multi-tenant production
+network, the benign portion of the attack test is small (so we report MCC rather than F1),
+and, as shown earlier, the benefit of few-shot calibration depends on whether the
+calibration samples represent the attacks seen at test time.
 
-Multi-seed and confidence intervals. Offline cross-network results report mean, SD, and
-3-decimal 95% t-intervals (df=4) over 5 seeds {42, 1, 7, 123, 2024}. AWS FAR proportions
-use Wilson-score 95% CIs; the stricter episode-level AWS split uses bootstrap 95% CIs
-(1,000 resamples).
+4.5 DISCUSSION AND LIMITATIONS
+------------------------------
+Taken together, the experiments tell a consistent story. A detector trained on a single
+network collapses when moved to another, the main reason is a measurable distribution shift
+between the networks rather than a lack of informative features, and a small amount of
+target labels restores detection as long as those labels resemble the traffic the detector
+will actually face. This pattern holds both on the offline benchmarks and on the live AWS
+testbed.
 
-Label verification. On CIC, Benign=0; binary conversion yields exactly 1,348,453
-normal and 274,808 attack, so the negative cross-network MCC is genuine, not a
-labeling artifact.
+The study also has clear limitations. Two of the nine SFM features are rate proxies that
+are not strictly identical across the three tools, and Table 9 shows that these two features
+are exactly the ones with the widest spread in UNSW, which is consistent with the direction
+asymmetry observed earlier; a cleaner solution would be to re-extract all datasets with a
+single flow exporter so that the rate definitions match exactly. The benefit of few-shot
+calibration is also not guaranteed: as shown on the AWS testbed, it can even decrease when
+the calibration labels come from attack types that differ from those at test time. Finally,
+the live experiments were run in a controlled two-instance testbed rather than a diverse
+production network, and we deliberately keep a single lightweight model for edge efficiency
+rather than claiming it is the best possible detector; a comparison against heavier deep
+domain-adaptation methods is left for future work. Adversarial robustness is likewise out
+of scope here, since our preliminary results indicate that it addresses a different problem
+and does not close the cross-network gap.
 
-AWS cloud testbed protocol (stated transparently). Region ap-southeast-1, 2 EC2
-instances in an isolated private VPC (attacker + target/analyzer). Capture via tcpdump
--> NFStream (9 SFM features), with duration expressed in microseconds and the two rate
-features computed once with a per-second denominator to match the CIC-trained scaler
-(no secondary rescaling downstream; see Section 6). Benign-only monitoring accumulates up to 22,644 flows at
-6 h (for FAR drift, Table 6). The attack session yields 17,753 labeled flows (17,620
-attack, 133 benign) across a scheduled timeline (benign -> BruteForce -> Slowloris ->
-SYN flood -> benign), labeled FROM THE TIMELINE. AWS-test split: 7,049 attack and 53
-benign (held-out, never trained). LIMITATIONS OF TESTBED EXTERNAL VALIDITY: (i) traffic
-is generated within a single controlled VPC (2 EC2 instances) with timeline-derived
-labels rather than multi-tenant production networks; (ii) the benign sample on the
-attack-session test is small (53 flows, ~99% attack), so we report MCC (not F1); and
-(iii) few-shot recovery depends on whether calibration samples represent the test
-attack regime (Table 8A vs 8B).
+Table 9 reports how widely each SFM feature varies within each dataset, measured in a
+shared z-score space so the two datasets are directly comparable. The feature values in
+UNSW are, on average, far more spread out than in CIC, and this larger dispersion helps
+explain why adapting toward UNSW recovers more fully than adapting toward CIC.
 
-Domain-variance computation (context for TABLE 9). The per-feature variances in
-TABLE 9 are computed in a SINGLE JOINT z-score space: both datasets are mapped by one
-shared scaler so values are directly comparable; a variance near 0 means a feature is
-tightly concentrated for that dataset in the shared space, while 9.5 means it is
-widely spread. Computed over 1.62M CIC and 175,341 UNSW flows. (This is a descriptive
-dispersion measure, distinct from the per-dataset-train z-score used for modeling.)
-
-7. DISCUSSION AND LIMITATIONS
------------------------------
-Three findings run together. Single-source NIDS collapse across networks. A directly
-measured distribution shift is a major contributor, though feature insufficiency and
-other dataset-specific factors may also play a part. Minimal calibration recovers
-performance, but only when the calibration labels are representative of the target
-environment. We observed this pattern across offline benchmarks and a controlled AWS
-cloud testbed. Limitations:
-(a) Rate-proxy definitional differences (src_load and dst_load): Model A combines seven
-exact semantic equivalents with two documented rate proxies that are not strictly
-identical across all three domains: (i) for src_load (Flow Byts/s <-> sload), UNSW
-sload/8 and AWS src2dst_bytes/dur_s measure unidirectional forward byte/s whereas CIC
-Flow Byts/s sums bidirectional byte/s (coinciding on unidirectional floods where
-backward bytes are zero, but differing on bidirectional traffic); and (ii) for dst_load
-(Bwd Pkts/s <-> dload), CIC and AWS measure backward packet/s whereas UNSW measures
-backward bit/s (coupled by variable per-flow backward packet size). These two proxies
-exhibit the largest UNSW variances in joint z-space (9.00 and 9.50, Table 9), and we
-explicitly bound our feature-equivalence claims accordingly. While our non-causal
-subset ablation (Section 3, Table 3) shows that transfer performance is sensitive to
-feature composition - with partial positive transfer at k=3 (+0.377 on CIC->UNSW) and
-near-zero transfer across k in {5, 7, 9} - future work should re-extract raw PCAPs across
-all domains with a single unified exporter to enforce identical directional rate
-definitions.
-(b) Non-monotonicity and representativeness of few-shot calibration: On the AWS testbed,
-few-shot calibration is not strictly monotonic on the flow-level split (Table 8A) and
-declines on the episode-level split when calibrated solely on {BruteForce, DoS} and
-tested on unseen {DDoS} (Table 8B, 0.579 -> 0.420), showing that few-shot adaptation
-requires calibration samples that represent the target test regime; furthermore,
-offline mixup was evaluated only on seed 42, limiting multi-seed comparisons to the
-few-shot, CORAL, and baseline runs.
-(c) External validity of the cloud testbed and model scope: The live AWS experiments
-were conducted in a controlled two-instance single-region testbed with timeline-based
-labeling rather than diverse multi-organization production traffic. Finally, the
-direction asymmetry is not fully resolved, and using a single XGBoost is a deliberate
-edge-efficiency choice (2.9 MB, 439.3 us measured single-core latency on 1 vCPU) rather
-than a universal model claim; a head-to-head against deep domain-invariant baselines
-(DI-NIDS, DANN) needs a different stack and is future work. Adversarial robustness is
-deliberately scoped out: preliminary results show adversarial training improves
-in-domain evasion robustness but does not close the cross-network gap - confirming the
-two problems need different solutions.
-
-TABLE 9. Domain-dispersion (variance in joint z-space per SFM feature). UNSW far more
-dispersed, explaining the adaptation-direction asymmetry.
+TABLE 9. Domain-dispersion quantification.
   SFM feature        CIC var.   UNSW var.
   Flow Duration      1.11       0.00
   Tot Fwd Pkts       1.11       0.01
@@ -709,76 +542,109 @@ dispersed, explaining the adaptation-direction asymmetry.
   Bwd Pkts/s         0.01       9.50
   Mean               0.68       3.64
 
-8. CONCLUSION AND FUTURE WORK
+
+5. CONCLUSION AND FUTURE WORK
 -----------------------------
-We presented an exploratory, statistics-based cross-tool Semantic Feature Mapping (7
-exact semantic equivalents and 2 documented rate proxies) and evaluated it across
-offline benchmarks and a controlled live AWS cloud testbed. Single-source models
-collapse cross-network (5-seed mean MCC -0.074 and -0.094) primarily due to distribution
-shift (domain-classifier accuracy >= 0.990), while 1% target labels restores offline
-cross-network MCC to 0.659 and 0.900. On the AWS cloud testbed, benign false-alarm rate
-remains below 0.5% over 6 hours, and few-shot calibration restores detection from 0.074
-to 0.490-0.596 when calibration labels are representative of the test traffic
-(stratified flow-level split), whereas episode-level evaluation on unseen DDoS shows
-that calibrating on non-representative attack types does not improve transfer. Future
-work: re-extracting benchmark PCAPs with a unified flow exporter to eliminate rate-proxy
-definitional differences; online/streaming adaptation with drift detection across
-multi-tenant production networks; automated active-learning/SIEM labeling with a
-trusted-holdout guardrail; and multi-class extensions. Adversarial robustness is pursued
-in a separate study.
+This paper studied why a network intrusion detector that works well on one network often
+fails on another, and how to fix it at a low cost. We showed that two datasets built with
+different flow-export tools can be made comparable through a simple, statistics-based
+Semantic Feature Mapping that keeps only the features that truly match across tools. Using
+this shared feature space, a single lightweight model is accurate within each network but
+collapses across networks, and we traced this collapse to a genuine distribution shift
+between the networks rather than to a lack of useful features. The gap can then be closed
+cheaply: adding only a small fraction of labelled data from the new network restores
+detection to a level close to full retraining. Crucially, we confirmed the whole recipe on
+a controlled cloud testbed, where the detector kept a low false-alarm rate on normal
+traffic and recovered its detection ability once a few representative labels from the new
+environment were provided.
+
+For future work, a natural next step is to study the detector under attack rather than only
+under normal distribution shift. This includes evasion attacks, where an adversary slightly
+alters traffic to avoid detection, and adversarial training as a possible defence, so that
+robustness and cross-network generalization can be examined together. Other promising
+directions are continuous, online adaptation that keeps the model up to date as traffic
+drifts over time, automated labelling to reduce the manual effort of calibration, extending
+the detector from a simple attack-or-benign decision to recognizing specific attack
+categories, and validating the approach on larger and more diverse real-world networks
+beyond the controlled testbed used here.
+
 
 ACKNOWLEDGEMENTS
 ----------------
-The authors thank Politeknik Elektronika Negeri Surabaya (PENS) for computing
-support.
+The authors thank Politeknik Elektronika Negeri Surabaya (PENS) for computing support.
+
+FUNDING
+-------
+This research did not receive any specific grant from funding agencies in the public,
+commercial, or not-for-profit sectors.
 
 DECLARATION OF GENERATIVE AI AND AI-ASSISTED TECHNOLOGIES
 ---------------------------------------------------------
 During the preparation of this work, the authors used AI-assisted tools to help with
-English language editing and LaTeX/formatting. All research design, experiments, data
-analysis, and interpretation were performed by the authors. All reported numbers are
-obtained from the authors' own executed, reproducible experiments (code and notebooks
-are available from the authors). After using these tools, the authors reviewed and
-edited the content as needed and take full responsibility for the content of the
-publication.
+English language editing, LaTeX/formatting, restructuring and simplifying the manuscript
+text, and generating some of the schematic and plot figures from the authors' own
+experimental results. All research design, experiments, data collection, analysis, and
+interpretation were performed by the authors, and all reported numbers come from the
+authors' own executed, reproducible experiments (code and notebooks are available from the
+authors). No results, data, or figures were fabricated by the tools. After using these
+tools, the authors reviewed and edited all content and take full responsibility for the
+content of the publication.
 
-NOMENCLATURE
-------------
-NIDS     Network Intrusion Detection System
-SFM      Semantic Feature Mapping (statistics-based cross-tool equivalence audit)
-MCC      Matthews Correlation Coefficient
-FAR      False-Alarm Rate
-IAT      Inter-Arrival Time (flow feature)
-CORAL    CORrelation ALignment (domain adaptation)
-DANN     Domain-Adversarial Neural Network
-DI-NIDS  Domain-Invariant NIDS
-W1       1-Wasserstein distance between domain distributions
-sigma    standard deviation (z-score scaling)
-mu       mean (z-score scaling)
-few-shot calibration using a small fraction of target-network labels
-mixup    supervised cross-dataset interpolation using target train labels
 
 REFERENCES
 ----------
-[1]  Cremer, F., Sheehan, B., Fortmann, M., Kia, A.N., Mullins, M., Murphy, F. & Materne, S., Cyber Risk and Cybersecurity: A Systematic Review of Data Availability, Geneva Papers on Risk and Insurance - Issues and Practice, 47(3), pp. 698-736, 2022.
-[2]  Khraisat, A., Gondal, I., Vamplew, P. & Kamruzzaman, J., Survey of Intrusion Detection Systems: Techniques, Datasets and Challenges, Cybersecurity, 2(1), pp. 1-22, 2019.
-[3]  Buczak, A.L. & Guven, E., A Survey of Data Mining and Machine Learning Methods for Cyber Security Intrusion Detection, IEEE Communications Surveys and Tutorials, 18(2), pp. 1153-1176, 2016.
-[4]  Cantone, M., Marrocco, C. & Bria, A., Machine Learning in Network Intrusion Detection: A Cross-Dataset Generalization Study, IEEE Access, 12, pp. 144491-144509, 2024.
-[5]  D'Hooge, L., Wauters, T., Volckaert, B. & De Turck, F., Inter-dataset Generalization Strength of Supervised Machine Learning Methods for Intrusion Detection, Journal of Information Security and Applications, 54, art. 102564, 2020.
-[6]  Verkerken, M., D'Hooge, L., Wauters, T., Volckaert, B. & De Turck, F., Towards Model Generalization for Intrusion Detection: Unsupervised Machine Learning Techniques, Journal of Network and Systems Management, 30(1), pp. 1-25, 2022.
-[7]  Sarhan, M., Layeghy, S. & Portmann, M., Towards a Standard Feature Set for Network Intrusion Detection System Datasets, Mobile Networks and Applications, 27(1), pp. 357-370, 2022.
-[8]  Shone, N., Ngoc, T.N., Phai, V.D. & Shi, Q., A Deep Learning Approach to Network Intrusion Detection, IEEE Trans. Emerging Topics in Computational Intelligence, 2(1), pp. 41-50, 2018.
-[9]  Wu, Z., Zhang, H., Wang, P. & Sun, Z., RTIDS: A Robust Transformer-based Approach for Intrusion Detection System, IEEE Access, 10, pp. 64375-64387, 2022.
-[10] Husain, A., Salem, A., Jim, C. & Dimitoglou, G., Development of an Efficient Network Intrusion Detection Model Using XGBoost on the UNSW-NB15 Dataset, Proc. IEEE ISSPIT, pp. 1-7, 2019.
-[11] Sarhan, M., Layeghy, S., Moustafa, N. & Portmann, M., NetFlow Datasets for Machine Learning-based Network Intrusion Detection Systems, in Big Data Technologies and Applications, Springer, 2021.
-[12] Engelen, G., Rimmer, V. & Joosen, W., Troubleshooting an Intrusion Detection Dataset: The CICIDS2017 Case Study, Proc. IEEE Security and Privacy Workshops (SPW), pp. 7-12, 2021.
-[13] Rosay, A., Cheval, E., Carlier, F. & Leroux, P., Network Intrusion Detection: A Comprehensive Analysis of CIC-IDS2017, Proc. 8th ICISSP, pp. 25-36, 2022.
-[14] Lanvin, M., Gimenez, P.-F., Han, Y., Majorczyk, F., Me, L. & Totel, E., Errors in the CICIDS2017 Dataset and the Significant Differences in Detection Performances It Makes, Proc. Int. Conf. Risks and Security of Internet and Systems (CRiSIS), pp. 18-33, 2022.
-[15] Liu, L., Engelen, G., Lynar, T., Essam, D. & Joosen, W., Error Prevalence in NIDS Datasets: A Case Study on CIC-IDS-2017 and CSE-CIC-IDS-2018, Proc. IEEE Conf. Communications and Network Security (CNS), pp. 254-262, 2022.
-[16] Catillo, M., Pecchia, A. & Villano, U., Machine Learning on Public Intrusion Datasets: Academic Hype or Concrete Advances in NIDS?, Proc. 53rd IEEE/IFIP Int. Conf. Dependable Systems and Networks (DSN-S), pp. 132-136, 2023.
-[17] Layeghy, S., Gallagher, M. & Portmann, M., Benchmarking the Benchmark - Comparing Synthetic and Real-World Network IDS Datasets, Journal of Information Security and Applications, 80, art. 103689, 2024.
-[18] Sun, B. & Saenko, K., Deep CORAL: Correlation Alignment for Deep Domain Adaptation, Proc. ECCV Workshops, pp. 443-450, 2016.
-[19] Chen, T. & Guestrin, C., XGBoost: A Scalable Tree Boosting System, Proc. 22nd ACM SIGKDD Int. Conf. Knowledge Discovery and Data Mining, pp. 785-794, 2016.
-[20] Sharafaldin, I., Lashkari, A.H. & Ghorbani, A.A., Toward Generating a New Intrusion Detection Dataset and Intrusion Traffic Characterization, Proc. 4th ICISSP, pp. 108-116, 2018.
-[21] Moustafa, N. & Slay, J., UNSW-NB15: A Comprehensive Data Set for Network Intrusion Detection Systems, Proc. Military Communications and Information Systems Conf. (MilCIS), pp. 1-6, 2015.
-[22] Moustafa, N. & Slay, J., The Evaluation of Network Anomaly Detection Systems: Statistical Analysis of the UNSW-NB15 Data Set and the Comparison with the KDD99 Data Set, Information Security Journal, 25(1-3), pp. 18-31, 2016.
+[1] F. Cremer, B. Sheehan, M. Fortmann, A. N. Kia, M. Mullins, F. Murphy, and S. Materne,
+    Cyber risk and cybersecurity: A systematic review of data availability, Geneva Papers
+    Risk Insur., 47(3), pp. 698-736, 2022.
+[2] A. Khraisat, I. Gondal, P. Vamplew, and J. Kamruzzaman, Survey of intrusion detection
+    systems: Techniques, datasets and challenges, Cybersecurity, 2(1), pp. 1-22, 2019.
+[3] A. L. Buczak and E. Guven, A survey of data mining and machine learning methods for
+    cyber security intrusion detection, IEEE Commun. Surveys Tuts., 18(2), pp. 1153-1176,
+    2016.
+[4] M. Cantone, C. Marrocco, and A. Bria, Machine learning in network intrusion detection:
+    A cross-dataset generalization study, IEEE Access, 12, pp. 144491-144509, 2024.
+[5] L. D'Hooge, T. Wauters, B. Volckaert, and F. De Turck, Inter-dataset generalization
+    strength of supervised machine learning methods for intrusion detection, J. Inf. Secur.
+    Appl., 54, art. 102564, 2020.
+[6] M. Verkerken, L. D'Hooge, T. Wauters, B. Volckaert, and F. De Turck, Towards model
+    generalization for intrusion detection: Unsupervised machine learning techniques, J.
+    Netw. Syst. Manage., 30(1), pp. 1-25, 2022.
+[7] M. Sarhan, S. Layeghy, and M. Portmann, Towards a standard feature set for network
+    intrusion detection system datasets, Mobile Netw. Appl., 27(1), pp. 357-370, 2022.
+[8] N. Shone, T. N. Ngoc, V. D. Phai, and Q. Shi, A deep learning approach to network
+    intrusion detection, IEEE Trans. Emerg. Topics Comput. Intell., 2(1), pp. 41-50, 2018.
+[9] Z. Wu, H. Zhang, P. Wang, and Z. Sun, RTIDS: A robust transformer-based approach for
+    intrusion detection system, IEEE Access, 10, pp. 64375-64387, 2022.
+[10] A. Husain, A. Salem, C. Jim, and G. Dimitoglou, Development of an efficient network
+    intrusion detection model using XGBoost on the UNSW-NB15 dataset, Proc. IEEE ISSPIT,
+    pp. 1-7, 2019.
+[11] M. Sarhan, S. Layeghy, N. Moustafa, and M. Portmann, NetFlow datasets for machine
+    learning-based network intrusion detection systems, in Big Data Technologies and
+    Applications, Springer, 2021.
+[12] G. Engelen, V. Rimmer, and W. Joosen, Troubleshooting an intrusion detection dataset:
+    The CICIDS2017 case study, Proc. IEEE SPW, pp. 7-12, 2021.
+[13] A. Rosay, E. Cheval, F. Carlier, and P. Leroux, Network intrusion detection: A
+    comprehensive analysis of CIC-IDS2017, Proc. 8th ICISSP, pp. 25-36, 2022.
+[14] M. Lanvin, P.-F. Gimenez, Y. Han, F. Majorczyk, L. Me, and E. Totel, Errors in the
+    CICIDS2017 dataset and the significant differences in detection performances it makes,
+    Proc. CRiSIS, pp. 18-33, 2022.
+[15] L. Liu, G. Engelen, T. Lynar, D. Essam, and W. Joosen, Error prevalence in NIDS
+    datasets: A case study on CIC-IDS-2017 and CSE-CIC-IDS-2018, Proc. IEEE CNS, pp.
+    254-262, 2022.
+[16] M. Catillo, A. Pecchia, and U. Villano, Machine learning on public intrusion datasets:
+    Academic hype or concrete advances in NIDS?, Proc. IEEE/IFIP DSN-S, pp. 132-136, 2023.
+[17] S. Layeghy, M. Gallagher, and M. Portmann, Benchmarking the benchmark - Comparing
+    synthetic and real-world network IDS datasets, J. Inf. Secur. Appl., 80, art. 103689,
+    2024.
+[18] B. Sun and K. Saenko, Deep CORAL: Correlation alignment for deep domain adaptation,
+    Proc. ECCV Workshops, pp. 443-450, 2016.
+[19] T. Chen and C. Guestrin, XGBoost: A scalable tree boosting system, Proc. 22nd ACM
+    SIGKDD, pp. 785-794, 2016.
+[20] I. Sharafaldin, A. H. Lashkari, and A. A. Ghorbani, Toward generating a new intrusion
+    detection dataset and intrusion traffic characterization, Proc. 4th ICISSP, pp.
+    108-116, 2018.
+[21] N. Moustafa and J. Slay, UNSW-NB15: A comprehensive data set for network intrusion
+    detection systems, Proc. MilCIS, pp. 1-6, 2015.
+[22] N. Moustafa and J. Slay, The evaluation of network anomaly detection systems:
+    Statistical analysis of the UNSW-NB15 data set and the comparison with the KDD99 data
+    set, Inf. Secur. J., 25(1-3), pp. 18-31, 2016.

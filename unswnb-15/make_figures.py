@@ -43,8 +43,6 @@ def fig_generalization_gap():
     bars = ax.bar(labels, mcc, color=colors, edgecolor="black", linewidth=0.6)
     ax.axhline(0, color="black", linewidth=0.8)
     ax.set_ylabel("MCC")
-    ax.set_title("In-domain vs Cross-dataset Detection (XGBoost, Model A)\n"
-                 "Cross-network generalization collapses to ~0")
     ax.set_ylim(-0.15, 1.0)
     for b, v in zip(bars, mcc):
         ax.text(b.get_x() + b.get_width() / 2, v + (0.02 if v >= 0 else -0.06),
@@ -75,8 +73,6 @@ def fig_fewshot_curve():
     ax.axhline(0, color="black", linewidth=0.8)
     ax.set_xlabel("Target labels used for calibration (%)")
     ax.set_ylabel("Cross-network MCC")
-    ax.set_title("Few-shot Target Adaptation\n"
-                 "1% target labels recover MCC from ~0 to 0.65\u20130.90")
     ax.legend(fontsize=9, loc="center right")
     ax.set_ylim(-0.15, 1.0)
     fig.savefig(os.path.join(FIG, "fig2_fewshot_curve.png"))
@@ -106,8 +102,6 @@ def fig_alignment():
     ax.axhline(0, color="black", linewidth=0.8)
     ax.set_xticks(x); ax.set_xticklabels(groups)
     ax.set_ylabel("MCC on target")
-    ax.set_title("Cross-network Alignment Strategies\n"
-                 "Joint training \u2248 in-domain; CORAL helps asymmetrically")
     ax.legend(fontsize=9)
     ax.set_ylim(-0.25, 1.0)
     fig.savefig(os.path.join(FIG, "fig3_alignment.png"))
@@ -215,6 +209,82 @@ def fig_deployment_blueprint():
     print("  fig6_deployment_blueprint.png")
 
 
+# ---------------------------------------------------------------------------
+# Fig SFM — Semantic Feature Mapping as the intersection of the two schemas
+# (concept diagram: CIC 68 features, UNSW 42 features, shared 9 SFM features)
+# ---------------------------------------------------------------------------
+def fig_shift_wasserstein():
+    # Mean 1-Wasserstein distance (unit-corrected shared z-space) across 9 SFM features.
+    # Real values from the three-domain shift analysis (notebooks/21_dataset_shift.ipynb).
+    pairs = ["CIC vs UNSW", "CIC vs AWS", "UNSW vs AWS"]
+    w1 = [0.317, 0.230, 0.372]
+    fig, ax = plt.subplots(figsize=(7.0, 3.6))
+    bars = ax.barh(pairs, w1, color="#4472c4", edgecolor="black", linewidth=0.5)
+    ax.set_xlabel(r"Mean $W_1$ (shared z-space)")
+    ax.set_xlim(0, 0.42)
+    for b, v in zip(bars, w1):
+        ax.text(v + 0.008, b.get_y() + b.get_height() / 2, f"{v:.2f}",
+                va="center", fontsize=10)
+    fig.savefig(os.path.join(FIG, "fig_shift_wasserstein.png"))
+    plt.close(fig)
+    print("  fig_shift_wasserstein.png")
+
+
+def fig_aws_fewshot_curve():
+    # Few-shot calibration on the live AWS testbed (stratified flow-level split).
+    # Real values from the AWS few-shot table.
+    frac = [0, 1, 5, 10, 20, 50]
+    uns = [0.074, 0.490, 0.479, 0.588, 0.596, 0.574]
+    cic = [-0.217, 0.132, 0.370, 0.207, 0.456, 0.136]
+    fig, ax = plt.subplots(figsize=(7.2, 4.2))
+    ax.plot(frac, uns, "o-", color="#e8842a", linewidth=2, markersize=7, label="UNSW + AWS")
+    ax.plot(frac, cic, "s-", color="#3a6ab0", linewidth=2, markersize=7, label="CIC + AWS")
+    ax.axhline(0.598, color="#2a8", linestyle="--", linewidth=1.5, label="AWS-only = 0.598")
+    ax.axhline(0, color="black", linewidth=0.8)
+    ax.set_xlabel("AWS labels used for calibration (%)")
+    ax.set_ylabel("MCC on AWS test")
+    ax.set_ylim(-0.3, 1.0)
+    ax.legend(fontsize=9, loc="upper right")
+    fig.savefig(os.path.join(FIG, "aws_fewshot_curve.png"))
+    plt.close(fig)
+    print("  aws_fewshot_curve.png")
+
+
+def fig_sfm_intersection():
+    from matplotlib.patches import Circle
+
+    fig, ax = plt.subplots(figsize=(7.2, 4.0))
+    ax.set_xlim(0, 10); ax.set_ylim(0, 5); ax.set_aspect("equal")
+    ax.axis("off"); ax.grid(False)
+
+    # two overlapping circles (radius sized to fit within ylim with margin)
+    cic = Circle((4.1, 2.5), 2.2, facecolor="#cde", edgecolor="#26a",
+                 linewidth=1.6, alpha=0.55)
+    unsw = Circle((5.9, 2.5), 2.2, facecolor="#fdb", edgecolor="#e90",
+                  linewidth=1.6, alpha=0.55)
+    ax.add_patch(cic); ax.add_patch(unsw)
+
+    # dataset names inside the non-overlapping part of each circle
+    ax.text(2.9, 2.65, "CSE-CIC-\nIDS2018", ha="center", va="center",
+            fontsize=10.5, fontweight="bold", color="#26a")
+    ax.text(2.9, 1.95, "68 features", ha="center", va="center",
+            fontsize=9, color="#26a")
+    ax.text(7.1, 2.65, "UNSW-\nNB15", ha="center", va="center",
+            fontsize=10.5, fontweight="bold", color="#b70")
+    ax.text(7.1, 1.95, "42 features", ha="center", va="center",
+            fontsize=9, color="#b70")
+
+    # intersection = SFM with 9 features
+    ax.text(5.0, 2.75, "SFM", ha="center", va="center",
+            fontsize=12.5, fontweight="bold", color="#060")
+    ax.text(5.0, 2.15, "9 features", ha="center", va="center",
+            fontsize=9.5, color="#060")
+
+    fig.savefig(os.path.join(FIG, "fig_sfm_intersection.png"))
+    plt.close(fig)
+    print("  fig_sfm_intersection.png")
+
+
 if __name__ == "__main__":
     print("Membangkitkan gambar paper Q1 dari hasil nyata:")
     fig_generalization_gap()
@@ -223,4 +293,7 @@ if __name__ == "__main__":
     fig_functional_evasion()
     fig_adaptive_whitebox()
     fig_deployment_blueprint()
+    fig_sfm_intersection()
+    fig_shift_wasserstein()
+    fig_aws_fewshot_curve()
     print(f"Selesai. Semua PNG di: {FIG}")
