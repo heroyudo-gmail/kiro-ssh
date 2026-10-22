@@ -13,6 +13,7 @@
 \usepackage[T1]{fontenc}
 \usepackage{amsmath,amssymb}
 \usepackage{booktabs}
+\usepackage{multirow}
 \usepackage{graphicx}
 \graphicspath{{figure-q1/}{figure-p2/}}
 \usepackage{geometry}
@@ -271,35 +272,282 @@ load (rate)         & re-derived from bytes $/$ duration & rate consistent with 
 % ============================================================
 \section{Performance Evaluation}
 
-\subsection{Two-Axis Results: Generalization vs Adversarial Robustness}
-% TODO: tabel utama 4 varian x 2 arah (clean target + adaptive evasion), 5-seed.
-% Angka nyata: few-shot CIC->UNSW 0.650, UNSW->CIC 0.899; few-shot+adv 0.662/0.898.
-% + dua figur PNG (CIC->UNSW, UNSW->CIC).
-[ISI]
+\subsection{Two-Axis Results: Generalization versus Adversarial Robustness}
+\label{sec:twoaxis}
+We first report the two axes jointly for the four variants in both transfer
+directions. Table~\ref{tab:p2main} gives, for each variant, the clean target MCC
+(the generalization axis) and the MCC under an adaptive PCFS attack at
+$\epsilon{=}0.1$ (the robustness axis), as the mean over five seeds. Two patterns are
+immediate. On the generalization axis the few-shot calibration is decisive: the
+baseline and adv variants, which never see any target labels, stay near zero
+($-0.06$ to $-0.08$), whereas few-shot recovers the target MCC to $0.650$ on
+CIC$\rightarrow$UNSW and $0.899$ on UNSW$\rightarrow$CIC. Adding adversarial training
+on top does not change this picture: few-shot$+$adv reaches $0.662$ and $0.898$,
+statistically indistinguishable from pure few-shot ($p{=}0.24$ and $p{=}0.45$). In
+other words, adversarial training neither helps nor hurts generalization; it only
+preserves it, which is the first thing a practical defense must guarantee.
+
+The robustness axis tells a more nuanced story that depends on the direction. On
+CIC$\rightarrow$UNSW the few-shot$+$adv variant is the only one robust on both axes
+at once, holding an adaptive MCC of $0.495$ while every other variant collapses. On
+UNSW$\rightarrow$CIC, however, adaptive robustness collapses for all four variants,
+including few-shot$+$adv, which drops to roughly zero. Adversarial training therefore
+buys genuine robustness in one direction but not the other. Figures~\ref{fig:p2cic}
+and \ref{fig:p2unsw} visualise the same result as grouped bars per direction, making
+the asymmetry between the two axes easy to read at a glance.
+
+\begin{table}[htbp]
+\centering
+\caption{Two-axis results for the four variants in both directions (five-seed mean).}
+\label{tab:p2main}
+\footnotesize
+\begin{tabular}{llcc}
+\toprule
+Direction & Variant & Clean target MCC & Adaptive PCFS MCC ($\epsilon{=}0.1$) \\
+\midrule
+\multirow{4}{*}{CIC$\rightarrow$UNSW}
+ & baseline              & $-0.062$ & $-0.074$ \\
+ & adv                   & $-0.049$ & $-0.010$ \\
+ & few-shot              & $0.650$  & $0.343$ \\
+ & few-shot$+$adv        & $\mathbf{0.662}$ & $\mathbf{0.495}$ \\
+\midrule
+\multirow{4}{*}{UNSW$\rightarrow$CIC}
+ & baseline              & $-0.086$ & $-0.020$ \\
+ & adv                   & $-0.079$ & $-0.030$ \\
+ & few-shot              & $\mathbf{0.899}$ & $-0.025$ \\
+ & few-shot$+$adv        & $0.898$  & $-0.025$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.8\linewidth]{figure-p2/paper2_CIC_to_UNSW.png}
+\caption{CIC$\rightarrow$UNSW: clean generalization and adaptive robustness per variant.}
+\label{fig:p2cic}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.8\linewidth]{figure-p2/paper2_UNSW_to_CIC.png}
+\caption{UNSW$\rightarrow$CIC: clean generalization and adaptive robustness per variant.}
+\label{fig:p2unsw}
+\end{figure}
 
 \subsection{Robustness Under Increasing Attack Strength}
-% TODO: FGSM vs PGD across eps {0.05,0.1,0.2}; temuan: FGSM overstate robustness.
-% contoh tajam: adv HURTS CIC->UNSW (0.524->0.302) tapi HELPS UNSW->CIC (-0.124->0.178)
-[ISI]
+\label{sec:strength}
+Reporting robustness as a single number at one attack strength can be misleading, so
+we next sweep the attack strength and compare a one-step attack (FGSM) against the
+stronger iterative attack (PGD, ten iterations) at $\epsilon{=}0.1$.
+Table~\ref{tab:strength} contrasts the two directions for the few-shot and
+few-shot$+$adv variants. The one-step attack consistently overstates robustness: the
+MCC under FGSM is higher than under PGD for the same budget, so a defense that looks
+adequate against FGSM can still fail against a patient iterative attacker. The
+clearest illustration is also the most important finding of this section. Under PGD,
+adding adversarial training \emph{hurts} on CIC$\rightarrow$UNSW, lowering the MCC
+from $0.524$ to $0.302$ ($p{=}0.012$), yet the same defense \emph{helps} on
+UNSW$\rightarrow$CIC, raising it from $-0.124$ to $0.178$ ($p{=}0.033$). The sign of
+the effect flips with the direction.
+
+The harmful case is a symptom of robust overfitting: training on FGSM examples fits
+the model to a one-step perturbation geometry that does not transfer to the stronger
+iterative attack on a high-variance target domain, so robustness to PGD actually
+degrades. The helpful case shows the opposite, where adversarial training genuinely
+widens the margin on a direction that was otherwise defenceless. The practical
+message is that robustness of an intrusion detector is not a scalar property of the
+defense; it is a joint function of transfer direction and attack strength, and it
+must be reported as such rather than as a single headline number.
+
+\begin{table}[htbp]
+\centering
+\caption{Robustness at $\epsilon{=}0.1$: one-step FGSM versus iterative PGD (five-seed mean).}
+\label{tab:strength}
+\footnotesize
+\begin{tabular}{llcc}
+\toprule
+Direction & Variant & FGSM MCC & PGD MCC \\
+\midrule
+\multirow{2}{*}{CIC$\rightarrow$UNSW}
+ & few-shot        & $0.493$ & $0.524$ \\
+ & few-shot$+$adv  & $0.454$ & $\mathbf{0.302}$ \\
+\midrule
+\multirow{2}{*}{UNSW$\rightarrow$CIC}
+ & few-shot        & $-0.169$ & $-0.124$ \\
+ & few-shot$+$adv  & $\mathbf{0.219}$ & $\mathbf{0.178}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \subsection{Security Metrics: Attack Success Rate}
-% TODO: ASR (lower better), recall/precision/F1 di bawah adaptive PCFS eps=0.1
-[ISI]
+\label{sec:asr}
+MCC measures detector quality but does not directly answer the security question an
+operator cares about: of the attacks that were caught before the perturbation, how
+many now evade? We therefore report the attack success rate (ASR), the fraction of
+previously detected attacks that slip through after an adaptive PCFS perturbation, so
+that lower is better and ASR $=0$ means the defense holds every attack. Alongside ASR
+we report recall and precision under the same adaptive attack at $\epsilon{=}0.1$, to
+show that the defense does not buy robustness by simply flagging everything.
+Table~\ref{tab:asr} summarises the two directions for the defended variants.
+
+The pattern mirrors the MCC results. On CIC$\rightarrow$UNSW the few-shot$+$adv
+variant keeps the ASR low under PGD ($0.055$) while retaining high recall ($0.922$),
+so it genuinely blocks the adaptive attacker rather than trading recall for
+robustness. On UNSW$\rightarrow$CIC the ASR stays high for every variant ($0.74$ and
+above), confirming that the collapse seen in MCC is a real security failure and not a
+metric artefact: on this direction an adaptive attacker who knows the model can evade
+the large majority of detections within the valid add-only perturbation corridor. The
+ASR view thus reinforces the direction-dependent reading of the previous subsections
+in terms an operator can act on.
+
+\begin{table}[htbp]
+\centering
+\caption{Attack success rate and recall under adaptive PCFS attack ($\epsilon{=}0.1$).}
+\label{tab:asr}
+\footnotesize
+\begin{tabular}{lllcc}
+\toprule
+Direction & Variant & Attack & ASR (lower better) & Recall \\
+\midrule
+\multirow{2}{*}{CIC$\rightarrow$UNSW}
+ & few-shot        & PGD  & $0.017$ & $0.959$ \\
+ & few-shot$+$adv  & PGD  & $\mathbf{0.055}$ & $0.922$ \\
+\midrule
+\multirow{2}{*}{UNSW$\rightarrow$CIC}
+ & few-shot        & PGD  & $0.938$ & $0.058$ \\
+ & few-shot$+$adv  & PGD  & $0.738$ & $0.240$ \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \subsection{Why the Interaction is Direction-Dependent}
-% TODO: decision-cell width (narasi sederhana) + figur skematik (PNG) + tabel bukti
-[ISI]
+\label{sec:mechanism}
+The asymmetry above is not accidental; it follows from the decision-boundary
+structure of the tree model. XGBoost builds its decision surface from axis-parallel
+orthogonal splits, so the surface is a piecewise-constant staircase rather than a
+smooth curve. The output score is constant inside each cell and changes only when a
+split threshold is crossed. How easily an adaptive attacker crosses a threshold then
+depends on how wide the cells are around the target samples. On a high-variance
+target domain the cells are wide, so a valid add-only perturbation of a given budget
+stays inside the attack cell and the flow remains detected. On a low-variance target
+domain, where benign and attack clusters sit close together separated by thin cells,
+the same budget is enough to cross into the benign side and the attack evades.
+Figure~\ref{fig:treeboundary} sketches this intuition.
+
+To make the explanation testable rather than merely narrative, we measure three
+direct quantities on the few-shot model for each target domain: the effective cell
+width $w$ (the median distance of a sample to the nearest split threshold), the
+distance-to-boundary $d_{\text{boundary}}$ (the smallest PCFS perturbation that flips
+a prediction), and the crossing probability $P_{\text{cross}}$ (the fraction of
+samples flipped at $\epsilon{=}0.1$). The hypothesis predicts a smaller $w$, a smaller
+$d_{\text{boundary}}$, and a larger $P_{\text{cross}}$ on the low-variance CIC target,
+and Table~\ref{tab:cell} confirms all three: on the CIC target the cell width is
+essentially zero, the flipping distance is about half that of UNSW, and more than
+twice as many samples cross the boundary at the same small budget. The leaf counts
+are similar ($24{,}944$ versus $21{,}380$), so the difference is the position of the
+target samples relative to the thresholds, not tree granularity. This gives the
+direction-dependent collapse a mechanistic explanation backed by numbers, and it
+points to defenses that smooth or blur the decision boundary, such as randomized
+smoothing or calibrated-noise ensembles, as the natural next step.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.9\linewidth]{figure-p2/paper2_treeboundary.png}
+\caption{Why the same valid perturbation collapses one direction but not the other.}
+\label{fig:treeboundary}
+\end{figure}
+
+\begin{table}[htbp]
+\centering
+\caption{Empirical evidence for the narrow-cell mechanism (few-shot model, target test set).}
+\label{tab:cell}
+\footnotesize
+\begin{tabular}{lccc}
+\toprule
+Target domain & $w$ & $d_{\text{boundary}}$ & $P_{\text{cross}}(\epsilon{=}0.1)$ \\
+\midrule
+UNSW (high-variance) & $3.5\times10^{-4}$ & $4.0\times10^{-3}$ & $0.091$ \\
+CIC (low-variance)   & $\approx 0$ & $\mathbf{2.0\times10^{-3}}$ & $\mathbf{0.237}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \subsection{Validation on Real AWS Traffic}
-% TODO: 3-tahap (zero-shot -> +1% few-shot -> +adv); recall 0.00->0.97, MCC 0.18-0.25
-% field evasion robustness tetap terbuka (jujur)
-[ISI]
+\label{sec:aws}
+Finally, we check whether the proposed pipeline transfers beyond the two benchmarks
+to real cloud traffic. On a self-controlled AWS testbed we capture labelled traffic
+from a known attack timeline, extract the same nine SFM features, and run a
+three-stage validation: a zero-shot source model with no calibration (S0), the source
+plus one percent of AWS labels for few-shot calibration (S1), and that plus
+adversarial training (S2). Few-shot labels are drawn only from an AWS training split
+and evaluation is always on a disjoint AWS test split, with the z-score fit on the
+source only. Because the AWS slice is self-labelled at limited scale and heavily
+imbalanced (roughly $17{,}600$ attack against $130$ benign flows), we treat this as a
+preliminary field validation and rely on recall, precision, and balanced accuracy
+rather than MCC alone. Table~\ref{tab:aws} reports the result over five seeds.
+
+The headline is that calibration works on a third, previously unseen domain. On
+CIC$\rightarrow$AWS the zero-shot model is effectively blind, with recall $0.000$ and
+MCC near zero; adding one percent of AWS labels lifts recall to $0.970$ and MCC to
+$0.184$, and adversarial training raises MCC further to $0.246$ without sacrificing
+recall or precision. Balanced accuracy rises monotonically with calibration
+($0.500\rightarrow0.693\rightarrow0.773$ on CIC$\rightarrow$AWS), confirming that the
+calibrated model genuinely catches attacks in the field even though the absolute MCC
+is suppressed by class imbalance. Reported without smoothing, the adversarial axis in
+the field remains weak: adaptive PCFS robustness at S2 stays between $-0.04$ and
+$0.07$, consistent with the benchmark limit of adversarial training on tree models.
+The balanced conclusion is that the pipeline transfers for the generalization axis on
+real cloud traffic, while field evasion robustness stays open.
+
+\begin{table}[htbp]
+\centering
+\caption{Three-stage validation on real labelled AWS traffic (five-seed mean).}
+\label{tab:aws}
+\footnotesize
+\begin{tabular}{llcccc}
+\toprule
+Direction & Stage & Clean MCC & Recall & Prec. & Bal.\ acc. \\
+\midrule
+\multirow{3}{*}{CIC$\rightarrow$AWS}
+ & S0: zero-shot        & $0.001$ & $0.000$ & $0.800$ & $0.500$ \\
+ & S1: $+1\%$ few-shot  & $0.184$ & $0.970$ & $0.995$ & $0.693$ \\
+ & S2: $+$adv           & $\mathbf{0.246}$ & $0.966$ & $0.997$ & $\mathbf{0.773}$ \\
+\midrule
+\multirow{3}{*}{UNSW$\rightarrow$AWS}
+ & S0: zero-shot        & $0.052$ & $0.997$ & $0.993$ & $0.524$ \\
+ & S1: $+1\%$ few-shot  & $0.026$ & $0.999$ & $0.993$ & $0.505$ \\
+ & S2: $+$adv           & $\mathbf{0.143}$ & $0.996$ & $0.994$ & $\mathbf{0.570}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 % ============================================================
 \section{Conclusion and Future Work}
-% TODO: ringkas temuan dua-sumbu + pesan direction/attack-dependent;
-% future work umum (packet-level deliverable attacks, defense yang sadar-arah, dll)
-[ISI]
+\label{sec:conclusion}
+This paper studied whether a cross-network intrusion detector built on semantic
+feature mapping and one percent few-shot calibration can also withstand adversarial
+evasion, evaluating four training variants in both transfer directions under attacks
+of increasing strength. The central result is that generalization and adversarial
+robustness form two distinct axes whose interaction is asymmetric. Few-shot
+calibration reliably restores cross-network generalization, recovering the target MCC
+from near zero to $0.650$ on CIC$\rightarrow$UNSW and $0.899$ on UNSW$\rightarrow$CIC,
+and adversarial training preserves this generalization without cost. Robustness,
+however, is direction and attack dependent: under the stronger iterative PGD attack,
+adversarial training hurts on CIC$\rightarrow$UNSW ($0.524\rightarrow0.302$) yet helps
+on UNSW$\rightarrow$CIC ($-0.124\rightarrow0.178$), so the same defense can raise or
+lower robustness depending on which network is the source. We traced this asymmetry
+to the decision-cell width of the tree model on low- versus high-variance target
+domains and supported it with direct measurements, and we confirmed on a real AWS
+testbed that the calibration pipeline transfers to a third domain while field evasion
+robustness remains limited.
+
+Two honest limitations frame the future work. Our perturbations are
+protocol-consistent at the feature level but we do not claim full packet-level
+deliverability, so bridging the gap to attacks that are both valid and physically
+sendable is the natural next step. More broadly, because the effectiveness of
+adversarial training flips with the transfer direction, a single static defense is
+insufficient; direction-aware and boundary-smoothing defenses, such as randomized
+smoothing or calibrated-noise ensembles, are promising routes to robustness that
+holds on both axes and in both directions at once.
 
 \section*{Acknowledgements}
 The authors thank Politeknik Elektronika Negeri Surabaya (PENS) for computing

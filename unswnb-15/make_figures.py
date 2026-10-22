@@ -297,3 +297,74 @@ if __name__ == "__main__":
     fig_shift_wasserstein()
     fig_aws_fewshot_curve()
     print(f"Selesai. Semua PNG di: {FIG}")
+
+
+# ---------------------------------------------------------------------------
+# Paper 2 — decision-cell schematic (why PCFS evasion is direction-dependent)
+# Conceptual 2D sketch; mechanism is quantified empirically in the paper.
+# ---------------------------------------------------------------------------
+def fig_p2_treeboundary():
+    import numpy as np
+    from matplotlib.patches import FancyArrowPatch
+
+    FIG_P2 = os.path.join(HERE, "figure-p2")
+    os.makedirs(FIG_P2, exist_ok=True)
+
+    fig, axes = plt.subplots(1, 2, figsize=(9.2, 4.2))
+    benign_c = "#2b7bba"
+    attack_c = "#d1495b"
+
+    # Same perturbation budget dx in both panels; only the cell width differs.
+    # (a) wide cells: the attack sits deep inside a wide attack cell, so the same
+    #     shift does NOT reach the boundary -> still detected.
+    # (b) thin cells: the boundary is close, so the same shift crosses -> evades.
+    dx = 1.4
+    for ax, (title, splits, start_off) in zip(
+        axes,
+        [("(a) high-variance target (UNSW): wide cells",
+          [2.2, 4.4, 6.6, 8.8], 1.9),
+         ("(b) low-variance target (CIC): thin cells",
+          [3.6, 4.1, 4.6, 5.1, 5.6, 6.1], 0.4)],
+    ):
+        ax.set_xlim(0, 10)
+        ax.set_ylim(0, 10)
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.grid(False)
+        # staircase decision boundary (axis-parallel splits)
+        for s in splits:
+            ax.axvline(s, color="#888", lw=1.0, ls="--")
+        # benign region (left) and attack region (right) shaded lightly
+        ax.axvspan(0, splits[len(splits)//2], color=benign_c, alpha=0.08)
+        ax.axvspan(splits[len(splits)//2], 10, color=attack_c, alpha=0.08)
+        boundary = splits[len(splits)//2]
+        # attack flow start inside the attack cell (farther in for wide cells)
+        x0 = boundary + start_off
+        ax.scatter([x0], [5], s=90, color=attack_c, zorder=5, edgecolor="k", lw=0.6)
+        ax.annotate("attack flow", (x0, 5), textcoords="offset points",
+                    xytext=(6, 12), fontsize=9, color=attack_c)
+        # same valid epsilon shift (add-only) to the left
+        ax.add_patch(FancyArrowPatch((x0, 5), (x0 - dx, 5),
+                                     arrowstyle="-|>", mutation_scale=14,
+                                     color="#333", lw=1.6, zorder=6))
+        landed = x0 - dx
+        if landed < boundary:
+            ax.scatter([landed], [5], s=90, color=benign_c, zorder=5,
+                       edgecolor="k", lw=0.6)
+            ax.text(landed, 3.3, "evades\n(crosses boundary)", ha="center",
+                    fontsize=8.5, color=benign_c)
+        else:
+            ax.scatter([landed], [5], s=90, color=attack_c, zorder=5,
+                       edgecolor="k", lw=0.6)
+            ax.text(landed, 3.3, "still detected\n(stays in cell)", ha="center",
+                    fontsize=8.5, color=attack_c)
+        ax.text(0.5, 9.3, "benign", fontsize=9, color=benign_c, fontweight="bold")
+        ax.text(9.5, 9.3, "attack", fontsize=9, color=attack_c,
+                fontweight="bold", ha="right")
+        ax.set_title(title, fontsize=10)
+        ax.set_xlabel("feature axis (e.g. bytes / load)", fontsize=9)
+
+    fig.tight_layout()
+    fig.savefig(os.path.join(FIG_P2, "paper2_treeboundary.png"))
+    plt.close(fig)
+    print("  figure-p2/paper2_treeboundary.png")
