@@ -567,8 +567,8 @@ The authors thank Politeknik Elektronika Negeri Surabaya (PENS) for computing su
 
 FUNDING
 -------
-This research did not receive any specific grant from funding agencies in the public,
-commercial, or not-for-profit sectors.
+This research was supported by the Ministry of Higher Education, Science, and Technology
+of the Republic of Indonesia.
 
 DECLARATION OF GENERATIVE AI AND AI-ASSISTED TECHNOLOGIES
 ---------------------------------------------------------
