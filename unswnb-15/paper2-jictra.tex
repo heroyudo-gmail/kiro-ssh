@@ -1,0 +1,356 @@
+% ============================================================
+% Paper 2 - VERSI JICTRA (LaTeX, untuk cek tampilan PDF).
+% Konten diturunkan dari paper2-english.tex (versi JISA) + gaya JICTRA (5 bab,
+%   referensi nomor [1], narasi sederhana, figur PNG).
+% Format JICTRA: English, SI units, abstract 100-200 words, numbered refs,
+%   order Title/Authors/Abstract/Body/Acknowledgements/References, <= 20 pages.
+%   All NUMBERS come from real experiments (paper2_reviewer_out/*, notebooks).
+%   SFM foundation is SUMMARIZED (not repeated from Paper 1) to avoid overlap.
+% ============================================================
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\graphicspath{{figure-q1/}{figure-p2/}}
+\usepackage{geometry}
+\usepackage{times}
+\usepackage[hidelinks]{hyperref}
+\geometry{margin=2.5cm}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.4em}
+\linespread{1.0}
+
+\title{\textbf{Adversarial Robustness of Cross-Network Intrusion Detection
+using Semantic Feature Mapping}}
+
+\author{Hero Yudo Martono\thanks{Corresponding author: \texttt{hero@pens.ac.id}},
+\quad Iwan Syarif, \quad Ferry Astika Saputra \\[0.3em]
+\normalsize Department of Informatics and Computer Engineering, \\
+\normalsize Politeknik Elektronika Negeri Surabaya (PENS), Surabaya, Indonesia \\
+\normalsize \texttt{hero@pens.ac.id; iwanarif@pens.ac.id; ferryas@pens.ac.id}}
+
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent A network intrusion detector can be robust in one respect yet fragile in
+another. Our earlier work showed that a lightweight model over semantically mapped
+features, calibrated with only a small amount of target data, generalizes across
+different networks. Generalizing across networks, however, does not guarantee
+resistance to adversarial evasion, where an attacker slightly alters traffic to avoid
+detection. This paper studies how these two properties interact, rather than proposing
+a new technique. Using the same nine shared features and a single lightweight model, we
+compare four training variants (baseline, few-shot, adversarial training, and
+few-shot combined with adversarial training) on two cross-network directions between
+CSE-CIC-IDS2018 and UNSW-NB15, under attacks of increasing strength. The results are
+reported honestly: cross-network generalization comes from few-shot calibration, while
+adversarial training alone does not help it, and combining the two preserves
+generalization. The central finding is that robustness on both axes is
+direction- and attack-strength-dependent: the same defence can help in one direction
+and harm in the other. We further validate the pipeline on real cloud traffic.
+\end{abstract}
+
+\medskip
+\noindent\textbf{Keywords:} network intrusion detection; adversarial robustness;
+cross-network generalization; semantic feature mapping; evasion attack.
+
+% ============================================================
+\section{Introduction}
+Machine-learning network intrusion detection systems (NIDS) have become a backbone of
+modern cyber defence \cite{cremer,khraisat}, and a long line of public datasets and
+models has pushed their in-domain accuracy very high. Yet a detector that scores well on
+its own benchmark is often fragile along two separate axes. The first is network shift: a
+model that excels on one network collapses on another because the traffic distributions
+differ \cite{dhooge,cantone}. The second is adversarial evasion: an attacker alters
+attack traffic just enough to slip past the detector \cite{biggio2013,goodfellow2015}.
+These two weaknesses are usually studied in isolation, but a real deployment must
+withstand both at the same time.
+
+Our earlier work addressed the first axis. Using a Semantic Feature Mapping (SFM) that
+keeps only the features genuinely comparable across different flow-export tools, together
+with a small amount of target-network labels for calibration, a single lightweight
+XGBoost recovers cross-network detection and was validated down to real cloud traffic
+\cite{martono2024sfm}. That result, however, says nothing about the second axis. A model that generalizes
+across networks may still be easy to evade, and it is not obvious whether making it
+robust to evasion would damage the cross-network ability it just gained, or whether the
+two kinds of robustness can be held at once.
+
+This paper studies exactly that interaction, and it does so as a scientific question
+rather than an engineering one. We do not propose a new technique; the building blocks we
+use (SFM, few-shot calibration, FGSM and PGD attacks, adversarial training, and a
+feature-space constraint that keeps perturbations consistent with protocol arithmetic)
+are all established. Our aim is to find out how cross-network generalization and
+adversarial robustness behave when they must coexist on one lightweight model, and why
+that coexistence turns out to depend on the direction of the network shift. Keeping the
+same nine SFM features, the same model, and the same evaluation metric as the earlier
+work, we compare four training variants (baseline, few-shot, adversarial training, and
+few-shot combined with adversarial training) on the two cross-network directions between
+CSE-CIC-IDS2018 and UNSW-NB15, under attacks of increasing strength.
+
+The main finding, not reported before, is that robustness on the two axes is
+direction- and attack-strength-dependent: the same defence can help in one direction and
+harm in the other. Cross-network generalization comes from the few-shot calibration,
+while adversarial training on its own does not close the cross-network gap; adding
+adversarial training on top of few-shot preserves generalization, and in one direction it
+yields a model robust on both axes at once, yet in the other direction the hardest attack
+still breaks every variant. The clearest illustration is that, under the stronger PGD
+attack, adversarial training hurts in one direction (MCC falling from 0.524 to 0.302) but
+helps in the other (from $-0.124$ to 0.178). We explain this asymmetry through the width
+of the decision cells of the tree model on low- versus high-variance target domains, and
+we report the trade-offs honestly, including the cases where the defence fails.
+
+The remainder of this paper is organized as follows. Section 2 reviews related work on
+cross-network generalization and adversarial robustness in NIDS. Section 3 presents the
+proposed method, including the features and model, the four training variants, and the
+adversarial generation and threat model. Section 4 reports the performance evaluation
+along both axes, the behaviour under increasing attack strength, security metrics beyond
+MCC, the mechanism behind the direction dependence, and a validation on real cloud
+traffic. Section 5 concludes and outlines future work.
+
+% ============================================================
+\section{Literature Review}
+This section reviews the two bodies of work that this paper brings together:
+cross-network generalization of NIDS and adversarial robustness of NIDS. We keep the
+first part short because it is the setting we inherit, and we focus more on the second
+part, which is the new axis we study.
+
+Cross-network generalization has been documented repeatedly: supervised detectors that
+are excellent on one dataset degrade sharply on another because the traffic
+distributions differ \cite{dhooge,verkerken,cantone}. Part of the difficulty is that
+different datasets are produced by different flow-export tools, so even features with the
+same name are not directly comparable, and benchmark datasets themselves carry labelling
+and feature-computation issues \cite{layeghy}. A standard feature set across datasets has
+been proposed to ease comparison \cite{sarhan}, and our earlier work went further by
+statistically auditing each feature pair and recovering cross-network detection with a
+small amount of target-network calibration, using a single lightweight XGBoost over nine
+semantically mapped features \cite{xgboost,martono2024sfm}. That earlier work is the
+starting point of this paper; we reuse its mapped features and model rather than
+re-deriving them.
+
+The second axis, adversarial evasion, has a long history in machine learning. Early work
+showed that small, carefully chosen input perturbations can flip a classifier's decision
+\cite{biggio2013,szegedy2014,goodfellow2015}, and stronger iterative attacks and careful
+evaluation protocols were later introduced to avoid overestimating robustness
+\cite{madry2018,carlini2017,athalye2018,carlini2019evaluating}. In the NIDS setting,
+however, an attacker cannot change feature values arbitrarily, because network features
+are coupled by protocol arithmetic and must correspond to traffic that can actually be
+sent. A line of work therefore studies how realistic such attacks are, and how to
+constrain perturbations so that they remain consistent with real traffic
+\cite{apruzzese2023,merzouk2022,alhajjar2021,sheatsley2022,lin2022idsgan}. We adopt this
+view and restrict our attacks to a protocol-consistent feature space rather than claiming
+full packet-level deliverability.
+
+A common defence is adversarial training, where adversarial examples are added during
+training so that the model learns to resist them \cite{madry2018}. For tree ensembles
+such as XGBoost, however, adversarial robustness is less well understood than for neural
+networks, and specialized analyses of evasion and hardening of tree models show that the
+piecewise-constant decision surface behaves differently from smooth models
+\cite{chen2019robusttrees,kantchelian2016}. This matters for our study because our
+detector is a tree ensemble.
+
+What is missing from both bodies of work is their intersection. Cross-network studies do
+not test adversarial evasion, and adversarial-robustness studies are usually run within a
+single dataset, so the question of whether a single model can be robust on both axes at
+once, and how the two interact, has not been examined. Table~\ref{tab:p2related}
+positions this paper against representative studies along three dimensions: whether
+cross-network generalization is addressed, whether adversarial robustness is studied, and
+whether the attacks respect feature-space consistency.
+
+\begin{table}[htbp]
+\centering
+\caption{Positioning against representative work.}
+\label{tab:p2related}
+\footnotesize
+\begin{tabular}{llll}
+\toprule
+Study & Cross-network & Adversarial & Feature-space constraint \\
+\midrule
+Cross-dataset studies \cite{dhooge,verkerken,cantone} & Yes & No & --- \\
+Standard feature set \cite{sarhan} & Yes & No & --- \\
+SFM + few-shot \cite{martono2024sfm} & Yes & No & --- \\
+NIDS evasion studies \cite{apruzzese2023,sheatsley2022} & No & Yes & Partial \\
+Tree robustness \cite{chen2019robusttrees,kantchelian2016} & No & Yes & No \\
+This work & Yes & Yes & Yes \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ============================================================
+\section{Proposed Method}
+We keep the same detection setup as our earlier cross-network work and extend it with an
+adversarial evaluation. This section describes the features, data, and model, the four
+training variants we compare, and how adversarial examples are generated under
+realistic, protocol-consistent constraints.
+
+\subsection{Features, Data, and Model}
+The detector is a single lightweight XGBoost \cite{xgboost} trained on the nine shared
+features produced by the Semantic Feature Mapping of our earlier work
+\cite{martono2024sfm}: duration, forward and backward packet counts, forward and backward
+byte counts, forward and backward mean packet sizes, and the source and destination load
+(rate) features. We reuse these features as given rather than re-deriving them, so that
+this paper can focus on the adversarial axis. Two public datasets act as the two networks,
+CSE-CIC-IDS2018 and UNSW-NB15, each reduced to the same nine features and a binary
+benign-versus-attack label. Features are standardized with a per-dataset z-score whose
+statistics are fit on the training split only, to avoid leakage. We write
+A$\rightarrow$B to mean a model trained on source dataset A and tested on target dataset
+B, following the usual source-to-target convention, and we evaluate both
+CIC$\rightarrow$UNSW and UNSW$\rightarrow$CIC because the two directions are not symmetric.
+
+\subsection{Four Training Variants}
+For each direction we compare four training variants. The \emph{baseline} is trained on
+the source network only. The \emph{few-shot} variant adds a small amount of
+target-network labels (about 1\%) for cross-network calibration. The \emph{adversarial}
+variant augments the source data with adversarial examples during training (an
+adversarial ratio of 20\% at training strength $\epsilon=0.1$). The proposed
+\emph{few-shot + adversarial} variant combines both: it first calibrates with 1\% target
+labels and then applies adversarial training on top. Comparing these four isolates what
+each ingredient contributes to each axis.
+
+\subsection{Adversarial Generation and Threat Model}
+XGBoost is a tree ensemble, so its decision function is piecewise constant and its exact
+gradient is zero almost everywhere. We therefore estimate the direction of evasion with a
+central finite difference of the loss in z-score space, as in Eq.~\eqref{eq:saliency},
+where $\mathcal{L}$ is the binary cross-entropy, $e_i$ the $i$-th feature direction, and
+$h=0.01$.
+
+\begin{equation}
+S_i(x) = \frac{\mathcal{L}(x + h\,e_i) - \mathcal{L}(x - h\,e_i)}{2h}
+\label{eq:saliency}
+\end{equation}
+
+A one-step FGSM attack then perturbs the input along the sign of this saliency,
+$x_{\mathrm{adv}} = x + \epsilon\,\mathrm{sign}(S(x))$. Because the saliency is computed
+from the attacked model itself, the attacker is adaptive and score-based (it needs only
+the model's output scores, not the internal tree structure), which gives every variant an
+equally hard and realistic test. To avoid overstating robustness with a single weak
+attack, we also use a stronger iterative attack (PGD, 10 iterations) and sweep three
+attack strengths $\epsilon \in \{0.05, 0.1, 0.2\}$, so that robustness is reported as a
+curve rather than a single point. Each experiment is repeated over five seeds
+($\{13,42,101,202,303\}$).
+
+Crucially, a network attacker cannot change feature values arbitrarily: packet and byte
+counts are non-negative integers, a flow's mean packet size must stay consistent with its
+bytes and packets, and an attacker can only add traffic, not remove what was already
+sent. We therefore project every perturbation onto a protocol-consistent feature space
+(PCFS) that enforces these rules, summarized in Table~\ref{tab:constraint}. This keeps the
+attack consistent at the feature level; we do not claim full packet-level deliverability.
+Throughout, the primary metric is the Matthews Correlation Coefficient (MCC), which stays
+reliable under heavy class imbalance, defined in Eq.~\eqref{eq:mcc} where TP, TN, FP, and
+FN are the confusion-matrix counts.
+
+\begin{equation}
+\mathrm{MCC} = \frac{\mathrm{TP}\cdot\mathrm{TN} - \mathrm{FP}\cdot\mathrm{FN}}
+{\sqrt{(\mathrm{TP}{+}\mathrm{FP})(\mathrm{TP}{+}\mathrm{FN})(\mathrm{TN}{+}\mathrm{FP})(\mathrm{TN}{+}\mathrm{FN})}}
+\label{eq:mcc}
+\end{equation}
+
+\begin{table}[htbp]
+\centering
+\caption{Protocol-consistent feature-space (PCFS) constraints.}
+\label{tab:constraint}
+\footnotesize
+\begin{tabular}{lll}
+\toprule
+Feature & Constraint & Rationale \\
+\midrule
+all features        & $x \ge 0$                          & no negative counts or rates \\
+packet counts       & integer $\ge 0$                    & packets are discrete \\
+bytes vs packets    & bytes $\ge$ packets                & each packet carries $\ge 1$ byte \\
+mean packet size    & mean $=$ bytes $/$ packets         & keep mean consistent \\
+add-only            & increments only ($\Delta \ge 0$)   & attacker may only add traffic \\
+load (rate)         & re-derived from bytes $/$ duration & rate consistent with volume \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ============================================================
+\section{Performance Evaluation}
+
+\subsection{Two-Axis Results: Generalization vs Adversarial Robustness}
+% TODO: tabel utama 4 varian x 2 arah (clean target + adaptive evasion), 5-seed.
+% Angka nyata: few-shot CIC->UNSW 0.650, UNSW->CIC 0.899; few-shot+adv 0.662/0.898.
+% + dua figur PNG (CIC->UNSW, UNSW->CIC).
+[ISI]
+
+\subsection{Robustness Under Increasing Attack Strength}
+% TODO: FGSM vs PGD across eps {0.05,0.1,0.2}; temuan: FGSM overstate robustness.
+% contoh tajam: adv HURTS CIC->UNSW (0.524->0.302) tapi HELPS UNSW->CIC (-0.124->0.178)
+[ISI]
+
+\subsection{Security Metrics: Attack Success Rate}
+% TODO: ASR (lower better), recall/precision/F1 di bawah adaptive PCFS eps=0.1
+[ISI]
+
+\subsection{Why the Interaction is Direction-Dependent}
+% TODO: decision-cell width (narasi sederhana) + figur skematik (PNG) + tabel bukti
+[ISI]
+
+\subsection{Validation on Real AWS Traffic}
+% TODO: 3-tahap (zero-shot -> +1% few-shot -> +adv); recall 0.00->0.97, MCC 0.18-0.25
+% field evasion robustness tetap terbuka (jujur)
+[ISI]
+
+% ============================================================
+\section{Conclusion and Future Work}
+% TODO: ringkas temuan dua-sumbu + pesan direction/attack-dependent;
+% future work umum (packet-level deliverable attacks, defense yang sadar-arah, dll)
+[ISI]
+
+\section*{Acknowledgements}
+The authors thank Politeknik Elektronika Negeri Surabaya (PENS) for computing
+support.
+
+\section*{Funding}
+This research was supported by the Ministry of Higher Education, Science, and Technology
+of the Republic of Indonesia.
+
+\section*{Declaration of Generative AI and AI-assisted Technologies}
+During the preparation of this work, the authors used AI-assisted tools to help with
+English language editing, LaTeX/formatting, restructuring and simplifying the manuscript
+text, and generating some of the schematic and plot figures from the authors' own
+experimental results. All research design, experiments, data collection, analysis, and
+interpretation were performed by the authors, and all reported numbers come from the
+authors' own executed, reproducible experiments (code and notebooks are available from
+the authors). No results, data, or figures were fabricated by the tools. After using
+these tools, the authors reviewed and edited all content and take full responsibility
+for the content of the publication.
+
+\begin{thebibliography}{99}
+\bibitem{cremer} F.~Cremer, B.~Sheehan, M.~Fortmann, A.~N.~Kia, M.~Mullins, F.~Murphy, and S.~Materne, Cyber risk and cybersecurity: A systematic review of data availability, \emph{Geneva Papers Risk Insur.}, 47(3), pp.~698--736, 2022.
+\bibitem{khraisat} A.~Khraisat, I.~Gondal, P.~Vamplew, and J.~Kamruzzaman, Survey of intrusion detection systems: Techniques, datasets and challenges, \emph{Cybersecurity}, 2(1), pp.~1--22, 2019.
+\bibitem{biggio2013} B.~Biggio, I.~Corona, D.~Maiorca, B.~Nelson, N.~\v{S}rndi\'c, P.~Laskov, G.~Giacinto, and F.~Roli, Evasion attacks against machine learning at test time, in \emph{Proc.\ ECML PKDD}, pp.~387--402, 2013.
+\bibitem{goodfellow2015} I.~J.~Goodfellow, J.~Shlens, and C.~Szegedy, Explaining and harnessing adversarial examples, in \emph{Proc.\ ICLR}, 2015.
+\bibitem{martono2024sfm} H.~Y.~Martono, I.~Syarif, and F.~A.~Saputra, Semantic feature mapping for cross-network intrusion detection: validation on a controlled cloud testbed, \emph{under review}, 2024.
+\bibitem{moustafa2015} N.~Moustafa and J.~Slay, UNSW-NB15: A comprehensive data set for network intrusion detection systems, in \emph{Proc.\ MilCIS}, pp.~1--6, 2015.
+\bibitem{unsweval} N.~Moustafa and J.~Slay, The evaluation of network anomaly detection systems: Statistical analysis of the UNSW-NB15 data set and the comparison with the KDD99 data set, \emph{Inf.\ Secur.\ J.}, 25(1--3), pp.~18--31, 2016.
+\bibitem{sharafaldin2018} I.~Sharafaldin, A.~H.~Lashkari, and A.~A.~Ghorbani, Toward generating a new intrusion detection dataset and intrusion traffic characterization, in \emph{Proc.\ ICISSP}, pp.~108--116, 2018.
+\bibitem{dhooge} L.~D'Hooge, T.~Wauters, B.~Volckaert, and F.~De~Turck, Inter-dataset generalization strength of supervised machine learning methods for intrusion detection, \emph{J.\ Inf.\ Secur.\ Appl.}, 54, art.~102564, 2020.
+\bibitem{verkerken} M.~Verkerken, L.~D'Hooge, T.~Wauters, B.~Volckaert, and F.~De~Turck, Towards model generalization for intrusion detection: Unsupervised machine learning techniques, \emph{J.\ Netw.\ Syst.\ Manage.}, 30(1), pp.~1--25, 2022.
+\bibitem{cantone} M.~Cantone, C.~Marrocco, and A.~Bria, Machine learning in network intrusion detection: A cross-dataset generalization study, \emph{IEEE Access}, 12, pp.~144491--144509, 2024.
+\bibitem{sarhan} M.~Sarhan, S.~Layeghy, and M.~Portmann, Towards a standard feature set for network intrusion detection system datasets, \emph{Mobile Netw.\ Appl.}, 27(1), pp.~357--370, 2022.
+\bibitem{layeghy} S.~Layeghy, M.~Gallagher, and M.~Portmann, Benchmarking the benchmark---Comparing synthetic and real-world network IDS datasets, \emph{J.\ Inf.\ Secur.\ Appl.}, 80, art.~103689, 2024.
+\bibitem{xgboost} T.~Chen and C.~Guestrin, XGBoost: A scalable tree boosting system, in \emph{Proc.\ ACM SIGKDD}, pp.~785--794, 2016.
+\bibitem{husain} A.~Husain, A.~Salem, C.~Jim, and G.~Dimitoglou, Development of an efficient network intrusion detection model using XGBoost on the UNSW-NB15 dataset, in \emph{Proc.\ IEEE ISSPIT}, pp.~1--7, 2019.
+\bibitem{shone} N.~Shone, T.~N.~Ngoc, V.~D.~Phai, and Q.~Shi, A deep learning approach to network intrusion detection, \emph{IEEE Trans.\ Emerg.\ Topics Comput.\ Intell.}, 2(1), pp.~41--50, 2018.
+\bibitem{wu} Z.~Wu, H.~Zhang, P.~Wang, and Z.~Sun, RTIDS: A robust transformer-based approach for intrusion detection system, \emph{IEEE Access}, 10, pp.~64375--64387, 2022.
+\bibitem{szegedy2014} C.~Szegedy, W.~Zaremba, I.~Sutskever, J.~Bruna, D.~Erhan, I.~Goodfellow, and R.~Fergus, Intriguing properties of neural networks, in \emph{Proc.\ ICLR}, 2014.
+\bibitem{madry2018} A.~Madry, A.~Makelov, L.~Schmidt, D.~Tsipras, and A.~Vladu, Towards deep learning models resistant to adversarial attacks, in \emph{Proc.\ ICLR}, 2018.
+\bibitem{carlini2017} N.~Carlini and D.~Wagner, Towards evaluating the robustness of neural networks, in \emph{Proc.\ IEEE S\&P}, pp.~39--57, 2017.
+\bibitem{athalye2018} A.~Athalye, N.~Carlini, and D.~Wagner, Obfuscated gradients give a false sense of security: Circumventing defenses to adversarial examples, in \emph{Proc.\ ICML}, pp.~274--283, 2018.
+\bibitem{carlini2019evaluating} N.~Carlini, A.~Athalye, N.~Papernot, W.~Brendel, J.~Rauber, D.~Tsipras, I.~Goodfellow, A.~Madry, and A.~Kurakin, On evaluating adversarial robustness, \emph{arXiv:1902.06705}, 2019.
+\bibitem{apruzzese2023} G.~Apruzzese, M.~Andreolini, L.~Ferretti, M.~Marchetti, and M.~Colajanni, Modeling realistic adversarial attacks against network intrusion detection systems, \emph{ACM Digit.\ Threats Res.\ Pract.}, 3(3), pp.~1--19, 2022.
+\bibitem{merzouk2022} M.~A.~Merzouk, F.~Cuppens, N.~Boulahia-Cuppens, and R.~Yaich, Investigating the practicality of adversarial evasion attacks on network intrusion detection, \emph{Ann.\ Telecommun.}, 77, pp.~763--775, 2022.
+\bibitem{alhajjar2021} E.~Alhajjar, P.~Maxwell, and N.~Bastian, Adversarial machine learning in network intrusion detection systems, \emph{Expert Syst.\ Appl.}, 186, art.~115782, 2021.
+\bibitem{sheatsley2022} R.~Sheatsley, N.~Papernot, M.~Weisman, G.~Verma, and P.~McDaniel, Adversarial examples for network intrusion detection systems, \emph{J.\ Comput.\ Secur.}, 30(5), pp.~727--752, 2022.
+\bibitem{lin2022idsgan} Z.~Lin, Y.~Shi, and Z.~Xue, IDSGAN: Generative adversarial networks for attack generation against intrusion detection, in \emph{Proc.\ PAKDD}, pp.~79--91, 2022.
+\bibitem{chen2019robusttrees} H.~Chen, H.~Zhang, D.~Boning, and C.-J.~Hsieh, Robust decision trees against adversarial examples, in \emph{Proc.\ ICML}, pp.~1122--1131, 2019.
+\bibitem{kantchelian2016} A.~Kantchelian, J.~D.~Tygar, and A.~D.~Joseph, Evasion and hardening of tree ensemble classifiers, in \emph{Proc.\ ICML}, pp.~2387--2396, 2016.
+\bibitem{bendavid} S.~Ben-David, J.~Blitzer, K.~Crammer, A.~Kulesza, F.~Pereira, and J.~W.~Vaughan, A theory of learning from different domains, \emph{Mach.\ Learn.}, 79(1--2), pp.~151--175, 2010.
+\end{thebibliography}
+
+\end{document}

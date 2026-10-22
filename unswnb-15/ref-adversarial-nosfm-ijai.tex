@@ -1,0 +1,548 @@
+\documentclass{iaesarticle}
+
+%%required package. add for your convenient, but do not remove the initial
+\setlength{\headsep}{0.15in}
+\usepackage{amsmath, amsfonts, amssymb, float, fancyhdr}
+\usepackage[figuresright]{rotating}
+\usepackage{authblk, graphicx, indentfirst, lastpage, lipsum}
+\usepackage{pifont}
+\renewcommand{\Authsep}{, }
+\renewcommand{\Authand}{, }
+\renewcommand{\Authands}{, }
+\setlength{\affilsep}{0cm}
+\renewcommand\Authfont{\normalsize}
+\renewcommand\Affilfont{\fontsize{8}{10}\mdseries}
+\makeatletter
+\renewcommand{\@biblabel}[1]{[#1]\hfill}
+\renewcommand\AB@authnote[1]{\textsuperscript{\normalfont\bfseries#1}}
+\makeatother
+\usepackage[font=normalsize]{subfig, caption}
+\usepackage{epstopdf}
+\usepackage[left=3cm, right=2.5cm, top=2.5cm, bottom=2.5cm, includehead, includefoot]{geometry}
+\usepackage[justification=centering]{caption}
+\captionsetup{labelsep=period}
+\usepackage{titlesec}
+\usepackage[table]{xcolor}
+\titleformat{\section}
+{\normalfont\normalsize\bfseries\uppercase}{\thesection}{1.7em}{} 
+\titleformat{\subsection}
+{\normalfont\normalsize\bfseries}{\thesubsection}{.95em}{}
+\titleformat{\subsubsection}
+{\bfseries}{\thesubsubsection}{.2em}{}
+\titlespacing*{\section}{0cm}{0.7cm}{0cm}
+\usepackage{enumitem}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{ragged2e}
+\usepackage{hyperref,graphicx}
+\usepackage{multirow}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{fleqn}
+
+%% compact spacing helpers (do not alter content)
+\setlength{\textfloatsep}{6pt plus 2pt minus 2pt}
+\setlength{\intextsep}{6pt plus 2pt minus 2pt}
+\setlength{\abovedisplayskip}{4pt plus 1pt minus 1pt}
+\setlength{\belowdisplayskip}{4pt plus 1pt minus 1pt}
+\setlength{\abovedisplayshortskip}{2pt}
+\setlength{\belowdisplayshortskip}{2pt}
+
+%%leave copyright info to the editor
+\CopyrightLine[]{}{\textit{This is an open access article under the \textcolor{blue}{\underline{CC BY-SA}} license.}
+\vspace{.5em}}
+
+%%author
+\author[1]{\bfseries Hero Yudo Martono}
+\author[1]{\bfseries Iwan Syarif}
+\author[1]{\bfseries Ferry Astika Saputra}
+
+%%author's affiliation
+\affil[1]{Department of Informatics Engineering, Politeknik Elektronika Negeri Surabaya, Surabaya, Indonesia}
+
+%%title and shortitle (for footer)
+\title{Feature reduction and adversarial training for evasion-resilient intrusion detection}
+\shorttitle{Feature reduction and adversarial training for evasion-resilient intrusion detection (Martono)}
+
+%%starting
+\begin{document}
+\setcounter{page}{1}
+
+%%indentation. do not change
+\setlength{\parindent}{1.27cm}
+
+%%header and footer setting. do not change
+\pagestyle{fancy}
+\fancyhfoffset{0cm}
+
+%%journal info
+\journalname{IAES International Journal of Artificial Intelligence (IJ-AI)}
+\journalshortname{Int J Artif Intell}
+\journalhomepage{http://ijai.iaescore.com}
+\vol{99}
+\no{1}
+\months{Month}
+\years{2099}
+\issn{2252-8938}
+\DOI{10.11591}
+\pagefirst{1}
+\pagelast{1x}
+
+%%build title
+\maketitle
+
+%%border setting. do not change
+\hrule
+\vspace{.1em}
+\hrule
+\vspace{.5em}
+\noindent
+\parbox[t][][s]{0.315\textwidth}{%
+\textbf{Article Info}
+\vspace{.5em}
+\hrule
+\vspace{.5em}
+\begin{history}
+\vspace{.5em}
+Received month dd, yyyy
+
+Revised month dd, yyyy
+
+Accepted month dd, yyyy
+
+\vspace{.7em}
+\end{history}
+\vspace{.5em}
+\hrule
+\vspace{.5em}
+\begin{keyword} 
+\vspace{.5em}
+Adversarial training \sep
+CSE-CIC-IDS2018 \sep
+Evasion attack \sep
+Feature reduction \sep
+Network intrusion detection
+\vspace{.5em}
+\end{keyword}
+\vspace{\fill}
+}
+\parbox{0.020\textwidth}{\hspace{0.5em}}
+\parbox[t][][s]{0.65\textwidth}{%
+\begin{abstract}
+\vspace{.3em}
+Machine learning-based network intrusion detection systems (NIDS) often perform well only under clean laboratory traffic and remain vulnerable to deliberate manipulation during inference, while feature dimensionality reduction improves efficiency but may enlarge the attack surface. This study evaluates and strengthens the robustness of an XGBoost model whose features were optimized using Gain-based importance, on the CSE-CIC-IDS2018 dataset (15.7 million samples, seven attack categories). The methodology has three stages: feature reduction from 68 to 10 features, simulation of Saliency Map-based evasion attacks, and Adversarial Training as defense. Because XGBoost is non-differentiable, input sensitivity is approximated numerically through finite differences over the model probability outputs. The baseline Matthews correlation coefficient (MCC) drops drastically from 0.9351 to 0.0184 (a 98\% decline) under evasion ($\epsilon=0.1$), whereas the hardened model recovers to 0.9953 on adversarial data while preserving 0.9347 on clean traffic. A robustness ablation over four configurations confirms Top-10 as the optimal sweet spot. Validation on real network traffic in an AWS cloud environment shows the robustness pattern remains consistent with offline results, demonstrating that the effectiveness of Adversarial Training is not confined to benchmark datasets.
+\end{abstract}
+}
+\parbox[l]{\textwidth}{%
+\rule{0.275\textwidth}{0.5pt} \hspace{0.5cm} \hrulefill
+\\
+\emph{\textbf{Corresponding Author:}}
+\vspace{.5em}\\
+Hero Yudo Martono\\
+Department of Informatics Engineering, Politeknik Elektronika Negeri Surabaya\\
+Surabaya, Indonesia\\
+Email: hero@pens.ac.id
+}
+\vspace{.5em}
+\hrule
+\vspace{.1em}
+\hrule
+
+%% main text
+
+\section{Introduction}
+The rapid growth of network traffic and the increasing sophistication of cyberattacks have made the network intrusion detection system (NIDS) an essential defensive component. Machine learning-based NIDS depends heavily on high-quality public benchmark datasets. Several datasets have become de facto standards for evaluating detection models, ranging from KDD Cup 99 \cite{1}, UNSW-NB15 \cite{2}, CIC-IDS/CSE-CIC-IDS \cite{3}, Bot-IoT \cite{4}, and TON\_IoT \cite{5}, to CICIoT2023 \cite{6}. Various surveys confirm that machine learning and deep learning methods have become mainstream in modern NIDS research \cite{7}, \cite{8}, \cite{9}.
+
+One classic challenge in NIDS datasets is the extreme class imbalance between normal traffic and attacks. To address this, generative adversarial networks (GAN) \cite{10} are widely used for data synthesis and balancing. Several generative variants have been developed as foundations, including conditional GAN \cite{11}, Wasserstein GAN \cite{12}, deep convolutional GAN \cite{13}, self-attention GAN \cite{14}, auxiliary classifier GAN \cite{15}, and conditional tabular GAN \cite{16}. At the NIDS application level, several studies combine generative models with traditional classifiers such as random forest, decision tree, support vector machine, and XGBoost to improve detection \cite{17}, \cite{18}, \cite{19}, \cite{20}, \cite{21}, \cite{22}. Another group employs deep learning architectures such as convolutional, recurrent, and long short-term memory networks as downstream classifiers after data generation \cite{23}, \cite{24}, \cite{25}, \cite{26}, \cite{27}, \cite{28}. These approaches improve detection under clean laboratory traffic.
+
+However, the same generative capability can be exploited offensively. Several studies show that GANs can generate adversarial samples that deceive NIDS models through evasion attacks, on both machine learning-based and deep learning-based classifiers \cite{29}, \cite{30}, \cite{31}. Such attacks are effective even under low-data regimes \cite{32}, in machine learning-based evasion schemes \cite{33}, in internet-of-things environments \cite{34}, and in the malware domain \cite{35}, \cite{36}. These findings reveal a fundamental security gap: a model that performs excellently on clean data can collapse drastically when its input features are subtly and deliberately manipulated during inference.
+
+To close this gap, defenses such as Adversarial Training and diffusion-based adversarial purification have been proposed to strengthen the decision boundary \cite{37}. Generative approaches have also evolved toward ensemble/hybrid methods \cite{38}, \cite{39} and privacy-preserving or distributed architectures such as differentially private GAN \cite{40}, distributed GAN \cite{41}, and federated learning \cite{42}. Meanwhile, the demand for computational efficiency drives feature dimensionality reduction so models can be deployed on resource-constrained devices. Ironically, aggressive feature reduction may enlarge the attack surface: concentrating decisions on a few features increases the gradient sensitivity of those features, making the model easier to exploit. This tension between efficiency and robustness has not been systematically explored.
+
+In addition, a review of generative and adversarial NIDS literature reveals two important gaps. First, cross-dataset generalization: recent studies prove that a model excelling on one dataset suffers a drastic performance drop when tested on a dataset from a different network \cite{43}, \cite{44}, indicating that benchmark performance does not necessarily reflect generalization capability. Second, and most critically, almost all such studies stop at offline evaluation using static datasets, and very few validate robustness on real network traffic in an actual deployment environment. As a result, claims of robustness against evasion remain largely untested under realistic conditions, where differences in feature-extraction tools and network characteristics can significantly affect performance. The inherent challenges of training generative models, such as mode collapse and convergence instability, further complicate reproducibility in real environments \cite{45}.
+
+Based on these gaps, this study proposes an approach integrating XGBoost Gain-based feature reduction with Saliency Map-based Adversarial Training, then validates it not only offline on CSE-CIC-IDS2018 but also on real traffic in an AWS cloud environment. The main contributions are: (i) quantifying the security gap caused by evasion attacks on a feature-reduced tree-based model; (ii) demonstrating the effectiveness of Adversarial Training in restoring robustness without sacrificing accuracy on normal traffic; (iii) determining the feature-dimension sweet spot through a robustness ablation study; and (iv) validating the consistency of model robustness on real network traffic, an aspect rarely addressed in adversarial NIDS literature.
+
+\section{Method}
+This study uses a quantitative experimental design to evaluate and improve the robustness of an NIDS against evasion attacks. It comprises six main stages: dataset preprocessing, XGBoost Gain-based feature optimization, adversarial sample generation, adversarial training, robustness ablation study, and model evaluation, as illustrated in Figure~\ref{fig:flowchart}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\linewidth]{nids-figures/fig_flowchart.png}
+\vspace{.25em}
+\caption{research methodology flowchart}
+\label{fig:flowchart}
+\end{figure}
+
+\subsection{Dataset and data preprocessing}
+This study uses the CSE-CIC-IDS2018 dataset provided by the Canadian Institute for Cybersecurity \cite{3}, selected for its broad attack coverage reflecting modern network scenarios (ten CSV files, $\approx6.7$~GB, covering benign traffic and seven attack categories: brute-force SSH/FTP, denial-of-service, distributed denial-of-service, web attacks, infiltration, and botnet). Given the massive volume (the 20 February file alone reaches 3.8~GB), a 10\% stratified sampling strategy \cite{46} preserves the original attack-label distribution, producing 1{,}570{,}577 samples out of 15{,}705{,}786. Data cleaning proceeded through: (i) \textit{handling of singular values}---samples with missing values (NaN) removed, and Infinity values imputed with the finite column maximum to avoid mathematical failure; (ii) \textit{elimination of biased features}---flow identifiers (Flow ID, source/destination IP, ports, protocol) and Timestamp dropped so the model learns statistical rather than topological or temporal cues; (iii) \textit{low-variance reduction}---zero-variance features discarded; and (iv) \textit{normalization and encoding}---labels via \texttt{LabelEncoder} and numeric features via standard/min-max scaling in scikit-learn \cite{47}. From 83 initial technical features, this yielded a clean matrix of 68 numeric features and one label (Table~\ref{tab:distribution}).
+
+\begin{table}[H]
+\centering
+\fontsize{8pt}{10pt}\selectfont
+\caption{Sample distribution of CSE-CIC-IDS2018 before and after preprocessing}
+\label{tab:distribution}
+\begin{tabular}{l r r l}
+\hline
+\textbf{Category} & \textbf{Original} & \textbf{10\% Subset} & \textbf{Description} \\ \hline
+Benign        & 13{,}484{,}708 & 1{,}348{,}470 & Normal traffic \\
+DDoS / DoS    & 1{,}391{,}082  & 139{,}108     & Volumetric flooding \\
+Brute-Force   & 380{,}943      & 38{,}094      & SSH/FTP login \\
+Botnet        & 286{,}191      & 28{,}619      & C2 command \\
+Web Attacks   & 928           & 93           & SQLi / XSS \\
+Infiltration  & 161{,}934      & 16{,}193      & Internal penetration \\ \hline
+\textbf{Total} & \textbf{15{,}705{,}786} & \textbf{1{,}570{,}577} & 83 features (before cleaning) \\ \hline
+\end{tabular}
+\end{table}
+
+\subsection{XGBoost Gain-based feature optimization}
+To achieve efficiency without sacrificing critical information, Gain-based reduction \cite{48} was performed by: (i) training a baseline XGBoost on all 68 features (80:20 split); (ii) extracting the Gain metric (average contribution of a feature in reducing the loss at each split); (iii) ranking features by Gain; (iv) validating via ablation over Full (68), Top-20, Top-15, and Top-10 subsets; and (v) selecting the configuration that best balances classification performance ($F_1$-score and MCC), model-artifact size, and inference latency---the sweet spot.
+
+\subsection{Adversarial sample generation (evasion attack)}
+This stage simulates an attacker deceiving the NIDS through evasion, using a gradient-based technique \cite{49} to identify vulnerabilities and apply subtle perturbations to critical features. The Saliency Map approach relies on output sensitivity to input changes \cite{50}. Let the NIDS be a decision function $f(\mathbf{x})$ with parameters $\theta$, where $\mathbf{x}=[x_1,\dots,x_d]^T\in\mathbb{R}^d$ is the feature vector and $y$ the label. The sensitivity of the loss $L(\theta,\mathbf{x},y)$ to each feature is the gradient vector in \eqref{eq:grad}, and the Saliency Map score for feature $i$ is its absolute partial derivative in \eqref{eq:sal}.
+
+\begin{equation}\label{eq:grad}
+\nabla_{\mathbf{x}} L(\theta, \mathbf{x}, y) = \left[ \frac{\partial L}{\partial x_1}, \frac{\partial L}{\partial x_2}, \dots, \frac{\partial L}{\partial x_d} \right]^T
+\end{equation}
+
+\begin{equation}\label{eq:sal}
+S(\mathbf{x}, i) = \left| \frac{\partial L(\theta, \mathbf{x}, y)}{\partial x_i} \right|
+\end{equation}
+
+XGBoost is tree-based with a step-function decision boundary and is therefore non-differentiable: $\partial L/\partial x_i$ is zero almost everywhere and undefined at split thresholds. Consequently the gradient is not computed analytically but approximated numerically by the central finite-difference method over the cross-entropy loss built from the model probabilities (\texttt{predict\_proba} under \texttt{multi:softprob}), which is continuous in the input, as in \eqref{eq:fd}.
+
+\begin{equation}\label{eq:fd}
+S(\mathbf{x}, i) = \left| \frac{L(\theta, \mathbf{x} + h\mathbf{e}_i, y) - L(\theta, \mathbf{x} - h\mathbf{e}_i, y)}{2h} \right|
+\end{equation}
+
+Here $\mathbf{e}_i$ is the unit basis vector along dimension $i$, $h=0.01$ the step size, and $L=-\sum_c y_c \log p_c(\mathbf{x})$ the cross-entropy with $p_c(\mathbf{x})$ the probability for class $c$. This is conceptually a score-based (zeroth-order) attack requiring only output probabilities, so the vulnerability computation remains valid for a non-differentiable model.
+
+The choice of the step size $h$ is critical because it must balance two competing sources of error inherent to differencing a step-function model in a $z$-scored (standardized) feature space. A step that is too large ($h\gtrsim0.1$) averages the loss over an interval that may straddle several tree split thresholds, so the estimated direction becomes strongly biased and no longer reflects the local decision surface; a step that is too small ($h\lesssim0.001$) falls, for most features, entirely within a single leaf region where the loss is piecewise constant, so the numerator $L(\mathbf{x}+h\mathbf{e}_i)-L(\mathbf{x}-h\mathbf{e}_i)$ collapses to zero (numerical instability from the cancellation of near-identical probabilities) and yields an uninformative, noise-dominated gradient. A preliminary sensitivity check over $h\in\{0.001, 0.01, 0.1\}$ confirmed this trade-off: at $h=0.1$ the ranked saliency of the top features fluctuated substantially between samples, while at $h=0.001$ a large fraction of features returned a zero score. Because the features are standardized to unit variance, $h=0.01$ corresponds to a perturbation of one-hundredth of a standard deviation---small enough to remain local yet large enough to cross a nearby split threshold with high probability---and produced the most stable perturbation-direction ranking. This value is therefore adopted for all subsequent experiments. Once the most sensitive features are identified, the adversarial sample $\mathbf{x}_{adv}$ adds a perturbation $\boldsymbol{\delta}$ bounded by the $L_\infty$ norm $\epsilon$, as in \eqref{eq:eps}. Following the fast gradient sign method \cite{51} and substituting the approximated saliency for the analytic gradient, it is formed as in \eqref{eq:fgsm}.
+
+\begin{equation}\label{eq:eps}
+\mathbf{x}_{adv} = \mathbf{x} + \boldsymbol{\delta}, \quad \text{with } \|\boldsymbol{\delta}\|_\infty \le \epsilon
+\end{equation}
+
+\begin{equation}\label{eq:fgsm}
+\mathbf{x}_{adv} = \mathbf{x} + \epsilon \cdot \text{sign}\left( S(\mathbf{x}) \right)
+\end{equation}
+
+On a feature-reduced model the decision concentrates on few dimensions; the fewer features, the larger the approximated saliency on those features tends to be, a weakness exploited by the Saliency Map-based attack.
+
+\subsection{Modeling and adversarial training}
+A single XGBoost classifier was deliberately chosen over a compressed deep learning alternative (e.g., a multilayer perceptron or a quantized convolutional network) for three reasons grounded in the nature of the problem and the intended edge deployment. First, gradient-boosted decision trees are historically superior on heterogeneous, low-dimensional tabular data such as network-flow statistics, whereas deep neural networks excel primarily on high-dimensional structured signals (images, audio, text) and tend to overfit and underperform on tabular features with only a few tens of columns. Second, from a Green-AI and edge-efficiency standpoint, the pruned Top-10 model is a self-contained 5.65~MB artifact that runs on CPU without a specialized accelerator; the ablation in Table~\ref{tab:ablation_selection} measures an inference time of 0.1826~s for 10{,}000 samples, i.e.\ $\approx18.3\,\mu$s per flow and a throughput of $\approx5.5\times10^{4}$ flows/s, which is empirical evidence of computational feasibility on resource-constrained hardware, in contrast to the larger memory footprint and energy budget typical of deep networks. Third, the tree structure lends itself to the score-based saliency analysis and threshold-level Adversarial Training used here, keeping the defense transparent and reproducible. The NIDS model is therefore XGBoost with objective \texttt{multi:softprob}; key hyperparameters are maximum tree depth (\texttt{max\_depth}) 8, learning rate 0.1, 200 estimators (\texttt{n\_estimators}), and \texttt{subsample}/\texttt{colsample\_bytree} 0.8 to mitigate overfitting. Adversarial Training is a Min-Max (saddle-point) optimization \cite{52} minimizing the worst-case loss under perturbation, as in \eqref{eq:minmax}.
+
+\begin{equation}\label{eq:minmax}
+\min_{\theta} \mathbb{E}_{(\mathbf{x}, y) \sim \mathcal{D}} \left[ \max_{\|\boldsymbol{\delta}\|_\infty \le \epsilon} L(\theta, \mathbf{x} + \boldsymbol{\delta}, y) \right]
+\end{equation}
+
+In practice, from the clean set $\mathcal{D}_{clean}$ an adversarial subset $\mathcal{D}_{adv}$ is generated via the Saliency Map method and combined into a robust training set at an 80:20 ratio, as in \eqref{eq:robustset}.
+
+\begin{equation}\label{eq:robustset}
+\mathcal{D}_{robust} = \mathcal{D}_{clean} \cup \mathcal{D}_{adv}
+\end{equation}
+
+Retraining on $\mathcal{D}_{robust}$ adjusts split thresholds so regions around the original samples---previously vulnerable to an $\epsilon$-shift---fall within the correct decision region, improving robustness without sacrificing clean accuracy (Figure~\ref{fig:advtrain}).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.72\linewidth]{nids-figures/fig_advtrain.png}
+\vspace{.25em}
+\caption{systematic adversarial training workflow}
+\label{fig:advtrain}
+\end{figure}
+
+\subsection{Robustness ablation study}
+The robustness ablation evaluates the trade-off between feature-dimension efficiency and security under evasion, isolating four hierarchical feature levels by Gain ranking (Table~\ref{tab:ablation_config}). Each configuration $C_k$ ($k\in\{1,2,3,4\}$) is trained twice---baseline (no defense) and robust (with Adversarial Training)---then tested with evasion samples $\mathbf{x}_{adv}$ parameterized by $\epsilon$. The goal is the sweet spot $\hat{C}$ maximizing the combined utility in \eqref{eq:sweetspot}, where $|C_k|$ is the feature count and $\lambda$ a dimension-efficiency penalty.
+
+\begin{table}[H]
+\centering
+\fontsize{8pt}{10pt}\selectfont
+\caption{Feature configurations for the robustness ablation study}
+\label{tab:ablation_config}
+\begin{tabular}{c c p{7.8cm}}
+\hline
+\textbf{Configuration} & \textbf{Count} & \textbf{Description} \\ \hline
+$C_1$ (Full)   & 68 & Full-dimension comparison baseline \\
+$C_2$ (Top-15) & 15 & Moderately informative feature subset \\
+$C_3$ (Top-10) & 10 & Sweet-spot hypothesis (compact and precise) \\
+$C_4$ (Top-5)  & 5  & Extreme compression (maximum efficiency) \\ \hline
+\end{tabular}
+\end{table}
+
+\begin{equation}\label{eq:sweetspot}
+\hat{C} = \arg\max_{C_k} \left( \text{MCC}(C_k, \mathbf{x}_{adv}) - \lambda \cdot |C_k| \right)
+\end{equation}
+
+\subsection{Model evaluation and performance comparison}
+Evaluation uses a $2\times2$ cross-testing scenario comparing the baseline and robust models on clean and manipulated traffic (Table~\ref{tab:scenario_2x2}). Because CSE-CIC-IDS2018 is extremely imbalanced, the Matthews correlation coefficient (MCC) \cite{53} is the primary metric; unlike accuracy, it accounts for all four confusion-matrix quadrants proportionally, making it more reliable on imbalanced data \cite{54}, as in \eqref{eq:mcc}. The MCC ranges over $[-1,+1]$ ($+1$ perfect, $0$ random, $-1$ total disagreement). Precision and $F_1$-score are reported as supporting metrics, as in \eqref{eq:prf}, with $\text{Recall}=TP/(TP+FN)$.
+
+\begin{table}[H]
+\centering
+\fontsize{8pt}{10pt}\selectfont
+\caption{Evaluation scenario matrix for the NIDS model ($2\times2$)}
+\label{tab:scenario_2x2}
+\begin{tabular}{l l l l p{5.2cm}}
+\hline
+\textbf{Scenario} & \textbf{Model} & \textbf{Train} & \textbf{Test} & \textbf{Evaluation objective} \\ \hline
+S1 & Baseline & Clean  & Clean       & Initial performance under normal conditions \\
+S2 & Baseline & Clean  & Manipulated & Measure evasion vulnerability (security gap) \\
+S3 & Robust   & Robust & Clean       & Verify accuracy preserved on normal traffic \\
+S4 & Robust   & Robust & Manipulated & Prove improved resilience against attacks \\ \hline
+\end{tabular}
+\end{table}
+
+\begin{equation}\label{eq:mcc}
+\text{MCC} = \frac{(TP \times TN) - (FP \times FN)}{\sqrt{(TP + FP)(TP + FN)(TN + FP)(TN + FN)}}
+\end{equation}
+
+\begin{equation}\label{eq:prf}
+\text{Precision} = \frac{TP}{TP + FP}, \qquad F_1 = 2 \times \frac{\text{Precision} \times \text{Recall}}{\text{Precision} + \text{Recall}}
+\end{equation}
+
+A performance drop in S2 reveals the security gap, whereas recovery of MCC and $F_1$-score in S4 demonstrates successful hardening through Adversarial Training.
+
+\section{Results and Discussion}
+\subsection{Preprocessing results and subset description}
+Preprocessing transformed the raw dataset ($\approx6.7$~GB) into a clean, proportionally balanced subset. The 10\% stratified sampling preserved attack-category ratios; 2{,}861 samples with undefined values were removed, and Infinity values in variables such as \texttt{Flow Bytes/s} were imputed with the finite column maximum. Removing six flow-identifier features and Timestamp prevented topology overfitting, while a variance scan discarded eight zero-variance features. From 83 initial features, this produced a clean matrix of 68 numeric features plus one label.
+
+\subsection{XGBoost Gain ranking and sensitive-feature exploration}
+Training on all 68 features showed the Gain contribution is concentrated on a few dominant attributes; the top-10 features account for more than 85\% of the accumulated Gain (Table~\ref{tab:feature_importance}), confirming that most features are redundant. A gradient-based analysis further distinguished global importance (Gain) from local sensitivity (approximated Saliency Map). When the model is forced to decide from only 10 features, the saliency on those features rises sharply. \textit{Init Fwd Win Byts} recorded the highest saliency, making it the most perturbation-sensitive even though it ranks only 10th by Gain; it represents the initial forward TCP window size, which an attacker can manipulate in the TCP header without breaking packet functionality---a realistic evasion target.
+
+\begin{table}[H]
+\centering
+\fontsize{8pt}{10pt}\selectfont
+\caption{Top-20 features ranked by XGBoost Gain-based importance}
+\label{tab:feature_importance}
+\begin{tabular}{c l c l}
+\hline
+\textbf{Rank} & \textbf{Feature} & \textbf{Rank} & \textbf{Feature} \\ \hline
+1  & Fwd Seg Size Min   & 11 & Bwd Pkt Len Std \\
+2  & URG Flag Cnt       & 12 & Bwd Seg Size Avg \\
+3  & Tot Bwd Pkts       & 13 & Fwd IAT Std \\
+4  & Fwd Act Data Pkts  & 14 & Bwd IAT Max \\
+5  & Fwd Pkt Len Max    & 15 & Bwd Pkt Len Max \\
+6  & Fwd Pkt Len Mean   & 16 & Fwd Header Len \\
+7  & Bwd Pkt Len Mean   & 17 & Fwd Pkts/s \\
+8  & Init Bwd Win Byts  & 18 & Fwd URG Flags \\
+9  & TotLen Bwd Pkts    & 19 & Fwd IAT Tot \\
+10 & Init Fwd Win Byts  & 20 & Fwd Pkt Len Std \\ \hline
+\end{tabular}
+\end{table}
+
+\subsection{Feature-selection ablation results}
+Retraining on four configurations (Table~\ref{tab:ablation_selection}) shows the $F_1$-score decreases only 0.83\% from Full (0.9798) to Top-10 (0.9717), while model size shrinks 21.2\% (7.17 to 5.65~MB) and inference time drops 23.9\% (0.2400 to 0.1826~s per 10{,}000 samples). Because Top-10 matches the Top-15 $F_1$-score with a more compact and faster model, it was selected as the sweet spot.
+
+\begin{table}[H]
+\centering
+\fontsize{8pt}{10pt}\selectfont
+\caption{Feature-selection ablation: performance and efficiency comparison}
+\label{tab:ablation_selection}
+\begin{tabular}{l c c c c c}
+\hline
+\textbf{Configuration} & \textbf{Features} & \textbf{$F_1$-score} & \textbf{ROC-AUC} & \textbf{Model Size} & \textbf{Inference (10k)} \\ \hline
+Full Features & 68 & 0.9798 & 0.9911 & 7.17 MB & 0.2400 s \\
+Top-20        & 20 & 0.9795 & 0.9900 & 6.82 MB & 0.2266 s \\
+Top-15        & 15 & 0.9717 & 0.9883 & 5.91 MB & 0.1930 s \\
+\textbf{Top-10} & \textbf{10} & \textbf{0.9717} & \textbf{0.9865} & \textbf{5.65 MB} & \textbf{0.1826 s} \\ \hline
+\end{tabular}
+\end{table}
+
+\subsection{Comparative evaluation of the four scenarios (S1--S4)}
+Table~\ref{tab:results_2x2} presents the four cross-testing scenarios on Top-10 with $\epsilon=0.10$. Under evasion, the baseline MCC collapses from 0.9351 (S1) to 0.0184 (S2)---a 98\% decline that constitutes the security gap. After Adversarial Training, the robust model recovers to MCC 0.9953 on manipulated data (S4, $+0.9769$ over S2), while on clean data (S3) it retains MCC 0.9347, only 0.04\% below the baseline---hardening does not degrade normal-traffic detection. Notably, the $F_1$-score in S2 remains 0.7539 despite the near-zero MCC, because the weighted $F_1$ is inflated by the majority (benign) class, whereas MCC captures the collapse on minority (attack) classes. This disparity demonstrates why MCC is the more trustworthy metric on imbalanced data. Adversarial Training addresses the weakness by isolating the attacker's gradient-shift within the redrawn decision boundary.
+
+\begin{table}[H]
+\centering
+\fontsize{8pt}{10pt}\selectfont
+\caption{Quantitative evaluation results for scenarios S1, S2, S3, and S4}
+\label{tab:results_2x2}
+\begin{tabular}{l l l c c c}
+\hline
+\textbf{Scenario} & \textbf{Model} & \textbf{Test data} & \textbf{MCC} & \textbf{$F_1$-score} & \textbf{Precision} \\ \hline
+S1 (Baseline)      & Baseline & Clean       & 0.9351 & 0.9729 & 0.9720 \\
+S2 (Vulnerability) & Baseline & Manipulated & 0.0184 & 0.7539 & 0.6905 \\
+S3 (Integrity)     & Robust   & Clean       & 0.9347 & 0.9727 & 0.9718 \\
+S4 (Robustness)    & Robust   & Manipulated & \textbf{0.9953} & \textbf{0.9985} & \textbf{0.9985} \\ \hline
+\end{tabular}
+\end{table}
+
+The per-class behavior is visualized by the confusion matrices in Figure~\ref{fig:confusion}: in S2 nearly all attack classes are misclassified as benign, whereas S4 restores a clean diagonal. A grouped-bar summary is shown in Figure~\ref{fig:groupedbar}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.72\linewidth]{nids-figures/evaluation_confusion_2x2_en.png}
+\vspace{.25em}
+\caption{confusion matrices for the 2x2 evaluation scenarios (XGBoost Top-10, $\epsilon=0.1$)}
+\label{fig:confusion}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.62\linewidth]{nids-figures/evaluation_grouped_bar_2x2_en.png}
+\vspace{.25em}
+\caption{comprehensive metric comparison across scenarios S1--S4}
+\label{fig:groupedbar}
+\end{figure}
+
+The observation that MCC in S4 (0.9953) exceeds S1 (0.9351) warrants care. It arises because the adversarial samples were generated from the saliency of the \textit{baseline} model, not the robust model---a transfer attack (grey-box with respect to the robust model). Perturbations designed to fool the baseline become ineffective against a model trained to withstand exactly those patterns, while clean data retains richer natural variation than the stereotypical $\epsilon\cdot\text{sign}(S(\mathbf{x}))$ perturbation. Because of this transfer setup, the S4 value is potentially an optimistic estimate; under a stricter white-box adaptive scenario the robustness would likely be lower. This limitation is stated explicitly and set as a primary direction for future work.
+
+\subsection{Robustness ablation: feature-dimension sweet spot}
+Table~\ref{tab:robustness_ablation} reports the adversarial-data MCC before (S2) and after (S4) Adversarial Training across the four configurations at $\epsilon=0.10$. All baseline models collapse (MCC near zero or negative), whereas every robust model recovers to MCC $>0.87$. Top-5 ($C_4$) shows the lowest robustness (0.873), indicating five features cannot form a stable decision boundary. Configurations $C_1$, $C_2$, $C_3$ differ only marginally in MCC S4 (0.997, 0.992, 0.995; $<0.5\%$) while model size grows from 5.65 to 7.17~MB. Top-10 ($C_3$) is the only one keeping the baseline adversarial MCC positive (0.018) while achieving MCC S4 $=0.995$, confirming it as the optimal sweet spot.
+
+\begin{table}[H]
+\centering
+\fontsize{8pt}{10pt}\selectfont
+\caption{Robustness ablation: adversarial-data MCC before (S2) and after (S4) adversarial training per configuration ($\epsilon = 0.10$)}
+\label{tab:robustness_ablation}
+\begin{tabular}{l c c c c}
+\hline
+\textbf{Configuration} & \textbf{Features} & \textbf{MCC$_{base+adv}$ (S2)} & \textbf{MCC$_{rob+adv}$ (S4)} & \textbf{Recovery} \\ \hline
+$C_1$ (Full)   & 68 & $-0.047$ & \textbf{0.997} & $+1.044$ \\
+$C_2$ (Top-15) & 15 & $-0.006$ & 0.992 & $+0.998$ \\
+$C_3$ (Top-10) & 10 & \textbf{0.018} & \textbf{0.995} & $+0.977$ \\
+$C_4$ (Top-5)  & 5  & $-0.070$ & 0.873 & $+0.943$ \\ \hline
+\end{tabular}
+\end{table}
+
+These findings carry practical weight. The compact $\approx5.65$~MB model can be embedded into resource-constrained edge devices (routers, IoT gateways); in serverless architectures (e.g., AWS Lambda) where cost scales with time and memory, using only 10 features keeps inference fast and light; and the robust resilience (MCC 0.9953) mitigates false-alarm fatigue. For reproducibility, the 5.65~MB artifact is a function of the ensemble structure rather than input dimensionality alone: with 200 boosting trees (\texttt{n\_estimators}$=200$) and depth 8 (\texttt{max\_depth}$=8$), each tree may hold up to $2^{8}-1=255$ split nodes, so the serialized model stores thresholds, split features, and leaf values of the full ensemble. Reducing features from 68 to 10 shrinks the size 21.2\% (7.17 to 5.65~MB) because fewer candidates yield shallower, sparser trees on average, but the dominant driver is the tree count and depth; this also explains why the size does not fall below the $\sim3$~MB range of aggressively compressed variants, since depth-8 trees are deliberately retained to preserve fidelity on the seven-class imbalanced problem. The holistic radar comparison (Figure~\ref{fig:radar}) reinforces this: the near-full symmetric polygons of S1, S3, and S4 indicate balanced high performance, whereas the shrunken S2 polygon---collapsing on the MCC axis yet wide on accuracy and recall---visually confirms the misleading nature of conventional metrics on imbalanced data.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.55\linewidth]{nids-figures/evaluation_radar_2x2_en.png}
+\vspace{.25em}
+\caption{multi-metric radar comparison of scenarios S1--S4}
+\label{fig:radar}
+\end{figure}
+
+\subsection{Real-traffic validation in the AWS cloud environment}
+To verify the offline findings are not laboratory artifacts, both models were tested on real traffic in an Amazon Web Services (AWS) cloud environment. The infrastructure was built inside a virtual private cloud (VPC, 10.3.0.0/16) with three EC2 nodes: an attacker (public subnet) running Hydra, Slowloris, and \texttt{nping}; a target (private subnet) running SSH and HTTP (Nginx); and an analyzer performing feature extraction and inference. Traffic was captured with \texttt{tcpdump}, stored to Amazon S3, and extracted into flow features via NFStream. Because NFStream does not natively expose two Top-10 TCP window features (\textit{Init Fwd/Bwd Win Byts}), a custom plugin parses the TCP window value from the first packet of each flow direction so all 10 features are extracted intact (Figure~\ref{fig:aws}). The test replicated the $2\times2$ matrix (RT-S1 to RT-S4); Table~\ref{tab:real_traffic} compares real-traffic and offline results on Top-10.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\linewidth]{nids-figures/fig_aws.png}
+\vspace{.25em}
+\caption{real-traffic testing infrastructure on AWS: the attacker node (public subnet) attacks the target node (private subnet); traffic is captured at the target and routed through Amazon S3 to the analyzer node for feature extraction and inference}
+\label{fig:aws}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\fontsize{8pt}{10pt}\selectfont
+\caption{Offline vs. real-traffic (AWS) performance comparison on the Top-10 configuration}
+\label{tab:real_traffic}
+\begin{tabular}{l c c c c}
+\hline
+\textbf{Scenario} & \textbf{MCC (Offline)} & \textbf{MCC (Real)} & \textbf{$F_1$ (Offline)} & \textbf{$F_1$ (Real)} \\ \hline
+RT-S1 (Base + Clean)     & 0.9351 & 0.164  & 0.9729 & 0.855 \\
+RT-S2 (Base + Evasion)   & 0.0184 & $-0.070$ & 0.7539 & 0.633 \\
+RT-S3 (Robust + Clean)   & 0.9347 & 0.339  & 0.9727 & 0.581 \\
+RT-S4 (Robust + Evasion) & 0.9953 & 0.389  & 0.9985 & 0.626 \\ \hline
+\end{tabular}
+\end{table}
+
+We stress that the primary measure of success is the consistency of the relative pattern, not the absolute MCC value: on AWS traffic the baseline still degrades under evasion (MCC $0.164\rightarrow-0.070$, below random guessing), whereas the robust model improves (MCC $0.339\rightarrow0.389$) with perfect Precision (1.0). This qualitative behavior---baseline collapses, robust model holds---is identical to the offline finding, confirming the core contribution is robust across test domains and not a benchmark artifact. The decline in the absolute MCC is best understood through the statistical-learning lens of \textit{distribution shift}: supervised models assume the test data are drawn from the same distribution as the training data, and this assumption is violated at deployment. Here the shift is driven, above all, by feature-extractor mismatch between the training extractor (CICFlowMeter) and the production extractor (NFStream). Because the two tools define the same nominal feature differently, the ``extractor mismatch'' effectively performs a shift of the semantic coordinate system of the features, mathematically translating test samples outside the decision boundary the model learned during training even when the underlying traffic behavior is unchanged. Two features dominate this translation: \textit{Fwd Seg Size Min} ($\approx66$ bytes in NFStream including the header vs. $\approx18$ bytes at training; $z\approx+6.2$) and the TCP window size on modern EC2 instances ($\approx62$~KB vs. $\approx8$~KB in the recording; $z\approx+3.3$ on \textit{Init Fwd/Bwd Win Byts}). The second case is especially instructive: \textit{Init Fwd Win Byts} is precisely the feature the Saliency Map identified as the most locally sensitive, and the robust model was trained to react strongly to it in order to counter evasion. Consequently, when the natural modernization of the TCP window on current EC2 instances shifts this feature by an extreme $z\approx+3.3$, the robust model misinterprets a benign environmental distribution shift as an adversarial anomaly---a direct, and theoretically expected, side effect of concentrating robustness on a few high-saliency dimensions. Rather than weakening the contribution, this drop strengthens it: it is direct empirical evidence of the generalization gap that motivates the three mitigation strategies below, each targeting this distribution-shift mechanism.
+
+To close the gap, three complementary strategies are recommended. First, \textit{extractor calibration}: mathematically aligning NFStream to the CICFlowMeter definition---e.g., correcting \textit{Fwd Seg Size Min} from $\approx66$ to $\approx18$ bytes via an affine transform---addressing the largest deviation without retraining. Second, \textit{domain adaptation}: fine-tuning the decision layer with a small amount of labeled real traffic to align the boundary with the operational distribution, particularly for \textit{Init Fwd Win Byts}. Third, \textit{multi-extractor training}: incorporating extraction variability from multiple libraries (CICFlowMeter, NFStream, Zeek) so the model becomes invariant to extractor-implementation differences. Unlike the mainstream of adversarial NIDS research that combines generative models with classifiers and stops at offline evaluation \cite{17}, \cite{18}, \cite{27}, \cite{26}, this study emphasizes the tension between feature efficiency and adversarial robustness on a tree-based model and validates it on real cloud traffic; whereas prior evasion studies largely demonstrate attack effectiveness \cite{29}, \cite{31}, \cite{33}, the present work quantifies the security gap, closes it through Adversarial Training \cite{52}, and reports the honest generalization gap on real traffic---consistent with cross-dataset concerns \cite{43} but rarely examined under live-traffic conditions.
+
+\section{Conclusion}
+This study developed and evaluated an NIDS optimization approach combining XGBoost Gain-based feature reduction with Saliency Map gradient-based Adversarial Training. Four conclusions follow. First, the feature-reduced baseline is highly vulnerable to evasion: although it attains MCC $=0.9351$ under normal conditions (S1), performance collapses to MCC $=0.0184$ under a subtle perturbation ($\epsilon=0.10$, S2)---a 98\% decline. Second, Adversarial Training based on Min-Max optimization restores reliability to MCC $=0.9953$ (S4, $+0.9769$ over S2) while preserving integrity on normal traffic (S3, MCC $=0.9347$; only 0.04\% below the baseline). Third, through the robustness ablation study, the Top-10 configuration ($C_3$) proved the optimal sweet spot, cutting model size to 5.65~MB (a 21.2\% reduction) while maintaining high resilience (MCC S4 $=0.995$); Top-5 degraded to MCC S4 $=0.873$, confirming that five features are insufficient for a stable decision boundary. Fourth, real-traffic validation in the AWS cloud showed the robustness pattern remains consistent with the offline results---the baseline degrades under evasion while the robust model holds---even though the absolute MCC decreases due to feature mismatch between the NFStream and CICFlowMeter extractors and TCP window differences, confirming that the effectiveness of Adversarial Training is robust across test domains while revealing a generalization challenge seldom discussed in the literature.
+
+Several directions are recommended for future research. First, white-box adaptive attack evaluation: the current assessment is limited to a transfer-attack scheme, so the robust value may be optimistic; future work should generate adversarial samples directly from the robust model's own saliency for a worst-case estimate. Second, black-box attack testing (e.g., Boundary or query-based attacks). Third, extending classifier types to other tree-based architectures (LightGBM, CatBoost) and compressed deep learning models (quantized neural networks). Fourth, an in-the-wild testbed deploying the 5.65~MB model on real edge hardware (e.g., Raspberry Pi or a smart router) to measure real-time throughput and power consumption. Most importantly, as the immediate and central item on our research roadmap, we will directly execute a quantitative evaluation of the three real-traffic mitigation strategies---extractor calibration, domain adaptation, and multi-extractor training---to explicitly close the benchmark-to-deployment generalization gap observed in the AWS environment, transforming these mitigation proposals from recommendations into empirically validated solutions toward a production-ready, evasion-resilient NIDS.
+
+\section*{FUNDING INFORMATION}
+This research was supported by an industry-collaboration program of the Ministry of Education of the Republic of Indonesia in 2026.
+
+\section*{AUTHOR CONTRIBUTIONS STATEMENT}
+This journal uses the Contributor Roles Taxonomy (CRediT) to recognize individual author contributions, reduce authorship disputes, and facilitate collaboration.
+
+\begin{table}[H]
+	\centering
+	\selectfont
+	\begin{tabular}{lcccccccccccccc}
+		\hline
+		\textbf{Name of Author} & \cellcolor[HTML]{D8F0F8}\textbf{C} & \cellcolor[HTML]{D8F0F8}\textbf{M} & \textbf{So} & \textbf{Va} & \cellcolor[HTML]{D8F0F8}\textbf{Fo} & \cellcolor[HTML]{D8F0F8}\textbf{I} & \textbf{R} & \textbf{D} & \cellcolor[HTML]{FDE9D9}\textbf{O} & \cellcolor[HTML]{FDE9D9}\textbf{E} & \textbf{Vi} & \textbf{Su} & \textbf{P} & \textbf{Fu} \\
+		\hline
+		Hero Yudo Martono & \cellcolor[HTML]{D8F0F8}\checkmark & \cellcolor[HTML]{D8F0F8}\checkmark & \checkmark & \checkmark & \cellcolor[HTML]{D8F0F8}\checkmark & \cellcolor[HTML]{D8F0F8}\checkmark &  & \checkmark & \cellcolor[HTML]{FDE9D9}\checkmark & \cellcolor[HTML]{FDE9D9}\checkmark & \checkmark & \checkmark & \checkmark &  \\
+		Iwan Syarif & \cellcolor[HTML]{D8F0F8}\checkmark & \cellcolor[HTML]{D8F0F8}\checkmark &  & \checkmark & \cellcolor[HTML]{D8F0F8} & \cellcolor[HTML]{D8F0F8} &  &  & \cellcolor[HTML]{FDE9D9} & \cellcolor[HTML]{FDE9D9}\checkmark &  & \checkmark &  &  \\
+		Ferry Astika Saputra & \cellcolor[HTML]{D8F0F8}\checkmark & \cellcolor[HTML]{D8F0F8}\checkmark &  & \checkmark & \cellcolor[HTML]{D8F0F8} & \cellcolor[HTML]{D8F0F8} &  &  & \cellcolor[HTML]{FDE9D9} & \cellcolor[HTML]{FDE9D9}\checkmark &  & \checkmark &  &  \\
+		\hline
+		\multicolumn{15}{c}{
+			\begin{tabular}{llllll}
+				&&&&&\\
+				C &: 	\textbf{C}\fontsize{8}{10}\selectfont onceptualization \quad\quad\quad\quad\quad\quad& I &: 	\textbf{I}\fontsize{8}{10}\selectfont nvestigation & Vi&: 	\textbf{Vi}\fontsize{8}{10}\selectfont sualization  \\
+				M &: 	\textbf{M}\fontsize{8}{10}\selectfont ethodology & R &: 	\textbf{R}\fontsize{8}{10}\selectfont esources & Su&: 	\textbf{Su}\fontsize{8}{10}\selectfont pervision  \\
+				So&: 	\textbf{So}\fontsize{8}{10}\selectfont ftware & D &:	\textbf{D}\fontsize{8}{10}\selectfont ata Curation & P &: 	\textbf{P}\fontsize{8}{10}\selectfont roject Administration  \\
+				Va&: 	\textbf{Va}\fontsize{8}{10}\selectfont lidation & O &:	\fontsize{8}{10}\selectfont Writing - \fontsize{10}{12}\selectfont \textbf{O}\fontsize{8}{10}\selectfont riginal Draft & Fu&: 	\textbf{Fu}\fontsize{8}{10}\selectfont nding Acquisition \\
+				Fo&: 	\textbf{Fo}\fontsize{8}{10}\selectfont rmal Analysis & E &:	\fontsize{8}{10}\selectfont Writing - Review \& \fontsize{10}{12}\selectfont\textbf{E}\fontsize{8}{10}\selectfont diting \quad\quad\quad\quad\quad&  \\
+			\end{tabular}
+		}
+	\end{tabular}
+\end{table}
+
+\section*{CONFLICT OF INTEREST STATEMENT}
+Authors state no conflict of interest.
+
+\section*{DATA AVAILABILITY}
+The CSE-CIC-IDS2018 dataset analyzed in this study is openly available from the Canadian Institute for Cybersecurity at https://www.unb.ca/cic/datasets/ids-2018.html. The processed subsets and code that support the findings of this study are available from the corresponding author upon reasonable request.
+
+\begin{thebibliography}{99}
+\footnotesize
+\itemsep 0pt
+
+\bibitem{1} M. Tavallaee, E. Bagheri, W. Lu, and A. A. Ghorbani, ``A detailed analysis of the KDD Cup 99 data set,'' in \textsl{Proc. IEEE Symp. Computational Intelligence for Security and Defense Applications (CISDA)}, 2009, pp. 1--6, doi: 10.1109/CISDA.2009.5356528.
+\bibitem{2} N. Moustafa and J. Slay, ``UNSW-NB15: a comprehensive data set for network intrusion detection systems,'' in \textsl{Proc. Military Communications and Information Systems Conf. (MilCIS)}, 2015, pp. 1--6, doi: 10.1109/MilCIS.2015.7348942.
+\bibitem{3} I. Sharafaldin, A. H. Lashkari, and A. A. Ghorbani, ``Toward generating a new intrusion detection dataset and intrusion traffic characterization,'' in \textsl{Proc. Int. Conf. Information Systems Security and Privacy (ICISSP)}, 2018, pp. 108--116, doi: 10.5220/0006639801080116.
+\bibitem{4} N. Koroniotis, N. Moustafa, E. Sitnikova, and B. Turnbull, ``Towards the development of realistic botnet dataset for IoT networks,'' \textsl{IEEE Access}, vol. 7, pp. 94529--94541, 2019, doi: 10.1109/ACCESS.2019.2926442.
+\bibitem{5} A. Alsaedi, N. Moustafa, Z. Tari, A. N. Mahmood, and A. Anwar, ``TON\_IoT telemetry dataset: a new generation dataset of IoT and IIoT for data-driven intrusion detection systems,'' \textsl{IEEE Access}, vol. 8, pp. 165130--165150, 2020, doi: 10.1109/ACCESS.2020.3022862.
+\bibitem{6} E. C. P. Neto, S. Dadkhah, R. Ferreira, A. Zohourian, R. Lu, and A. A. Ghorbani, ``CICIoT2023: a real-time dataset and benchmark for large-scale attacks in IoT environment,'' \textsl{Sensors}, vol. 23, no. 13, 2023, doi: 10.3390/s23135941.
+\bibitem{7} M. Al-Ajlan and M. Ykhlef, ``A review of generative adversarial networks for intrusion detection systems: advances, challenges, and future directions,'' \textsl{Computers, Materials \& Continua}, vol. 81, no. 2, pp. 2053--2076, 2024, doi: 10.32604/cmc.2024.055891.
+\bibitem{8} A. Dunmore, J. Jang-Jaccard, F. Sabrina, and J. Kwak, ``Generative adversarial networks for malware detection: a survey,'' \textsl{arXiv preprint} arXiv:2302.08558, 2023, doi: 10.48550/arXiv.2302.08558.
+\bibitem{9} Y. Huang, K. G. Fields, and Y. Ma, ``A tutorial on generative adversarial networks with application to classification of imbalanced data,'' \textsl{Statistical Analysis and Data Mining}, vol. 15, no. 5, pp. 543--552, 2022, doi: 10.1002/sam.11570.
+\bibitem{10} I. Goodfellow \textsl{et al.}, ``Generative adversarial nets,'' in \textsl{Advances in Neural Information Processing Systems}, 2014, pp. 2672--2680.
+\bibitem{11} M. Mirza and S. Osindero, ``Conditional generative adversarial nets,'' \textsl{arXiv preprint} arXiv:1411.1784, 2014, doi: 10.48550/arXiv.1411.1784.
+\bibitem{12} M. Arjovsky, S. Chintala, and L. Bottou, ``Wasserstein GAN,'' \textsl{arXiv preprint} arXiv:1701.07875, 2017, doi: 10.48550/arXiv.1701.07875.
+\bibitem{13} A. Radford, L. Metz, and S. Chintala, ``Unsupervised representation learning with deep convolutional generative adversarial networks,'' \textsl{arXiv preprint} arXiv:1511.06434, 2015, doi: 10.48550/arXiv.1511.06434.
+\bibitem{14} H. Zhang, I. Goodfellow, D. Metaxas, and A. Odena, ``Self-attention generative adversarial networks,'' in \textsl{Proc. 36th Int. Conf. Machine Learning (ICML)}, PMLR, vol. 97, 2019, pp. 7354--7363.
+\bibitem{15} A. Odena, C. Olah, and J. Shlens, ``Conditional image synthesis with auxiliary classifier GANs,'' in \textsl{Proc. 34th Int. Conf. Machine Learning (ICML)}, PMLR, vol. 70, 2017, pp. 2642--2651.
+\bibitem{16} L. Xu, M. Skoularidou, A. Cuesta-Infante, and K. Veeramachaneni, ``Modeling tabular data using conditional GAN,'' in \textsl{Advances in Neural Information Processing Systems}, vol. 32, 2019.
+\bibitem{17} A.-G. Mari, D. Zinca, and V. Dobrota, ``Development of a machine-learning intrusion detection system and testing of its performance using a generative adversarial network,'' \textsl{Sensors}, vol. 23, no. 3, p. 1315, 2023, doi: 10.3390/s23031315.
+\bibitem{18} V. Kumar and D. Sinha, ``Synthetic attack data generation model applying generative adversarial network for intrusion detection,'' \textsl{Computers \& Security}, vol. 125, p. 103054, 2023, doi: 10.1016/j.cose.2022.103054.
+\bibitem{19} B. A. Alabsi, M. Anbar, and S. D. A. Rihan, ``Conditional tabular generative adversarial based intrusion detection system for detecting DDoS and DoS attacks on the Internet of Things networks,'' \textsl{Sensors}, vol. 23, no. 12, p. 5644, 2023, doi: 10.3390/s23125644.
+\bibitem{20} K. S. Babu and Y. N. Rao, ``MCGAN: modified conditional generative adversarial network for class imbalance problems in network intrusion detection system,'' \textsl{Applied Sciences}, vol. 13, no. 4, 2023, doi: 10.3390/app13042576.
+\bibitem{21} S. Rahman, S. Pal, S. Mittal, T. Chawla, and C. Karmakar, ``Syn-GAN: a robust intrusion detection system using GAN-based synthetic data for IoT security,'' \textsl{Internet of Things}, vol. 26, p. 101212, 2024, doi: 10.1016/j.iot.2024.101212.
+\bibitem{22} Y. Yang \textsl{et al.}, ``A CE-GAN based approach to address data imbalance in network intrusion detection systems,'' \textsl{Scientific Reports}, vol. 15, no. 1, p. 7916, 2025, doi: 10.1038/s41598-025-92562-z.
+\bibitem{23} P. F. de Araujo-Filho, M. Naili, G. Kaddoum, E. T. Fapi, and Z. Zhu, ``Unsupervised GAN-based intrusion detection system using temporal convolutional networks and self-attention,'' \textsl{IEEE Trans. Network and Service Management}, vol. 20, no. 4, pp. 4951--4963, 2023, doi: 10.1109/TNSM.2023.3260039.
+\bibitem{24} H. Yang, J. Xu, Y. Xiao, and L. Hu, ``SPE-ACGAN: a resampling approach for class imbalance problem in network intrusion detection systems,'' \textsl{Electronics}, vol. 12, no. 15, p. 3323, 2023, doi: 10.3390/electronics12153323.
+\bibitem{25} M. A. Rahman, H. Shahriar, V. Clincy, M. F. Hossain, and M. Rahman, ``A quantum generative adversarial network-based intrusion detection system,'' in \textsl{Proc. IEEE 47th Annu. Computers, Software, and Applications Conf. (COMPSAC)}, 2023, pp. 1810--1815, doi: 10.1109/COMPSAC57700.2023.00280.
+\bibitem{26} H. Ding, Y. Sun, N. Huang, Z. Shen, and X. Cui, ``TMG-GAN: generative adversarial networks-based imbalanced learning for network intrusion detection,'' \textsl{IEEE Trans. Information Forensics and Security}, vol. 19, pp. 1156--1167, 2024, doi: 10.1109/TIFS.2023.3331240.
+\bibitem{27} C. Park, J. Lee, Y. Kim, J.-G. Park, H. Kim, and D. Hong, ``An enhanced AI-based network intrusion detection system using generative adversarial networks,'' \textsl{IEEE Internet of Things Journal}, vol. 10, no. 3, pp. 2330--2345, 2023, doi: 10.1109/JIOT.2022.3211346.
+\bibitem{28} C. Xu, Y. Zhan, G. Chen, Z. Wang, S. Liu, and W. Hu, ``Elevated few-shot network intrusion detection via self-attention mechanisms and iterative refinement,'' \textsl{PLoS ONE}, vol. 20, no. 1, p. e0317713, 2025, doi: 10.1371/journal.pone.0317713.
+\bibitem{29} S. Zhao, J. Li, J. Wang, Z. Zhang, L. Zhu, and Y. Zhang, ``AttackGAN: adversarial attack against black-box IDS using generative adversarial networks,'' \textsl{Procedia Computer Science}, vol. 187, pp. 128--133, 2021, doi: 10.1016/j.procs.2021.04.118.
+\bibitem{30} S. Aldhaheri and A. Alhuzali, ``SGAN-IDS: self-attention-based generative adversarial network against intrusion detection systems,'' \textsl{Sensors}, vol. 23, no. 18, p. 7796, 2023, doi: 10.3390/s23187796.
+\bibitem{31} D. Wang, X. Wang, and J. Fei, ``IDS-GAN: adversarial attack against intrusion detection based on generative adversarial networks,'' in \textsl{Proc. 5th Int. Conf. Computer Vision, Image and Deep Learning (CVIDL)}, 2024, pp. 1130--1134, doi: 10.1109/CVIDL62147.2024.10604156.
+\bibitem{32} R. H. Randhawa, N. Aslam, M. Alauthman, and H. Rafiq, ``Evasion generative adversarial network for low data regimes,'' \textsl{IEEE Trans. Artificial Intelligence}, vol. 4, no. 5, pp. 1076--1088, 2023, doi: 10.1109/TAI.2022.3196283.
+\bibitem{33} D. Xu, Y. Lv, M. Wang, B. Zheng, J. Zhao, and J. Yu, ``DEMGAN: a machine learning-based intrusion detection system evasion scheme,'' \textsl{Computers, Materials \& Continua}, vol. 84, no. 1, pp. 1731--1746, 2025, doi: 10.32604/cmc.2025.063734.
+\bibitem{34} M. Mbow, R. Roman, T. Takahashi, and K. Sakurai, ``Evading IoT intrusion detection systems with GAN,'' in \textsl{Proc. 19th Asia Joint Conf. Information Security (AsiaJCIS)}, 2024, pp. 48--55, doi: 10.1109/AsiaJCIS64263.2024.00018.
+\bibitem{35} D. M. Trung, N. H. Khoa, P. T. Duy, V.-H. Pham, and N. T. Cam, ``AAGAN: Android malware generation system based on generative adversarial network,'' \textsl{Int. J. Semantic Computing}, vol. 14, no. 1, 2024, doi: 10.1142/S1793351X24500028.
+\bibitem{36} D. Devadiga \textsl{et al.}, ``GLEAM: GAN and LLM for evasive adversarial malware,'' in \textsl{Proc. 14th Int. Conf. Information and Communication Technology Convergence (ICTC)}, 2023, pp. 53--58, doi: 10.1109/ICTC58733.2023.10392738.
+\bibitem{37} M. A. Merzouk, E. Beurier, R. Yaich, N. Boulahia-Cuppens, F. Cuppens, and F. Khomh, ``Diffusion-based adversarial purification for intrusion detection,'' in \textsl{Proc. IFIP Annu. Conf. Data and Applications Security and Privacy}, Springer, 2025, pp. 351--370, doi: 10.1007/978-3-031-65172-4\_22.
+\bibitem{38} R. Riaz, G. Han, K. Shaukat, N. U. Khan, H. Zhu, and L. Wang, ``A novel ensemble Wasserstein GAN framework for effective anomaly detection in industrial Internet of Things environments,'' \textsl{Scientific Reports}, vol. 15, no. 1, p. 26786, 2025, doi: 10.1038/s41598-025-11321-2.
+\bibitem{39} M. S. Alshehri, O. Saidani, W. A. Malwi, F. Asiri, S. Latif, A. A. Khattak, and J. Ahmad, ``A hybrid Wasserstein GAN and autoencoder model for robust intrusion detection in IoT,'' \textsl{Computer Modeling in Engineering \& Sciences}, vol. 143, no. 3, pp. 3899--3920, 2025, doi: 10.32604/cmes.2025.065343.
+\bibitem{40} U. Hassan, D. Chen, S.-C. Cheung, and C.-N. Chuah, ``HE-GAN: differentially private GAN using Hamiltonian Monte Carlo based exponential mechanism,'' in \textsl{Proc. IEEE Int. Conf. Acoustics, Speech and Signal Processing (ICASSP)}, 2023, pp. 3186--3190, doi: 10.1109/ICASSP49357.2023.10096046.
+\bibitem{41} X. Jiang, Y. Zhang, X. Zhou, and J. Grossklags, ``Distributed GAN-based privacy-preserving publication of vertically-partitioned data,'' \textsl{Proc. Privacy Enhancing Technologies}, vol. 2023, no. 2, pp. 50--69, 2023, doi: 10.56553/popets-2023-0037.
+\bibitem{42} J. Wang, K. Yang, and M. Li, ``NIDS-FGPA: a federated learning network intrusion detection algorithm based on secure aggregation of gradient similarity models,'' \textsl{PLoS ONE}, vol. 19, no. 10, p. e0308639, 2024, doi: 10.1371/journal.pone.0308639.
+\bibitem{43} M. Cantone, C. Marrocco, and A. Bria, ``Machine learning in network intrusion detection: a cross-dataset generalization study,'' \textsl{IEEE Access}, vol. 12, pp. 144491--144509, 2024, doi: 10.1109/ACCESS.2024.3472159.
+\bibitem{44} G. Aceto \textsl{et al.}, ``Synthetic and privacy-preserving traffic trace generation using generative AI models for training network intrusion detection systems,'' \textsl{J. Network and Computer Applications}, vol. 229, p. 103926, 2024, doi: 10.1016/j.jnca.2024.103926.
+\bibitem{45} Educative, ``What are the challenges in training GAN?'' 2025. [Online]. Available: https://www.educative.io/answers/what-are-the-challenges-in-training-gan
+\bibitem{46} R. Kohavi, ``A study of cross-validation and bootstrap for accuracy estimation and model selection,'' in \textsl{Proc. 14th Int. Joint Conf. Artificial Intelligence (IJCAI)}, 1995, pp. 1137--1143.
+\bibitem{47} F. Pedregosa \textsl{et al.}, ``Scikit-learn: machine learning in Python,'' \textsl{J. Machine Learning Research}, vol. 12, pp. 2825--2830, 2011.
+\bibitem{48} T. Chen and C. Guestrin, ``XGBoost: a scalable tree boosting system,'' in \textsl{Proc. 22nd ACM SIGKDD Int. Conf. Knowledge Discovery and Data Mining}, 2016, pp. 785--794, doi: 10.1145/2939672.2939785.
+\bibitem{49} C. Szegedy \textsl{et al.}, ``Intriguing properties of neural networks,'' in \textsl{Proc. Int. Conf. Learning Representations (ICLR)}, 2014.
+\bibitem{50} K. Simonyan, A. Vedaldi, and A. Zisserman, ``Deep inside convolutional networks: visualising image classification models and saliency maps,'' in \textsl{Workshop at Int. Conf. Learning Representations (ICLR)}, 2014.
+\bibitem{51} I. J. Goodfellow, J. Shlens, and C. Szegedy, ``Explaining and harnessing adversarial examples,'' in \textsl{Proc. Int. Conf. Learning Representations (ICLR)}, 2015.
+\bibitem{52} A. Madry, A. Makelov, L. Schmidt, D. Tsipras, and A. Vladu, ``Towards deep learning models resistant to adversarial attacks,'' in \textsl{Proc. Int. Conf. Learning Representations (ICLR)}, 2018.
+\bibitem{53} B. W. Matthews, ``Comparison of the predicted and observed secondary structure of T4 phage lysozyme,'' \textsl{Biochimica et Biophysica Acta (BBA) - Protein Structure}, vol. 405, no. 2, pp. 442--451, 1975, doi: 10.1016/0005-2795(75)90109-9.
+\bibitem{54} D. Chicco and G. Jurman, ``The advantages of the Matthews correlation coefficient (MCC) over F1 score and accuracy in binary classification evaluation,'' \textsl{BMC Genomics}, vol. 21, no. 1, p. 6, 2020, doi: 10.1186/s12864-019-6413-7.
+
+\end{thebibliography}
+
+\end{document}
