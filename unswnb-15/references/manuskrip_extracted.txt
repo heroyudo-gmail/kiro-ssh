@@ -1,0 +1,322 @@
+﻿Jurnal Teknologi Informasi dan Ilmu Komputer (JTIIK)
+p-ISSN: 2355-7699 / e-ISSN: 2528-6579
+EXPLAINABLE ARTIFICIAL INTELLIGENCE UNTUK NETWORK INTRUSION DETECTION SYSTEM: ANALISIS INTERPRETABILITAS DAN GENERALISASI LINTAS-DATASET PADA PIPELINE BEBAS-KEBOCORAN
+Penulis Pertama1, Penulis Kedua2
+1,2Program Studi Teknik Informatika, Politeknik Elektronika Negeri Surabaya
+Email: 1penulis1@pens.ac.id, 2penulis2@pens.ac.id
+*Penulis Korespondensi
+(Naskah masuk: dd mmm yyyy, diterima untuk diterbitkan: dd mmm yyyy)
+Abstrak
+Sistem deteksi intrusi berbasis machine learning sering menunjukkan performa sangat tinggi pada evaluasi within-dataset, namun reliabilitasnya menurun ketika diterapkan pada dataset dengan distribusi trafik dan karakteristik ekstraksi fitur yang berbeda. Penelitian ini menyajikan kerangka Explainable Artificial Intelligence (XAI) untuk Network Intrusion Detection System (NIDS) dengan pipeline bebas kebocoran dan evaluasi generalisasi lintas dataset. Eksperimen menggunakan CIC-IDS-2017 sebagai dataset referensi dan sepuluh partisi CSE-CIC-IDS2018 sebagai dataset target. Pipeline meliputi normalisasi label dan nama kolom, harmonisasi skema fitur berbasis referensi, stratified subsampling, pembagian latih-uji, seleksi fitur hanya pada data latih, standardisasi berbasis data latih, serta SMOTE hanya pada data latih. Model referensi yang tersimpan pada artefak eksperimen adalah Random Forest. Pada evaluasi within-dataset, model mencapai F1-score 0,9963, MCC 98,54%, dan AUC-ROC 0,9997. Namun, pada evaluasi lintas dataset, rata-rata F1 tertimbang masih tampak tinggi (0,7864) sementara MCC seluruh target menjadi 0,00%, dengan recall kelas serangan bernilai 0 pada seluruh partisi CSE-CIC-IDS2018. Hasil ini menunjukkan bahwa F1 tertimbang dan akurasi dapat menyesatkan pada dataset tidak seimbang ketika model cenderung memprediksi kelas mayoritas. Analisis SHAP mengidentifikasi Bwd Packet Length Min, Flow Duration, Fwd URG Flags, Bwd Packet Length Max, dan Average Packet Size sebagai fitur global terpenting, tetapi stabilitas fitur tidak cukup untuk menjamin generalisasi. Temuan ini menegaskan perlunya pelaporan MCC, recall per kelas, dan validasi lintas dataset dalam riset IDS.
+Kata kunci: explainable AI, intrusion detection, generalisasi lintas-dataset, SHAP, MCC, data leakage
+
+EXPLAINABLE ARTIFICIAL INTELLIGENCE FOR NETWORK INTRUSION DETECTION SYSTEM: INTERPRETABILITY ANALYSIS AND CROSS-DATASET GENERALIZATION ON LEAK-FREE PIPELINES
+Abstract
+Machine learning-based intrusion detection systems often achieve high within-dataset performance, yet their reliability degrades when deployed on datasets with different traffic distributions and feature extraction characteristics. This study presents an Explainable Artificial Intelligence (XAI) framework for Network Intrusion Detection Systems (NIDS) using a leakage-free pipeline and cross-dataset generalization analysis. The experiments use CIC-IDS-2017 as the reference dataset and ten CSE-CIC-IDS2018 daily partitions as target datasets. The pipeline includes label and column normalization, reference-based feature schema harmonization, stratified subsampling, train-test splitting, train-only feature selection, train-only standardization, and train-only SMOTE. The reference model stored in the experimental artifacts is Random Forest. In the within-dataset evaluation, the model achieves F1-score of 0.9963, MCC of 98.54%, and AUC-ROC of 0.9997. In cross-dataset evaluation, however, the average weighted F1 remains apparently high (0.7864), whereas MCC collapses to 0.00% for all targets and attack-class recall is 0 across all CSE-CIC-IDS2018 partitions. These results demonstrate that weighted F1 and accuracy can be misleading under class imbalance when a model predicts the majority class. SHAP analysis identifies Bwd Packet Length Min, Flow Duration, Fwd URG Flags, Bwd Packet Length Max, and Average Packet Size as the most important global features, but feature stability alone is insufficient to guarantee transferability. The findings emphasize the need to report MCC, per-class recall, and cross-dataset validation in IDS research.
+Keywords: explainable AI, intrusion detection, cross-dataset generalization, SHAP, MCC, data leakage
+1. PENDAHULUAN
+Transformasi digital memperluas permukaan serangan jaringan dan meningkatkan kebutuhan terhadap Intrusion Detection System (IDS) yang adaptif. Pendekatan machine learning (ML) banyak digunakan karena mampu mempelajari pola trafik dari dataset benchmark seperti CIC-IDS-2017 dan CSE-CIC-IDS2018. Akan tetapi, performa tinggi pada evaluasi within-dataset tidak selalu merepresentasikan kemampuan operasional di lingkungan jaringan yang berbeda. Studi generalisasi lintas-dataset sebelumnya menunjukkan bahwa model IDS sering mengalami penurunan signifikan ketika distribusi data latih dan data uji tidak identik (Dâ€™hooge dkk., 2020; Cantone dkk., 2024).
+Keterbatasan lain adalah karakter black-box pada model berperforma tinggi. Bagi analis Security Operation Center (SOC), prediksi tanpa penjelasan sulit digunakan untuk triase alarm, validasi false positive, dan penelusuran indikator serangan. Explainable Artificial Intelligence (XAI), terutama SHAP dan LIME, menyediakan mekanisme untuk menghubungkan keputusan model dengan kontribusi fitur, baik pada tingkat global maupun lokal (Lundberg dan Lee, 2017; Ribeiro dkk., 2016; Molnar, 2022).
+Dua persoalan metodologis masih perlu diperkuat dalam penelitian IDS berbasis ML. Pertama, data leakage dapat muncul ketika seleksi fitur, standardisasi, atau oversampling dilakukan sebelum pembagian data latih dan data uji. Leakage menghasilkan estimasi performa yang terlalu optimistis karena statistik data uji telah memengaruhi model. Kedua, kesesuaian skema fitur tidak menjamin kesesuaian distribusi. Walaupun nama fitur telah dinormalisasi dan jumlah fitur cocok, nilai statistik fitur dapat tetap berbeda pada lintas dataset karena perbedaan hari perekaman, komposisi serangan, dan konfigurasi CICFlowMeter.
+Kontribusi penelitian adalah: (1) merancang pipeline bebas kebocoran untuk eksperimen IDS biner; (2) mengevaluasi generalisasi model referensi CIC-IDS-2017 pada sepuluh partisi CSE-CIC-IDS2018; (3) menunjukkan bahwa F1 tertimbang dan akurasi dapat menyesatkan ketika model gagal mendeteksi kelas serangan; dan (4) menganalisis stabilitas fitur menggunakan SHAP untuk memahami konsistensi mekanisme keputusan model.
+2. METODE PENELITIAN
+2.1 Dataset dan Ruang Lingkup Eksperimen
+Eksperimen menggunakan 11 dataset terolah: satu dataset referensi CIC-IDS-2017 dan sepuluh partisi harian CSE-CIC-IDS2018. Seluruh label dipetakan ke skema biner, yaitu Normal/Benign sebagai kelas 0 dan Attack sebagai kelas 1. Untuk mengendalikan beban komputasi, setiap dataset diproses menggunakan stratified subsampling sekitar 10% dengan batas maksimum 300.000 baris. Ringkasan data setelah pembersihan, subsampling, dan pembagian latih-uji ditunjukkan pada Tabel 1.
+Tabel 1. Ringkasan dataset setelah pra-pemrosesan dan subsampling
+Dataset
+Raw Rows
+Sampled
+Train
+Test
+Features
+CIC17
+2,830,743
+223,392
+178,713
+44,679
+75
+CIC18_TUESDAY
+7,948,748
+300,000
+240,000
+60,000
+75
+CIC18_WEDNESDAY-1
+1,048,575
+61,980
+49,584
+12,396
+75
+CIC18_WEDNESDAY-2
+1,048,575
+56,139
+44,911
+11,228
+75
+CIC18_WEDNESDAY-3
+613,104
+45,863
+36,690
+9,173
+75
+CIC18_THURSDAY-1
+1,048,575
+79,557
+63,645
+15,912
+75
+CIC18_THURSDAY-2
+1,048,575
+83,254
+66,603
+16,651
+75
+CIC18_THURSDAY-3
+331,125
+24,949
+19,959
+4,990
+75
+CIC18_FRIDAY-1
+1,048,574
+59,187
+47,349
+11,838
+75
+CIC18_FRIDAY-2
+1,048,575
+83,156
+66,524
+16,632
+75
+CIC18_FRIDAY-3
+1,048,574
+77,216
+61,772
+15,444
+75
+
+2.2 Pipeline Bebas-Kebocoran
+Pipeline dirancang agar seluruh operasi fitting hanya menggunakan data latih. Urutan pemrosesan adalah sebagai berikut.
+â€¢ Normalisasi kolom dan label: nama kolom dibersihkan dari variasi whitespace/BOM, alias umum antar versi CICFlowMeter dipetakan ke nama referensi, dan kolom label dipulihkan secara header-based maupun value-based untuk mengatasi CSV dengan header tidak konsisten.
+â€¢ Pembersihan data: kolom metadata seperti IP, port, protocol, timestamp, dan flow identifier dikeluarkan dari ruang fitur. Duplikasi dihapus, nilai tak hingga dikonversi menjadi NaN, kolom dengan missing value dominan dibuang, dan sisa missing value pada fitur numerik diisi dengan median.
+â€¢ Harmonisasi skema fitur: CIC17 dijadikan referensi fitur numerik. Dataset target disesuaikan ke 75 fitur referensi melalui normalisasi nama dan penyusunan ulang kolom. Fitur non-referensi dibuang dan fitur referensi yang tidak ditemukan diisi nilai 0 agar dimensi input konsisten.
+â€¢ Subsampling dan pembagian data: sampling dilakukan secara stratified dengan hard floor 50 sampel dan soft floor 200 sampel untuk mengurangi hilangnya kelas minoritas. Data kemudian dibagi 80% untuk pelatihan dan 20% untuk uji secara stratifikasi.
+â€¢ Seleksi fitur, standardisasi, dan SMOTE: Random Forest 50 estimator digunakan untuk memilih 20 fitur teratas hanya dari data latih. StandardScaler disesuaikan pada data latih dan diterapkan ke data uji. SMOTE hanya diterapkan pada data latih, sehingga data uji tetap merepresentasikan distribusi asli.
+Keputusan penting dalam pipeline ini adalah tidak menggunakan data uji untuk digunakan ulang dalam proses fitting berikutnya. Pada evaluasi lintasdataset, model referensi, scaler, dan daftar 20 fitur hasil seleksi dari CIC17 digunakan langsung pada target CSE-CIC-IDS2018. Dengan demikian, evaluasi lintas dataset mengukur kemampuan transfer model, bukan kemampuan model beradaptasi ulang terhadap target.
+2.3 Model Klasifikasi
+Delapan model dievaluasi pada tahap pelatihan: Decision Tree, Random Forest, Gradient Boosting, XGBoost, LightGBM, Logistic Regression, K-Nearest Neighbors, dan Gaussian Naive Bayes. Berdasarkan artefak eksperimen lintas dataset yang tersedia, model referensi tersimpan adalah RandomForestClassifier yang dilatih pada CIC17. Model referensi ini digunakan untuk seluruh evaluasi dari CIC17 ke CSE-CIC-IDS2018 dan analisis SHAP lintas target.
+2.4 Metrik Evaluasi
+Evaluasi within-dataset dan lintas dataset menggunakan evaluasi performasi model seperti : accuracy, precision, recall, weighted F1-score, AUC-ROC, dan Matthews Correlation Coefficient (MCC). MCC diprioritaskan pada evaluasi lintas-dataset karena memperhitungkan TP, TN, FP, dan FN secara simultan serta tetap informatif ketika data tidak seimbang. Weighted F1 tetap dilaporkan karena umum digunakan dalam literatur IDS, tetapi hasil penelitian ini menunjukkan bahwa weighted F1 harus dibaca bersama MCC dan recall per-kelas.
+2.5 Explainability dengan SHAP dan LIME
+SHAP digunakan untuk mengukur kepentingan fitur secara global pada setiap target dataset. Untuk setiap pasangan data latih ke data uji, fitur diberi peringkat berdasarkan mean absolute SHAP value; stabilitas fitur dihitung dari rata-rata peringkat dan standar deviasi peringkat pada seluruh target. Korelasi Spearman digunakan untuk mengevaluasi kesamaan peringkat fitur antar-target. LIME tersedia dalam pipeline eksperimen sebagai mekanisme penjelasan lokal, tetapi artefak revisi yang tersedia terutama memuat keluaran SHAP lintas dataset. Oleh karena itu, hasil utama XAI pada naskah ini difokuskan pada stabilitas fitur SHAP.
+3. HASIL DAN PEMBAHASAN
+3.1 Kinerja Within-Dataset Model Referensi
+Pada evaluasi within-dataset CIC17, RandomForestClassifier mencapai F1-score 0,9963, MCC 98,54%, accuracy 0,9963, dan AUC-ROC 0,9997. Hasil ini menunjukkan bahwa pemisahan kelas Normal/Benign dan Attack pada ruang fitur CIC17 sangat kuat ketika pipeline bebas kebocoran diterapkan. Akan tetapi, skor near-perfect ini tidak boleh langsung ditafsirkan sebagai bukti kesiapan operasional lintas lingkungan. Generalisasi harus diuji pada dataset target yang tidak digunakan selama proses pelatihan maupun seleksi fitur.
+3.2 Generalisasi Lintas-Dataset CIC17 â†’ CSE-CIC-IDS2018
+Tabel 2 menyajikan performa model CIC17 pada sepuluh partisi CSE-CIC-IDS2018. Seluruh target memiliki 20 fitur yang cocok dengan daftar fitur referensi setelah harmonisasi skema. Dengan demikian, kegagalan generalisasi yang terlihat pada MCC tidak lagi dapat dijelaskan sebagai sekadar ketiadaan kolom input, melainkan sebagai indikasi pergeseran distribusi dan bias prediksi kelas mayoritas.
+Tabel 2. Evaluasi model referensi CIC17 pada target CIC17 dan CSE-CIC-IDS2018
+Target
+Tipe
+F1
+MCC%
+Akurasi
+AUC
+Fitur
+CIC17
+Within
+0,9963
+98,54
+0,9963
+0,9997
+20
+CIC18_FRIDAY-1
+Cross
+0,6491
+0,00
+0,7546
+0,0169
+20
+CIC18_FRIDAY-2
+Cross
+0,9964
+0,00
+0,9976
+0,4121
+20
+CIC18_FRIDAY-3
+Cross
+0,7289
+0,00
+0,8128
+0,3334
+20
+CIC18_THURSDAY-1
+Cross
+0,9044
+0,00
+0,9355
+0,7308
+20
+CIC18_THURSDAY-2
+Cross
+0,9964
+0,00
+0,9976
+0,4489
+20
+CIC18_THURSDAY-3
+Cross
+0,6441
+0,00
+0,7509
+0,4796
+20
+CIC18_TUESDAY
+Cross
+0,8442
+0,00
+0,8942
+0,4476
+20
+CIC18_WEDNESDAY-1
+Cross
+0,7785
+0,00
+0,8482
+0,5080
+20
+CIC18_WEDNESDAY-2
+Cross
+0,5029
+0,00
+0,6427
+0,7632
+20
+CIC18_WEDNESDAY-3
+Cross
+0,8191
+0,00
+0,8767
+0,4942
+20
+Rata-rata cross
+Cross
+0,7864
+0,00
+0,8511
+0,4635
+20
+
+Rata-rata weighted F1 lintas dataset adalah 0,7864 dan rata-rata akurasi adalah 0,8511. Nilai ini secara sekilas tampak cukup baik. Namun, MCC seluruh target CSE-CIC-IDS2018 bernilai 0,00%, yang berarti prediksi model tidak memiliki korelasi diskriminatif terhadap label aktual. Gambar 1 memperlihatkan kontras antara F1 dan MCC: F1 mengikuti dominasi kelas Normal, sedangkan MCC mengungkap bahwa model gagal membedakan Normal/Benign dan Attack.
+
+Gambar 1. Perbandingan F1-score dan MCC model referensi CIC17 pada seluruh target
+3.3 Diskrepansi Weighted F1 dan MCC
+Subseksi ini membahas tentang adanya diskrepansi antara Weighted F1 dan MCC. Pada seluruh partisi CSE-CIC-IDS2018, precision, recall, dan F1 untuk kelas Attack bernilai 0,00. Sebaliknya, kelas Normal memperoleh recall 1,00. Dengan kata lain, model secara efektif memprediksi hampir seluruh sampel sebagai Normal/Benign. Pada target dengan proporsi Attack sangat kecil, seperti pada data set CIC18_FRIDAY-2 dan CIC18_THURSDAY-2 yang masing-masing hanya memiliki 40 sampel Attack pada data uji, weighted F1 mendekati 0,996 meskipun tidak ada satu pun serangan yang terdeteksi.
+Temuan ini memiliki implikasi metodologis yang kuat. Weighted F1 dan accuracy tidak cukup untuk mengevaluasi IDS pada skenario lintas dataset yang tidak seimbang. Model yang tidak mendeteksi serangan tetap dapat memperoleh skor tinggi karena kelas mayoritas mendominasi rata-rata tertimbang. Sebaliknya, MCC bernilai 0 ketika prediksi tidak berkorelasi dengan label aktual, sehingga lebih sesuai sebagai metrik primer untuk generalisasi IDS. Oleh sebab itu, setiap studi IDS lintas dataset sebaiknya melaporkan MCC, confusion matrix, dan recall kelas Attack secara eksplisit.
+3.4 Gap Generalisasi dan Interpretasi Distribusional
+Tabel 3 merangkum gap generalisasi. F1 turun 0,2099 poin dari 0,9963 menjadi 0,7864, sedangkan MCC turun 98,54 poin persentase dari 98,54% menjadi 0,00%. Fitur yang digunakan pada target telah cocok 20/20 setelah melalui harmonisasi skema. Gap ini mengindikasikan bahwa kompatibilitas nama dan jumlah fitur tidak identik dengan kompatibilitas distribusi. Model tetap membawa batas keputusan yang sangat spesifik terhadap distribusi CIC17.
+Tabel 3. Ringkasan gap generalisasi model referensi CIC17
+Train
+Within F1
+Cross F1
+Gap F1
+Within MCC%
+Cross MCC%
+Gap MCC%
+CIC17
+0,9963
+0,7864
+0,2099
+98,54
+0,00
+98,54
+
+
+
+Gambar 2. Gap generalisasi antara evaluasi within-dataset dan cross-dataset
+Secara praktis, hasil ini menunjukkan bahwa harmonisasi skema adalah prasyarat minimum, bukan solusi akhir. IDS berbasis ML masih memerlukan strategi adaptasi domain, kalibrasi threshold, evaluasi per serangan, atau pelatihan multi domain agar dapat menghadapi pergeseran distribusi lintas lingkungan jaringan.
+3.5 Stabilitas Fitur SHAP
+Tabel 4 menampilkan sepuluh fitur teratas berdasarkan rata-rata peringkat SHAP pada seluruh kombinasi CIC17 ke target. Fitur Bwd Packet Length Min memiliki rata-rata peringkat terbaik (1,82) dan standar deviasi rendah (0,87), diikuti Flow Duration, Fwd URG Flags, Bwd Packet Length Max, dan Average Packet Size. Fitur-fitur ini berkaitan dengan karakteristik ukuran paket, durasi aliran, dan flag TCP yang secara konseptual relevan untuk membedakan trafik normal dan serangan.
+Tabel 4. Sepuluh fitur terpenting berdasarkan stabilitas peringkat SHAP global
+Fitur
+Avg Rank
+Std
+Kategori
+Bwd Packet Length Min
+1,82
+0,87
+Sangat stabil
+Flow Duration
+3,27
+2,65
+Sangat stabil
+Fwd URG Flags
+4,18
+3,74
+Moderat
+Bwd Packet Length Max
+4,45
+1,69
+Sangat stabil
+Average Packet Size
+4,91
+2,26
+Sangat stabil
+Packet Length Mean
+5,18
+1,47
+Sangat stabil
+Subflow Bwd Packets
+8,18
+1,89
+Sangat stabil
+Total Backward Packets
+8,36
+3,83
+Moderat
+Max Packet Length
+9,64
+4,20
+Moderat
+ECE Flag Count
+9,82
+2,36
+Sangat stabil
+
+Namun, stabilitas peringkat fitur tidak berarti model berhasil melakukan generalisasi. Dalam eksperimen ini, fitur-fitur penting tetap konsisten, tetapi batas keputusan yang dipelajari dari CIC17 tidak menghasilkan deteksi Attack pada target CIC18. Artinya, SHAP menjelaskan fitur yang digunakan model, bukan menjamin bahwa pola yang dipelajari bersifat universal. Gambar 3 dan Gambar 4 memperlihatkan konsensus fitur top-10 dan stabilitas peringkat SHAP pada seluruh target.
+
+Gambar 3. Konsensus sepuluh fitur teratas berdasarkan SHAP
+
+
+Gambar 4. Heatmap stabilitas peringkat SHAP pada seluruh kombinasi trainâ†’test
+3.6 Implikasi terhadap Riset dan Operasional IDS
+Hasil eksperimen memberikan tiga implikasi. Pertama, evaluasi within-dataset tidak cukup untuk menilai kelayakan model IDS. Skor within-dataset mendekati sempurna dapat muncul sekalipun model tidak mampu mendeteksi serangan pada dataset lain. Kedua, MCC dan recall kelas Attack harus menjadi metrik wajib, terutama pada evaluasi lintas dataset dan dataset tidak seimbang. Ketiga, XAI perlu dibaca bersama metrik performa. SHAP dapat menunjukkan fitur yang secara konsisten dipakai model, tetapi keputusan operasional tetap harus mempertimbangkan apakah prediksi berhasil mendeteksi kelas serangan.
+Dari sudut pandang implementasi SOC, model seperti ini belum layak digunakan secara langsung pada lingkungan baru tanpa validasi domain. Jika model memprediksi hampir seluruh trafik sebagai Normal, maka risiko false negative menjadi sangat tinggi. Untuk penggunaan praktis, diperlukan validasi pada trafik lokal, kalibrasi ulang, pembelajaran multi-dataset, dan pemantauan drift distribusi fitur.
+3.7 Keterbatasan
+Penelitian ini memiliki beberapa keterbatasan. Pertama, grid eksperimen yang tersedia hanya menggunakan CIC17 sebagai model referensi; pelatihan model referensi pada setiap partisi CIC18 belum dilaporkan. Kedua, eksperimen menggunakan skema biner, sehingga belum mengukur kemampuan model membedakan jenis serangan spesifik. Ketiga, interpretasi XAI difokuskan pada SHAP. Keempat, strategi pengisian fitur hilang dengan nol dan harmonisasi nama fitur belum cukup mengatasi pergeseran distribusi. Penelitian lanjutan perlu mengevaluasi harmonisasi berbasis domain, adaptation learning, dan pelatihan multi-source.
+4. KESIMPULAN
+Penelitian ini menyajikan evaluasi XAI untuk NIDS dengan pipeline bebas kebocoran dan validasi lintas dataset. Model referensi Random Forest yang dilatih pada CIC17 mencapai F1-score 0,9963, MCC 98,54%, dan AUC-ROC 0,9997 pada evaluasi within-dataset. Namun, ketika diuji pada sepuluh partisi CSE-CIC-IDS2018, rata-rata weighted F1 tetap tampak tinggi sebesar 0,7864, sedangkan MCC seluruh target turun menjadi 0,00%. Diskrepansi  nilai weighted F1  dan MCC menunjukkan bahwa recall kelas Attack bernilai 0 pada seluruh target, sehingga model pada dasarnya gagal mendeteksi serangan 
+Temuan tersebut menegaskan bahwa weighted F1 dan accuracy tidak dapat dijadikan metrik tunggal dalam evaluasi IDS lintas dataset. MCC, recall kelas Attack, dan confusion matrix wajib dilaporkan untuk menghindari kesimpulan optimistis yang menyesatkan. Analisis SHAP menunjukkan bahwa fitur seperti Bwd Packet Length Min, Flow Duration, Fwd URG Flags, Bwd Packet Length Max, dan Average Packet Size stabil sebagai fitur penting, tetapi stabilitas fitur tidak otomatis menghasilkan transferabilitas model. Penelitian lanjutan perlu memperluas evaluasi ke grid dimensi NÃ—N penuh, klasifikasi multi-kelas, harmonisasi fitur berbasis domain, dan teknik domain adaptation agar model IDS lebih robust terhadap pergeseran distribusi jaringan.
+DAFTAR PUSTAKA
+ALABBAADI, A. dan BAJABER, F., 2025. IDS over IoT data streams using XAI. Sensors, 25(3), 847.
+ARRECHE, O., dkk., 2024. XAI-IDS: Toward an explainable AI framework for network intrusion detection systems. Applied Sciences, 14(10), 4170.
+BREIMAN, L., 2001. Random forests. Machine Learning, 45(1), pp.5â€“32.
+CANTONE, M., MARROCCO, C. dan BRIA, A., 2024. Machine learning in network intrusion detection: A cross-dataset generalization study. IEEE Access, 12, pp.144489â€“144508.
+CHAWLA, N.V., dkk., 2002. SMOTE: Synthetic minority over-sampling technique. Journal of Artificial Intelligence Research, 16, pp.321â€“357.
+CHEN, T. dan GUESTRIN, C., 2016. XGBoost: A scalable tree boosting system. Proceedings of the ACM SIGKDD, pp.785â€“794.
+Dâ€™HOOGE, L., dkk., 2020. Inter-dataset generalization strength of supervised ML methods for intrusion detection. Journal of Information Security and Applications, 54, 102564.
+ENGELEN, G., RIMMER, V. dan JOOSEN, W., 2021. Troubleshooting an intrusion detection dataset: The CICIDS2017 case study. Proceedings of IEEE SPW, pp.7â€“12.
+GASPAR, D., dkk., 2024. Explainable AI for intrusion detection: LIME and SHAP on MLP. IEEE Access, 12, pp.30164â€“30175.
+KE, G., dkk., 2017. LightGBM: A highly efficient gradient boosting decision tree. NeurIPS, 30, pp.3146â€“3154.
+LANVIN, M., dkk., 2022. Errors in the CICIDS2017 dataset. Proceedings of CRISIS, pp.18â€“33.
+LIU, L., dkk., 2024. Error prevalence in CICIDS2017 and CSE-CIC-IDS2018. Journal of Information Security and Applications, 82, 103740.
+LUNDBERG, S.M. dan LEE, S.-I., 2017. A unified approach to interpreting model predictions. NeurIPS, 30, pp.4765â€“4774.
+MOHALE, V.Z. dan OBAGBUWA, I.C., 2025. Systematic review of XAI in intrusion detection systems. Frontiers in AI, 8, 1526221.
+MOLNAR, C., 2022. Interpretable Machine Learning. Edisi ke-2. Munich: christophm.github.io.
+PEDREGOSA, F., dkk., 2011. Scikit-learn: machine learning in Python. JMLR, 12, pp.2825â€“2830.
+RIBEIRO, M.T., SINGH, S. dan GUESTRIN, C., 2016. Why should I trust you? Proceedings of the ACM SIGKDD, pp.1135â€“1144.
+ROSAY, A., dkk., 2022. Network intrusion detection: A comprehensive analysis of CIC-IDS2017. Proceedings of ICISSP, pp.25â€“36.
+SHARAFALDIN, I., dkk., 2018. Toward generating a new intrusion detection dataset. Proceedings of ICISSP, pp.108â€“116.
+WANG, H., dkk., 2024. Explainable deep learning for network intrusion detection using SHAP. Computers and Security, 138, 103651.
+
