@@ -140,7 +140,7 @@ Amazon S3 and result artifacts uploaded back.
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.95\textwidth]{fig1_pipeline.png}
+\includegraphics[width=0.95\textwidth]{figure-p4/fig1_pipeline.png}
 \caption{Leakage-free cross-dataset evaluation pipeline. All fitting (median imputation,
 feature selection, standardization, SMOTE) uses the source training split only; the fitted
 model, scaler, and feature list are then transferred unchanged to the target dataset.}
@@ -233,7 +233,7 @@ MCC and per-class recall are mandatory.
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.8\textwidth]{fig2_f1_vs_mcc.png}
+\includegraphics[width=0.8\textwidth]{figure-p4/fig2_f1_vs_mcc.png}
 \caption{Weighted-F1 versus MCC, within-dataset against cross-dataset, for both models.
 Weighted-F1 follows the dominant benign class, whereas MCC exposes the failure to separate
 benign from attack across datasets.}
@@ -293,7 +293,7 @@ RF & CIC2018$\rightarrow$CIC2017 & $0.574$ & $0.967$ & $0.985$ & $0.989$ \\
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.8\textwidth]{fig3_fewshot.png}
+\includegraphics[width=0.8\textwidth]{figure-p4/fig3_fewshot.png}
 \caption{Few-shot recovery curves (MCC versus fraction of target labels added) for both
 models and both transfer directions. Even 1\% of target labels restores most achievable
 performance.}
@@ -358,7 +358,7 @@ RF & Repaired (1\% few-shot) & init\_win\_bytes\_forward; init\_win\_bytes\_back
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.9\textwidth]{fig4_shap.png}
+\includegraphics[width=0.9\textwidth]{figure-p4/fig4_shap.png}
 \caption{Condition-aware SHAP feature importance (failed versus repaired model) for XGBoost
 and Random Forest. Feature-ranking stability across conditions does not translate into
 cross-dataset transferability.}
