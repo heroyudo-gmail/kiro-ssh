@@ -75,18 +75,25 @@ Transformasi digital memperluas permukaan serangan jaringan dan meningkatkan keb
 terhadap NIDS yang andal. Pendekatan pembelajaran mesin banyak dipakai karena mampu
 mempelajari pola trafik dari dataset benchmark seperti CIC-IDS2017 dan CSE-CIC-IDS2018.
 Namun, performa tinggi pada evaluasi within-dataset tidak menjamin keandalan operasional
-pada lingkungan yang berbeda (D'hooge dkk., 2020; Cantone dkk., 2024).
+pada lingkungan yang berbeda (D'hooge dkk., 2020; Cantone dkk., 2024). Layeghy dan Portmann
+(2023) menunjukkan bahwa model NIDS yang nyaris sempurna pada tolok ukur sintetis sering
+tidak tergeneralisasi ke jaringan lain, karena perbedaan infrastruktur dan protokol
+menghasilkan pergeseran distribusi fitur (covariate maupun concept shift). Tinjauan
+transfer learning untuk IDS (Kheddar dkk., 2023) menegaskan bahwa adaptasi domain menjadi
+kebutuhan ketika label pada domain target langka.
 
 Dua persoalan metodologis menonjol. **Pertama, kebocoran data (data leakage)** muncul bila
 seleksi fitur, standardisasi, atau oversampling dilakukan sebelum pemisahan latih-uji,
 menghasilkan estimasi performa yang terlalu optimistis. **Kedua, kesesuaian skema fitur
 tidak menjamin kesesuaian distribusi**: meskipun nama dan jumlah fitur cocok (karena alat
 ekstraksi sama, yaitu CICFlowMeter), nilai statistik fitur dapat berbeda akibat perbedaan
-komposisi serangan dan kondisi perekaman.
+komposisi serangan dan kondisi perekaman. Karena itu, evaluasi lintas-dataset yang kredibel
+menuntut pipeline yang sadar-kebocoran dan, idealnya, analisis transfer dua arah agar
+keandalan model tidak dinilai dari satu arah saja.
 
-Studi terdahulu (lih. manuskrip referensi XAI-IDS) telah menunjukkan fenomena runtuhnya
-MCC pada evaluasi lintas-dataset, tetapi memiliki tiga keterbatasan yang menjadi celah
-penelitian ini:
+Studi pendahulu oleh tim penulis (Martono dkk., 2024; dan manuskrip XAI-IDS pada pipeline
+bebas-kebocoran) telah menunjukkan fenomena runtuhnya MCC pada evaluasi lintas-dataset,
+tetapi memiliki tiga keterbatasan yang menjadi celah penelitian ini:
 1. **Berhenti pada diagnosis** — menyatakan model gagal tanpa menawarkan pemulihan.
 2. **Mencampur dua jenis kegagalan** — menafsirkan MCC = 0 murni sebagai pergeseran
    distribusi, padahal AUC yang bervariasi mengindikasikan sebagian adalah masalah
@@ -98,7 +105,9 @@ penelitian ini:
 1. Merancang pipeline bebas-kebocoran untuk eksperimen IDS biner lintas-dataset
    CIC-IDS2017 → CSE-CIC-IDS2018 (dan sebaliknya) tanpa pemetaan fitur semantik.
 2. Memisahkan **kegagalan ranking** (diukur AUC/PR-AUC) dari **kegagalan ambang**
-   (diukur MCC pada ambang 0,5) dan menerapkan kalibrasi ambang.
+   (diukur MCC pada ambang 0,5) dan menerapkan kalibrasi ambang. Berbeda dari pendekatan
+   adaptasi domain berbasis jaringan dalam seperti DI-NIDS/DANN (Layeghy dkk., 2023) yang
+   menuntut tumpukan deep dan data target melimpah, kami memakai kalibrasi ringan.
 3. **Memulihkan** deteksi melalui kalibrasi few-shot minimal, dilaporkan dengan
    multi-seed dan interval kepercayaan.
 4. **Membandingkan XGBoost dan Random Forest** pada protokol identik untuk menguji apakah
@@ -479,6 +488,9 @@ KE, G., MENG, Q., FINLEY, T., WANG, T., CHEN, W., MA, W., YE, Q. dan LIU, T.-Y.,
 LightGBM: A highly efficient gradient boosting decision tree. *Advances in Neural
 Information Processing Systems (NeurIPS)*, 30, pp. 3146-3154.
 
+KHEDDAR, H., HIMEUR, Y. dan AWAD, A.I., 2023. Deep transfer learning applications in
+intrusion detection systems: A comprehensive review. *arXiv preprint* arXiv:2304.10550.
+
 LANVIN, M., GIMENEZ, P.-F., HAN, Y., MAJORCZYK, F., ME, L. dan TOTEL, E., 2022. Errors
 in the CICIDS2017 dataset and the significant differences in detection performances it
 makes. *Proc. Int. Conf. Risks and Security of Internet and Systems (CRiSIS)*, pp. 18-33.
@@ -487,12 +499,22 @@ LAYEGHY, S., GALLAGHER, M. dan PORTMANN, M., 2024. Benchmarking the benchmark - 
 synthetic and real-world network IDS datasets. *Journal of Information Security and
 Applications*, 80, 103689.
 
+LAYEGHY, S., BAKTASH, M. dan PORTMANN, M., 2023. DI-NIDS: Domain invariant network
+intrusion detection system. *Knowledge-Based Systems*, 273, 110626.
+
+LAYEGHY, S. dan PORTMANN, M., 2023. On generalisability of machine learning-based network
+intrusion detection systems. *Computers and Electrical Engineering*, 108, 108692.
+
 LIU, L., ENGELEN, G., LYNAR, T., ESSAM, D. dan JOOSEN, W., 2022. Error prevalence in NIDS
 datasets: A case study on CIC-IDS-2017 and CSE-CIC-IDS-2018. *Proc. IEEE Conf.
 Communications and Network Security (CNS)*, pp. 254-262.
 
 LUNDBERG, S.M. dan LEE, S.-I., 2017. A unified approach to interpreting model predictions.
 *Advances in Neural Information Processing Systems (NeurIPS)*, 30, pp. 4765-4774.
+
+MARTONO, H.Y., SYARIF, I. dan SAPUTRA, F.A., 2024. Cross-dataset generalization of
+ML-based network intrusion detection via semantic feature mapping and few-shot adaptation,
+validated on real cloud traffic. *Manuscript / preprint* (karya pendahulu tim penulis).
 
 MOHALE, V.Z. dan OBAGBUWA, I.C., 2025. A systematic review of explainable artificial
 intelligence in intrusion detection systems. *Frontiers in Artificial Intelligence*, 8,
