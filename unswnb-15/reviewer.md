@@ -131,7 +131,7 @@ atau *IEEE TDSC*. Empat poin revisi minor:
 studi kasus TCP window mismatch, functional-preserving evasion, analisis asimetri, gambar
 kualitas publikasi.
 
-**Poin A — SELESAI.** Diukur nyata (`notebooks/09_model_efficiency.ipynb`, `model_efficiency.json`):
+**Poin A — SELESAI.** Diukur nyata (`notebooks/09_model_efficiency.ipynb`, `json/paper1/model_efficiency.json`):
 model **2,9 MB**, latensi **≈439 µs/flow**, throughput **≈2.276 flow/detik** @1 vCPU (single-thread).
 Throughput *batch* artefak (~77 jt/detik) dibuang; notebook diperbaiki. Angka dimasukkan ke
 Tabel efisiensi §3.4. Detail di `documentation.md` §17.3.

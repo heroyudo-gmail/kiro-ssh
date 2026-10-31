@@ -212,7 +212,7 @@ Untuk menilai pengaruh kualitas pemetaan terhadap generalisasi:
 Perbandingan A vs B mengukur apakah menambah fitur berpadanan longgar membantu atau justru merusak generalisasi lintas-dataset.
 
 ### 10.4 Tabel Semantic Feature Mapping Penuh (68 CIC ↔ 42 UNSW)
-Berbasis inventaris fitur nyata (`feature_inventory.json`). Konvensi: **Fwd = source (s)**, **Bwd = destination (d)**.
+Berbasis inventaris fitur nyata (`json/paper1/feature_inventory.json`). Konvensi: **Fwd = source (s)**, **Bwd = destination (d)**.
 
 **A. Irisan KUAT** (definisi & satuan sangat berdekatan — kandidat utama Model A):
 
@@ -351,7 +351,7 @@ Preprocessing: **StandardScaler (z-score) diterapkan per dataset secara terpisah
 
 ## 11. Baseline Cross-Dataset (T3 — SELESAI)
 
-Notebook `03_cross_dataset_baseline.ipynb`, dijalankan di SageMaker atas dataset asli. Hasil disimpan di `cross_dataset_baseline.json`. **Seluruh angka di bawah adalah hasil eksekusi nyata.**
+Notebook `03_cross_dataset_baseline.ipynb`, dijalankan di SageMaker atas dataset asli. Hasil disimpan di `json/paper1/cross_dataset_baseline.json`. **Seluruh angka di bawah adalah hasil eksekusi nyata.**
 
 ### 11.1 Setup
 - **Label biner:** attack (1) vs normal (0). Untuk tahap awal, seluruh 14 kelas serangan CIC digabung jadi "attack".
@@ -377,7 +377,7 @@ Sebelum mempercayai angka, label CIC diverifikasi terhadap `label_mapping` di `c
 | **gap (latih CIC)** = MCC(same_cic) − MCC(cic2unsw) | **0,985** | 0,910 |
 | **gap (latih UNSW)** = MCC(same_unsw) − MCC(unsw2cic) | **0,806** | 0,789 |
 
-Metrik pendukung (Model A): `same_cic` F1=0,928 ACC=0,976 AUC=0,981; `same_unsw` F1=0,890 ACC=0,868 AUC=0,979. Detail lengkap (F1/ACC/AUC/confusion tiap skenario) di `cross_dataset_baseline.json`.
+Metrik pendukung (Model A): `same_cic` F1=0,928 ACC=0,976 AUC=0,981; `same_unsw` F1=0,890 ACC=0,868 AUC=0,979. Detail lengkap (F1/ACC/AUC/confusion tiap skenario) di `json/paper1/cross_dataset_baseline.json`.
 
 ### 11.4 Temuan
 1. **Kolaps generalisasi lintas-jaringan (bukti empiris gap #1).** Model dengan performa dalam-dataset tinggi (MCC 0,91 di CIC; 0,74 di UNSW) **jatuh ke MCC ≈ 0 hingga negatif** saat diuji-silang. MCC ≈ 0 = setara tebakan acak; MCC negatif = sistematis salah arah. *Generalization gap* mencapai **0,81–0,99** — bukti tajam bahwa model NIDS terlatih-satu-jaringan tidak transfer ke jaringan lain.
@@ -392,7 +392,7 @@ Hasil ini adalah **motivasi kuantitatif inti** paper: NIDS state-of-practice run
 
 ## 12. Adversarial Training Cross-Dataset (T5 — SELESAI)
 
-Notebook `04_adversarial_cross_dataset.ipynb`, dijalankan di SageMaker. Hasil di `adversarial_cross_dataset.json`. **Seluruh angka hasil eksekusi nyata.**
+Notebook `04_adversarial_cross_dataset.ipynb`, dijalankan di SageMaker. Hasil di `json/paper2/adversarial_cross_dataset.json`. **Seluruh angka hasil eksekusi nyata.**
 
 ### 12.1 Setup
 - Model **A** (9 fitur), label **biner**. Gradien **finite-difference central** (`h=0.01`), serangan **FGSM** `x_adv = x + eps*sign(dL/dx)`, adaptasi biner dari Paper 1.
@@ -433,7 +433,7 @@ Perbaikan besar pada eps ≤ `eps_train` (0,1); pada eps=0,2 (melebihi eps latih
 
 ## 13. Cross-Network Alignment (T6 — SELESAI)
 
-Notebook `05_cross_network_alignment.ipynb`, dijalankan di SageMaker. Hasil di `cross_network_alignment.json`. **Seluruh angka hasil eksekusi nyata.**
+Notebook `05_cross_network_alignment.ipynb`, dijalankan di SageMaker. Hasil di `json/paper1/cross_network_alignment.json`. **Seluruh angka hasil eksekusi nyata.**
 
 ### 13.1 Setup
 Model A (9 fitur), biner, z-score per dataset. Tiga strategi dibandingkan:
@@ -476,7 +476,7 @@ Rangkaian T3→T5→T6 membentuk **narasi kuantitatif yang bersih dan jujur**:
 
 ## 14. Domain Adaptation: Few-Shot + Mixup (T7 — SELESAI)
 
-Notebook `06_domain_adaptation.ipynb`, dijalankan di SageMaker. Hasil di `domain_adaptation.json`. **Seluruh angka hasil eksekusi nyata.**
+Notebook `06_domain_adaptation.ipynb`, dijalankan di SageMaker. Hasil di `json/paper1/domain_adaptation.json`. **Seluruh angka hasil eksekusi nyata.**
 
 ### 14.1 Setup
 Model A (9 fitur), biner, z-score per dataset. Dua eksperimen:
@@ -520,7 +520,7 @@ Model A (9 fitur), biner, z-score per dataset. Dua eksperimen:
 
 ## 15. Functional-Preserving Evasion (T8 — SELESAI)
 
-Notebook `07_functional_preserving_evasion.ipynb`, dijalankan di SageMaker. Hasil di `functional_preserving_evasion.json`. **Seluruh angka hasil eksekusi nyata.**
+Notebook `07_functional_preserving_evasion.ipynb`, dijalankan di SageMaker. Hasil di `json/paper2/functional_preserving_evasion.json`. **Seluruh angka hasil eksekusi nyata.**
 
 ### 15.1 Setup
 Model A (9 fitur), biner. FGSM (finite-diff saliency) dibandingkan dalam dua mode:
@@ -554,7 +554,7 @@ T8 melengkapi trio gap dengan **dimensi realisme serangan**: evaluasi adversaria
 
 ## 16. Adaptive White-Box Evaluation (T9 — SELESAI)
 
-Notebook `08_adaptive_whitebox.ipynb`, dijalankan di SageMaker. Hasil di `adaptive_whitebox.json`. **Seluruh angka hasil eksekusi nyata.** Menutup gap #3 Paper 1 (evaluasi hanya transfer/grey-box).
+Notebook `08_adaptive_whitebox.ipynb`, dijalankan di SageMaker. Hasil di `json/paper2/adaptive_whitebox.json`. **Seluruh angka hasil eksekusi nyata.** Menutup gap #3 Paper 1 (evaluasi hanya transfer/grey-box).
 
 ### 16.1 Setup
 Model A (9 fitur), biner, 2 arah (CIC, UNSW). Per arah dilatih **baseline** dan **robust** (adversarial training, D_clean ∪ D_adv 80:20, eps_train=0,1, adv functional). Dua jenis serangan, keduanya **functional-preserving** (T8):
@@ -615,7 +615,7 @@ di `reviewer.md`.
 
 ### 17.3 Poin A — SELESAI (angka nyata terukur)
 Diukur via `notebooks/09_model_efficiency.ipynb` di SageMaker (tanpa deployment AWS), hasil
-di `model_efficiency.json`. Lingkungan: Amazon Linux 2023, x86_64 8 vCPU, XGBoost 3.2.0;
+di `json/paper1/model_efficiency.json`. Lingkungan: Amazon Linux 2023, x86_64 8 vCPU, XGBoost 3.2.0;
 inferensi **dipaksa single-thread** (`nthread=1`) untuk meniru edge 1 vCPU.
 
 | Metrik | Nilai (nyata) |
@@ -651,7 +651,7 @@ sesudah kalibrasi domain; buktikan secara matematis jaraknya mengecil ke distrib
 target (standar Layeghy dkk. 2024).
 
 **Eksekusi nyata:** `notebooks/10_wasserstein_shift.ipynb` (Run All di SageMaker), output
-`wasserstein_shift.json`. W1 dihitung per fitur di ruang z-score yang di-fit pada
+`json/paper1/wasserstein_shift.json`. W1 dihitung per fitur di ruang z-score yang di-fit pada
 train-target, `scipy.stats.wasserstein_distance`, seed 42; disertakan batas-bawah
 intra-target (train vs test target sama).
 
@@ -751,9 +751,9 @@ sebagai penyebab, karena empat faktor lain belum dieliminasi secara terkontrol.
 
 | Faktor | Bukti nyata yang ADA | Terisolasi? |
 |---|---|---|
-| 1. Feature insufficiency | Joint training MCC $0{,}912$ (CIC) / $0{,}732$ (UNSW) ≈ in-domain (`05` → `cross_network_alignment.json`) | **Ya — tersingkir** |
-| 2. Feature-extractor mismatch | Studi kasus `swin`/`dwin` + audit satuan (`02` → `mapping_validation.json`); dinetralkan *by-design* via SFM | Dinetralkan, tak dikuantifikasi |
-| 3. Covariate/distribution shift | Wasserstein $W_1$ (`10` → `wasserstein_shift.json`) + domain-classifier $\approx 0{,}99$ (`21` → `shift_out/`) | **Ya — terukur** (marginal $P(X)$) |
+| 1. Feature insufficiency | Joint training MCC $0{,}912$ (CIC) / $0{,}732$ (UNSW) ≈ in-domain (`05` → `json/paper1/cross_network_alignment.json`) | **Ya — tersingkir** |
+| 2. Feature-extractor mismatch | Studi kasus `swin`/`dwin` + audit satuan (`02` → `json/paper1/mapping_validation.json`); dinetralkan *by-design* via SFM | Dinetralkan, tak dikuantifikasi |
+| 3. Covariate/distribution shift | Wasserstein $W_1$ (`10` → `json/paper1/wasserstein_shift.json`) + domain-classifier $\approx 0{,}99$ (`21` → `shift_out/`) | **Ya — terukur** (marginal $P(X)$) |
 | 4. Label/attack-taxonomy shift | Per-kategori $W_1$ (`23`), transfer multiclass kelas-bersama kolaps (`24`) | Tidak — gejala ditunjukkan, kontribusi tak dipisah |
 | 5. Classifier limitation | Hanya XGBoost sebagai detektor di seluruh Paper 1 (RandomForest di `21` hanya sebagai *domain-classifier*) | Tidak — tak ada pembanding |
 
@@ -821,7 +821,7 @@ referensi yang belum bisa diverifikasi TIDAK dikarang; angka yang belum ada dita
 | K1 | Label/judul gambar ke bahasa Inggris (Fig 8 & 9) | perbaikan gambar | **SELESAI** (masalah copy-paste Overleaf; label ID di gambar sudah tampil benar) |
 | K2 | Baseline domain-invariant (DI-NIDS/DANN) pada CIC↔UNSW | **eksperimen (berat, butuh PyTorch)** | **DITUNDA sadar** — review ini informal (bukan reviewer resmi jurnal); DANN menuntut dependency neural baru. Teks pengait sudah ada di §related & §align. Dikerjakan bila diminta reviewer resmi. |
 | K3 | Perbarui related work (DI-NIDS, dll) | tulisan | **SELESAI** — paragraf baru "NIDS domain-invariant" + 4 bibitem terverifikasi |
-| K4 | CI/std untuk semua MCC + few-shot multi-seed | **eksperimen** | **NOTEBOOK SIAP** — `notebooks/19_multiseed_ci.ipynb` (5 seed; mean±std + CI95 t-interval untuk tab:baseline/align/fewshot; output `multiseed_ci.json`). Menunggu Run All di SageMaker. |
+| K4 | CI/std untuk semua MCC + few-shot multi-seed | **eksperimen** | **NOTEBOOK SIAP** — `notebooks/19_multiseed_ci.ipynb` (5 seed; mean±std + CI95 t-interval untuk tab:baseline/align/fewshot; output `json/paper1/multiseed_ci.json`). Menunggu Run All di SageMaker. |
 | K5 | Deskripsi rinci pengumpulan trafik AWS | tulisan | **SELESAI** — tabel ringkas `tab:awscollect` (jenis serangan, jumlah flow, rasio kelas, definisi episode, pelabelan); periode kalender ditandai `[diisi]` |
 | K6 | Prosedur few-shot presisi & algoritmik | tulisan | **SELESAI** — blok `Algorithm` few-shot (stratified per-kelas, anti-bocor, seeded) |
 
@@ -834,7 +834,7 @@ referensi yang belum bisa diverifikasi TIDAK dikarang; angka yang belum ada dita
 | P3 | Jelaskan non-monoton kurva CIC+AWS few-shot (Fig 9) | tulisan | **SELESAI** — paragraf "Perilaku non-monoton kurva CIC+AWS" (titik awal negatif, benign langka, asimetri domain) |
 | P4 | Hubungan W1 & d_HΔH + keterbatasan W1 sebagai proxy | tulisan | **SELESAI** — paragraf hubungan bound Kantorovich–Rubinstein; W1 = proxy covariate-shift (perlu, bukan cukup) |
 | P5 | Strategi penanganan class imbalance | tulisan | **SELESAI** — paragraf 3-tingkat (MCC; scale_pos_weight; stratified sampling; tanpa SMOTE) |
-| P6 | Ablation jumlah fitur SFM | **eksperimen** | **NOTEBOOK SIAP** — `notebooks/18_feature_ablation.ipynb` (top-k {3,5,7,9} via importance joint; in-domain/joint/cross; output `feature_ablation.json`+PNG+S3). Menunggu Run All di SageMaker. |
+| P6 | Ablation jumlah fitur SFM | **eksperimen** | **NOTEBOOK SIAP** — `notebooks/18_feature_ablation.ipynb` (top-k {3,5,7,9} via importance joint; in-domain/joint/cross; output `json/paper1/feature_ablation.json`+PNG+S3). Menunggu Run All di SageMaker. |
 
 ### 20.3 Poin MINOR — status
 - **M1 Perpendek judul**: judul Paper 1 aktif sudah ringkas ("Pemetaan Fitur Semantik dan
@@ -869,7 +869,7 @@ Menunggu detail sitasi dari penulis, atau dibiarkan digantikan oleh DI-NIDS + 3 
 ## 21. Hasil Eksperimen nb18 & nb19 Terintegrasi ke Naskah (P6 & K4 SELESAI)
 
 Notebook 18 (ablation) & 19 (multi-seed CI) telah dijalankan di SageMaker; hasil nyata
-(`feature_ablation.json`, `multiseed_ci.json`) diintegrasikan ke `paper1-generalisasi.tex`.
+(`json/paper1/feature_ablation.json`, `json/paper1/multiseed_ci.json`) diintegrasikan ke `paper1-generalisasi.tex`.
 
 ### 21.1 P6 Ablation Jumlah Fitur (SELESAI)
 Subbagian baru **\S Ablasi Jumlah Fitur SFM** (`sec:ablation`) + `tab:ablation`. Temuan:

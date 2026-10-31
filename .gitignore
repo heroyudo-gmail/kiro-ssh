@@ -244,16 +244,13 @@ ransomware/aws/results-windows/aes_key.bin
 *.joblib
 *.pkl
 
-# Pengecualian: metadata fitur/mapping kecil UNSW-NB15 (untuk reproduksibilitas paper Q1)
-!unswnb-15/feature_inventory.json
-!unswnb-15/mapping_validation.json
-!unswnb-15/cross_dataset_baseline.json
-!unswnb-15/adversarial_cross_dataset.json
-!unswnb-15/cross_network_alignment.json
-!unswnb-15/domain_adaptation.json
-!unswnb-15/functional_preserving_evasion.json
-!unswnb-15/adaptive_whitebox.json
-!unswnb-15/model_efficiency.json
+# Pengecualian: artefak JSON kecil UNSW-NB15 (reproduksibilitas) - dirapikan ke json/paperN/
+# (kecuali modelA_9feat.json yang besar ~3MB, tetap diabaikan)
+!unswnb-15/json/paper1/
+!unswnb-15/json/paper2/
+!unswnb-15/json/paper1/*.json
+!unswnb-15/json/paper2/*.json
+unswnb-15/json/paper1/modelA_9feat.json
 
 # Pengecualian: hasil PoC AWS Paper 2 (adversarial) — kecil, untuk reproduksibilitas
 !unswnb-15/aws/paper2_aws/detect_clean_advmetrics.json
