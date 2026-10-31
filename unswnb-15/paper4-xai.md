@@ -159,6 +159,12 @@ Seluruh notebook eksperimen (`notebook_xai/01–03`) dieksekusi di **AWS SageMak
 mentah di-sync dari S3, notebook dijalankan berurutan, dan artefak hasil (JSON) di-upload
 kembali ke S3 untuk mengisi tabel-tabel pada bagian Hasil.
 
+![Pipeline bebas-kebocoran](figure-p4/fig1_pipeline.png)
+
+*Gambar 1. Pipeline evaluasi lintas-dataset bebas-kebocoran. Seluruh fitting (imputasi
+median, seleksi fitur, standardisasi, SMOTE) hanya memakai data latih sumber; model,
+scaler, dan daftar fitur lalu ditransfer apa adanya ke dataset target.*
+
 ### 2.3 Model Klasifikasi
 
 Dua model dievaluasi dan **dibandingkan**: **XGBoost** (depth=8, lr=0,1, n_estimators=200,
@@ -237,6 +243,12 @@ semua flow sebagai kelas benign yang dominan, sementara nyaris tidak mendeteksi 
 Implikasi: metrik tunggal weighted-F1 atau akurasi tidak memadai untuk IDS lintas-dataset;
 MCC dan recall per-kelas wajib dilaporkan.
 
+![Weighted-F1 vs MCC](figure-p4/fig2_f1_vs_mcc.png)
+
+*Gambar 2. Perbandingan weighted-F1 dan MCC, within-dataset versus lintas-dataset, untuk
+kedua model. Weighted-F1 mengikuti kelas benign dominan, sedangkan MCC menyingkap
+kegagalan memisahkan benign dari serangan lintas-dataset.*
+
 ### 3.4 Ranking vs Ambang: Kalibrasi Ambang (KONTRIBUSI BARU)
 
 Temuan kunci: kegagalan lintas-dataset tidak seragam jenisnya. Pada XGBoost arah CIC2017
@@ -280,6 +292,11 @@ kebetulan satu konfigurasi.
 | RF | CIC2018 → CIC2017 | 0,574 | 0,967 | 0,985 | 0,989 |
 
 *MCC, mean 5 seed. Fraksi = porsi label target yang ditambahkan ke pelatihan.*
+
+![Kurva pemulihan few-shot](figure-p4/fig3_fewshot.png)
+
+*Gambar 3. Kurva pemulihan few-shot (MCC vs persentase label target) untuk kedua model
+dan kedua arah transfer. Bahkan 1% label target memulihkan sebagian besar performa.*
 
 ### 3.6 Perbandingan XGBoost vs Random Forest
 
@@ -329,6 +346,12 @@ fitur yang sama, padahal kinerja deteksinya berbeda jauh. Dengan kata lain, inte
 SHAP harus dibaca sadar-kondisi — fitur "penting" pada model yang gagal mendeteksi serangan
 tidak otomatis bermakna operasional, dan juga sadar-model karena dua algoritma memberi
 peringkat berbeda.
+
+![SHAP sadar-kondisi](figure-p4/fig4_shap.png)
+
+*Gambar 4. Kepentingan fitur SHAP sadar-kondisi (model gagal versus pulih) untuk XGBoost
+dan Random Forest. Stabilitas peringkat fitur antar-kondisi tidak berujung pada
+transferabilitas lintas-dataset.*
 
 ### 3.8 Analisis Pergeseran Distribusi (opsional, penguat)
 
