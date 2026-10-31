@@ -15,8 +15,11 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+# Script dipindah ke supporting/paper1/ -> ROOT = folder unswnb-15 (dua level di atas).
 HERE = os.path.dirname(os.path.abspath(__file__))
-FIG = os.path.join(HERE, "figure-q1")
+ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
+FIG = os.path.join(ROOT, "figure-q1")
+JSON_DIRS = [os.path.join(ROOT, "json", "paper1"), os.path.join(ROOT, "json", "paper2")]
 os.makedirs(FIG, exist_ok=True)
 
 plt.rcParams.update({"font.size": 11, "figure.dpi": 150, "axes.grid": True,
@@ -24,8 +27,13 @@ plt.rcParams.update({"font.size": 11, "figure.dpi": 150, "axes.grid": True,
 
 
 def load(name):
-    with open(os.path.join(HERE, name), "r") as f:
-        return json.load(f)
+    # cari JSON di json/paper1 lalu json/paper2 (artefak sudah dirapikan ke subfolder)
+    for d in JSON_DIRS:
+        fp = os.path.join(d, name)
+        if os.path.exists(fp):
+            with open(fp, "r") as f:
+                return json.load(f)
+    raise FileNotFoundError(name + " tidak ditemukan di " + str(JSON_DIRS))
 
 
 # ---------------------------------------------------------------------------
@@ -307,7 +315,7 @@ def fig_p2_treeboundary():
     import numpy as np
     from matplotlib.patches import FancyArrowPatch
 
-    FIG_P2 = os.path.join(HERE, "figure-p2")
+    FIG_P2 = os.path.join(ROOT, "figure-p2")
     os.makedirs(FIG_P2, exist_ok=True)
 
     fig, axes = plt.subplots(1, 2, figsize=(9.2, 4.2))

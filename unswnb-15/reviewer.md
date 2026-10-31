@@ -73,7 +73,7 @@ Untuk membuktikan celah = *distribution shift* (bukan fitur), tambahkan visualis
 - **Rencana:** t-SNE atau UMAP pada 9 fitur irisan SFM; plot sebaran CIC (biru) vs UNSW (merah).
   Tunjukkan *overlap* minim sebelum kalibrasi, dan penyelarasan setelah 1% label / *mixup*.
 - **Integrasi:** jadi gambar baru (mis. `fig6_tsne_shift.png`) di `figure-q1/`; tambah ke
-  `make_figures.py` (butuh subset data → dijalankan di SageMaker karena perlu CSV/pkl).
+  `supporting/paper1/make_figures.py` (butuh subset data → dijalankan di SageMaker karena perlu CSV/pkl).
 - **Status:** BELUM — perlu notebook/skrip t-SNE + gambar.
 
 ### 5. Sempurnakan Future Work AWS Deployment — diagram arsitektur
