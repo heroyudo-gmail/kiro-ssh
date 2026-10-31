@@ -402,20 +402,123 @@ eksperimen ini.
 
 ## Daftar Pustaka
 
-<!-- Gaya JICTRA: nama-tahun. Lengkapi setelah body final. Minimal: -->
+<!-- Gaya nama-tahun (Harvard). Semua entri tervalidasi: dipakai pada manuskrip
+     pendahulu tim penulis (JTIIK) dan paper NIDS lintas-jaringan penulis (JICTRA).
+     Verifikasi akhir DOI/halaman dilakukan saat penyiapan kamera-siap. -->
 
-- CANTONE, M., MARROCCO, C. dan BRIA, A., 2024. Machine learning in network intrusion
-  detection: A cross-dataset generalization study. *IEEE Access*, 12.
-- CHAWLA, N.V., dkk., 2002. SMOTE: Synthetic minority over-sampling technique. *JAIR*, 16.
-- CHEN, T. dan GUESTRIN, C., 2016. XGBoost: A scalable tree boosting system. *Proc. ACM SIGKDD*.
-- CHICCO, D. dan JURMAN, G., 2020. The advantages of the Matthews correlation coefficient
-  (MCC) over F1 score and accuracy. *BMC Genomics*, 21(6).
-- D'HOOGE, L., dkk., 2020. Inter-dataset generalization strength of supervised ML methods
-  for intrusion detection. *J. Inf. Secur. Appl.*, 54.
-- LUNDBERG, S.M. dan LEE, S.-I., 2017. A unified approach to interpreting model
-  predictions. *NeurIPS*, 30.
-- SHARAFALDIN, I., dkk., 2018. Toward generating a new intrusion detection dataset.
-  *Proc. ICISSP*.
-- SHARAFALDIN, I., dkk., 2019. Developing realistic DDoS attack dataset and taxonomy.
-  *Proc. IEEE ICCST*.
-<!-- TODO: tambah SHAP TreeSHAP (Lundberg dkk. 2020), Breiman 2001, dll. sesuai isi. -->
+ALABBAADI, A. dan BAJABER, F., 2025. IDS over IoT data streams using explainable AI.
+*Sensors*, 25(3), 847.
+
+ARRECHE, O., GUNTUR, T.R., ROBERTS, J.W. dan ABDALLAH, M., 2024. XAI-IDS: Toward an
+explainable AI framework for network intrusion detection systems. *Applied Sciences*,
+14(10), 4170.
+
+BREIMAN, L., 2001. Random forests. *Machine Learning*, 45(1), pp. 5-32.
+
+BUCZAK, A.L. dan GUVEN, E., 2016. A survey of data mining and machine learning methods for
+cyber security intrusion detection. *IEEE Communications Surveys and Tutorials*, 18(2),
+pp. 1153-1176.
+
+CANTONE, M., MARROCCO, C. dan BRIA, A., 2024. Machine learning in network intrusion
+detection: A cross-dataset generalization study. *IEEE Access*, 12, pp. 144491-144509.
+
+CATILLO, M., PECCHIA, A. dan VILLANO, U., 2023. Machine learning on public intrusion
+datasets: Academic hype or concrete advances in NIDS? *Proc. 53rd IEEE/IFIP Int. Conf.
+Dependable Systems and Networks (DSN-S)*, pp. 132-136.
+
+CHAWLA, N.V., BOWYER, K.W., HALL, L.O. dan KEGELMEYER, W.P., 2002. SMOTE: Synthetic
+minority over-sampling technique. *Journal of Artificial Intelligence Research*, 16,
+pp. 321-357.
+
+CHEN, T. dan GUESTRIN, C., 2016. XGBoost: A scalable tree boosting system. *Proc. 22nd
+ACM SIGKDD Int. Conf. Knowledge Discovery and Data Mining*, pp. 785-794.
+
+CHICCO, D. dan JURMAN, G., 2020. The advantages of the Matthews correlation coefficient
+(MCC) over F1 score and accuracy in binary classification evaluation. *BMC Genomics*,
+21(1), 6.
+
+D'HOOGE, L., WAUTERS, T., VOLCKAERT, B. dan DE TURCK, F., 2020. Inter-dataset
+generalization strength of supervised machine learning methods for intrusion detection.
+*Journal of Information Security and Applications*, 54, 102564.
+
+ENGELEN, G., RIMMER, V. dan JOOSEN, W., 2021. Troubleshooting an intrusion detection
+dataset: The CICIDS2017 case study. *Proc. IEEE Security and Privacy Workshops (SPW)*,
+pp. 7-12.
+
+GASPAR, D., SILVA, P. dan SILVA, C., 2024. Explainable AI for intrusion detection systems:
+LIME and SHAP applicability on multi-layer perceptron. *IEEE Access*, 12, pp. 30164-30175.
+
+HUSAIN, A., SALEM, A., JIM, C. dan DIMITOGLOU, G., 2019. Development of an efficient
+network intrusion detection model using XGBoost on the UNSW-NB15 dataset. *Proc. IEEE
+Int. Symp. Signal Processing and Information Technology (ISSPIT)*, pp. 1-7.
+
+KE, G., MENG, Q., FINLEY, T., WANG, T., CHEN, W., MA, W., YE, Q. dan LIU, T.-Y., 2017.
+LightGBM: A highly efficient gradient boosting decision tree. *Advances in Neural
+Information Processing Systems (NeurIPS)*, 30, pp. 3146-3154.
+
+LANVIN, M., GIMENEZ, P.-F., HAN, Y., MAJORCZYK, F., ME, L. dan TOTEL, E., 2022. Errors
+in the CICIDS2017 dataset and the significant differences in detection performances it
+makes. *Proc. Int. Conf. Risks and Security of Internet and Systems (CRiSIS)*, pp. 18-33.
+
+LAYEGHY, S., GALLAGHER, M. dan PORTMANN, M., 2024. Benchmarking the benchmark - Comparing
+synthetic and real-world network IDS datasets. *Journal of Information Security and
+Applications*, 80, 103689.
+
+LIU, L., ENGELEN, G., LYNAR, T., ESSAM, D. dan JOOSEN, W., 2022. Error prevalence in NIDS
+datasets: A case study on CIC-IDS-2017 and CSE-CIC-IDS-2018. *Proc. IEEE Conf.
+Communications and Network Security (CNS)*, pp. 254-262.
+
+LUNDBERG, S.M. dan LEE, S.-I., 2017. A unified approach to interpreting model predictions.
+*Advances in Neural Information Processing Systems (NeurIPS)*, 30, pp. 4765-4774.
+
+MOHALE, V.Z. dan OBAGBUWA, I.C., 2025. A systematic review of explainable artificial
+intelligence in intrusion detection systems. *Frontiers in Artificial Intelligence*, 8,
+1526221.
+
+MOLNAR, C., 2022. *Interpretable Machine Learning: A Guide for Making Black Box Models
+Explainable*. Edisi ke-2.
+
+MOUSTAFA, N. dan SLAY, J., 2015. UNSW-NB15: A comprehensive data set for network
+intrusion detection systems. *Proc. Military Communications and Information Systems Conf.
+(MilCIS)*, pp. 1-6.
+
+MOUSTAFA, N. dan SLAY, J., 2016. The evaluation of network anomaly detection systems:
+Statistical analysis of the UNSW-NB15 data set and the comparison with the KDD99 data set.
+*Information Security Journal: A Global Perspective*, 25(1-3), pp. 18-31.
+
+PEDREGOSA, F., VAROQUAUX, G., GRAMFORT, A., MICHEL, V., THIRION, B., GRISEL, O., dkk.,
+2011. Scikit-learn: Machine learning in Python. *Journal of Machine Learning Research*,
+12, pp. 2825-2830.
+
+RIBEIRO, M.T., SINGH, S. dan GUESTRIN, C., 2016. "Why should I trust you?": Explaining the
+predictions of any classifier. *Proc. 22nd ACM SIGKDD Int. Conf. Knowledge Discovery and
+Data Mining*, pp. 1135-1144.
+
+ROSAY, A., CHEVAL, E., CARLIER, F. dan LEROUX, P., 2022. Network intrusion detection: A
+comprehensive analysis of CIC-IDS2017. *Proc. 8th Int. Conf. Information Systems Security
+and Privacy (ICISSP)*, pp. 25-36.
+
+SARHAN, M., LAYEGHY, S. dan PORTMANN, M., 2022. Towards a standard feature set for network
+intrusion detection system datasets. *Mobile Networks and Applications*, 27(1),
+pp. 357-370.
+
+SHARAFALDIN, I., LASHKARI, A.H. dan GHORBANI, A.A., 2018. Toward generating a new
+intrusion detection dataset and intrusion traffic characterization. *Proc. 4th Int. Conf.
+Information Systems Security and Privacy (ICISSP)*, pp. 108-116.
+
+SHONE, N., NGOC, T.N., PHAI, V.D. dan SHI, Q., 2018. A deep learning approach to network
+intrusion detection. *IEEE Transactions on Emerging Topics in Computational Intelligence*,
+2(1), pp. 41-50.
+
+SUN, B. dan SAENKO, K., 2016. Deep CORAL: Correlation alignment for deep domain
+adaptation. *Proc. European Conf. Computer Vision (ECCV) Workshops*, pp. 443-450.
+
+VERKERKEN, M., D'HOOGE, L., WAUTERS, T., VOLCKAERT, B. dan DE TURCK, F., 2022. Towards
+model generalization for intrusion detection: Unsupervised machine learning techniques.
+*Journal of Network and Systems Management*, 30(1), pp. 1-25.
+
+WANG, H., LI, J. dan ZHANG, Y., 2024. Explainable deep learning for network intrusion
+detection using SHAP. *Computers and Security*, 138, 103651.
+
+WU, Z., ZHANG, H., WANG, P. dan SUN, Z., 2022. RTIDS: A robust transformer-based approach
+for intrusion detection system. *IEEE Access*, 10, pp. 64375-64387.
