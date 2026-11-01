@@ -86,7 +86,7 @@ synthetic benchmarks reflect real traffic \cite{layeghy}. Credible cross-dataset
 therefore calls for a leakage-aware pipeline and, ideally, bidirectional transfer analysis
 so that reliability is not judged from a single direction.
 
-A prior study by the authors \cite{martono} diagnosed this phenomenon but had three
+A prior study by the present authors diagnosed this phenomenon but had three
 limitations that this paper addresses: (1) it \emph{stopped at diagnosis}, reporting failure without a repair;
 (2) it \emph{conflated two failure modes}, reading an MCC of zero purely as distribution
 shift even though a varying AUC indicated a partial thresholding problem; and (3) it
@@ -407,8 +407,8 @@ threshold on the target; (v) XGBoost in the SHAP notebook uses an explicit
 performance metrics.
 
 \subsection{Comparison with Predecessor Work}
-This study is a direct continuation of the authors' predecessor manuscript \cite{martono},
-which diagnosed cross-dataset generalization collapse. Table~\ref{tab:predecessor} makes the
+This study is a direct continuation of the authors' earlier (unpublished) work that
+diagnosed cross-dataset generalization collapse. Table~\ref{tab:predecessor} makes the
 added value explicit.
 
 \begin{table}[htbp]
@@ -473,7 +473,6 @@ partner for the cloud computing resources used in these experiments.
 \bibitem{liu} L.~Liu, G.~Engelen, T.~Lynar, D.~Essam, and W.~Joosen, ``Error prevalence in NIDS datasets: A case study on CIC-IDS-2017 and CSE-CIC-IDS-2018,'' \emph{Proc. IEEE CNS}, pp.~254--262, 2022.
 \bibitem{catillo} M.~Catillo, A.~Pecchia, and U.~Villano, ``Machine learning on public intrusion datasets: Academic hype or concrete advances in NIDS?,'' \emph{Proc. IEEE/IFIP DSN-S}, pp.~132--136, 2023.
 \bibitem{layeghy} S.~Layeghy, M.~Gallagher, and M.~Portmann, ``Benchmarking the benchmark---Comparing synthetic and real-world network IDS datasets,'' \emph{J. Inf. Secur. Appl.}, 80, 103689, 2024.
-\bibitem{martono} H.~Y.~Martono, I.~Syarif, and F.~A.~Saputra, ``Cross-dataset generalization of ML-based network intrusion detection via semantic feature mapping and few-shot adaptation, validated on real cloud traffic,'' manuscript (authors' predecessor work), 2024.
 \bibitem{lundberg} S.~M.~Lundberg and S.-I.~Lee, ``A unified approach to interpreting model predictions,'' \emph{NeurIPS}, 30, pp.~4765--4774, 2017.
 \bibitem{ribeiro} M.~T.~Ribeiro, S.~Singh, and C.~Guestrin, ```Why should I trust you?': Explaining the predictions of any classifier,'' \emph{Proc. 22nd ACM SIGKDD}, pp.~1135--1144, 2016.
 \bibitem{arreche} O.~Arreche, T.~R.~Guntur, J.~W.~Roberts, and M.~Abdallah, ``XAI-IDS: Toward an explainable AI framework for network intrusion detection systems,'' \emph{Applied Sciences}, 14(10), 4170, 2024.

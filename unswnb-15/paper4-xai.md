@@ -107,21 +107,21 @@ tolok ukur sintetis mencerminkan trafik nyata [14]. Karena itu, evaluasi lintas-
 menuntut pipeline yang sadar-kebocoran dan, idealnya, analisis transfer dua arah agar
 keandalan model tidak dinilai dari satu arah saja.
 
-Studi pendahulu oleh tim penulis [15] telah menunjukkan fenomena runtuhnya MCC pada evaluasi lintas-dataset,
+Studi pendahulu oleh tim penulis (belum terpublikasi) telah menunjukkan fenomena runtuhnya MCC pada evaluasi lintas-dataset,
 tetapi memiliki tiga keterbatasan yang menjadi celah penelitian ini:
 1. **Berhenti pada diagnosis** — menyatakan model gagal tanpa menawarkan pemulihan.
 2. **Mencampur dua jenis kegagalan** — menafsirkan MCC = 0 murni sebagai pergeseran
    distribusi, padahal AUC yang bervariasi mengindikasikan sebagian adalah masalah
    kalibrasi ambang.
 3. **Interpretasi SHAP tanpa konteks kondisi model** — menghitung SHAP pada model yang
-   recall serangannya nol, sehingga interpretasinya rapuh. Metode explainability seperti SHAP [16] dan LIME [17] makin banyak diterapkan pada NIDS [18], [19], [20], [21], [22], tetapi interpretasinya jarang dikaitkan dengan apakah model benar-benar mendeteksi serangan.
+   recall serangannya nol, sehingga interpretasinya rapuh. Metode explainability seperti SHAP [15] dan LIME [16] makin banyak diterapkan pada NIDS [17], [18], [19], [20], [21], tetapi interpretasinya jarang dikaitkan dengan apakah model benar-benar mendeteksi serangan.
 
 Untuk menutup keterbatasan tersebut, penelitian ini menyumbang sebuah pipeline
 bebas-kebocoran untuk eksperimen IDS biner lintas-dataset antara CIC-IDS2017 dan
 CSE-CIC-IDS2018 (dua arah) yang menyelaraskan fitur melalui irisan nama tanpa pemetaan
 fitur semantik. Di atas pipeline ini kami memisahkan kegagalan ranking (diukur AUC/PR-AUC)
 dari kegagalan ambang (MCC pada ambang baku) lalu menerapkan kalibrasi ambang; berbeda dari
-adaptasi domain berbasis jaringan dalam seperti DI-NIDS/DANN [23] yang
+adaptasi domain berbasis jaringan dalam seperti DI-NIDS/DANN [22] yang
 menuntut tumpukan deep dan data target melimpah, perbaikan kami berupa kalibrasi few-shot
 ringan yang hanya memakai sebagian kecil label target dan dilaporkan dengan selang
 kepercayaan multi-seed. Kami juga membandingkan XGBoost dan Random Forest pada protokol
@@ -165,11 +165,11 @@ Seluruh operasi fitting hanya menggunakan data latih. Urutan pemrosesan:
    hapus duplikasi, ubah nilai tak hingga menjadi NaN, buang kolom missing dominan, isi
    sisa missing numerik dengan median (statistik median dari **train**).
 3. **Penyelarasan skema fitur (tanpa SFM)** — ambil **irisan nama kolom** antara kedua
-   dataset setelah normalisasi, berbeda dari upaya himpunan fitur terstandar [24]; tidak ada
+   dataset setelah normalisasi, berbeda dari upaya himpunan fitur terstandar [23]; tidak ada
    pemetaan semantik manual, tidak ada pengisian-nol untuk fitur yang tak ada.
 4. **Pembagian data** — stratified split 80% latih / 20% uji.
 5. **Seleksi fitur, standardisasi, SMOTE — hanya pada data latih.** Seleksi fitur top-k
-   dari importance model di data latih; StandardScaler fit di latih; SMOTE [25] hanya di latih; seluruh model memakai scikit-learn [26].
+   dari importance model di data latih; StandardScaler fit di latih; SMOTE [24] hanya di latih; seluruh model memakai scikit-learn [25].
 
 Pada evaluasi lintas-dataset, model, scaler, dan daftar fitur hasil seleksi dari referensi
 (CIC-IDS2017) dipakai langsung pada target (CSE-CIC-IDS2018). Evaluasi mengukur kemampuan
@@ -188,7 +188,7 @@ scaler, dan daftar fitur lalu ditransfer apa adanya ke dataset target.*
 ### 2.3 Model Klasifikasi
 
 Kami sengaja memakai dua model ensembel pohon, bukan jaringan dalam. Ensembel pohon tetap
-menjadi baseline kuat dan lazim untuk fitur flow tabular pada NIDS [27], [28], [29], [30], [31], [32]; model ini cepat dilatih,
+menjadi baseline kuat dan lazim untuk fitur flow tabular pada NIDS [26], [27], [28], [29], [30], [31]; model ini cepat dilatih,
 ringan untuk deployment edge/sumber daya terbatas, dan — penting bagi penelitian ini —
 mendukung atribusi eksak dan cepat melalui TreeSHAP yang menjadi dasar analisis SHAP
 sadar-kondisi di Bagian 3.
@@ -216,7 +216,7 @@ lengkap di notebook `notebook_xai/`.
 
 Metrik: accuracy, precision, recall (per-kelas), weighted F1, AUC-ROC, **PR-AUC**, dan
 **MCC**. MCC diprioritaskan pada evaluasi lintas-dataset karena memperhitungkan TP/TN/FP/FN
-secara simultan dan tetap informatif pada data tidak seimbang [33]. Studi generalisasi lintas-dataset dan tak-tersupervisi memotivasi penekanan ini [34], serta karya adaptasi domain [35] dan pemodelan yang dapat ditafsirkan [36].
+secara simultan dan tetap informatif pada data tidak seimbang [32]. Studi generalisasi lintas-dataset dan tak-tersupervisi memotivasi penekanan ini [33], serta karya adaptasi domain [34] dan pemodelan yang dapat ditafsirkan [35].
 Untuk memisahkan kegagalan ranking dari kegagalan ambang, dilaporkan **AUC/PR-AUC**
 (independen ambang) bersama **MCC dan recall Attack pada ambang 0,5 dan ambang terkalibrasi**.
 
@@ -423,8 +423,8 @@ per-instans dan kuantifikasi pergeseran distribusi diserahkan ke pekerjaan lanju
 
 ### 3.10 Perbandingan dengan Karya Pendahulu
 
-Penelitian ini merupakan kelanjutan langsung dari manuskrip pendahulu tim penulis
-[15] yang mendiagnosis fenomena runtuhnya generalisasi lintas-dataset.
+Penelitian ini merupakan kelanjutan langsung dari karya awal tim penulis yang belum
+terpublikasi, yang mendiagnosis fenomena runtuhnya generalisasi lintas-dataset.
 Perbandingan eksplisit pada Tabel 8 menegaskan apa yang ditambahkan karya ini.
 
 **Tabel 8. Posisi terhadap karya pendahulu**
@@ -515,46 +515,45 @@ eksperimen ini.
 
 [14] LAYEGHY, S., GALLAGHER, M. dan PORTMANN, M., 2024. Benchmarking the benchmark - Comparing synthetic and real-world network IDS datasets. *Journal of Information Security and Applications*, 80, 103689.
 
-[15] MARTONO, H.Y., SYARIF, I. dan SAPUTRA, F.A., 2024. Cross-dataset generalization of ML-based network intrusion detection via semantic feature mapping and few-shot adaptation, validated on real cloud traffic. *Manuscript / preprint* (karya pendahulu tim penulis).
 
-[16] LUNDBERG, S.M. dan LEE, S.-I., 2017. A unified approach to interpreting model predictions. *Advances in Neural Information Processing Systems (NeurIPS)*, 30, pp. 4765-4774.
+[15] LUNDBERG, S.M. dan LEE, S.-I., 2017. A unified approach to interpreting model predictions. *Advances in Neural Information Processing Systems (NeurIPS)*, 30, pp. 4765-4774.
 
-[17] RIBEIRO, M.T., SINGH, S. dan GUESTRIN, C., 2016. "Why should I trust you?": Explaining the predictions of any classifier. *Proc. 22nd ACM SIGKDD Int. Conf. Knowledge Discovery and Data Mining*, pp. 1135-1144.
+[16] RIBEIRO, M.T., SINGH, S. dan GUESTRIN, C., 2016. "Why should I trust you?": Explaining the predictions of any classifier. *Proc. 22nd ACM SIGKDD Int. Conf. Knowledge Discovery and Data Mining*, pp. 1135-1144.
 
-[18] ARRECHE, O., GUNTUR, T.R., ROBERTS, J.W. dan ABDALLAH, M., 2024. XAI-IDS: Toward an explainable AI framework for network intrusion detection systems. *Applied Sciences*, 14(10), 4170.
+[17] ARRECHE, O., GUNTUR, T.R., ROBERTS, J.W. dan ABDALLAH, M., 2024. XAI-IDS: Toward an explainable AI framework for network intrusion detection systems. *Applied Sciences*, 14(10), 4170.
 
-[19] GASPAR, D., SILVA, P. dan SILVA, C., 2024. Explainable AI for intrusion detection systems: LIME and SHAP applicability on multi-layer perceptron. *IEEE Access*, 12, pp. 30164-30175.
+[18] GASPAR, D., SILVA, P. dan SILVA, C., 2024. Explainable AI for intrusion detection systems: LIME and SHAP applicability on multi-layer perceptron. *IEEE Access*, 12, pp. 30164-30175.
 
-[20] WANG, H., LI, J. dan ZHANG, Y., 2024. Explainable deep learning for network intrusion detection using SHAP. *Computers and Security*, 138, 103651.
+[19] WANG, H., LI, J. dan ZHANG, Y., 2024. Explainable deep learning for network intrusion detection using SHAP. *Computers and Security*, 138, 103651.
 
-[21] MOHALE, V.Z. dan OBAGBUWA, I.C., 2025. A systematic review of explainable artificial intelligence in intrusion detection systems. *Frontiers in Artificial Intelligence*, 8, 1526221.
+[20] MOHALE, V.Z. dan OBAGBUWA, I.C., 2025. A systematic review of explainable artificial intelligence in intrusion detection systems. *Frontiers in Artificial Intelligence*, 8, 1526221.
 
-[22] ALABBAADI, A. dan BAJABER, F., 2025. IDS over IoT data streams using explainable AI. *Sensors*, 25(3), 847.
+[21] ALABBAADI, A. dan BAJABER, F., 2025. IDS over IoT data streams using explainable AI. *Sensors*, 25(3), 847.
 
-[23] LAYEGHY, S., BAKTASH, M. dan PORTMANN, M., 2023. DI-NIDS: Domain invariant network intrusion detection system. *Knowledge-Based Systems*, 273, 110626.
+[22] LAYEGHY, S., BAKTASH, M. dan PORTMANN, M., 2023. DI-NIDS: Domain invariant network intrusion detection system. *Knowledge-Based Systems*, 273, 110626.
 
-[24] SARHAN, M., LAYEGHY, S. dan PORTMANN, M., 2022. Towards a standard feature set for network intrusion detection system datasets. *Mobile Networks and Applications*, 27(1), pp. 357-370.
+[23] SARHAN, M., LAYEGHY, S. dan PORTMANN, M., 2022. Towards a standard feature set for network intrusion detection system datasets. *Mobile Networks and Applications*, 27(1), pp. 357-370.
 
-[25] CHAWLA, N.V., BOWYER, K.W., HALL, L.O. dan KEGELMEYER, W.P., 2002. SMOTE: Synthetic minority over-sampling technique. *Journal of Artificial Intelligence Research*, 16, pp. 321-357.
+[24] CHAWLA, N.V., BOWYER, K.W., HALL, L.O. dan KEGELMEYER, W.P., 2002. SMOTE: Synthetic minority over-sampling technique. *Journal of Artificial Intelligence Research*, 16, pp. 321-357.
 
-[26] PEDREGOSA, F., VAROQUAUX, G., GRAMFORT, A., MICHEL, V., THIRION, B., GRISEL, O., dkk., 2011. Scikit-learn: Machine learning in Python. *Journal of Machine Learning Research*, 12, pp. 2825-2830.
+[25] PEDREGOSA, F., VAROQUAUX, G., GRAMFORT, A., MICHEL, V., THIRION, B., GRISEL, O., dkk., 2011. Scikit-learn: Machine learning in Python. *Journal of Machine Learning Research*, 12, pp. 2825-2830.
 
-[27] BREIMAN, L., 2001. Random forests. *Machine Learning*, 45(1), pp. 5-32.
+[26] BREIMAN, L., 2001. Random forests. *Machine Learning*, 45(1), pp. 5-32.
 
-[28] CHEN, T. dan GUESTRIN, C., 2016. XGBoost: A scalable tree boosting system. *Proc. 22nd ACM SIGKDD Int. Conf. Knowledge Discovery and Data Mining*, pp. 785-794.
+[27] CHEN, T. dan GUESTRIN, C., 2016. XGBoost: A scalable tree boosting system. *Proc. 22nd ACM SIGKDD Int. Conf. Knowledge Discovery and Data Mining*, pp. 785-794.
 
-[29] KE, G., MENG, Q., FINLEY, T., WANG, T., CHEN, W., MA, W., YE, Q. dan LIU, T.-Y., 2017. LightGBM: A highly efficient gradient boosting decision tree. *Advances in Neural Information Processing Systems (NeurIPS)*, 30, pp. 3146-3154.
+[28] KE, G., MENG, Q., FINLEY, T., WANG, T., CHEN, W., MA, W., YE, Q. dan LIU, T.-Y., 2017. LightGBM: A highly efficient gradient boosting decision tree. *Advances in Neural Information Processing Systems (NeurIPS)*, 30, pp. 3146-3154.
 
-[30] HUSAIN, A., SALEM, A., JIM, C. dan DIMITOGLOU, G., 2019. Development of an efficient network intrusion detection model using XGBoost on the UNSW-NB15 dataset. *Proc. IEEE Int. Symp. Signal Processing and Information Technology (ISSPIT)*, pp. 1-7.
+[29] HUSAIN, A., SALEM, A., JIM, C. dan DIMITOGLOU, G., 2019. Development of an efficient network intrusion detection model using XGBoost on the UNSW-NB15 dataset. *Proc. IEEE Int. Symp. Signal Processing and Information Technology (ISSPIT)*, pp. 1-7.
 
-[31] MOUSTAFA, N. dan SLAY, J., 2015. UNSW-NB15: A comprehensive data set for network intrusion detection systems. *Proc. Military Communications and Information Systems Conf. (MilCIS)*, pp. 1-6.
+[30] MOUSTAFA, N. dan SLAY, J., 2015. UNSW-NB15: A comprehensive data set for network intrusion detection systems. *Proc. Military Communications and Information Systems Conf. (MilCIS)*, pp. 1-6.
 
-[32] MOUSTAFA, N. dan SLAY, J., 2016. The evaluation of network anomaly detection systems: Statistical analysis of the UNSW-NB15 data set and the comparison with the KDD99 data set. *Information Security Journal: A Global Perspective*, 25(1-3), pp. 18-31.
+[31] MOUSTAFA, N. dan SLAY, J., 2016. The evaluation of network anomaly detection systems: Statistical analysis of the UNSW-NB15 data set and the comparison with the KDD99 data set. *Information Security Journal: A Global Perspective*, 25(1-3), pp. 18-31.
 
-[33] CHICCO, D. dan JURMAN, G., 2020. The advantages of the Matthews correlation coefficient (MCC) over F1 score and accuracy in binary classification evaluation. *BMC Genomics*, 21(1), 6.
+[32] CHICCO, D. dan JURMAN, G., 2020. The advantages of the Matthews correlation coefficient (MCC) over F1 score and accuracy in binary classification evaluation. *BMC Genomics*, 21(1), 6.
 
-[34] VERKERKEN, M., D'HOOGE, L., WAUTERS, T., VOLCKAERT, B. dan DE TURCK, F., 2022. Towards model generalization for intrusion detection: Unsupervised machine learning techniques. *Journal of Network and Systems Management*, 30(1), pp. 1-25.
+[33] VERKERKEN, M., D'HOOGE, L., WAUTERS, T., VOLCKAERT, B. dan DE TURCK, F., 2022. Towards model generalization for intrusion detection: Unsupervised machine learning techniques. *Journal of Network and Systems Management*, 30(1), pp. 1-25.
 
-[35] SUN, B. dan SAENKO, K., 2016. Deep CORAL: Correlation alignment for deep domain adaptation. *Proc. European Conf. Computer Vision (ECCV) Workshops*, pp. 443-450.
+[34] SUN, B. dan SAENKO, K., 2016. Deep CORAL: Correlation alignment for deep domain adaptation. *Proc. European Conf. Computer Vision (ECCV) Workshops*, pp. 443-450.
 
-[36] MOLNAR, C., 2022. *Interpretable Machine Learning: A Guide for Making Black Box Models Explainable*. Edisi ke-2.
+[35] MOLNAR, C., 2022. *Interpretable Machine Learning: A Guide for Making Black Box Models Explainable*. Edisi ke-2.
