@@ -413,6 +413,37 @@ kompatibel dengan pustaka interpretasi; perbedaan setelan ini tidak memengaruhi 
 performa. (v) Interpretasi difokuskan pada SHAP global (mean absolut); analisis lokal
 per-instans dan kuantifikasi pergeseran distribusi diserahkan ke pekerjaan lanjutan.
 
+### 3.12 Perbandingan dengan Karya Pendahulu
+
+Penelitian ini merupakan kelanjutan langsung dari manuskrip pendahulu tim penulis
+(Martono dkk., 2024) yang mendiagnosis fenomena runtuhnya generalisasi lintas-dataset.
+Perbandingan eksplisit pada Tabel 8 menegaskan apa yang ditambahkan karya ini.
+
+**Tabel 8. Posisi terhadap karya pendahulu**
+
+| Aspek | Karya pendahulu (JTIIK) | Penelitian ini |
+|---|---|---|
+| Penyelarasan fitur | Harmonisasi 75 fitur dengan **pengisian-nol** untuk fitur yang tak ada | **Irisan nama** 76 fitur, tanpa pengisian-nol |
+| Model | Random Forest (model referensi) | XGBoost **dan** Random Forest (protokol identik) |
+| Cross MCC@0,5 (2017→2018) | **0,00 pada seluruh 10 partisi** (recall serangan 0) | 0,067 (XGB) / 0,175 (RF) — runtuh namun tak nol-mutlak |
+| AUC lintas-dataset | Rerata ~0,46 (≈acak) | 0,779 (XGB) — di atas acak |
+| Jenis kegagalan | Ditafsir murni pergeseran distribusi | **Dipisah**: ranking vs ambang |
+| Pemulihan | Tidak ada (berhenti pada diagnosis) | **Kalibrasi ambang + few-shot 1%** (MCC hingga 0,66–0,99) |
+| Arah transfer | Satu arah (2017→2018) | **Dua arah** (2017↔2018) |
+| SHAP | Dihitung pada model gagal saja | **Sadar-kondisi** (gagal vs pulih) + antar-model |
+
+Perbedaan angka cross yang paling mencolok — MCC 0,00 dan AUC acak pada karya pendahulu
+versus MCC kecil-tetapi-positif dengan AUC 0,779 di sini — kemungkinan besar berakar pada
+strategi penyelarasan fitur. Pengisian-nol untuk fitur yang hilang pada karya pendahulu
+menyuntikkan kolom konstan yang dapat merusak batas keputusan dan menyamarkan kemampuan
+ranking model; pendekatan irisan-nama murni pada penelitian ini menghindari artefak
+tersebut, sehingga terungkap bahwa sebagian "kegagalan" sesungguhnya adalah masalah ambang
+yang dapat dipulihkan. Dengan demikian, penelitian ini bukan sekadar mereproduksi temuan
+pendahulu, melainkan mengoreksi interpretasinya dan menuntaskan jalur pemulihan yang pada
+karya pendahulu hanya disarankan sebagai kerja mendatang.
+
+---
+
 ---
 
 ## 4. Kesimpulan

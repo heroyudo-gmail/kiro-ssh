@@ -386,6 +386,41 @@ threshold on the target; (v) XGBoost in the SHAP notebook uses an explicit
 \texttt{base\_score}=0.5 for interpretability-library compatibility, which does not affect
 performance metrics.
 
+\subsection{Comparison with Predecessor Work}
+This study is a direct continuation of the authors' predecessor manuscript \cite{martono},
+which diagnosed cross-dataset generalization collapse. Table~\ref{tab:predecessor} makes the
+added value explicit.
+
+\begin{table}[htbp]
+\centering
+\caption{Position relative to the predecessor work.}
+\label{tab:predecessor}
+\footnotesize
+\begin{tabular}{p{3.2cm}p{4.3cm}p{4.3cm}}
+\toprule
+Aspect & Predecessor (JTIIK) & This work \\
+\midrule
+Feature alignment & 75-feature harmonization with \textbf{zero-fill} for missing features & \textbf{Name intersection} (76 features), no zero-fill \\
+Model & Random Forest (reference) & XGBoost \emph{and} Random Forest (identical protocol) \\
+Cross MCC@0.5 (2017$\rightarrow$2018) & \textbf{0.00 across all 10 partitions} (attack recall 0) & 0.067 (XGB) / 0.175 (RF) --- collapsed but not absolute zero \\
+Cross-dataset AUC & $\approx 0.46$ mean ($\approx$ chance) & 0.779 (XGB) --- above chance \\
+Failure type & Read purely as distribution shift & \textbf{Separated}: ranking vs thresholding \\
+Repair & None (stops at diagnosis) & \textbf{Threshold calibration + 1\% few-shot} (MCC up to 0.66--0.99) \\
+Transfer direction & One-way (2017$\rightarrow$2018) & \textbf{Bidirectional} (2017$\leftrightarrow$2018) \\
+SHAP & Computed on the failed model only & \textbf{Condition-aware} (failed vs repaired) and cross-model \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The most striking numeric difference---MCC of 0.00 with chance-level AUC in the predecessor
+versus small-but-positive MCC with AUC 0.779 here---most likely stems from the
+feature-alignment strategy. Zero-filling missing features in the predecessor injects
+constant columns that can distort the decision boundary and mask the model's ranking
+ability; the pure name-intersection approach here avoids that artifact, revealing that part
+of the ``failure'' is in fact a thresholding problem that can be repaired. This work thus
+does not merely reproduce the predecessor's finding but corrects its interpretation and
+completes the recovery path that the predecessor only suggested as future work.
+
 \section{Conclusion}
 We diagnosed and repaired cross-dataset generalization failure for NIDS on a leakage-free
 pipeline without semantic feature mapping, using CIC-IDS2017 (reference) and CSE-CIC-IDS2018
