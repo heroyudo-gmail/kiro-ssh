@@ -95,16 +95,19 @@ recall was zero were fragile. Explainability methods such as SHAP \cite{lundberg
 LIME \cite{ribeiro} are increasingly applied to NIDS \cite{arreche,gaspar,wang,mohale,alabbaadi},
 yet their interpretations are rarely tied to whether the model actually detects attacks.
 
-\paragraph{Contributions.} (1) A leakage-free pipeline for binary cross-dataset IDS
-experiments, CIC-IDS2017 $\rightarrow$ CSE-CIC-IDS2018 (and the reverse), without semantic
-feature mapping. (2) A separation of \emph{ranking failure} (measured by AUC/PR-AUC) from
-\emph{thresholding failure} (MCC at threshold 0.5), followed by threshold calibration;
-unlike deep domain-adaptation such as DI-NIDS/DANN \cite{layeghydi} that require a heavy
-network stack and ample target data, we use lightweight calibration.
-(3) A low-cost repair via minimal few-shot calibration, reported with multi-seed confidence
-intervals. (4) A comparison of XGBoost and Random Forest under an identical protocol to test
-whether the failure-then-repair pattern is algorithm-general. (5) A condition-aware SHAP
-analysis contrasting failed versus repaired models for both algorithms.
+To address these limitations, this paper contributes a leakage-free pipeline for binary
+cross-dataset IDS experiments between CIC-IDS2017 and CSE-CIC-IDS2018 (in both directions)
+that aligns features by name intersection without semantic feature mapping. On this
+pipeline we separate \emph{ranking failure} (measured by AUC/PR-AUC) from
+\emph{thresholding failure} (MCC at the default threshold) and then apply threshold
+calibration; in contrast to deep domain-adaptation methods such as DI-NIDS and DANN
+\cite{layeghydi}, which require a heavy network stack and ample target data, our repair is
+a lightweight few-shot calibration that uses only a small fraction of target labels and is
+reported with multi-seed confidence intervals. We further compare XGBoost and Random Forest
+under an identical protocol to test whether the failure-then-repair pattern is
+algorithm-general, and we interpret the models with a condition-aware SHAP analysis that
+contrasts the failed and repaired models for both algorithms, showing that feature-ranking
+stability does not by itself imply cross-dataset transferability.
 
 \section{Method}
 \subsection{Datasets and Experimental Scope}

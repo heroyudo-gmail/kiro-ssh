@@ -118,19 +118,19 @@ tetapi memiliki tiga keterbatasan yang menjadi celah penelitian ini:
 3. **Interpretasi SHAP tanpa konteks kondisi model** — menghitung SHAP pada model yang
    recall serangannya nol, sehingga interpretasinya rapuh.
 
-**Kontribusi penelitian ini:**
-1. Merancang pipeline bebas-kebocoran untuk eksperimen IDS biner lintas-dataset
-   CIC-IDS2017 → CSE-CIC-IDS2018 (dan sebaliknya) tanpa pemetaan fitur semantik.
-2. Memisahkan **kegagalan ranking** (diukur AUC/PR-AUC) dari **kegagalan ambang**
-   (diukur MCC pada ambang 0,5) dan menerapkan kalibrasi ambang. Berbeda dari pendekatan
-   adaptasi domain berbasis jaringan dalam seperti DI-NIDS/DANN (Layeghy dkk., 2023) yang
-   menuntut tumpukan deep dan data target melimpah, kami memakai kalibrasi ringan.
-3. **Memulihkan** deteksi melalui kalibrasi few-shot minimal, dilaporkan dengan
-   multi-seed dan interval kepercayaan.
-4. **Membandingkan XGBoost dan Random Forest** pada protokol identik untuk menguji apakah
-   fenomena kegagalan dan pola pemulihan bersifat umum lintas-algoritma.
-5. Menafsirkan SHAP secara **sadar-kondisi**: membandingkan interpretasi pada model gagal
-   versus model pulih, untuk kedua model.
+Untuk menutup keterbatasan tersebut, penelitian ini menyumbang sebuah pipeline
+bebas-kebocoran untuk eksperimen IDS biner lintas-dataset antara CIC-IDS2017 dan
+CSE-CIC-IDS2018 (dua arah) yang menyelaraskan fitur melalui irisan nama tanpa pemetaan
+fitur semantik. Di atas pipeline ini kami memisahkan kegagalan ranking (diukur AUC/PR-AUC)
+dari kegagalan ambang (MCC pada ambang baku) lalu menerapkan kalibrasi ambang; berbeda dari
+adaptasi domain berbasis jaringan dalam seperti DI-NIDS/DANN (Layeghy dkk., 2023) yang
+menuntut tumpukan deep dan data target melimpah, perbaikan kami berupa kalibrasi few-shot
+ringan yang hanya memakai sebagian kecil label target dan dilaporkan dengan selang
+kepercayaan multi-seed. Kami juga membandingkan XGBoost dan Random Forest pada protokol
+identik untuk menguji apakah pola kegagalan-lalu-pemulihan bersifat umum lintas-algoritma,
+serta menafsirkan model dengan analisis SHAP sadar-kondisi yang membandingkan model gagal
+dan model pulih untuk kedua algoritma, yang memperlihatkan bahwa stabilitas peringkat fitur
+tidak dengan sendirinya menjamin transferabilitas lintas-dataset.
 
 ---
 
