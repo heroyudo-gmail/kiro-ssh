@@ -189,11 +189,30 @@ scaler, dan daftar fitur lalu ditransfer apa adanya ke dataset target.*
 
 ### 2.3 Model Klasifikasi
 
-Dua model dievaluasi dan **dibandingkan**: **XGBoost** (depth=8, lr=0,1, n_estimators=200,
-subsample=0,8, colsample_bytree=0,8) dan **Random Forest** (n_estimators=200). Random Forest
-dipilih agar sejajar dengan paper referensi, sedangkan XGBoost mewakili gradient boosting
-yang umum pada IDS modern. Keduanya dijalankan pada pipeline leak-free identik dan protokol
-evaluasi yang sama, sehingga perbandingannya adil. Detail lengkap di notebook `notebook_xai/`.
+Kami sengaja memakai dua model ensembel pohon, bukan jaringan dalam. Ensembel pohon tetap
+menjadi baseline kuat dan lazim untuk fitur flow tabular pada NIDS; model ini cepat dilatih,
+ringan untuk deployment edge/sumber daya terbatas, dan — penting bagi penelitian ini —
+mendukung atribusi eksak dan cepat melalui TreeSHAP yang menjadi dasar analisis SHAP
+sadar-kondisi di Bagian 3.
+
+Kedua model mewakili dua paradigma pembelajaran yang saling melengkapi. **Random Forest**
+adalah ensembel *bagging*: menumbuhkan banyak pohon ter-dekorelasi pada sampel bootstrap lalu
+merata-ratakan suara, sehingga menekan varians dan sejajar dengan paper referensi.
+**XGBoost** adalah ensembel *gradient boosting*: menambahkan pohon secara berurutan, tiap
+pohon mengoreksi galat sisa pohon sebelumnya, mewakili keluarga gradient boosting yang umum
+pada IDS modern. Membandingkan model bagging dan boosting memungkinkan kami menguji apakah
+pola kegagalan-lalu-pemulihan bersifat khas satu gaya belajar atau umum pada keduanya.
+
+Kedua model dijalankan pada pipeline bebas-kebocoran, subset fitur terpilih, dan pembagian
+latih/uji yang **sama**, sehingga perbedaan yang teramati mencerminkan algoritma, bukan
+pra-pemrosesan. XGBoost memakai max_depth=8, learning_rate=0,1, n_estimators=200,
+subsample=colsample_bytree=0,8; Random Forest memakai n_estimators=200 dengan max_depth=20.
+Kedalaman Random Forest dibatasi 20 agar pelatihan tetap praktis pada data referensi yang
+lebih besar (~800 ribu baris); dampaknya pada akurasi kecil dan dilaporkan sebagai pilihan
+metodologis. Pada notebook SHAP, XGBoost menambahkan base_score=0,5 demi kompatibilitas
+pustaka interpretasi; ini tidak memengaruhi metrik performa. Pengaturan lain dibiarkan pada
+nilai baku pustaka, dan lima seed acak yang sama dipakai di seluruh eksperimen. Detail
+lengkap di notebook `notebook_xai/`.
 
 ### 2.4 Metrik Evaluasi
 

@@ -159,13 +159,30 @@ model, scaler, and feature list are then transferred unchanged to the target dat
 \end{figure}
 
 \subsection{Classification Models}
-Related NIDS studies span tree ensembles and boosting \cite{breiman,chen,ke,husain} and
-UNSW-NB15-based detectors \cite{moustafa15,moustafa16}. Two models are compared under an
-identical pipeline: \textbf{XGBoost} (\texttt{max\_depth}=8,
-\texttt{learning\_rate}=0.1, \texttt{n\_estimators}=200,
-\texttt{subsample}=\texttt{colsample\_bytree}=0.8) and \textbf{Random Forest}
-(\texttt{n\_estimators}=200, \texttt{max\_depth}=20). Random Forest parallels the reference
-study; XGBoost represents modern gradient boosting common in IDS.
+We deliberately use two tree-ensemble classifiers rather than a deep network. Tree
+ensembles remain strong and widely adopted baselines for tabular flow features in NIDS
+\cite{breiman,chen,ke,husain,moustafa15,moustafa16}; they train quickly, need little
+tuning, are comparatively lightweight for edge or resource-constrained deployment, and
+--- important for this study --- admit exact and fast attributions through TreeSHAP, which
+underpins the condition-aware SHAP analysis in Section~3. The two models represent two
+complementary learning paradigms. \textbf{Random Forest} is a \emph{bagging} ensemble: it
+grows many de-correlated trees on bootstrap samples and averages their votes, which reduces
+variance and parallels the reference study. \textbf{XGBoost} is a \emph{gradient-boosting}
+ensemble: it adds trees sequentially, each correcting the residual errors of the previous
+ones, and represents the gradient-boosting family common in modern IDS. Comparing a bagging
+and a boosting model lets us test whether the failure-then-repair pattern is specific to one
+learning style or general across both.
+
+Both models run on the \emph{same} leakage-free pipeline, the same selected feature subset,
+and the same train/test splits, so any observed difference reflects the algorithm rather
+than the preprocessing. XGBoost uses \texttt{max\_depth}=8, \texttt{learning\_rate}=0.1,
+\texttt{n\_estimators}=200, and \texttt{subsample}=\texttt{colsample\_bytree}=0.8; Random
+Forest uses \texttt{n\_estimators}=200 with \texttt{max\_depth}=20. The Random-Forest depth
+is capped at 20 to keep training tractable on the larger ($\sim$800k-row) reference set; the
+effect on accuracy is minor and is reported as a methodological choice. For the SHAP
+notebook, XGBoost additionally sets \texttt{base\_score}=0.5 for compatibility with the
+interpretation library; this does not affect the performance metrics. All other settings are
+left at their library defaults, and the same five random seeds are used throughout.
 
 \subsection{Evaluation Metrics}
 We report accuracy, precision, recall (per class), weighted F1, AUC-ROC, PR-AUC, and MCC.
