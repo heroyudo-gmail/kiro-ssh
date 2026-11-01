@@ -69,7 +69,11 @@ NIDS. Machine-learning detectors are widely used because they learn traffic patt
 benchmark datasets such as CIC-IDS2017 \cite{sharafaldin} and CSE-CIC-IDS2018; surveys
 document a broad range of such detectors \cite{buczak,shone,wu}. High within-dataset accuracy,
 however, does not guarantee operational reliability on a different environment
-\cite{dhooge,cantone}.
+\cite{dhooge,cantone}. Layeghy and Portmann \cite{layeghygen} show that NIDS models that
+are near-perfect on synthetic benchmarks often fail to generalize to other networks, as
+differing infrastructure and protocols induce covariate and concept shift; transfer-learning
+surveys for IDS \cite{kheddar} underline domain adaptation as essential when target-domain
+labels are scarce.
 
 Two methodological problems stand out. First, \emph{data leakage} arises when feature
 selection, standardization, or oversampling is performed before the train-test split,
@@ -78,10 +82,12 @@ imply distribution compatibility}: even when feature names and counts match (bot
 use CICFlowMeter), feature statistics can differ because of different attack compositions
 and recording conditions; several works further document label and feature-quality
 issues in these datasets \cite{engelen,rosay,lanvin,liu,catillo} and question how well
-synthetic benchmarks reflect real traffic \cite{layeghy}.
+synthetic benchmarks reflect real traffic \cite{layeghy}. Credible cross-dataset evaluation
+therefore calls for a leakage-aware pipeline and, ideally, bidirectional transfer analysis
+so that reliability is not judged from a single direction.
 
-A prior study by the authors diagnosed this phenomenon but had three limitations that this
-paper addresses: (1) it \emph{stopped at diagnosis}, reporting failure without a repair;
+A prior study by the authors \cite{martono} diagnosed this phenomenon but had three
+limitations that this paper addresses: (1) it \emph{stopped at diagnosis}, reporting failure without a repair;
 (2) it \emph{conflated two failure modes}, reading an MCC of zero purely as distribution
 shift even though a varying AUC indicated a partial thresholding problem; and (3) it
 computed SHAP without regard to model condition, so interpretations on a model whose attack
@@ -92,7 +98,9 @@ yet their interpretations are rarely tied to whether the model actually detects 
 \paragraph{Contributions.} (1) A leakage-free pipeline for binary cross-dataset IDS
 experiments, CIC-IDS2017 $\rightarrow$ CSE-CIC-IDS2018 (and the reverse), without semantic
 feature mapping. (2) A separation of \emph{ranking failure} (measured by AUC/PR-AUC) from
-\emph{thresholding failure} (MCC at threshold 0.5), followed by threshold calibration.
+\emph{thresholding failure} (MCC at threshold 0.5), followed by threshold calibration;
+unlike deep domain-adaptation such as DI-NIDS/DANN \cite{layeghydi} that require a heavy
+network stack and ample target data, we use lightweight calibration.
 (3) A low-cost repair via minimal few-shot calibration, reported with multi-seed confidence
 intervals. (4) A comparison of XGBoost and Random Forest under an identical protocol to test
 whether the failure-then-repair pattern is algorithm-general. (5) A condition-aware SHAP
@@ -409,11 +417,15 @@ partner for the cloud computing resources used in these experiments.
 \bibitem{engelen} G.~Engelen, V.~Rimmer, and W.~Joosen, ``Troubleshooting an intrusion detection dataset: The CICIDS2017 case study,'' \emph{Proc. IEEE SPW}, pp.~7--12, 2021.
 \bibitem{gaspar} D.~Gaspar, P.~Silva, and C.~Silva, ``Explainable AI for intrusion detection systems: LIME and SHAP applicability on multi-layer perceptron,'' \emph{IEEE Access}, 12, pp.~30164--30175, 2024.
 \bibitem{husain} A.~Husain, A.~Salem, C.~Jim, and G.~Dimitoglou, ``Development of an efficient network intrusion detection model using XGBoost on the UNSW-NB15 dataset,'' \emph{Proc. IEEE ISSPIT}, pp.~1--7, 2019.
+\bibitem{kheddar} H.~Kheddar, Y.~Himeur, and A.~I.~Awad, ``Deep transfer learning applications in intrusion detection systems: A comprehensive review,'' \emph{arXiv:2304.10550}, 2023.
 \bibitem{ke} G.~Ke, Q.~Meng, T.~Finley, T.~Wang, W.~Chen, W.~Ma, Q.~Ye, and T.-Y.~Liu, ``LightGBM: A highly efficient gradient boosting decision tree,'' \emph{NeurIPS}, 30, pp.~3146--3154, 2017.
 \bibitem{lanvin} M.~Lanvin, P.-F.~Gimenez, Y.~Han, F.~Majorczyk, L.~M\'e, and \'E.~Totel, ``Errors in the CICIDS2017 dataset and the significant differences in detection performances it makes,'' \emph{Proc. CRiSIS}, pp.~18--33, 2022.
 \bibitem{layeghy} S.~Layeghy, M.~Gallagher, and M.~Portmann, ``Benchmarking the benchmark---Comparing synthetic and real-world network IDS datasets,'' \emph{J. Inf. Secur. Appl.}, 80, 103689, 2024.
+\bibitem{layeghydi} S.~Layeghy, M.~Baktash, and M.~Portmann, ``DI-NIDS: Domain invariant network intrusion detection system,'' \emph{Knowledge-Based Systems}, 273, 110626, 2023.
+\bibitem{layeghygen} S.~Layeghy and M.~Portmann, ``On generalisability of machine learning-based network intrusion detection systems,'' \emph{Comput. Electr. Eng.}, 108, 108692, 2023.
 \bibitem{liu} L.~Liu, G.~Engelen, T.~Lynar, D.~Essam, and W.~Joosen, ``Error prevalence in NIDS datasets: A case study on CIC-IDS-2017 and CSE-CIC-IDS-2018,'' \emph{Proc. IEEE CNS}, pp.~254--262, 2022.
 \bibitem{lundberg} S.~M.~Lundberg and S.-I.~Lee, ``A unified approach to interpreting model predictions,'' \emph{NeurIPS}, 30, pp.~4765--4774, 2017.
+\bibitem{martono} H.~Y.~Martono, I.~Syarif, and F.~A.~Saputra, ``Cross-dataset generalization of ML-based network intrusion detection via semantic feature mapping and few-shot adaptation, validated on real cloud traffic,'' manuscript (authors' predecessor work), 2024.
 \bibitem{mohale} V.~Z.~Mohale and I.~C.~Obagbuwa, ``A systematic review of explainable artificial intelligence in intrusion detection systems,'' \emph{Frontiers in AI}, 8, 1526221, 2025.
 \bibitem{molnar} C.~Molnar, \emph{Interpretable Machine Learning: A Guide for Making Black Box Models Explainable}, 2nd ed., 2022.
 \bibitem{moustafa15} N.~Moustafa and J.~Slay, ``UNSW-NB15: A comprehensive data set for network intrusion detection systems,'' \emph{Proc. MilCIS}, pp.~1--6, 2015.
