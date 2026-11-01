@@ -290,7 +290,7 @@ MCC dan recall per-kelas wajib dilaporkan.
 kedua model. Weighted-F1 mengikuti kelas benign dominan, sedangkan MCC menyingkap
 kegagalan memisahkan benign dari serangan lintas-dataset.*
 
-### 3.4 Ranking vs Ambang: Kalibrasi Ambang (KONTRIBUSI BARU)
+### 3.4 Ranking vs Ambang: Kalibrasi Ambang
 
 Temuan kunci: kegagalan lintas-dataset tidak seragam jenisnya. Pada XGBoost arah CIC2017
 ke CIC2018, AUC-ROC tetap 0,779 (jauh di atas acak 0,5) walau MCC@0,5 hanya 0,067; setelah
@@ -313,7 +313,7 @@ terpelihara, dan kurang membantu bila ranking itu sendiri sudah rusak.
 
 *Ambang dipilih memaksimalkan MCC pada subset kalibrasi kecil (10% test target); mean 5 seed.*
 
-### 3.5 Pemulihan via Few-Shot (KONTRIBUSI BARU)
+### 3.5 Pemulihan via Few-Shot
 
 Penambahan hanya 1% label target memulihkan deteksi secara dramatis. Pada arah CIC2017 ke
 CIC2018, MCC naik dari 0,067 ke 0,663 (XGBoost) dan dari 0,175 ke 0,871 (Random Forest);
@@ -394,7 +394,7 @@ peringkat berbeda.
 dan Random Forest. Stabilitas peringkat fitur antar-kondisi tidak berujung pada
 transferabilitas lintas-dataset.*
 
-### 3.8 Analisis Pergeseran Distribusi (opsional, penguat)
+### 3.8 Analisis Pergeseran Distribusi
 
 Catatan: kuantifikasi langsung pergeseran distribusi antar-dataset (mis. jarak Wasserstein
 per fitur atau akurasi domain-classifier) tidak dihitung pada eksperimen ini dan
@@ -403,7 +403,7 @@ sudah tampak dari kontras tajam antara performa within-dataset (MCC 0,955 hingga
 dan lintas-dataset (MCC mendekati nol pada ambang 0,5), serta dari berubahnya ambang
 optimal pada domain target.
 
-### 3.9 Multi-Seed dan Interval Kepercayaan
+### 3.9 Keyakinan Multi-Seed dan Keterbatasan
 
 Seluruh angka utama dilaporkan sebagai rerata atas 5 seed {42, 1, 7, 123, 2024} dengan
 selang kepercayaan 95% (distribusi-t, df=4). Sebagai contoh lebar selang: within CIC2017
@@ -412,15 +412,6 @@ CIC2018 MCC@0,5 XGBoost 0,067 [0,012, 0,122]. Selang few-shot pada 1% label lebi
 pada XGBoost arah 2017 ke 2018 (0,663 [0,414, 0,911]) namun sempit pada Random Forest arah
 sebaliknya (0,967 [0,963, 0,971]), menunjukkan variabilitas antar-seed yang jujur
 dilaporkan, bukan hasil run tunggal.
-
-### 3.10 Implikasi terhadap Riset dan Operasional IDS
-
-- Evaluasi within-dataset tidak cukup menilai kelayakan IDS.
-- MCC, PR-AUC, recall Attack, dan kalibrasi ambang wajib dilaporkan.
-- SHAP harus dibaca bersama kondisi model.
-- Pemulihan few-shot menunjukkan jalur praktis adaptasi domain berbiaya rendah.
-
-### 3.11 Keterbatasan
 
 Penelitian ini memiliki beberapa keterbatasan. (i) Klasifikasi dibatasi biner
 (benign vs attack); perilaku per-kategori serangan tidak dianalisis. (ii) Cakupan hanya
@@ -432,7 +423,7 @@ kompatibel dengan pustaka interpretasi; perbedaan setelan ini tidak memengaruhi 
 performa. (v) Interpretasi difokuskan pada SHAP global (mean absolut); analisis lokal
 per-instans dan kuantifikasi pergeseran distribusi diserahkan ke pekerjaan lanjutan.
 
-### 3.12 Perbandingan dengan Karya Pendahulu
+### 3.10 Perbandingan dengan Karya Pendahulu
 
 Penelitian ini merupakan kelanjutan langsung dari manuskrip pendahulu tim penulis
 (Martono dkk., 2024) yang mendiagnosis fenomena runtuhnya generalisasi lintas-dataset.
@@ -461,7 +452,6 @@ yang dapat dipulihkan. Dengan demikian, penelitian ini bukan sekadar mereproduks
 pendahulu, melainkan mengoreksi interpretasinya dan menuntaskan jalur pemulihan yang pada
 karya pendahulu hanya disarankan sebagai kerja mendatang.
 
----
 
 ---
 
