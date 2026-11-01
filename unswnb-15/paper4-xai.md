@@ -60,7 +60,24 @@ kalibrasi ambang; SHAP; MCC.
 
 <!-- Versi Inggris dari abstrak, isi menyusul setelah versi Indonesia final. -->
 
-*[ISI: terjemahan abstrak setelah versi Indonesia difinalkan.]*
+Machine-learning network intrusion detection systems (NIDS) often appear nearly perfect
+under within-dataset evaluation yet collapse on datasets with different attack compositions
+and recording conditions. This paper presents a diagnosis and repair of cross-dataset
+generalization failure using a leakage-free pipeline, with CIC-IDS2017 as the reference
+dataset and CSE-CIC-IDS2018 as the transfer target, both extracted with CICFlowMeter and
+aligned by feature-name intersection only (no semantic feature mapping). Two classifiers,
+XGBoost and Random Forest, are trained on the reference and transferred to the target
+without retraining. Within-dataset performance is high (Matthews correlation coefficient,
+MCC, of 0.955 and 0.979). Across datasets, MCC at the default threshold collapses to 0.067
+and 0.175 with near-zero attack recall, while weighted-F1 remains misleadingly high. Unlike
+prior work that stops at diagnosis, we (i) separate ranking failure from thresholding
+failure: cross-dataset AUC stays above chance (0.779 for XGBoost) and threshold calibration
+lifts MCC to 0.498, whereas for Random Forest calibration reaches only 0.403; and (ii)
+repair detection with minimal few-shot calibration, where only 1% of target labels raises
+MCC to 0.663 (XGBoost) and 0.871 (Random Forest), and above 0.96 in the reverse direction.
+SHAP is read in a condition-aware manner: feature-ranking stability (Spearman 0.72 between
+failed and repaired models) does not imply transferability. The findings reinforce reporting
+MCC, per-class recall, threshold calibration, and cross-dataset validation in NIDS research.
 
 **Keywords:** explainable AI; network intrusion detection; cross-dataset generalization;
 threshold calibration; SHAP; MCC.
@@ -114,10 +131,6 @@ tetapi memiliki tiga keterbatasan yang menjadi celah penelitian ini:
    fenomena kegagalan dan pola pemulihan bersifat umum lintas-algoritma.
 5. Menafsirkan SHAP secara **sadar-kondisi**: membandingkan interpretasi pada model gagal
    versus model pulih, untuk kedua model.
-
-<!-- TODO: lengkapi sitasi dasar: Sharafaldin dkk. 2018 (CIC-IDS2017 & CSE-CIC-IDS2018),
-     Lundberg & Lee 2017 (SHAP), Chen & Guestrin 2016 (XGBoost), Breiman 2001 (RF),
-     Chawla dkk. 2002 (SMOTE), Chicco & Jurman 2020 (MCC). -->
 
 ---
 
@@ -195,7 +208,7 @@ Untuk memisahkan kegagalan ranking dari kegagalan ambang, dilaporkan **AUC/PR-AU
 - **Kalibrasi ambang**: ambang keputusan dipilih ulang pada target (mis. maksimasi MCC /
   Youden's J pada subset kecil), untuk menguji apakah "kegagalan" sebagian hanya artefak
   ambang 0,5.
-- **Pemulihan few-shot**: tambahkan fraksi kecil label target [ISI: 0; 1%; 5%; 10%] ke
+- **Pemulihan few-shot**: tambahkan fraksi kecil label target (0%, 1%, 5%, 10%) ke
   pelatihan lalu ukur kenaikan MCC & recall Attack.
 
 ### 2.6 Explainability dengan SHAP
@@ -213,7 +226,7 @@ dibandingkan — untuk menegaskan bahwa stabilitas fitur tidak identik dengan tr
 
 ### 3.1 Kinerja Within-Dataset
 
-Pada evaluasi within-dataset [ISI: CIC-IDS2017], kedua model mencapai performa tinggi.
+Pada evaluasi within-dataset (CIC-IDS2017), kedua model mencapai performa tinggi.
 Skor ini tidak boleh ditafsirkan sebagai kesiapan operasional lintas lingkungan.
 
 **Tabel 2. Kinerja within-dataset (mean multi-seed)**
