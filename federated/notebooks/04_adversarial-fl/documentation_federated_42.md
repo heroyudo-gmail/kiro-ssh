@@ -16,8 +16,8 @@
 > ruang SFM + `aws/fed_node.py` sebagai basis. Ini silsilah lanjutan, BUKAN
 > salami-slicing: pertanyaan, ancaman, metode, dan metrik berbeda.
 >
-> **PETA:** paper = `notebook42/paper-4-2.tex` (ID dulu, lalu EN). Notebook di
-> `notebook42/`. Hasil ke S3 `unsw-far/federated42/results/`.
+> **PETA:** paper = `notebooks/04_adversarial-fl/paper-4-2.tex` (ID dulu, lalu EN). Notebook di
+> `notebooks/04_adversarial-fl/`. Hasil ke S3 `unsw-far/federated42/results/`.
 
 ---
 

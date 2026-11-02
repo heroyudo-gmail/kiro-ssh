@@ -549,7 +549,7 @@ dibingkai sebagai verifikasi klaim literatur [F11], bukan temuan metode kami.
 - Kerangka urut 1–7; Bagian 1 & 2 narasi penuh; 30 referensi IEEE + DOI.
 - Keputusan lab terjawab (alignment 9 pasang, instance `t3.medium`, CIC 100k/UNSW 82k).
 - **Kode eksekusi LENGKAP:** `aws/fed_node_survey.py` (FedAvg+FedProx+hook adv),
-  `aws/fed-runbook-survey.md`, dan 7 notebook `notebooks2/` (s01,s03,s05,s06,s07,s14,s15).
+  `aws/fed-runbook-survey.md`, dan 7 notebook `notebooks/02_survey-tanpaSFM/` (s01,s03,s05,s06,s07,s14,s15).
 
 **TODO:**
 1. [ ] **Jalankan di AWS/SageMaker** (butuh kredensial + data): s01 → EC2 run (R3,R6) →
@@ -573,7 +573,7 @@ dibingkai sebagai verifikasi klaim literatur [F11], bukan temuan metode kami.
 - **Kode node** (`aws/fed_node.py`): MLP numpy 9→128→64→1, FedAvg + FedProx (`--mu`),
   transport S3, dijalankan via SSM.
 - **Runbook** (`aws/fed-runbook.md`): deploy → setup → run → pantau → evaluasi → teardown.
-- **Notebook survei** (`notebooks2/`): `s01_fed_data_partition.ipynb` (sudah; reframe
+- **Notebook survei** (`notebooks/02_survey-tanpaSFM/`): `s01_fed_data_partition.ipynb` (sudah; reframe
   tanpa SFM, S3 prefix `federated_survey/`). Berikutnya s03/s05/s06/s07/s14/s15.
 
 ### B.1 Yang diubah untuk survei (lepas dari SFM)

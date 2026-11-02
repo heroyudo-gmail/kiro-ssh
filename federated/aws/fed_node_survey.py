@@ -2,7 +2,7 @@
 # fed_node_survey.py -- SURVEY paper federated node (aggregator | client) over S3.
 # Turunan dari aws/fed_node.py (Paper 4), DISESUAIKAN untuk paper SURVEY:
 #   - TIDAK memakai SFM. Fitur = hasil "manual feature-name alignment" (lihat
-#     notebooks2/s01_fed_data_partition.ipynb). Node ini agnostik: ia hanya memuat
+#     notebooks/02_survey-tanpaSFM/s01_fed_data_partition.ipynb). Node ini agnostik: ia hanya memuat
 #     X dari <id>_train.npz; penyelarasan fitur sudah dilakukan di s01.
 #   - Prefix S3 TERPISAH: unsw-far/federated_survey/ (agar tak menimpa Paper 4).
 #   - Tambahan HOOK ADVERSARIAL TRAINING (R6): FGSM constrained pada ruang fitur

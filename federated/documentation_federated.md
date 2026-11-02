@@ -564,7 +564,7 @@ personalisasi federasi (berbagi backbone + head personal), bukan agregasi global
 
 ## K. Prinsip reproduksi
 
-Notebook Paper 4 di `federated/notebooks/`. Output → `federated/fed_out/` + S3
+Notebook Paper 4 di `federated/notebooks/03_federated-denganSFM/`. Output → `federated/fed_out/` + S3
 `s3://ssh-detection-features-232032302717/unsw-far/federated/`. Dataset sumber dipakai
 bersama dari root repo (gitignored): `CICDDoS2018/`, `unswnb-15/data/`. SFM mapping
 diwarisi dari `unswnb-15/notebooks/01,02,05`. JANGAN mengarang angka.

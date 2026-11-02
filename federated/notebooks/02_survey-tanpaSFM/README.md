@@ -1,7 +1,7 @@
-# notebooks2/ — Notebook untuk PAPER SURVEY (bukan Paper 4)
+# notebooks/02_survey-tanpaSFM/ — Notebook untuk PAPER SURVEY (bukan Paper 4)
 
 Folder ini berisi notebook eksperimen untuk **paper survey FL-NIDS**
-(`../paper-survey.md`), terpisah dari `../notebooks/` milik Paper 4.
+(`../paper-survey.md`), terpisah dari `../03_federated-denganSFM/` milik Paper 4.
 
 **Perbedaan utama dari notebooks Paper 4:**
 - **TIDAK memakai SFM** (metode kami yang masih dalam review jurnal). Penyelarasan

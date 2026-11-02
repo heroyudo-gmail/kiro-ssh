@@ -12,7 +12,7 @@
 ---
 
 ## 0. Prasyarat (sekali)
-- Partisi klien ada di S3 (dari `notebooks/01_fed_data_partition.ipynb`):
+- Partisi klien ada di S3 (dari `notebooks/03_federated-denganSFM/01_fed_data_partition.ipynb`):
   `unsw-far/federated/data/cic/cic_train.npz`, `.../unsw/unsw_train.npz`.
 - Skrip `fed_node.py` diunggah ke S3 `unsw-far/federated/scripts/fed_node.py` (via boto3/console).
 - Kredensial user `hero` (akun 232032302717), region ap-southeast-1.

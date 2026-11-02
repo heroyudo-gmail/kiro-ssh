@@ -9,7 +9,7 @@
 > 1 stack → biaya nol. Region ap-southeast-1.
 
 ## 0. Prasyarat (sekali)
-- Jalankan `notebooks2/s01_fed_data_partition.ipynb` → partisi klien ada di S3:
+- Jalankan `notebooks/02_survey-tanpaSFM/s01_fed_data_partition.ipynb` → partisi klien ada di S3:
   `unsw-far/federated_survey/data/{cic,unsw}/{cic,unsw}_train.npz` (+ `_test.npz`).
 - Unggah skrip ke S3: `unsw-far/federated_survey/scripts/fed_node_survey.py` (via boto3/console).
 
@@ -67,7 +67,7 @@ Tambah `--mu 0.1` (atau 0.01) di KEDUA client; aggregator `--mu` untuk pencatata
 Tambah `--adv-ratio 0.5 --adv-eps 0.1` di KEDUA client (aggregator normal).
 
 > R2 (sweep non-IID) & R4 (biaya) lihat catatan di bawah. R5 (evasion) OFFLINE di
-> `notebooks2/s14_adv_evasion.ipynb` (tak perlu EC2).
+> `notebooks/02_survey-tanpaSFM/s14_adv_evasion.ipynb` (tak perlu EC2).
 
 ## 4. Pantau
 ```
@@ -77,8 +77,8 @@ aws s3 ls s3://ssh-detection-features-232032302717/unsw-far/federated_survey/run
 ```
 
 ## 5. Evaluasi (OFFLINE di SageMaker, bukan di EC2)
-- R3: `notebooks2/s03_fedavg_crossdataset.ipynb` (set env `RUN=S_R3`).
-- R5: `notebooks2/s14_adv_evasion.ipynb` (set env `RUN=S_R3`).
+- R3: `notebooks/02_survey-tanpaSFM/s03_fedavg_crossdataset.ipynb` (set env `RUN=S_R3`).
+- R5: `notebooks/02_survey-tanpaSFM/s14_adv_evasion.ipynb` (set env `RUN=S_R3`).
 - R1/R2/R6: notebook s06/s05/s15 (TODO) — pola sama: tarik `global_final.npz`, hitung MCC.
 
 ## 6. R4 — biaya cloud (diukur dari log, bukan run terpisah)
