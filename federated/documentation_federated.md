@@ -43,15 +43,15 @@
 
 | File | Ukuran | Bahasa | Status | Isi singkat |
 |---|---|---|---|---|
-| **`paper6-federated.tex`** | ~70 KB | Inggris | **NASKAH AKTIF — siap submit** | Versi FINAL Paper 4 untuk JICTRA (ITB, Scopus Q4). Judul: *"When Does Cross-Dataset Federated Learning Work for Network Intrusion Detection? A Controlled Study with Semantic Feature Alignment."* Angka hasil NYATA sudah terisi (homogen MCC 0,563/0,674; cross-dataset FedAvg 0,650; FedPer 0,731; centralized 0,745). Framing temuan-terkontrol: SFM perlu tapi tak cukup; FedPer menutup gap. Gaya referensi IEEE, TNR 11pt, maks 20 hlm. |
-| **`paper6-federated-draft-lama.tex`** | ~28 KB | Indonesia | Draft lama (arsip) | Draft kerja awal untuk promotor. Judul: *"NIDS Terfederasi Lintas-Jaringan melalui Pemetaan Fitur Semantik."* Topik SAMA dengan `paper6-federated.tex`, tetapi **semua angka hasil masih `[TBD]`** (eksperimen belum dieksekusi saat ditulis). Rencana metode FedAvg + FedProx, framing optimis ("SFM menyelesaikan heterogenitas"). Sudah digantikan oleh `paper6-federated.tex`. |
-| **`nids-fl.tex`** | ~25 KB | Indonesia | TIDAK terkait Paper 4 | Materi kuliah MK Cyber Security: *review paper state-of-the-art* FL untuk NIDS, studi kasus metode **Fed-ANIDS** (Expert Systems with Applications, 2023). Bukan naskah riset kita; sekadar bahan ajar/telaah literatur yang kebetulan satu folder. |
+| **`paper6-federated.tex`** | ~70 KB | Inggris | **NASKAH AKTIF — siap submit** | Versi FINAL Paper 6 untuk JICTRA (ITB, Scopus Q4). Judul: *"When Does Cross-Dataset Federated Learning Work for Network Intrusion Detection? A Controlled Study with Semantic Feature Alignment."* Angka hasil NYATA sudah terisi (homogen MCC 0,563/0,674; cross-dataset FedAvg 0,650; FedPer 0,731; centralized 0,745). Framing temuan-terkontrol: SFM perlu tapi tak cukup; FedPer menutup gap. Gaya referensi IEEE, TNR 11pt, maks 20 hlm. |
+| **`nids-fl.tex`** | ~25 KB | Indonesia | TIDAK terkait Paper 6 | Materi kuliah MK Cyber Security: *review paper state-of-the-art* FL untuk NIDS, studi kasus metode **Fed-ANIDS** (Expert Systems with Applications, 2023). Bukan naskah riset kita; sekadar bahan ajar/telaah literatur yang kebetulan satu folder. |
 
-**Kesimpulan hubungan:** `paper6-federated.tex` adalah evolusi final dari `paper6-federated-draft-lama.tex`
-(riset sama, Paper 4). `paper6-federated-draft-lama.tex` disimpan sebagai jejak draft awal (Indonesia,
-angka kosong). `nids-fl.tex` berdiri sendiri (materi kuliah, bukan Paper 4). **Untuk
-submit, pakai `paper6-federated.tex`.** Versi plain-text untuk transfer ke Word JICTRA ada
-di `paper6-federated-plaintext.txt`.
+**Kesimpulan hubungan:** `paper6-federated.tex` adalah NASKAH AKTIF Paper 6 (riset federated).
+Draf awal berbahasa Indonesia (dulu `paper-4.tex`, framing optimis "SFM menyelesaikan heterogenitas",
+seluruh angka `[TBD]`) **sudah dibuang** karena usang dan menyesatkan: temuan nyata (RUN-1/RUN-2)
+justru temuan-negatif ("SFM perlu tapi tak cukup; FedAvg kolaps, FedPer memulihkan"). `nids-fl.tex`
+berdiri sendiri (materi kuliah, bukan Paper 6). **Untuk submit, pakai `paper6-federated.tex`.**
+Versi plain-text untuk transfer ke Word JICTRA ada di `paper6-federated.txt`.
 
 ---
 
