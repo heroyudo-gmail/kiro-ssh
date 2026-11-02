@@ -1,6 +1,6 @@
 ================================================================================
 PLAIN-TEXT VERSION FOR WORD JICTRA TEMPLATE (copy-paste)
-Source: federated/paper-jictra.tex
+Source: federated/paper6-federated.tex
 Notes:
   - This is clean prose with LaTeX commands removed. Citations are shown as
     [key] markers; replace with the numbered reference once the Word bibliography

@@ -22,7 +22,7 @@
 > BERHASIL -> FedPer 0,731, clustered 0,745 (~centralized) -> failure boundary dapat
 > DIMITIGASI dengan personalisasi. NORMALISASI (nb13): FedAvg cross-dataset local-z=0,650
 > vs pooled-z=−0,026 -> 'kolaps' sebagian ARTEFAK pooled-z; narasi direvisi jadi
-> 'underperform bukan collapse' (local-z angka utama). NASKAH: paper-jictra.tex (target Q4, 'semantic feature
+> 'underperform bukan collapse' (local-z angka utama). NASKAH: paper6-federated.tex (target Q4, 'semantic feature
 > alignment', self-contained). Lihat Bagian D–J (TEMA 1-4) + RINGKASAN ALUR 5 langkah.
 > **JANGAN mengarang angka** — placeholder `[TBD]`/`--` sampai hasil nyata.
 >
@@ -43,15 +43,15 @@
 
 | File | Ukuran | Bahasa | Status | Isi singkat |
 |---|---|---|---|---|
-| **`paper-jictra.tex`** | ~70 KB | Inggris | **NASKAH AKTIF — siap submit** | Versi FINAL Paper 4 untuk JICTRA (ITB, Scopus Q4). Judul: *"When Does Cross-Dataset Federated Learning Work for Network Intrusion Detection? A Controlled Study with Semantic Feature Alignment."* Angka hasil NYATA sudah terisi (homogen MCC 0,563/0,674; cross-dataset FedAvg 0,650; FedPer 0,731; centralized 0,745). Framing temuan-terkontrol: SFM perlu tapi tak cukup; FedPer menutup gap. Gaya referensi IEEE, TNR 11pt, maks 20 hlm. |
-| **`paper-4.tex`** | ~28 KB | Indonesia | Draft lama (arsip) | Draft kerja awal untuk promotor. Judul: *"NIDS Terfederasi Lintas-Jaringan melalui Pemetaan Fitur Semantik."* Topik SAMA dengan `paper-jictra.tex`, tetapi **semua angka hasil masih `[TBD]`** (eksperimen belum dieksekusi saat ditulis). Rencana metode FedAvg + FedProx, framing optimis ("SFM menyelesaikan heterogenitas"). Sudah digantikan oleh `paper-jictra.tex`. |
+| **`paper6-federated.tex`** | ~70 KB | Inggris | **NASKAH AKTIF — siap submit** | Versi FINAL Paper 4 untuk JICTRA (ITB, Scopus Q4). Judul: *"When Does Cross-Dataset Federated Learning Work for Network Intrusion Detection? A Controlled Study with Semantic Feature Alignment."* Angka hasil NYATA sudah terisi (homogen MCC 0,563/0,674; cross-dataset FedAvg 0,650; FedPer 0,731; centralized 0,745). Framing temuan-terkontrol: SFM perlu tapi tak cukup; FedPer menutup gap. Gaya referensi IEEE, TNR 11pt, maks 20 hlm. |
+| **`paper6-federated-draft-lama.tex`** | ~28 KB | Indonesia | Draft lama (arsip) | Draft kerja awal untuk promotor. Judul: *"NIDS Terfederasi Lintas-Jaringan melalui Pemetaan Fitur Semantik."* Topik SAMA dengan `paper6-federated.tex`, tetapi **semua angka hasil masih `[TBD]`** (eksperimen belum dieksekusi saat ditulis). Rencana metode FedAvg + FedProx, framing optimis ("SFM menyelesaikan heterogenitas"). Sudah digantikan oleh `paper6-federated.tex`. |
 | **`nids-fl.tex`** | ~25 KB | Indonesia | TIDAK terkait Paper 4 | Materi kuliah MK Cyber Security: *review paper state-of-the-art* FL untuk NIDS, studi kasus metode **Fed-ANIDS** (Expert Systems with Applications, 2023). Bukan naskah riset kita; sekadar bahan ajar/telaah literatur yang kebetulan satu folder. |
 
-**Kesimpulan hubungan:** `paper-jictra.tex` adalah evolusi final dari `paper-4.tex`
-(riset sama, Paper 4). `paper-4.tex` disimpan sebagai jejak draft awal (Indonesia,
+**Kesimpulan hubungan:** `paper6-federated.tex` adalah evolusi final dari `paper6-federated-draft-lama.tex`
+(riset sama, Paper 4). `paper6-federated-draft-lama.tex` disimpan sebagai jejak draft awal (Indonesia,
 angka kosong). `nids-fl.tex` berdiri sendiri (materi kuliah, bukan Paper 4). **Untuk
-submit, pakai `paper-jictra.tex`.** Versi plain-text untuk transfer ke Word JICTRA ada
-di `paper-jictra.txt`.
+submit, pakai `paper6-federated.tex`.** Versi plain-text untuk transfer ke Word JICTRA ada
+di `paper6-federated-plaintext.txt`.
 
 ---
 
@@ -603,7 +603,7 @@ diwarisi dari `unswnb-15/notebooks/01,02,05`. JANGAN mengarang angka.
 | 10 | Jembatan non-IID bertingkat (nb09) — titik putus | ✅ selesai: UNSW putus α≈0,1; CIC tahan sampai α=0,01 (asimetri prior-label) |
 | 11 | Eksperimen one-class federated (nb10) — mitigasi | ✅ selesai: federated-AE 0,039 (gagal); diagnosa = ruang SFM kurang separable |
 | 12 | Mitigasi heterogeneity-aware (nb12) — FedPer/clustered | ✅ selesai: FedPer 0,731 / clustered 0,745 (~centralized) — mitigasi BERHASIL |
-| 13 | Naskah JICTRA (target Scopus Q4 ITB) | ◐ draft `paper-jictra.tex` (self-contained, revisi 2 review, +mitigasi); kompilasi Overleaf |
+| 13 | Naskah JICTRA (target Scopus Q4 ITB) | ◐ draft `paper6-federated.tex` (self-contained, revisi 2 review, +mitigasi); kompilasi Overleaf |
 
 ## N. ROADMAP BERTAHAP (langkah kerja)
 

@@ -510,7 +510,7 @@ pelengkap yang dapat direproduksi.
 **Masalah yang dilihat.** Riset FL-NIDS terfragmentasi; survei yang ada ([F1]–[F4])
 murni telaah pustaka, merangkum angka yang tak sebanding tanpa menguji ulang.
 
-**Pembeda vs Paper 4 (`paper-jictra.tex`) — anti-salami.** Paper 4 = *research paper*
+**Pembeda vs Paper 4 (`paper6-federated.tex`) — anti-salami.** Paper 4 = *research paper*
 yang mengusung **metode kami sendiri** (Semantic Feature Alignment/SFM) + temuan
 spesifik (FedPer menutup gap cross-dataset); fokus sempit & mendalam; masih review.
 Survei ini = *survey ber-bukti* yang **tidak mengusung metode baru**, cakupan luas
