@@ -319,10 +319,17 @@ pelengkap yang dapat direproduksi.
 > (R5–R6). Semua memakai metode terpublikasi; yang baru adalah buktinya.
 
 **(A) Reproduksi klaim inti FL-NIDS**
-1. **R1 — FedAvg vs FedProx (SQ3/SQ4).** Klaim: FedProx lebih stabil di non-IID [F16],[F31]. Hasil: pada partisi non-IID berat (Dirichlet α=0,1), rata-rata lima seed menunjukkan FedAvg dan FedProx **tidak berbeda bermakna**: FedAvg MCC 0,555 (CI95 ±0,230), FedProx(μ=0,01) 0,555 (±0,230), FedProx(μ=0,1) 0,553 (±0,233). Selisihnya ≈0,001–0,002, jauh di dalam interval kepercayaan. Pada setup single-dataset ini FedProx **tidak** memperbaiki FedAvg; arah klaim tidak bertahan.
-2. **R2 — Dampak non-IID (SQ2/SQ4).** Klaim: performa FL turun seiring heterogenitas [F11]; sweep Dirichlet α, cari titik putus FedAvg. Hasil: penurunan monoton yang jelas (rata-rata lima seed): α=100 → MCC 0,826 (±0,005), α=1,0 → 0,782 (±0,067), α=0,5 → 0,733 (±0,097), α=0,1 → 0,555 (±0,230). Pada α rendah, MCC turun ke level *local-only* (0,615) sementara lebar CI membengkak ~46×, menandakan ketidakstabilan antar-seed. Arah klaim **bertahan kuat**.
+1. **R1 — FedAvg vs FedProx (SQ3/SQ4).** Klaim: FedProx lebih stabil di non-IID [F16],[F31]. Hasil: pada setting lintas-dataset (klien CIC + UNSW, rata-rata tiga seed), FedAvg dan FedProx **tidak berbeda bermakna**: FedAvg MCC 0,572, FedProx(μ=0,01) 0,573, FedProx(μ=0,1) 0,571 — selisih ≈0,001, dan ketiganya konvergen cepat (7–11 ronde). Pola yang sama muncul pada fondasi single-dataset (α=0,1): FedAvg 0,555 vs FedProx(μ=0,1) 0,553. Di kedua setting FedProx **tidak** memperbaiki FedAvg; arah klaim tidak bertahan pada rentang hyperparameter yang kami uji.
+2. **R2 — Dampak non-IID (SQ2/SQ4).** Klaim: performa FL turun seiring heterogenitas [F11]; sweep Dirichlet α. Hasil: **dampaknya bergantung domain** — sebuah nuansa yang jarang disorot. Pada klien **CIC**, pola klasik muncul: MCC relatif stabil pada α besar (0,512 di α=100) lalu runtuh dan menjadi sangat tak stabil pada α rendah (0,387 di α=0,1, dengan std melonjak ke 0,27). Sebaliknya pada klien **UNSW**, performa **tidak** turun seiring non-IID — justru datar bahkan sedikit naik (0,621 di α=100; 0,655 di α=0,1), karena kelas UNSW relatif mudah dipisah sehingga partisi timpang pun tak merusak. Jadi klaim "non-IID menurunkan FL" **bertahan pada CIC tetapi tidak pada UNSW**: efeknya nyata namun tidak universal, tergantung separabilitas domain. Pada fondasi single-dataset penurunan juga tegas (0,826 di α=100 → 0,555 di α=0,1, CI membengkak ~46×).
 3. **R3 — Cross-dataset FL (SQ4).** Klaim: FL lintas-dataset sulit/menurun tajam [F11]; uji dengan alignment manual. Hasil: [TBD].
-4. **R4 — Biaya cloud nyata (SQ5).** Efisiensi komunikasi FL [F8]: latensi/throughput/komunikasi per round di AWS. Hasil: [TBD].
+4. **R4 — Biaya cloud nyata (SQ5).** Efisiensi komunikasi FL [F8]: komunikasi/latensi/throughput per ronde di AWS. Hasil (komunikasi): model ringan 9.601 parameter → 76,8 KB per unggahan klien, sehingga ≈300 KB lalu lintas agregator per ronde untuk dua klien (dua arah). Ongkos komunikasi FL-NIDS dengan model sekelas ini sangat kecil. Latensi dan throughput per-ronde diukur dari log run EC2 (R3/R6) dan dilaporkan bersama hasil tersebut: [TBD dari log EC2].
+
+Sebagai pemeriksaan dasar bahwa federasi memang bermanfaat, kami membandingkan model
+federated dengan baseline *local-only* (tiap klien melatih sendiri tanpa agregasi)
+lintas lima seed: federated mencapai MCC 0,574 (CI95 0,565–0,583) versus local-only
+0,364 (0,306–0,422), selisih +0,210 yang signifikan secara statistik (paired *t*-test
+p=0,0005). Jadi agregasi federated memberi keuntungan nyata di atas pelatihan lokal
+terisolasi — prasyarat yang harus dipenuhi sebelum klaim-klaim lanjutan bermakna.
 
 **(B) Eksperimen adversarial**
 5. **R5 — Kerentanan evasion (SQ6).** Klaim: NIDS ML rapuh terhadap evasion [F28],[F33],[F34]; terapkan FGSM/PGD + saliency/JSMA; ukur attack success rate & ΔMCC (homogen & cross). Hasil: [TBD].
@@ -330,18 +337,20 @@ pelengkap yang dapat direproduksi.
 
 ### 4.3 Tabel hasil (ISI dari CSV/log nyata)
 
-> **Catatan sumber angka.** R1 dan R2 diperoleh dari fondasi **single-dataset**
-> (CSE-CIC-IDS2018 dipartisi ke K=4 klien, partisi Dirichlet untuk non-IID), lima seed
-> {13,42,101,202,303} dengan CI95, model MLP terkontrol identik untuk semua skenario.
-> R3–R6 (cross-dataset + adversarial) dijalankan pada testbed AWS tiga-EC2 dan masih
-> `[TBD]`.
+> **Catatan sumber angka.** R1, R2, R4-komunikasi, dan uji signifikansi FL-vs-lokal
+> adalah **simulasi terkontrol** di notebook (logika FedAvg/FedProx/MLP/z-score identik
+> dengan node EC2 `fed_node_survey.py`); R1/R4 memakai klien CIC+UNSW (tiga seed), R2
+> menyapu Dirichlet α per domain. Fondasi single-dataset (CSE-CIC-IDS2018, K=4, lima
+> seed {13,42,101,202,303}) dilaporkan sebagai pembanding. R3, R5, R6 dan R4-latensi
+> dijalankan nyata pada testbed AWS tiga-EC2 dan masih `[TBD]`. Perbedaan simulasi vs
+> run EC2 dicatat terbuka di Bagian 6.
 
 | Klaim | Jenis | Sumber literatur | Metrik | Angka dilaporkan asli | **Angka lab kami** | Bertahan? |
 |---|---|---|---|---|---|---|
-| R1 FedProx>FedAvg (non-IID) | reproduksi | [F16][F31] | MCC (5 seed, CI95) | [kutip] | FedAvg 0,555±0,230 vs FedProx(μ=0,1) 0,553±0,233 (α=0,1); selisih tak bermakna | **Tidak** |
-| R2 non-IID menurunkan FL | reproduksi | [F11] | MCC vs α (5 seed) | [kutip] | 0,826→0,782→0,733→0,555 untuk α=100/1/0,5/0,1; CI membengkak di α rendah | **Ya** |
+| R1 FedProx>FedAvg (non-IID) | reproduksi | [F16][F31] | MCC (cross-dataset, 3 seed) | [kutip] | FedAvg 0,572 vs FedProx(μ=0,1) 0,571; selisih ≈0,001, tak bermakna | **Tidak** |
+| R2 non-IID menurunkan FL | reproduksi | [F11] | MCC vs α per domain | [kutip] | CIC: 0,512→0,387 (α=100→0,1), runtuh & tak stabil. UNSW: 0,621→0,655, datar | **Bergantung domain** (ya di CIC, tidak di UNSW) |
 | R3 cross-dataset FL sulit | reproduksi | [F11] | MCC | [kutip] | [TBD] | [TBD] |
-| R4 biaya komunikasi | reproduksi | [F8] | bytes/round, latensi | [kutip] | [TBD] | — |
+| R4 biaya komunikasi | reproduksi | [F8] | bytes/round, latensi | [kutip] | 76,8 KB/unggahan klien; ≈300 KB/ronde (2 klien); latensi [TBD] | — |
 | R5 evasion FGSM/PGD/JSMA | adversarial | [F28][F33][F34] | attack success rate, ΔMCC | [kutip] | [TBD] | [TBD] |
 | R6 adversarial training | adversarial | [F16][F17][F32] | robust MCC, Δclean-acc | [kutip] | [TBD] | [TBD] |
 
