@@ -319,8 +319,8 @@ pelengkap yang dapat direproduksi.
 > (R5–R6). Semua memakai metode terpublikasi; yang baru adalah buktinya.
 
 **(A) Reproduksi klaim inti FL-NIDS**
-1. **R1 — FedAvg vs FedProx (SQ3/SQ4).** Klaim: FedProx lebih stabil di non-IID [F16],[F31]. Hasil: [TBD].
-2. **R2 — Dampak non-IID (SQ2/SQ4).** Klaim: performa FL turun seiring heterogenitas [F11]; sweep Dirichlet α, cari titik putus FedAvg. Hasil: [TBD].
+1. **R1 — FedAvg vs FedProx (SQ3/SQ4).** Klaim: FedProx lebih stabil di non-IID [F16],[F31]. Hasil: pada partisi non-IID berat (Dirichlet α=0,1), rata-rata lima seed menunjukkan FedAvg dan FedProx **tidak berbeda bermakna**: FedAvg MCC 0,555 (CI95 ±0,230), FedProx(μ=0,01) 0,555 (±0,230), FedProx(μ=0,1) 0,553 (±0,233). Selisihnya ≈0,001–0,002, jauh di dalam interval kepercayaan. Pada setup single-dataset ini FedProx **tidak** memperbaiki FedAvg; arah klaim tidak bertahan.
+2. **R2 — Dampak non-IID (SQ2/SQ4).** Klaim: performa FL turun seiring heterogenitas [F11]; sweep Dirichlet α, cari titik putus FedAvg. Hasil: penurunan monoton yang jelas (rata-rata lima seed): α=100 → MCC 0,826 (±0,005), α=1,0 → 0,782 (±0,067), α=0,5 → 0,733 (±0,097), α=0,1 → 0,555 (±0,230). Pada α rendah, MCC turun ke level *local-only* (0,615) sementara lebar CI membengkak ~46×, menandakan ketidakstabilan antar-seed. Arah klaim **bertahan kuat**.
 3. **R3 — Cross-dataset FL (SQ4).** Klaim: FL lintas-dataset sulit/menurun tajam [F11]; uji dengan alignment manual. Hasil: [TBD].
 4. **R4 — Biaya cloud nyata (SQ5).** Efisiensi komunikasi FL [F8]: latensi/throughput/komunikasi per round di AWS. Hasil: [TBD].
 
@@ -330,10 +330,16 @@ pelengkap yang dapat direproduksi.
 
 ### 4.3 Tabel hasil (ISI dari CSV/log nyata)
 
-| Klaim | Jenis | Sumber literatur | Metrik | Angka dilaporkan asli | **Angka lab kami (AWS)** | Bertahan? |
+> **Catatan sumber angka.** R1 dan R2 diperoleh dari fondasi **single-dataset**
+> (CSE-CIC-IDS2018 dipartisi ke K=4 klien, partisi Dirichlet untuk non-IID), lima seed
+> {13,42,101,202,303} dengan CI95, model MLP terkontrol identik untuk semua skenario.
+> R3–R6 (cross-dataset + adversarial) dijalankan pada testbed AWS tiga-EC2 dan masih
+> `[TBD]`.
+
+| Klaim | Jenis | Sumber literatur | Metrik | Angka dilaporkan asli | **Angka lab kami** | Bertahan? |
 |---|---|---|---|---|---|---|
-| R1 FedProx>FedAvg (non-IID) | reproduksi | [F16][F31] | MCC/F1 | [kutip] | [TBD] | [TBD] |
-| R2 non-IID menurunkan FL | reproduksi | [F11] | ΔMCC | [kutip] | [TBD] | [TBD] |
+| R1 FedProx>FedAvg (non-IID) | reproduksi | [F16][F31] | MCC (5 seed, CI95) | [kutip] | FedAvg 0,555±0,230 vs FedProx(μ=0,1) 0,553±0,233 (α=0,1); selisih tak bermakna | **Tidak** |
+| R2 non-IID menurunkan FL | reproduksi | [F11] | MCC vs α (5 seed) | [kutip] | 0,826→0,782→0,733→0,555 untuk α=100/1/0,5/0,1; CI membengkak di α rendah | **Ya** |
 | R3 cross-dataset FL sulit | reproduksi | [F11] | MCC | [kutip] | [TBD] | [TBD] |
 | R4 biaya komunikasi | reproduksi | [F8] | bytes/round, latensi | [kutip] | [TBD] | — |
 | R5 evasion FGSM/PGD/JSMA | adversarial | [F28][F33][F34] | attack success rate, ΔMCC | [kutip] | [TBD] | [TBD] |
