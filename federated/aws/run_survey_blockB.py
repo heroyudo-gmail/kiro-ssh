@@ -121,7 +121,7 @@ def wait_ssm_online(instance_ids, timeout=600):
 def ssm_run(instance_id, commands, timeout=900, wait=True):
     r = ssm.send_command(
         InstanceIds=[instance_id],
-        DocumentName="AWS-RunShellCommand",
+        DocumentName="AWS-RunShellScript",
         TimeoutSeconds=timeout,
         Parameters={"commands": commands},
     )
@@ -137,15 +137,15 @@ def ssm_run(instance_id, commands, timeout=900, wait=True):
 
 
 def setup_nodes(ids):
+    dl = ("import boto3; "
+          "boto3.client('s3',region_name='%s')"
+          ".download_file('%s','%s','/opt/fed/%s'); "
+          "print('ready')" % (REGION, BUCKET, SCRIPT_KEY, NODE_SCRIPT))
     cmds = [
         "sudo dnf -y install python3-pip >/tmp/pip.log 2>&1",
         "python3 -m pip install -q --user boto3 numpy >/tmp/pipuser.log 2>&1",
         "mkdir -p /opt/fed",
-        "python3 - <<PY",
-        'import boto3; s3=boto3.client("s3",region_name="%s")' % REGION,
-        's3.download_file("%s","%s","/opt/fed/%s")' % (BUCKET, SCRIPT_KEY, NODE_SCRIPT),
-        'print("ready")',
-        "PY",
+        'python3 -c "%s"' % dl,
     ]
     for iid in ids:
         log(f"setup node {iid} ...")

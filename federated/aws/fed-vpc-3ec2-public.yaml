@@ -165,6 +165,6 @@ Outputs:
   ClientCICId:    { Value: !Ref ClientCIC }
   ClientUNSWId:   { Value: !Ref ClientUNSW }
   VpcId:          { Value: !Ref VPC }
-  SecurityGroupId:{ Value: !Ref InstanceSG }
+  SecurityGroupId: { Value: !Ref InstanceSG }
   Note:
     Value: "3 public EC2, no NAT. Weights via S3 unsw-far/federated/. Access via SSM. Delete stack to remove all."
