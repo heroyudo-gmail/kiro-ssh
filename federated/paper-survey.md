@@ -1,16 +1,18 @@
-# Federated Learning for Network Intrusion Detection Systems: A Survey with Reproducible Verification and Adversarial Experiments on a Cloud Testbed
+# Beyond the Literature: A Reproducible Survey of Federated Learning for Network Intrusion Detection with Cross-Dataset and Adversarial Verification on AWS
 
 > **Judul paper (English, final untuk JICTRA)** = baris di atas.
 >
-> **Opsi judul English (pilih salah satu saat finalisasi):**
+> **Opsi judul English (arsip; final = baris di atas):**
 > 1. *Federated Learning for Network Intrusion Detection Systems: A Survey with
->    Reproducible Verification and Adversarial Experiments on a Cloud Testbed* ← default
+>    Reproducible Verification and Adversarial Experiments on a Cloud Testbed*
 > 2. *Does It Still Hold? A Survey of Federated Learning for Network Intrusion
 >    Detection with Reproducible Verification on AWS*
 > 3. *From Reading to Running: A Reproducible Survey of Federated Learning for
 >    Network Intrusion Detection on a Public Cloud Testbed*
 > 4. *Federated Learning for Network Intrusion Detection: A Survey and Controlled
 >    Reproduction Study with Adversarial Evaluation*
+> 5. *Beyond the Literature: A Reproducible Survey of Federated Learning for Network
+>    Intrusion Detection with Cross-Dataset and Adversarial Verification on AWS* ← dipilih
 >
 > **Judul kerja (Indonesia, bukan untuk submit):** Federated Learning untuk Network
 > Intrusion Detection System (NIDS): Sintesis Literatur dan Verifikasi Reproduktif di
