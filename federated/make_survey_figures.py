@@ -135,8 +135,8 @@ def fig_results():
     unsw_m = [0.6205, 0.6241, 0.6448, 0.6384, 0.6552, 0.6477]
     unsw_s = [0.0117, 0.0078, 0.0126, 0.0289, 0.0136, 0.0300]
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(7.4, 2.7),
-                                   gridspec_kw={"width_ratios": [1, 1.2]})
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8.0, 2.8),
+                                   gridspec_kw={"width_ratios": [1, 1.3]})
     x = np.arange(len(alphas))
     ax1.errorbar(x, cic_m, yerr=cic_s, marker="o", capsize=3, lw=1.6,
                  color="#d1495b", label="Client-CIC")
@@ -151,22 +151,25 @@ def fig_results():
     ax1.legend(fontsize=8, loc="lower left")
     ax1.set_title("(a) Non-IID impact per domain", fontsize=9)
 
-    # (b) R3 on the union test set (values from survey_out/r3_crossdataset.csv, single run)
+    # (b) R3 on the union test set: mean and 95% CI over 5 seeds
+    # (values from survey_out/r3_crossdataset_agg.csv, scope=union)
     labels = ["Central.\n(pooled)", "Central.\n(local norm)", "Local-only\n(CIC)",
               "Local-only\n(UNSW)", "Federated\n(local norm)", "Federated\n(pooled eval)"]
-    vals = [0.5446, 0.6047, 0.2078, 0.0017, 0.6504, -0.0264]
+    vals = [0.5648, 0.6160, 0.2260, 0.0097, 0.6471, 0.2294]
+    cis = [0.0285, 0.0116, 0.0523, 0.0682, 0.0204, 0.2282]
     cols = ["#9a9a9a", "#6b6b6b", "#d1495b", "#3a6ea5", "#2e8b57", "#bfe3cb"]
-    bars = ax2.bar(range(6), vals, color=cols, width=0.68)
+    bars = ax2.bar(range(6), vals, color=cols, width=0.68, yerr=cis, capsize=3,
+                   error_kw=dict(lw=1.0, ecolor="#222"))
     bars[5].set_hatch("//")
     bars[5].set_edgecolor("#2e8b57")
     ax2.axhline(0, color="#333", lw=0.8)
-    for b, v in zip(bars, vals):
-        ax2.text(b.get_x() + b.get_width() / 2, v + (0.03 if v >= 0 else -0.07),
+    for b, v, c in zip(bars, vals, cis):
+        ax2.text(b.get_x() + b.get_width() / 2, v + c + 0.02,
                  f"{v:.2f}", ha="center", fontsize=7.5)
     ax2.set_xticks(range(6))
-    ax2.set_xticklabels(labels, fontsize=6.3)
+    ax2.set_xticklabels(labels, fontsize=5.6)
     ax2.set_ylabel("MCC (union test)", fontsize=8)
-    ax2.set_ylim(-0.2, 0.8)
+    ax2.set_ylim(-0.2, 0.85)
     ax2.tick_params(axis="y", labelsize=8)
     ax2.set_title("(b) Cross-dataset FL", fontsize=9)
 

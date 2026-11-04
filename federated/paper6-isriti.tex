@@ -36,7 +36,7 @@ ferryas@pens.ac.id}
 \maketitle
 
 \begin{abstract}
-Federated learning (FL) promises collaborative training of network intrusion detection systems (NIDS) across organizations without centralizing sensitive traffic. However, the FL-NIDS literature is fragmented: datasets, architectures, aggregation strategies, and evaluation protocols differ across studies, so reported claims are hard to compare and evidence of public-cloud deployment is scarce. This paper surveys recent FL-NIDS work in four themes and, unlike prior surveys, empirically verifies representative claims from published methods on a uniform Amazon Web Services testbed using CSE-CIC-IDS2018 (CIC) and UNSW-NB15 (UNSW), including three evasion attacks and adversarial training. One claim holds (a healthy model is highly vulnerable to evasion, with an attack success rate of 0.91 at a perturbation budget of 0.1), two do not hold (FedProx does not beat FedAvg; cross-dataset FL does not collapse, reaching a Matthews correlation coefficient (MCC) of 0.65 versus 0.60 for centralized training), and two are domain dependent (the non-IID impact; adversarial training improves robustness on CIC but breaks UNSW). We also show that cross-dataset conclusions are sensitive to the normalization protocol: an inconsistent evaluation makes FL appear to collapse (MCC of minus 0.03). Cloud costs are small, about 300 KB and 16 seconds per round.
+Federated learning (FL) promises collaborative training of network intrusion detection systems (NIDS) across organizations without centralizing sensitive traffic. However, the FL-NIDS literature is fragmented: datasets, architectures, aggregation strategies, and evaluation protocols differ across studies, so reported claims are hard to compare and evidence of public-cloud deployment is scarce. This paper surveys recent FL-NIDS work in four themes and, unlike prior surveys, empirically verifies representative claims from published methods on a uniform Amazon Web Services testbed using CSE-CIC-IDS2018 (CIC) and UNSW-NB15 (UNSW), including three evasion attacks and adversarial training. One claim holds (a healthy model is highly vulnerable to evasion, with an attack success rate of 0.91 at a perturbation budget of 0.1), two do not hold (FedProx does not beat FedAvg; cross-dataset FL does not collapse, reaching a Matthews correlation coefficient (MCC) of 0.65 versus 0.62 for centralized training), and two are domain dependent (the non-IID impact; adversarial training improves robustness on CIC but breaks UNSW). We also show that cross-dataset conclusions are sensitive to the normalization protocol: an inconsistent evaluation cuts the federated MCC from 0.65 to 0.23 on average. Cloud costs are small, about 300 KB and 16 seconds per round.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -293,9 +293,10 @@ and results are reported per client and on the union of both test sets. The R1 a
 simulations instead use one shared global z-score for training and evaluation, which is
 internally consistent but does not preserve statistic privacy. The centralized baseline is
 reported with both a pooled and a per-domain normalization, to separate the effect of
-normalization from the effect of federation. Seed counts differ by experiment: three seeds
-($\{13,42,101\}$) for R1 and R2, five seeds for the federated-versus-local-only check, and
-a single run (seed 42) for R3, R5, and R6 on EC2.
+normalization from the effect of federation. Seed counts differ by experiment: three seeds ($\{13,42,101\}$) for R1 and R2, and five
+seeds ($\{13,42,101,202,303\}$) for the federated-versus-local-only check and for the EC2 runs
+(R3, R5, and R6), reported as mean and 95\% confidence interval. The data partition is fixed,
+so the variation reflects training randomness only.
 
 \subsection{Claims and Metrics}
 We test six representative claims, grouped as reproduction (R1--R4) and adversarial
@@ -322,7 +323,7 @@ including where a claim does not hold.
 \hline
 R1 FedProx$>$FedAvg & 0.572 vs.\ 0.571, n.s. & No \\
 R2 non-IID harms FL & CIC drops; UNSW flat & Domain dep. \\
-R3 cross-dataset hard & fed.\ 0.65 vs.\ cen.\ 0.60 & No \\
+R3 cross-dataset hard & fed.\ 0.65 vs.\ cen.\ 0.62 & No \\
 R4 comm.\ cost & 300 KB, 16 s / round & --- \\
 R5 evasion & ASR 0.91 at budget 0.1 & Yes \\
 R6 adv.\ training & CIC up; UNSW breaks & Domain dep. \\
@@ -346,17 +347,17 @@ universal.
 
 \textit{R3 (cross-dataset FL is hard): does not hold under a consistent protocol.} When each
 test set is normalized with the statistics of the client that owns it, as during training,
-the federated model reaches an MCC of 0.650 on the union test set (CIC 0.532, UNSW 0.616).
-A centralized model (data pooled, not allowed in real FL) reaches 0.545 with pooled
-normalization and 0.605 with per-domain normalization, so at matched normalization the gap
-to federated is small (0.650 versus 0.605) and, from a single run, not demonstrably
-meaningful. What fails to cross domains is the local-only model: trained on CIC it reaches
-0.208 on the union test set (UNSW $-0.301$), and trained on UNSW only 0.002 (CIC
-$-0.108$). Federation therefore does close the inter-domain gap. An important
-methodological finding is that the same federated model, evaluated with pooled statistics
-inconsistent with its training, collapses to an MCC of $-0.026$ and seems to fail. The
-conclusion ``cross-dataset FL collapses'' is thus highly sensitive to the normalization
-protocol and can appear as an evaluation artifact.
+the federated model reaches a union-test MCC of $0.647 \pm 0.020$ (mean and 95\% confidence
+interval over five seeds; CIC $0.533$, UNSW $0.610$). A centralized model (data pooled, not
+allowed in real FL) reaches $0.565 \pm 0.028$ with pooled normalization and $0.616 \pm 0.012$
+with per-domain normalization, so at matched normalization the federated model is slightly but
+consistently better (difference $+0.031$, Welch $p{=}0.009$). What fails to cross domains is the
+local-only model: trained on CIC it reaches $0.226 \pm 0.052$ on the union test set (UNSW
+$-0.223$), and trained on UNSW only $0.010 \pm 0.068$ (CIC $-0.088$). Federation therefore does
+close the inter-domain gap. An important methodological finding is that the same federated
+models, evaluated with pooled statistics inconsistent with their training, fall to a mean MCC of
+$0.229 \pm 0.228$ and vary erratically across seeds ($-0.026$ to $0.425$), so conclusions drawn
+from such an evaluation are both pessimistic and unstable.
 
 \textit{R4 (cloud cost): measured.} With a light 9{,}601-parameter model, each client
 upload is 76.8~KB, so aggregator traffic is about 300~KB per round for two clients.
@@ -364,38 +365,40 @@ From S3 object timestamps, 100 rounds take about 27 minutes (about 16 seconds pe
 including S3 sync), measured while two runs shared CPU.
 
 \textit{R5 (evasion vulnerability): holds.} Attack success rate (ASR) is computed only over
-attacks that were detected before the perturbation, on a healthy base (baseline recall 0.611,
-MCC 0.650). At $\epsilon{=}0.05$, FGSM and PGD let 62--64\% of the previously detected
-attacks evade (JSMA 47\%) and MCC falls to 0.30--0.40; at $\epsilon{=}0.1$ ASR reaches
-0.91 with MCC about 0.05 (JSMA: ASR 0.85, MCC 0.12); and for $\epsilon{\geq}0.2$ ASR is
-at least 0.98 and MCC turns negative ($-0.06$ to $-0.10$). FGSM and PGD are nearly equally
-effective, while JSMA, which changes only two features, is somewhat weaker. Vulnerability
-differs by domain: at $\epsilon{=}0.05$ the ASR on UNSW (0.75--0.78 for FGSM and PGD) is far
-above CIC (0.33), and UNSW is almost entirely evaded at $\epsilon{=}0.1$ (0.99).
+attacks that were detected before the perturbation, on a healthy base (baseline recall 0.61,
+MCC 0.647); all figures are means over five seeds. At $\epsilon{=}0.05$, FGSM and PGD let
+58--59\% of the previously detected attacks evade (JSMA 37\%) and MCC falls to about 0.33 (JSMA
+0.46); at $\epsilon{=}0.1$ ASR reaches 0.89 for FGSM and 0.91 for PGD with an MCC of 0.04--0.07
+(JSMA: ASR 0.70, MCC 0.24); and for $\epsilon{\geq}0.2$ FGSM and PGD reach an ASR of at least 0.98
+and MCC turns negative (about $-0.08$ at 0.2 and $-0.11$ at 0.5). FGSM and PGD are nearly equally
+effective and stable across seeds (95\% interval within $\pm$0.06 on ASR), while JSMA, which
+changes only two features, is weaker and more variable (ASR 0.37, 0.70, and 0.91 at $\epsilon$ of
+0.05, 0.1, and 0.2). Vulnerability differs by domain: at $\epsilon{=}0.05$ the ASR on UNSW
+(0.70--0.71 for FGSM and PGD) is far above CIC (0.32--0.33), and at $\epsilon{=}0.1$ UNSW is
+almost entirely evaded (0.99) versus 0.68--0.74 on CIC.
 
 \textit{R6 (adversarial training as defense): domain dependent.} Each client replaces 50\%
-of its training samples with FGSM examples ($\epsilon{=}0.1$), and the result is compared
-with the clean model under PGD at $\epsilon{=}0.1$. On CIC it is effective: MCC under
-attack rises from 0.162 to 0.446 and ASR falls from 0.73 to 0.18, without hurting clean
-performance (MCC 0.532 to 0.562; recall 0.47 to 0.88). On UNSW the model breaks: clean MCC
-falls from 0.616 to 0.072 and recall from 0.705 to 0.020, so the MCC under attack
-(about 0) is no longer meaningful. On the union test set, MCC under attack improves
-(0.047 to 0.148) but clean MCC drops sharply (0.650 to 0.224). Because this is a single
-run, we cannot tell whether the UNSW collapse is a property of adversarial training or of
-training instability. The union ASR of the adversarially trained model (0.20) is also not
+of its training samples with FGSM examples ($\epsilon{=}0.1$), and the result is compared with the
+clean model under PGD at $\epsilon{=}0.1$ (means over five seeds). On CIC it is effective: MCC
+under attack rises from 0.149 to 0.500 and ASR falls from 0.74 to 0.13, while clean performance
+also improves (MCC 0.533 to 0.585; recall 0.48 to 0.91). On UNSW the model degrades
+consistently: clean MCC falls from 0.610 to 0.170 (between 0.07 and 0.27 in every seed) and
+recall from 0.70 to 0.10, so the MCC under attack (0.016) loses its meaning. On the union test
+set, MCC under attack improves (0.038 to 0.182) but clean MCC drops from 0.647 to 0.284. All
+these differences are significant across seeds (Welch tests, $p{<}0.01$), and because the UNSW
+degradation appears in every seed it is not a one-off training instability; we did not
+investigate its cause. The union ASR of the adversarially trained model (0.24) is not
 comparable with the clean model (0.91), since it is computed over a much smaller set of
 detected attacks.
 
 Table~\ref{tab:adv} reports the same comparison per client. The union row averages two
 opposite effects, which is why we report each client separately: on CIC the defense raises
-recall from 0.47 to 0.88 together with robustness, suggesting a more sensitive detector,
-whereas on UNSW recall falls to 0.02, so the model flags almost no attack and the ASR,
-computed over the few attacks it still detects, loses its meaning. Because every row comes
-from a single training run, these figures show the direction of the effect rather than its
-size.
+recall from 0.48 to 0.91 together with robustness, suggesting a more sensitive detector,
+whereas on UNSW recall falls to 0.10, so the model flags few attacks and the ASR, computed over
+the few attacks it still detects, loses much of its meaning.
 
 \begin{table}[htbp]
-\caption{Adversarial training results per client (PGD, budget 0.1).}
+\caption{Adversarial training results per client (PGD, budget 0.1; mean of five seeds).}
 \label{tab:adv}
 \begin{center}
 \footnotesize
@@ -404,13 +407,13 @@ size.
 \hline
 \textbf{Model} & \textbf{Test} & \textbf{MCC} & \textbf{Recall} & \textbf{PGD MCC} & \textbf{ASR} \\
 \hline
-Clean & CIC & 0.532 & 0.475 & 0.162 & 0.73 \\
-Clean & UNSW & 0.616 & 0.705 & $-0.136$ & 0.99 \\
-Clean & Union & 0.650 & 0.611 & 0.047 & 0.91 \\
+Clean & CIC & 0.533 & 0.479 & 0.149 & 0.74 \\
+Clean & UNSW & 0.610 & 0.699 & $-0.140$ & 0.99 \\
+Clean & Union & 0.647 & 0.609 & 0.038 & 0.91 \\
 \hline
-Adv.-trained & CIC & 0.562 & 0.882 & 0.446 & 0.18 \\
-Adv.-trained & UNSW & 0.072 & 0.020 & $-0.001$ & 0.95 \\
-Adv.-trained & Union & 0.224 & 0.372 & 0.148 & 0.20 \\
+Adv.-trained & CIC & 0.585 & 0.907 & 0.500 & 0.13 \\
+Adv.-trained & UNSW & 0.170 & 0.101 & 0.016 & 0.96 \\
+Adv.-trained & Union & 0.284 & 0.430 & 0.182 & 0.24 \\
 \hline
 \end{tabular}
 \end{center}
@@ -420,37 +423,35 @@ As a sanity check that federation helps, the federated model beats a local-only
 baseline across five seeds (MCC 0.574 vs.\ 0.364; paired $t$-test $p{=}0.0005$).
 
 Fig.~\ref{fig:results} visualizes two of the sharpest findings: (a) the domain-dependent
-non-IID effect behind R2, and (b) the cross-dataset result behind R3, where the federated
-model with consistent normalization matches or exceeds centralized training and clearly
-beats single-network models, while the same model evaluated with inconsistent pooled
-statistics appears to fail (hatched bar).
+non-IID effect behind R2, and (b) the cross-dataset result behind R3, where the federated model
+with consistent normalization matches or exceeds centralized training and clearly beats
+single-network models, while the same models evaluated with inconsistent pooled statistics do
+much worse and vary widely across seeds (hatched bar).
 
 \begin{figure*}[t]
 \centerline{\includegraphics[width=0.78\textwidth]{fig_results.png}}
-\caption{(a) Non-IID impact differs by domain (R2); (b) cross-dataset FL on the union test set (R3).}
+\caption{(a) Non-IID impact differs by domain (R2); (b) cross-dataset FL on the union test set (R3). Error bars: standard deviation (a), 95\% CI (b).}
 \label{fig:results}
 \end{figure*}
 
 \subsection{Threats to Validity}
 First, verification measures whether the \emph{direction} of a claim holds on a uniform
 testbed, not an exact replication of the original setup, so absolute differences from the
-original papers are expected. Second, the scope is narrow: two datasets and two clients,
-with three seeds for R1 and R2, five seeds for the federated-versus-local-only check, and
-only a single run for R3, R5, and R6, which therefore carry no confidence intervals. Small
-gaps, such as federated 0.650 versus centralized 0.605, cannot be called meaningful, and
-the collapse of UNSW under adversarial training may reflect training instability rather
-than a property of the defense. Third, normalization and the evaluation protocol strongly
-affect results. The EC2 runs use per-client z-score while the R1 and R2 simulations use one
-shared global z-score, so simulation and EC2 figures should not be compared directly, and
-the same federated model scores 0.650 or $-0.026$ depending on whether the evaluation
-statistics match training. Fourth, our adversarial experiments act on the tabular
-flow-feature space, not raw packets: perturbations are clipped to the 1st to 99th
-percentile of each feature in z-score space without enforcing cross-feature protocol
-consistency (for example, the byte-to-packet relationship), so they are a feature-space
-estimate of vulnerability under a white-box threat model rather than evidence that
-manipulated traffic could be sent on the wire. ASR is also computed only over attacks
-detected before the perturbation, so it is not comparable across models with different
-recall.
+original papers are expected. Second, the scope is narrow: two datasets and two clients, with
+three seeds for R1 and R2 and five seeds for the other experiments. Confidence intervals over
+seeds capture training randomness only, because the data partition is fixed, so they do not
+reflect variation from resampling the data. The cause of the UNSW degradation under adversarial
+training, although consistent across seeds, was not investigated. Third, normalization and the
+evaluation protocol strongly affect results. The EC2 runs use per-client z-score while the R1
+and R2 simulations use one shared global z-score, so simulation and EC2 figures should not be
+compared directly, and the same federated models score 0.647 or only 0.229 on average depending
+on whether the evaluation statistics match training. Fourth, our adversarial experiments act on
+the tabular flow-feature space, not raw packets: perturbations are clipped to the 1st to 99th
+percentile of each feature in z-score space without enforcing cross-feature protocol consistency
+(for example, the byte-to-packet relationship), so they are a feature-space estimate of
+vulnerability under a white-box threat model rather than evidence that manipulated traffic could
+be sent on the wire. ASR is also computed only over attacks detected before the perturbation, so
+it is not comparable across models with different recall.
 
 \subsection{Research Directions}
 From these findings, the most pressing research directions are standardized, leakage-free
@@ -460,22 +461,23 @@ at a client and traffic scale closer to production.
 
 \section{Conclusion}
 This survey combines a thematic review of recent FL-NIDS literature with something rarely
-done: reproducible verification of its representative claims on a uniform AWS testbed.
-Rather than summarizing what original authors reported, we re-test whether each claim holds
-in an equivalent environment and report the outcome honestly. One claim holds: a healthy
-model is highly vulnerable to evasion, with an attack success rate of 0.91 at a budget of
-0.1 and close to 1.00 above 0.2. Two do not hold: FedProx does not beat FedAvg, and
-cross-dataset FL does not collapse, since with consistent normalization it reaches an MCC
-of 0.65, comparable to centralized training (0.60) and far above models trained on a single
-network (0.21 and 0.00). Two are domain dependent: the non-IID impact is real on CIC but not
-on UNSW, and adversarial training improves robustness on CIC but breaks UNSW. The most
-important lesson is methodological: the conclusion that cross-dataset FL collapses can be an
-evaluation artifact, because the same federated model appears to fail (MCC of minus 0.03)
-when evaluated with normalization statistics inconsistent with its training. The main
-contribution is evidence and protocol rather than a new method: a reproducible, reasonably
-priced baseline showing which FL-NIDS claims are robust, which are domain dependent, and
-which are sensitive to the evaluation protocol. All protocols, scripts, and cloud
-configurations are made available so the community can reproduce and build upon them.
+done: reproducible verification of its representative claims on a uniform AWS testbed. Rather
+than summarizing what original authors reported, we re-test whether each claim holds in an
+equivalent environment and report the outcome honestly. One claim holds: a healthy model is
+highly vulnerable to evasion, with an attack success rate of 0.91 at a budget of 0.1 and at
+least 0.98 above 0.2 for FGSM and PGD. Two do not hold: FedProx does not beat FedAvg, and
+cross-dataset FL does not collapse, since with consistent normalization it reaches an MCC of
+0.65, slightly above centralized training (0.62) and far above models trained on a single
+network (0.23 and 0.01). Two are domain dependent: the non-IID impact is real on CIC but not on
+UNSW, and adversarial training improves robustness on CIC but consistently degrades UNSW across
+five seeds. The most important lesson is methodological: the conclusion that cross-dataset FL
+collapses can be an evaluation artifact, because the same federated models fall to a mean MCC of
+0.23, erratic across seeds, when evaluated with normalization statistics inconsistent with their
+training. The main contribution is evidence and protocol rather than a new method: a
+reproducible, reasonably priced baseline showing which FL-NIDS claims are robust, which are
+domain dependent, and which are sensitive to the evaluation protocol. All protocols, scripts,
+and cloud configurations are made available so the community can reproduce and build upon
+them.
 
 \section*{Acknowledgment}
 The authors thank Politeknik Elektronika Negeri Surabaya (PENS) for computing support.
