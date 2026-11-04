@@ -33,9 +33,6 @@
 
 ## Abstrak
 
-> Gaya JICTRA: 100–200 kata, 5–10 keyword, bentuk lampau untuk hasil. Finalkan setelah
-> angka lab masuk (ganti `[TBD]`).
-
 Federated Learning (FL) menjanjikan pelatihan Network Intrusion Detection System
 (NIDS) kolaboratif lintas-organisasi tanpa memusatkan data trafik yang sensitif.
 Namun literatur FL-NIDS terfragmentasi: dataset, arsitektur, strategi agregasi, dan
@@ -46,14 +43,17 @@ tema—arsitektur dan agregasi, penanganan heterogenitas (non-IID), robustness
 adversarial dan Byzantine, serta few-shot/transfer lintas-domain—dan, berbeda dari
 survei terdahulu, **menguji empiris** sejumlah klaim representatif dari **metode yang
 sudah terpublikasi** (mis. FedAvg, FedProx) pada **testbed Amazon Web Services (AWS)
-yang seragam** menggunakan CSE-CIC-IDS2018 dan UNSW-NB15. Selain mereproduksi klaim
-inti (perbandingan agregasi, dampak non-IID, kelayakan lintas-dataset), kami juga
-menjalankan eksperimen adversarial—evasion (FGSM, PGD, serangan berbasis saliency/
-JSMA) dan adversarial training—pada setting lintas-dataset yang belum pernah diuji
-bersama. Kami [TBD: ringkas temuan]. Kami juga melaporkan biaya komunikasi, latensi,
-dan throughput nyata pada cloud. Survei ini memberikan taksonomi terpadu, protokol
-evaluasi yang dapat direproduksi, dan agenda riset untuk FL-NIDS yang
-privacy-preserving, robust, dan dapat di-deploy.
+yang seragam** menggunakan CSE-CIC-IDS2018 dan UNSW-NB15. Kami juga
+menjalankan eksperimen adversarial—evasion (FGSM, PGD, saliency/JSMA) dan adversarial
+training—pada setting lintas-dataset yang belum pernah diuji bersama. Dari enam klaim,
+dua terkonfirmasi (FL lintas-dataset runtuh, MCC −0,03 vs 0,55 terpusat; evasion
+sangat mudah, attack success rate hingga 1,00), satu bergantung domain
+(dampak non-IID nyata pada CIC tetapi tidak pada UNSW), dan dua tidak bertahan
+(FedProx tidak mengungguli FedAvg; adversarial training menaikkan akurasi bersih namun
+gagal memulihkan robustness). Biaya cloud terukur kecil (≈300 KB dan ≈16 detik per
+ronde). Survei ini memberikan taksonomi terpadu, protokol evaluasi yang dapat
+direproduksi, dan agenda riset untuk FL-NIDS yang privacy-preserving, robust, dan
+dapat di-deploy.
 
 **Kata kunci:** federated learning; network intrusion detection; non-IID data;
 adversarial robustness; cross-dataset generalization; cloud deployment; reproducibility.
@@ -400,13 +400,38 @@ terisolasi — prasyarat yang harus dipenuhi sebelum klaim-klaim lanjutan bermak
 
 ## 7. Kesimpulan
 
-> ISI setelah angka Bagian 4 masuk.
+Survei ini menggabungkan telaah tematik literatur FL-NIDS terkini (2020–2026) dengan
+sesuatu yang jarang dilakukan survei lain: verifikasi reproduktif atas klaim-klaim
+representatifnya pada satu testbed AWS yang seragam. Alih-alih sekadar merangkum apa
+yang dilaporkan penulis asli, kami menguji ulang apakah arah tiap klaim bertahan di
+lingkungan yang setara, dan melaporkan hasilnya apa adanya—termasuk ketika klaim itu
+tidak bertahan.
 
-- Ringkas taksonomi empat tema + temuan reproduksi R1–R4 + biaya cloud + eksperimen
-  adversarial R5–R6.
-- Pernyataan jujur: klaim literatur mana yang bertahan dan mana yang tidak di testbed seragam.
-- Nilai untuk komunitas: baseline reproduktif + bukti robustness adversarial pada
-  celah terbuka (gap a) + agenda riset FL-NIDS.
+Dari enam klaim yang diuji, gambarannya beragam. Dua klaim terkonfirmasi: FL
+lintas-dataset memang sulit—menggabungkan CSE-CIC-IDS2018 dan UNSW-NB15 lewat FedAvg
+membuat MCC runtuh ke −0,03, jauh di bawah batas atas terpusat 0,55; dan model sangat
+rapuh terhadap evasion, dengan attack success rate 0,96 pada perturbasi kecil hingga
+1,00 pada perturbasi sedang untuk FGSM dan PGD. Satu klaim bergantung domain: dampak
+non-IID yang ditekankan literatur nyata pada klien CIC (MCC jatuh dari 0,51 ke 0,39
+seiring heterogenitas meningkat) tetapi hampir tidak terlihat pada UNSW yang kelasnya
+lebih mudah dipisah—sebuah nuansa yang menunjukkan bahwa "non-IID menurunkan FL" tidak
+berlaku universal. Dua klaim tidak bertahan pada rentang yang kami uji: FedProx tidak
+mengungguli FedAvg secara bermakna, dan adversarial training—meski sedikit menaikkan
+akurasi pada trafik bersih—gagal memulihkan, bahkan memperburuk, robustness pada
+setting lintas-dataset yang sudah lemah. Di sisi biaya, FL-NIDS dengan model ringan
+terbukti murah secara komunikasi (≈300 KB per ronde) dengan latensi ≈16 detik per
+ronde pada tiga EC2.
+
+Kontribusi utama makalah ini bukan sebuah metode baru, melainkan bukti: sebuah
+baseline reproduktif beranggaran cloud wajar yang memperlihatkan dengan jelas mana
+klaim FL-NIDS yang kokoh dan mana yang rapuh ketika diuji secara terkontrol. Temuan
+bahwa integrasi FL lintas-dataset dengan robustness adversarial masih jauh dari
+memadai menegaskan celah terbuka yang penting (gap a). Arah lanjutan yang kami
+sarankan mencakup penyelarasan fitur yang sadar-semantik untuk memperbaiki transfer
+lintas-dataset, pertahanan evasion yang sadar-arah dan sadar-domain, serta evaluasi
+pada skala klien dan trafik yang lebih mendekati produksi. Seluruh protokol, skrip,
+dan konfigurasi cloud kami sediakan agar komunitas—khususnya di Indonesia—dapat
+mereproduksi dan membangun di atasnya.
 
 ---
 
