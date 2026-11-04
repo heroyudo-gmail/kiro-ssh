@@ -427,31 +427,69 @@ terisolasi — prasyarat yang harus dipenuhi sebelum klaim-klaim lanjutan bermak
 
 ## 5. Discussion: Gaps & Research Agenda
 
-> Sumber: `references/state_of_art_gap_federated_nids.md` (gap a–e + rekomendasi).
+Menyatukan telaah tematik (Bagian 3) dengan hasil verifikasi (Bagian 4) memunculkan
+sejumlah celah yang saling berkaitan, dan beberapa di antaranya justru dipertegas oleh
+temuan kami sendiri. Celah paling mencolok adalah lemahnya integrasi antara federated
+learning dan robustness adversarial ketika diuji secara lintas-dataset. Literatur
+cenderung membahas keduanya secara terpisah—ada yang menguji FL lintas-jaringan, ada
+yang menguji evasion—tetapi jarang menggabungkannya pada satu eksperimen. Hasil R5 dan
+R6 memperlihatkan mengapa penggabungan itu penting: model FL lintas-dataset yang sudah
+rapuh ternyata nyaris sepenuhnya dapat dielak, dan adversarial training—pertahanan yang
+paling sering disarankan—gagal memulihkannya. Dengan kata lain, celah ini bukan sekadar
+kekosongan literatur, melainkan persoalan nyata yang baru terlihat saat kedua dimensi
+diuji bersama.
 
-- **Gap a** — Integrasi FL + adversarial robustness yang diuji **cross-dataset**:
-  langka. **→ Sebagian kami isi lewat R5–R6 (Bagian 4).**
-- **Gap b** — Semantic feature mapping eksplisit dalam FL: belum diformalkan (celah
-  terbuka; survei ini mencatat, tidak mengisinya).
-- **Gap c** — Few-shot teruji **lintas-dataset** + digabung adversarial: terbatas.
-- **Gap d** — Skalabilitas & heterogenitas skala produksi (ribuan klien, trafik nyata): minim bukti.
-- **Gap e** — **Deployment & evaluasi di cloud publik (AWS)**: hampir tak ada. **→
-  Sebagian kami isi lewat R4 (biaya cloud nyata) di Bagian 4.**
-- **Agenda riset**: encoder selaras-semantik; adversarial-aware prototypical federated
-  meta-learning; agregasi berbobot-semantik; protokol evaluasi cross-dataset
-  bebas-kebocoran; evaluasi cloud testbed.
+Celah berikutnya menyangkut cara menyelaraskan fitur antar-jaringan. Runtuhnya FL
+lintas-dataset pada R3 menunjukkan bahwa penyelarasan nama fitur yang generik—sekadar
+memetakan sembilan kolom yang namanya bersesuaian—tidak cukup untuk mentransfer
+pengetahuan antara dua jaringan yang sangat berbeda. Penyelarasan yang sadar-semantik,
+yang mempertimbangkan makna dan distribusi fitur alih-alih sekadar namanya, masih
+merupakan persoalan terbuka; survei ini mencatatnya sebagai celah, bukan mengisinya.
+Pada arah yang sama, few-shot dan meta-learning lintas-dataset yang digabung dengan
+evaluasi adversarial juga masih terbatas di literatur.
+
+Dua celah terakhir bersifat lebih praktis. Pertama, skalabilitas dan heterogenitas pada
+skala produksi—ribuan klien dengan lalu lintas nyata—nyaris tidak memiliki bukti
+empiris; sebagian besar studi, termasuk kami, bekerja pada sedikit klien. Kedua, bukti
+deployment dan pengukuran biaya di cloud publik hampir tidak ada, suatu kekosongan yang
+sebagian kami isi lewat pengukuran komunikasi dan latensi nyata pada R4. Dari pemetaan
+ini, agenda riset yang kami pandang paling mendesak adalah: encoder penyelaras fitur
+yang sadar-semantik untuk memperbaiki transfer lintas-dataset, pertahanan evasion yang
+sadar-arah dan sadar-domain alih-alih adversarial training statis, protokol evaluasi
+lintas-dataset yang bebas kebocoran, serta validasi pada testbed cloud yang lebih
+mendekati skala produksi.
 
 ---
 
 ## 6. Threats to Validity
 
-- Perbedaan setup reproduksi vs penulis asli (dataset, model, hyperparameter).
-- Dua dataset saja (CIC + UNSW) — generalisasi terbatas; diakui jujur.
-- Biaya cloud → jumlah run/seed terbatas; dilaporkan apa adanya.
-- Potensi bias seleksi literatur; mitigasi: protokol pencarian eksplisit (Bagian 2).
-- **Adversarial pada tabular flow (R5–R6):** perturbasi dibatasi agar flow tetap valid
-  → serangan lebih konservatif daripada domain citra; threat model yang diasumsikan
-  (fitur yang dapat dimanipulasi, white/black-box) membatasi generalisasi temuan.
+Beberapa hal membatasi sejauh mana temuan kami dapat digeneralisasi, dan kami
+menyampaikannya secara terbuka agar pembaca dapat menimbang bobot setiap klaim.
+Pertama, verifikasi kami mengukur apakah *arah* sebuah klaim bertahan di lingkungan
+yang setara, bukan mereplikasi persis setiap detail setup penulis asli. Perbedaan
+dataset, arsitektur model, dan hyperparameter antara reproduksi kami dan karya asli
+berarti selisih angka absolut memang diharapkan; yang kami nilai adalah pola dan
+arahnya, bukan kecocokan nilai per digit.
+
+Kedua, ruang lingkup eksperimen kami sempit secara sengaja. Kami hanya memakai dua
+dataset benchmark (CSE-CIC-IDS2018 dan UNSW-NB15) dan sedikit klien, sehingga temuan
+seperti "dampak non-IID bergantung domain" perlu diuji pada lebih banyak pasangan
+jaringan sebelum dapat dianggap umum. Anggaran cloud juga membatasi jumlah run dan
+seed yang dapat kami jalankan; angka dilaporkan apa adanya beserta interval
+kepercayaannya, tetapi presisi statistik pada kondisi non-IID berat tetap terbatas.
+Untuk komponen telaah pustaka, potensi bias seleksi kami mitigasi dengan protokol
+pencarian yang eksplisit (Bagian 2), meski tidak ada protokol yang sepenuhnya bebas
+bias.
+
+Ketiga, dan paling penting untuk ditafsirkan dengan hati-hati, eksperimen adversarial
+kami (R5–R6) bekerja pada ruang fitur aliran (tabular), bukan pada paket mentah.
+Perturbasi FGSM/PGD/JSMA kami batasi agar aliran tetap valid—nilai non-negatif,
+konsisten antar-fitur, dan hanya pada fitur yang realistis dapat dimanipulasi
+penyerang. Akibatnya, serangan kami lebih konservatif daripada serangan tak-terkendala
+pada domain citra, dan hasil attack success rate harus dibaca dalam kerangka threat
+model yang kami asumsikan (pengetahuan white/black-box, kapabilitas terbatas pada
+fitur yang dapat diubah). Kerentanan nyata di lapangan bisa berbeda, bergantung pada
+seberapa besar kendali yang sesungguhnya dimiliki penyerang atas lalu lintas.
 
 ---
 
