@@ -240,51 +240,69 @@ pelengkap yang dapat direproduksi.
 > ditandai "(dilaporkan penulis asli)". Jawab SQ1–SQ3.
 
 ### 3.1 FL-NIDS Architectures & Aggregation Strategies (SQ1)
-- **Arsitektur dominan**: horizontal cross-silo antar organisasi/domain [1], [11].
-- **Agregasi baseline**: FedAvg (rata-rata berbobot ukuran data) [1].
-- **Varian agregasi lanjutan**:
-  - Entente [11]: Adaptive Contribution Scaling + graph sketching untuk GNIDS
-    (OpTC, LANL Cyber1, Pivoting; precision/recall tinggi, FPR rendah — dilaporkan asli).
-  - FedAGRU [12]: attention-based aggregation, GRU-SVM (KDD'99, CICIDS2017, WSN-DS).
-  - FedIn-NID [13]: agregasi global dinamis (EMA) + pemilihan client multidimensi (IIoT).
-  - FLAD [14]: FedAvg adaptif (arithmetic mean + pemilihan client by akurasi
-    validasi) untuk DDoS (CIC-DDoS2019; konvergensi lebih cepat — dilaporkan asli).
-  - Resource-efficient FL [15]: fokus efisiensi komunikasi/komputasi.
+
+Arsitektur yang dominan pada FL-NIDS adalah horizontal cross-silo, di mana beberapa
+organisasi atau domain melatih model bersama tanpa berbagi data mentah [1], [11], dan
+agregasi bakunya adalah FedAvg yang merata-ratakan bobot klien secara tertimbang
+ukuran data [1]. Di atas fondasi ini, literatur mengembangkan sejumlah varian agregasi
+yang lebih canggih. Entente [11] memakai Adaptive Contribution Scaling dan graph
+sketching untuk deteksi berbasis graf jaringan, dan melaporkan precision/recall tinggi
+dengan FPR rendah pada OpTC, LANL Cyber1, dan Pivoting. FedAGRU [12] menambahkan
+agregasi berbasis attention pada model GRU-SVM, sementara FedIn-NID [13] mengandalkan
+agregasi global dinamis (exponential moving average) dengan pemilihan klien
+multidimensi untuk IIoT. Untuk deteksi DDoS, FLAD [14] mengadaptasi FedAvg dengan
+pemilihan klien berbasis akurasi validasi dan melaporkan konvergensi yang lebih cepat.
+Arah lain menekankan efisiensi: resource-efficient FL [15] berfokus menekan biaya
+komunikasi dan komputasi. Secara keseluruhan, inovasi pada lapisan agregasi cukup
+kaya, tetapi mayoritas diuji hanya dalam satu jaringan dan jarang lintas-dataset.
 
 ### 3.2 Heterogeneity & Non-IID Data (SQ2)
-- **Bukti penurunan non-IID**: Lavaur dkk. [5] menunjukkan FL-NIDS turun drastis di
-  skenario cross-dataset (UNSW-NB15, Bot-IoT, ToN_IoT, CSE-CIC-IDS2018).
-- **Solusi non-IID**:
-  - Personalisasi/klasterisasi: Sentinel (knowledge distillation) [16]; FedDB (DBSCAN) [17].
-  - Alignment fitur/perilaku: FedCross-VAN [18]; graph priors Entente [11].
-  - Arsitektur hirarkis/mist: Mist-assisted FL [19].
-  - Evaluasi IID vs non-IID eksplisit: Benkaddour [20] (CNN di UNSW-NB15).
-- **Catatan**: istilah "semantic feature mapping" eksplisit jarang; umumnya "feature
-  alignment" implisit. Survei ini tidak mengusulkan solusi alignment baru — untuk
-  cross-dataset kami memakai alignment nama fitur manual yang sudah ada sebagai setup.
+
+Heterogenitas data adalah tantangan yang paling banyak disorot. Lavaur dkk. [5]
+menunjukkan bahwa FL-NIDS menurun drastis pada skenario cross-dataset yang melibatkan
+UNSW-NB15, Bot-IoT, ToN_IoT, dan CSE-CIC-IDS2018—bukti bahwa perbedaan distribusi
+antar-jaringan, bukan sekadar non-IID ringan antar-klien, dapat meruntuhkan performa.
+Untuk mengatasinya, literatur menempuh beberapa jalur. Pendekatan personalisasi dan
+klasterisasi berusaha menyesuaikan model ke tiap klien, seperti Sentinel yang memakai
+knowledge distillation [16] dan FedDB yang mengelompokkan klien dengan DBSCAN [17].
+Jalur lain menyelaraskan fitur atau perilaku antar-domain, misalnya FedCross-VAN [18]
+dan graph prior pada Entente [11]. Ada pula yang menata arsitektur secara hirarkis,
+seperti mist-assisted FL [19], serta studi yang secara eksplisit membandingkan kondisi
+IID versus non-IID [20]. Yang menarik, istilah "semantic feature mapping" jarang
+disebut secara eksplisit; penyelarasan fitur lebih sering muncul secara implisit.
+Survei ini tidak mengusulkan solusi penyelarasan baru—untuk kebutuhan lintas-dataset
+kami memakai penyelarasan nama fitur manual yang sudah ada sebagai bagian dari setup.
 
 ### 3.3 Adversarial Robustness & Byzantine/Poisoning (SQ3)
-- **Adversarial training dalam FL**: Ennaji dkk. [21] (Edge-IIoTset, akurasi 91,23%
-  — dilaporkan asli); SFAT [6] ("exacerbated heterogeneity" + α-slack); HADA [22]
-  (66–73% di bawah FGSM/PGD — dilaporkan asli).
-- **Byzantine/poisoning**: Multi-Krum (FedSecIoT [23], Saha dkk. [7]); FORT-IDS
-  [24] (agregasi robust-outlier); label-flipping [5].
-- **GAN-based adversarial training (DDoS)**: GADoT [25].
-- **Benchmark & review adversarial**: Dadhwal dkk. [26]; Saini dkk. [8]; Debicha
-  dkk. [27].
-- **Catatan**: trade-off robustness vs accuracy belum tuntas, apalagi di non-IID;
-  integrasi cross-dataset + adversarial masih langka (gap a). **Tema inilah yang kami
-  uji sendiri di Bagian 4 (R5–R6)**, sehingga punya dua sisi: telaah di sini +
-  eksperimen di Bagian 4.
+
+Ketahanan model terhadap serangan dibahas dari dua sisi: evasion pada waktu inferensi
+dan peracunan pada waktu pelatihan. Pada sisi evasion, adversarial training menjadi
+pertahanan yang paling sering diusulkan; Ennaji dkk. [21] melaporkan akurasi 91,23%
+pada Edge-IIoTset, SFAT [6] menyoroti "exacerbated heterogeneity" dan menambahkan
+mekanisme α-slack, sedangkan HADA [22] melaporkan akurasi 66–73% di bawah serangan
+FGSM/PGD. Pada sisi peracunan, pertahanan Byzantine berupaya menolak pembaruan klien
+jahat: FedSecIoT [23] dan karya Saha dkk. [7] memakai agregasi multi-Krum, FORT-IDS
+[24] mengandalkan agregasi yang tahan outlier, dan serangan label-flipping juga
+teramati pada setting FL-NIDS [5]. Khusus untuk DDoS, GADoT [25] memakai GAN untuk
+membangkitkan contoh adversarial saat pelatihan. Beberapa karya menyediakan tolok ukur
+dan telaah atas lanskap ini [26], [8], [27]. Benang merahnya, trade-off antara
+robustness dan akurasi belum tuntas—apalagi pada kondisi non-IID—dan integrasi evaluasi
+adversarial dengan setting cross-dataset masih langka. Celah inilah yang kami uji
+sendiri pada Bagian 4 (R5–R6), sehingga tema ini hadir dua sisi: sebagai telaah di
+sini dan sebagai eksperimen di sana.
 
 ### 3.4 Few-Shot, Meta-Learning & Cross-Domain Transfer (SQ2–SQ3)
-- **Few-shot FL**: Ceviz dkk. [10] (UAV); FeCoGraph [28] (graph contrastive).
-- **Meta-learning**: Hu dkk. [9] (federated meta-learning lawan APT).
-- **Prototypical/transfer cross-domain**: FedPKT [29].
-- **Ensemble + XAI**: [30] (CNN+LSTM+Transformer, akurasi 98,5% multi-dataset —
-  dilaporkan asli; kompleksitas tinggi).
-- **Catatan**: semantic-mapping + few-shot cross-dataset masih jarang (gap b/c);
-  survei ini mencatatnya sebagai celah terbuka, bukan mengisinya.
+
+Tema terakhir menyasar kemampuan mengenali serangan baru dari sedikit contoh. Pada
+jalur few-shot, Ceviz dkk. [10] menerapkannya untuk jaringan UAV, sementara FeCoGraph
+[28] memakai pembelajaran kontrastif berbasis graf. Pendekatan meta-learning
+diwakili Hu dkk. [9] yang merancang federated meta-learning untuk melawan advanced
+persistent threat. Untuk transfer lintas-domain, FedPKT [29] memakai transfer
+pengetahuan prototipikal, dan pada arah ensemble, karya [30] menggabungkan CNN, LSTM,
+dan Transformer serta melaporkan akurasi 98,5% pada enam dataset dengan konsekuensi
+kompleksitas yang tinggi. Secara umum, penggabungan penyelarasan semantik dan few-shot
+yang diuji benar-benar lintas-dataset masih jarang; survei ini mencatatnya sebagai
+celah terbuka, bukan mengisinya.
 
 ### 3.5 State-of-the-Art Comparison Table
 
