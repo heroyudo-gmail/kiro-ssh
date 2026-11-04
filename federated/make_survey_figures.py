@@ -70,5 +70,57 @@ def fig_architecture():
     print("  figure-fed/fig_fl_architecture.png")
 
 
+def fig_feature_alignment():
+    """Only the 9-feature 1:1 intersection of the two extractors is used."""
+    fig, ax = plt.subplots(figsize=(9.4, 5.6))
+    ax.set_xlim(0, 10)
+    ax.set_ylim(0, 10)
+    ax.axis("off")
+
+    # left: CIC raw features
+    _box(ax, 0.3, 5.6, 2.9, 3.4,
+         "CSE-CIC-IDS2018\n(CICFlowMeter)\n~80 raw features\ne.g. Flow Duration,\nTot Fwd Pkts,\nFlow IAT, flags ...",
+         "#d6e4f5", ec="#3a6ea5", fs=8.3)
+    # right: UNSW raw features
+    _box(ax, 6.8, 5.6, 2.9, 3.4,
+         "UNSW-NB15\n(Argus/Bro)\n42 raw features\ne.g. dur, spkts,\nsttl, ct_srv_src,\ntrans_depth ...",
+         "#d6e4f5", ec="#3a6ea5", fs=8.3)
+
+    # center: 9 aligned features
+    _box(ax, 3.5, 5.9, 3.0, 2.9,
+         "9 aligned features\n(1:1 name mapping)\n\nduration, fwd_pkts,\nbwd_pkts, fwd_bytes,\nbwd_bytes, fwd_mean,\nbwd_mean, src_load,\ndst_load",
+         "#cfe8d6", ec="#2e8b57", fs=8.2, bold=False)
+
+    # arrows: raw -> aligned (keep only the intersection)
+    _arrow(ax, (3.2, 7.3), (3.5, 7.3), color="#2e8b57")
+    _arrow(ax, (6.8, 7.3), (6.5, 7.3), color="#2e8b57")
+
+    # dropped note
+    ax.text(1.75, 5.25, "extractor-specific\nfeatures dropped", fontsize=7.5,
+            color="#b03030", ha="center", style="italic")
+    ax.text(8.25, 5.25, "extractor-specific\nfeatures dropped", fontsize=7.5,
+            color="#b03030", ha="center", style="italic")
+
+    # bottom: feeds each client
+    _box(ax, 0.6, 1.2, 3.4, 1.6,
+         "Client-CIC\ntrains on its own rows,\nrestricted to the 9 features",
+         "#eef4fb", ec="#3a6ea5", fs=8.3)
+    _box(ax, 6.0, 1.2, 3.4, 1.6,
+         "Client-UNSW\ntrains on its own rows,\nrestricted to the 9 features",
+         "#eef4fb", ec="#3a6ea5", fs=8.3)
+    _arrow(ax, (4.3, 5.9), (2.3, 2.8), color="#3a6ea5", rad=0.15)
+    _arrow(ax, (5.7, 5.9), (7.7, 2.8), color="#3a6ea5", rad=-0.15)
+
+    ax.text(5.0, 9.4,
+            "Shared feature schema: only the 9 features present in BOTH extractors "
+            "are kept; each client applies it to its own data.",
+            ha="center", fontsize=8.2, color="#333")
+
+    fig.savefig(os.path.join(FIG, "fig_feature_alignment.png"))
+    plt.close(fig)
+    print("  figure-fed/fig_feature_alignment.png")
+
+
 if __name__ == "__main__":
+    fig_feature_alignment()
     fig_architecture()

@@ -307,9 +307,30 @@ pelengkap yang dapat direproduksi.
 
 ### 4.1 Rancangan testbed
 
+Sebelum pelatihan, kedua dataset tidak dipakai dengan seluruh fiturnya. CSE-CIC-IDS2018
+diekstrak dengan CICFlowMeter (sekitar 80 fitur) sedangkan UNSW-NB15 dengan Argus/Bro
+(42 fitur), sehingga skema fiturnya berbeda. Agar kedua client berbicara dalam ruang
+fitur yang sama, kami hanya memakai **sembilan fitur** yang memiliki padanan nama 1:1
+di kedua ekstraktor—durasi aliran, jumlah dan volume paket arah maju/mundur, rata-rata
+ukuran paket, dan laju—sebagai skema bersama (Gambar 1). Fitur yang khas pada satu
+ekstraktor saja (misalnya `ct_srv_src`, TTL, atau `trans_depth` pada UNSW; fitur IAT
+atau flag pada CICFlowMeter) tidak memiliki padanan dan karenanya dibuang. Angka
+sembilan ini adalah konsekuensi dari irisan kedua ekstraktor, bukan pilihan desain;
+penyelarasan nama fitur manual semacam ini sudah lazim di literatur cross-dataset
+[F11] dan kami perlakukan sebagai setup, bukan kontribusi. Tiap client lalu menerapkan
+skema sembilan fitur ini **pada datanya sendiri**.
+
+![Penyelarasan fitur: hanya sembilan fitur beririsan di kedua ekstraktor yang dipakai;
+fitur spesifik-ekstraktor dibuang.](figure-fed/fig_feature_alignment.png)
+
+*Gambar 1. Penyelarasan fitur lintas-dataset. Dari ~80 fitur CICFlowMeter dan 42 fitur
+Argus/Bro, hanya sembilan fitur dengan padanan 1:1 yang dipertahankan sebagai skema
+bersama; fitur spesifik-ekstraktor dibuang. Tiap client melatih pada datanya sendiri,
+dibatasi pada sembilan fitur ini.*
+
 Arsitektur federasi yang kami bangun mengikuti pola horizontal cross-silo dengan satu
 **aggregator** dan dua **client**, masing-masing memegang satu dataset—Client-CIC
-untuk CSE-CIC-IDS2018 dan Client-UNSW untuk UNSW-NB15 (Gambar 1). Setiap client
+untuk CSE-CIC-IDS2018 dan Client-UNSW untuk UNSW-NB15 (Gambar 2). Setiap client
 melatih model pada datanya **sendiri** tanpa pernah mengirim data mentah; yang
 dipertukarkan hanyalah bobot model. Normalisasi fitur (z-score) juga dihitung **lokal
 per-client** memakai statistik masing-masing, sehingga tidak ada statistik data yang
@@ -328,7 +349,7 @@ dilaporkan pada R4.
 ![Arsitektur federated learning: satu aggregator (FedAvg) dan dua client (CIC, UNSW)
 yang bertukar model global dan pembaruan lokal.](figure-fed/fig_fl_architecture.png)
 
-*Gambar 1. Arsitektur federated learning yang dibangun: satu aggregator (FedAvg) dan
+*Gambar 2. Arsitektur federated learning yang dibangun: satu aggregator (FedAvg) dan
 dua client (Client-CIC, Client-UNSW). Tiap ronde, aggregator mengirim model global,
 tiap client melatih lokal pada datanya sendiri lalu mengembalikan pembaruan bobot.*
 
