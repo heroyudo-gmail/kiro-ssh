@@ -118,9 +118,12 @@ sebagai bagian dari setup eksperimen.
 
 Melampaui reproduksi, kami juga menutup sebagian celah yang diakui kosong oleh
 literatur, yaitu integrasi FL dengan robustness adversarial yang **diuji secara
-lintas-dataset**. Kami menjalankan eksperimen evasion menggunakan FGSM, PGD, dan
-serangan berbasis saliency (JSMA), lalu menguji adversarial training sebagai
-pertahanan—semuanya metode yang sudah ada—pada FL-NIDS lintas-dataset di cloud. Yang
+lintas-dataset**. Kami menjalankan eksperimen evasion menggunakan FGSM (*Fast Gradient
+Sign Method*), PGD (*Projected Gradient Descent*), dan serangan berbasis saliency
+JSMA (*Jacobian-based Saliency Map Attack*), lalu menguji adversarial training sebagai
+pertahanan—semuanya metode yang sudah ada—pada FL-NIDS lintas-dataset di cloud. FGSM
+membangkitkan perturbasi satu langkah searah tanda gradien; PGD adalah versi iteratif
+yang lebih kuat; JSMA memilih fitur paling berpengaruh melalui peta saliency. Yang
 baru di sini adalah **buktinya**, bukan metodenya.
 
 Kontribusi makalah ini dapat diringkas sebagai berikut. (1) Telaah tematik mutakhir
