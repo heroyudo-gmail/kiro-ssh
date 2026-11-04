@@ -24,14 +24,14 @@
 > Sinta 1 / Scopus Q3. Status: **draf — Bagian 1 sudah narasi penuh; Bagian 2–7 campur
 > narasi & kerangka; angka lab `[TBD]`.**
 >
-> **Daftar isi naskah:**
-> Abstrak · 1 Pendahuluan · 2 Metodologi Survei · 3 Telaah Tematik ·
-> 4 Studi Reproduksi & Eksperimen Adversarial di AWS · 5 Diskusi: Gap & Agenda Riset ·
-> 6 Ancaman Validitas · 7 Kesimpulan · Referensi · (Lampiran: catatan kerja)
+> **Daftar isi naskah (judul bab English, isi Indonesia):**
+> Abstract · 1 Introduction · 2 Survey Methodology · 3 Thematic Review ·
+> 4 Reproduction Study & Adversarial Experiments on AWS · 5 Discussion: Gaps & Research Agenda ·
+> 6 Threats to Validity · 7 Conclusion · References · (Lampiran: catatan kerja)
 
 ---
 
-## Abstrak
+## Abstract
 
 Federated Learning (FL) menjanjikan pelatihan Network Intrusion Detection System
 (NIDS) kolaboratif lintas-organisasi tanpa memusatkan data trafik yang sensitif.
@@ -60,7 +60,7 @@ adversarial robustness; cross-dataset generalization; cloud deployment; reproduc
 
 ---
 
-## 1. Pendahuluan
+## 1. Introduction
 
 Network Intrusion Detection System (NIDS) berbasis pembelajaran mesin kini menjadi
 komponen inti pertahanan siber, dari jaringan enterprise hingga Internet of Things
@@ -156,7 +156,7 @@ kesimpulan.
 
 ---
 
-## 2. Metodologi Survei
+## 2. Survey Methodology
 
 Metodologi survei ini terdiri atas dua komponen yang saling melengkapi. Komponen
 pertama adalah protokol telaah pustaka yang sistematis untuk membangun taksonomi
@@ -165,7 +165,7 @@ terdahulu—adalah protokol verifikasi reproduktif yang memandu eksperimen pada
 testbed cloud (Bagian 4). Kami memaparkan keduanya secara berurutan agar pembaca
 dapat menilai cakupan maupun keterulangannya.
 
-### 2.1 Protokol pencarian literatur
+### 2.1 Literature search protocol
 
 Pencarian literatur dilakukan dalam tiga fase yang saling melengkapi untuk
 memastikan cakupan menyeluruh terhadap tiga poros utama FL-NIDS. Fase pertama
@@ -178,7 +178,7 @@ Kueri tiap fase dirumuskan dari kombinasi kata kunci inti (mis. *federated learn
 *network intrusion detection*, *non-IID*, *adversarial*, *few-shot*,
 *cross-dataset*) dan diperhalus secara iteratif berdasarkan hasil awal.
 
-### 2.2 Kriteria inklusi dan eksklusi
+### 2.2 Inclusion and exclusion criteria
 
 Sebuah karya dimasukkan apabila memenuhi seluruh kriteria berikut: (i) terbit dalam
 rentang 2020–2026; (ii) berfokus pada federated learning, robustness adversarial,
@@ -187,7 +187,7 @@ metodologi eksperimental atau kerangka teknis yang jelas; dan (iv) berupa publik
 tertelaah sejawat atau pracetak yang kredibel. Karya yang hanya menyinggung FL atau
 NIDS secara sepintas, tanpa kontribusi metodologis yang dapat ditelaah, dikeluarkan.
 
-### 2.3 Ekstraksi data per-karya
+### 2.3 Per-study data extraction
 
 Untuk setiap karya yang lolos seleksi, kami mengekstrak atribut yang seragam agar
 dapat dibandingkan antar-studi: arsitektur federasi (horizontal, vertikal, atau
@@ -199,7 +199,7 @@ karya tersebut dievaluasi secara lintas-dataset dan apakah memiliki bukti deploy
 pada cloud. Dua atribut terakhir inilah yang menjadi kolom penanda pada tabel
 komparatif di Bagian 3 dan langsung menyorot celah yang kami isi di Bagian 4.
 
-### 2.4 Konsolidasi referensi dan penomoran
+### 2.4 Reference consolidation and numbering
 
 Hasil ketiga fase digabung dan dideduplikasi berdasarkan DOI serta judul, karena
 sebagian karya muncul di lebih dari satu fase pencarian. Konsolidasi menghasilkan
@@ -209,7 +209,7 @@ karya penyelarasan fitur semantik milik kami sendiri masih dalam proses tinjauan
 karya tersebut hanya dirujuk sebagai karya-terkait bila diperlukan dan **tidak**
 digunakan sebagai metode dalam survei ini (lihat Bagian 2.5 dan 4.1).
 
-### 2.5 Protokol verifikasi reproduktif
+### 2.5 Reproducible verification protocol
 
 Berbeda dari survei murni, kami menambahkan lapisan verifikasi empiris. Prinsipnya
 sederhana: alih-alih menerima angka yang dilaporkan tiap penulis apa adanya, kami
@@ -231,12 +231,12 @@ pelengkap yang dapat direproduksi.
 
 ---
 
-## 3. Telaah Tematik
+## 3. Thematic Review
 
 > Status: kerangka bullet; akan dinaratifkan. Tiap angka dari karya orang lain
 > ditandai "(dilaporkan penulis asli)". Jawab SQ1–SQ3.
 
-### 3.1 Arsitektur & Strategi Agregasi FL-NIDS (SQ1)
+### 3.1 FL-NIDS Architectures & Aggregation Strategies (SQ1)
 - **Arsitektur dominan**: horizontal cross-silo antar organisasi/domain [F1], [F5].
 - **Agregasi baseline**: FedAvg (rata-rata berbobot ukuran data) [F1].
 - **Varian agregasi lanjutan**:
@@ -248,7 +248,7 @@ pelengkap yang dapat direproduksi.
     validasi) untuk DDoS (CIC-DDoS2019; konvergensi lebih cepat — dilaporkan asli).
   - Resource-efficient FL [F8]: fokus efisiensi komunikasi/komputasi.
 
-### 3.2 Heterogenitas & Data Non-IID (SQ2)
+### 3.2 Heterogeneity & Non-IID Data (SQ2)
 - **Bukti penurunan non-IID**: Lavaur dkk. [F11] menunjukkan FL-NIDS turun drastis di
   skenario cross-dataset (UNSW-NB15, Bot-IoT, ToN_IoT, CSE-CIC-IDS2018).
 - **Solusi non-IID**:
@@ -260,7 +260,7 @@ pelengkap yang dapat direproduksi.
   alignment" implisit. Survei ini tidak mengusulkan solusi alignment baru — untuk
   cross-dataset kami memakai alignment nama fitur manual yang sudah ada sebagai setup.
 
-### 3.3 Robustness Adversarial & Byzantine/Poisoning (SQ3)
+### 3.3 Adversarial Robustness & Byzantine/Poisoning (SQ3)
 - **Adversarial training dalam FL**: Ennaji dkk. [F17] (Edge-IIoTset, akurasi 91,23%
   — dilaporkan asli); SFAT [F16] ("exacerbated heterogeneity" + α-slack); HADA [F18]
   (66–73% di bawah FGSM/PGD — dilaporkan asli).
@@ -274,7 +274,7 @@ pelengkap yang dapat direproduksi.
   uji sendiri di Bagian 4 (R5–R6)**, sehingga punya dua sisi: telaah di sini +
   eksperimen di Bagian 4.
 
-### 3.4 Few-Shot, Meta-Learning & Transfer Lintas-Domain (SQ2–SQ3)
+### 3.4 Few-Shot, Meta-Learning & Cross-Domain Transfer (SQ2–SQ3)
 - **Few-shot FL**: Ceviz dkk. [F39] (UAV); FeCoGraph [F37] (graph contrastive).
 - **Meta-learning**: Hu dkk. [F36] (federated meta-learning lawan APT).
 - **Prototypical/transfer cross-domain**: FedPKT [F38]; transfer IIoT Zhang dkk. [F40].
@@ -283,7 +283,7 @@ pelengkap yang dapat direproduksi.
 - **Catatan**: semantic-mapping + few-shot cross-dataset masih jarang (gap b/c);
   survei ini mencatatnya sebagai celah terbuka, bukan mengisinya.
 
-### 3.5 Tabel Komparatif State-of-the-Art
+### 3.5 State-of-the-Art Comparison Table
 > Kolom "Cross-dataset?" dan "Cloud deploy?" adalah penanda yang jarang dibuat survei
 > lain — langsung memperlihatkan celah yang kami isi di Bagian 4.
 
@@ -299,13 +299,13 @@ pelengkap yang dapat direproduksi.
 
 ---
 
-## 4. Studi Reproduksi & Eksperimen Adversarial di AWS
+## 4. Reproduction Study & Adversarial Experiments on AWS
 
 > **Bagian pembeda utama.** Kami menjalankan metode terpublikasi pada **satu testbed
 > AWS seragam** dan melaporkan angka yang sebanding. **Semua angka = `[TBD]`** sampai
 > eksperimen dieksekusi. Detail operasional (infra, runbook, fase) di Lampiran B.
 
-### 4.1 Rancangan testbed
+### 4.1 Testbed design
 
 Sebelum pelatihan, kedua dataset tidak dipakai dengan seluruh fiturnya. CSE-CIC-IDS2018
 diekstrak dengan CICFlowMeter (sekitar 80 fitur) sedangkan UNSW-NB15 dengan Argus/Bro
@@ -363,7 +363,7 @@ tiap client melatih lokal pada datanya sendiri lalu mengembalikan pembaruan bobo
 - **Metrik**: MCC (utama), recall/precision/F1, balanced-accuracy; + biaya FL
   (rounds-to-converge, bytes/round, latensi, throughput). Multi-seed {13,42,101,202,303}.
 
-### 4.2 Klaim yang diuji
+### 4.2 Claims under test
 > Dua kelompok: **(A) reproduksi** klaim inti (R1–R4) dan **(B) eksperimen adversarial**
 > (R5–R6). Semua memakai metode terpublikasi; yang baru adalah buktinya.
 
@@ -384,7 +384,7 @@ terisolasi — prasyarat yang harus dipenuhi sebelum klaim-klaim lanjutan bermak
 5. **R5 — Kerentanan evasion (SQ6).** Klaim: NIDS ML rapuh terhadap evasion [F28],[F33],[F34]; terapkan FGSM/PGD + saliency/JSMA (dibatasi agar flow tetap valid) pada model FL hasil R3, sapu ε ∈ {0,05; 0,1; 0,2; 0,5}. Hasil: klaim **bertahan telak**. Bahkan pada ε kecil (0,05), *attack success rate* sudah 0,96 untuk ketiga serangan; pada ε ≥ 0,2 FGSM/PGD mencapai ASR 1,00 (seluruh serangan yang semula terdeteksi berhasil lolos), menekan MCC dari −0,026 ke −0,15. JSMA sedikit kurang agresif (ASR 0,96–0,99) namun tetap sangat tinggi. Model FL lintas-dataset ini nyaris sepenuhnya dapat dielak.
 6. **R6 — Adversarial training sebagai defense (SQ6).** Klaim: adversarial training menaikkan robustness dengan trade-off [F16],[F17],[F32]; latih ulang FL dengan adv-examples (run S\_R6) lalu bandingkan dengan model bersih (S\_R3). Hasil: **tidak bertahan pada setting ini**, dengan nuansa yang kami laporkan jujur. Adversarial training sedikit menaikkan MCC *bersih* (−0,026 → 0,070) tetapi **gagal** pada robustness: MCC di bawah PGD justru memburuk (−0,152 → −0,222). Jadi menambahkan adv-examples pada FL lintas-dataset yang sudah lemah tidak memulihkan ketahanan evasion — menggemakan batas adversarial training pada domain sulit yang juga teramati di literatur. (Catatan: MCC absolut rendah di R5/R6 karena basis R3 sendiri sudah runtuh; nilai dibaca sebagai arah, bukan performa mutlak.)
 
-### 4.3 Tabel hasil (ISI dari CSV/log nyata)
+### 4.3 Results table
 
 > **Catatan sumber angka.** R1, R2, R4-komunikasi, dan uji signifikansi FL-vs-lokal
 > adalah **simulasi terkontrol** di notebook (logika FedAvg/FedProx/MLP/z-score identik
@@ -405,7 +405,7 @@ terisolasi — prasyarat yang harus dipenuhi sebelum klaim-klaim lanjutan bermak
 | R5 evasion FGSM/PGD/JSMA | adversarial | [F28][F33][F34] | attack success rate, ΔMCC | [kutip] | ASR 0,96 di ε=0,05; 1,00 di ε≥0,2 (FGSM/PGD); MCC −0,03→−0,15 | **Ya** (sangat rapuh) |
 | R6 adversarial training | adversarial | [F16][F17][F32] | robust MCC, Δclean-acc | [kutip] | clean −0,026→0,070 tapi robust −0,152→−0,222 (memburuk) | **Tidak** |
 
-### 4.4 Catatan kehati-hatian metodologis
+### 4.4 Methodological caveats
 - Reproduksi mengukur apakah **arah klaim** bertahan di testbed seragam — bukan meniru
   persis setup penulis asli (perbedaan dicatat di Bagian 6).
 - **Adversarial pada tabular flow ≠ pada citra.** Perturbasi FGSM/PGD/JSMA dibatasi
@@ -415,7 +415,7 @@ terisolasi — prasyarat yang harus dipenuhi sebelum klaim-klaim lanjutan bermak
 
 ---
 
-## 5. Diskusi: Gap & Agenda Riset
+## 5. Discussion: Gaps & Research Agenda
 
 > Sumber: `references/state_of_art_gap_federated_nids.md` (gap a–e + rekomendasi).
 
@@ -433,7 +433,7 @@ terisolasi — prasyarat yang harus dipenuhi sebelum klaim-klaim lanjutan bermak
 
 ---
 
-## 6. Ancaman Validitas
+## 6. Threats to Validity
 
 - Perbedaan setup reproduksi vs penulis asli (dataset, model, hyperparameter).
 - Dua dataset saja (CIC + UNSW) — generalisasi terbatas; diakui jujur.
@@ -445,7 +445,7 @@ terisolasi — prasyarat yang harus dipenuhi sebelum klaim-klaim lanjutan bermak
 
 ---
 
-## 7. Kesimpulan
+## 7. Conclusion
 
 Survei ini menggabungkan telaah tematik literatur FL-NIDS terkini (2020–2026) dengan
 sesuatu yang jarang dilakukan survei lain: verifikasi reproduktif atas klaim-klaim
@@ -482,7 +482,7 @@ mereproduksi dan membangun di atasnya.
 
 ---
 
-## Referensi
+## References
 
 > Gaya IEEE, 30 referensi. Dipilih dari `references/federated_refs_clean.md` dengan
 > keterwakilan empat tema + semua karya yang disitasi di Bagian 3–4. Penomoran di
