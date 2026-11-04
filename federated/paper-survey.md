@@ -67,7 +67,7 @@ komponen inti pertahanan siber, dari jaringan enterprise hingga Internet of Thin
 (IoT) dan Industrial IoT. Namun model yang akurat menuntut data lalu lintas yang
 besar dan representatif, sementara data semacam itu bersifat sensitif dan jarang
 boleh keluar dari batas organisasi karena alasan privasi serta kepatuhan regulasi.
-Ketegangan inilah—antara kebutuhan data lintas-organisasi dan larangan berbagi data
+Tarik-menarik inilah—antara kebutuhan data lintas-organisasi dan larangan berbagi data
 mentah—yang mendorong minat besar pada pembelajaran terdistribusi untuk keamanan
 jaringan.
 
