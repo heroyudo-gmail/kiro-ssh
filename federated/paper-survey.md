@@ -72,7 +72,7 @@ mentah—yang mendorong minat besar pada pembelajaran terdistribusi untuk keaman
 jaringan.
 
 Federated Learning (FL) menawarkan jalan keluar yang menarik: alih-alih memusatkan
-data, setiap peserta melatih model pada datanya sendiri dan hanya mempertukarkan
+data, setiap client melatih model pada datanya sendiri dan hanya mempertukarkan
 pembaruan model (bobot atau gradien), sehingga data mentah tetap berada di sisi
 masing-masing organisasi [F1]. Dalam satu dekade terakhir, penerapan FL untuk NIDS
 tumbuh pesat dan telah dirangkum oleh sejumlah survei dan taksonomi yang memetakan
