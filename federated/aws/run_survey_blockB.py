@@ -157,18 +157,40 @@ def setup_nodes(ids):
     return True
 
 
-def launch_run(out, run_tag, rounds, extra_client=""):
-    agg, cic, unsw = out["AggregatorId"], out["ClientCICId"], out["ClientUNSWId"]
+LEGACY_SEED = 42   # run lama S_R3 / S_R6 memakai seed 42 (nama tanpa sufiks)
+
+
+def run_tag_for(base, seed):
+    """Seed 42 -> nama lama (S_R3 / S_R6); seed lain -> S_R3_s13, S_R6_s13, ..."""
+    return base if seed == LEGACY_SEED else f"{base}_s{seed}"
+
+
+def build_cmds(run_tag, rounds, extra_client="", seed=LEGACY_SEED):
     base = f"cd /opt/fed && python3 {NODE_SCRIPT}"
+    # log per-run agar dua run paralel tidak saling menimpa
+    return {
+        "cic": f'{base} --role client --client-id cic --run {run_tag} --rounds {rounds} '
+               f'--local-epochs 5 --seed {seed} {extra_client} >/tmp/{run_tag}_cic.log 2>&1 &',
+        "unsw": f'{base} --role client --client-id unsw --run {run_tag} --rounds {rounds} '
+                f'--local-epochs 5 --seed {seed} {extra_client} >/tmp/{run_tag}_unsw.log 2>&1 &',
+        "agg": f'{base} --role aggregator --run {run_tag} --clients cic,unsw --rounds {rounds} '
+               f'--mu 0.0 --seed {seed} >/tmp/{run_tag}_agg.log 2>&1 &',
+    }
+
+
+def run_exists(run_tag):
+    return s3_exists(f"{BASE}/run_{run_tag}/global_final.npz")
+
+
+def launch_run(out, run_tag, rounds, extra_client="", seed=LEGACY_SEED):
+    agg, cic, unsw = out["AggregatorId"], out["ClientCICId"], out["ClientUNSWId"]
+    cmds = build_cmds(run_tag, rounds, extra_client, seed)
     # client dulu (background), lalu aggregator (background)
-    ssm_run(cic, [f'{base} --role client --client-id cic --run {run_tag} '
-                  f'--rounds {rounds} --local-epochs 5 {extra_client} >/tmp/cic.log 2>&1 &'], wait=False)
-    ssm_run(unsw, [f'{base} --role client --client-id unsw --run {run_tag} '
-                   f'--rounds {rounds} --local-epochs 5 {extra_client} >/tmp/unsw.log 2>&1 &'], wait=False)
+    ssm_run(cic, [cmds["cic"]], wait=False)
+    ssm_run(unsw, [cmds["unsw"]], wait=False)
     time.sleep(5)
-    ssm_run(agg, [f'{base} --role aggregator --run {run_tag} --clients cic,unsw '
-                  f'--rounds {rounds} --mu 0.0 >/tmp/agg.log 2>&1 &'], wait=False)
-    log(f"run {run_tag} dilepas (rounds={rounds}, extra_client='{extra_client.strip()}')")
+    ssm_run(agg, [cmds["agg"]], wait=False)
+    log(f"run {run_tag} dilepas (seed={seed}, rounds={rounds}, extra_client='{extra_client.strip()}')")
 
 
 def wait_final(run_tag, rounds, poll=20):
@@ -186,10 +208,11 @@ def wait_final(run_tag, rounds, poll=20):
     return False
 
 
-def tail_log(out, which="agg", n=25):
+def tail_log(out, which="agg", n=25, tag="S_R3"):
     iid = {"agg": out["AggregatorId"], "cic": out["ClientCICId"],
            "unsw": out["ClientUNSWId"]}[which]
-    inv = ssm_run(iid, [f"tail -n {n} /tmp/{which}.log"], timeout=60)
+    inv = ssm_run(iid, [f"tail -n {n} /tmp/{tag}_{which}.log 2>/dev/null || tail -n {n} /tmp/{which}.log"],
+                  timeout=60)
     print(inv.get("StandardOutputContent", ""))
 
 
@@ -202,9 +225,10 @@ def show_status():
         for k in ("AggregatorId", "ClientCICId", "ClientUNSWId"):
             if k in out:
                 log(f"  {k} = {out[k]}")
-    for tag in ("S_R3", "S_R6"):
-        key = f"{BASE}/run_{tag}/global_final.npz"
-        log(f"  {tag}/global_final.npz : {'ADA' if s3_exists(key) else 'belum'}")
+    for seed in (13, 42, 101, 202, 303):
+        for base in ("S_R3", "S_R6"):
+            tag = run_tag_for(base, seed)
+            log(f"  seed {seed:<3} {tag}/global_final.npz : {'ADA' if run_exists(tag) else 'belum'}")
 
 
 def teardown():
@@ -223,10 +247,30 @@ def main():
     ap.add_argument("--setup", action="store_true", help="setup node via SSM")
     ap.add_argument("--run-r3", action="store_true", help="jalankan S_R3 (FedAvg) + tunggu")
     ap.add_argument("--run-r6", action="store_true", help="jalankan S_R6 (adv-training) + tunggu")
+    ap.add_argument("--seeds", type=int, nargs="+", default=None,
+                    help="daftar seed untuk --run-r3/--run-r6 (default: 42 = run lama). "
+                         "Contoh: --seeds 13 101 202 303")
+    ap.add_argument("--dry-run", action="store_true",
+                    help="cetak perintah per run lalu keluar (tanpa menyentuh AWS)")
     ap.add_argument("--status", action="store_true", help="cek status stack & hasil")
     ap.add_argument("--tail", choices=["agg", "cic", "unsw"], help="tail log via SSM")
     ap.add_argument("--teardown", action="store_true", help="hapus stack (WAJIB setelah selesai)")
     a = ap.parse_args()
+    seeds = a.seeds or [LEGACY_SEED]
+    kinds = []
+    if a.run_r3:
+        kinds.append(("S_R3", ""))
+    if a.run_r6:
+        kinds.append(("S_R6", "--adv-ratio 0.5 --adv-eps 0.1"))
+
+    if a.dry_run:
+        for seed in seeds:
+            for base, extra in kinds:
+                tag = run_tag_for(base, seed)
+                print(f"[dry-run] seed={seed} tag={tag}")
+                for role, cmd in build_cmds(tag, a.rounds, extra, seed).items():
+                    print(f"   {role:5s} {cmd}")
+        return
 
     if a.teardown:
         teardown()
@@ -250,13 +294,21 @@ def main():
         if not setup_nodes(ids):
             sys.exit(1)
 
-    if a.run_r3:
-        launch_run(out, "S_R3", a.rounds, extra_client="")
-        wait_final("S_R3", a.rounds)
-
-    if a.run_r6:
-        launch_run(out, "S_R6", a.rounds, extra_client="--adv-ratio 0.5 --adv-eps 0.1")
-        wait_final("S_R6", a.rounds)
+    # per seed: R3 dan R6 dilepas bersamaan (paralel), lalu ditunggu keduanya.
+    # Run yang global_final.npz-nya sudah ada dilewati (aman untuk di-resume).
+    for seed in seeds:
+        pending = []
+        for base, extra in kinds:
+            tag = run_tag_for(base, seed)
+            if run_exists(tag):
+                log(f"lewati {tag}: global_final.npz sudah ada")
+                continue
+            launch_run(out, tag, a.rounds, extra_client=extra, seed=seed)
+            pending.append(tag)
+        for tag in pending:
+            if not wait_final(tag, a.rounds):
+                log(f"GAGAL menunggu {tag}; hentikan agar tidak boros. Cek log via --tail.")
+                sys.exit(1)
 
     if a.tail:
         tail_log(out, a.tail)
