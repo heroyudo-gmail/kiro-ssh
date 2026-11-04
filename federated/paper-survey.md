@@ -323,8 +323,8 @@ pelengkap yang dapat direproduksi.
 **(A) Reproduksi klaim inti FL-NIDS**
 1. **R1 — FedAvg vs FedProx (SQ3/SQ4).** Klaim: FedProx lebih stabil di non-IID [F16],[F31]. Hasil: pada setting lintas-dataset (klien CIC + UNSW, rata-rata tiga seed), FedAvg dan FedProx **tidak berbeda bermakna**: FedAvg MCC 0,572, FedProx(μ=0,01) 0,573, FedProx(μ=0,1) 0,571 — selisih ≈0,001, dan ketiganya konvergen cepat (7–11 ronde). Pola yang sama muncul pada fondasi single-dataset (α=0,1): FedAvg 0,555 vs FedProx(μ=0,1) 0,553. Di kedua setting FedProx **tidak** memperbaiki FedAvg; arah klaim tidak bertahan pada rentang hyperparameter yang kami uji.
 2. **R2 — Dampak non-IID (SQ2/SQ4).** Klaim: performa FL turun seiring heterogenitas [F11]; sweep Dirichlet α. Hasil: **dampaknya bergantung domain** — sebuah nuansa yang jarang disorot. Pada klien **CIC**, pola klasik muncul: MCC relatif stabil pada α besar (0,512 di α=100) lalu runtuh dan menjadi sangat tak stabil pada α rendah (0,387 di α=0,1, dengan std melonjak ke 0,27). Sebaliknya pada klien **UNSW**, performa **tidak** turun seiring non-IID — justru datar bahkan sedikit naik (0,621 di α=100; 0,655 di α=0,1), karena kelas UNSW relatif mudah dipisah sehingga partisi timpang pun tak merusak. Jadi klaim "non-IID menurunkan FL" **bertahan pada CIC tetapi tidak pada UNSW**: efeknya nyata namun tidak universal, tergantung separabilitas domain. Pada fondasi single-dataset penurunan juga tegas (0,826 di α=100 → 0,555 di α=0,1, CI membengkak ~46×).
-3. **R3 — Cross-dataset FL (SQ4).** Klaim: FL lintas-dataset sulit/menurun tajam [F11]; uji dengan alignment manual. Hasil: [TBD].
-4. **R4 — Biaya cloud nyata (SQ5).** Efisiensi komunikasi FL [F8]: komunikasi/latensi/throughput per ronde di AWS. Hasil (komunikasi): model ringan 9.601 parameter → 76,8 KB per unggahan klien, sehingga ≈300 KB lalu lintas agregator per ronde untuk dua klien (dua arah). Ongkos komunikasi FL-NIDS dengan model sekelas ini sangat kecil. Latensi dan throughput per-ronde diukur dari log run EC2 (R3/R6) dan dilaporkan bersama hasil tersebut: [TBD dari log EC2].
+3. **R3 — Cross-dataset FL (SQ4).** Klaim: FL lintas-dataset sulit/menurun tajam [F11]; uji dengan alignment manual pada testbed AWS tiga-EC2 (100 ronde FedAvg, klien CIC + UNSW). Hasil: klaim **bertahan telak**. Model federated runtuh ke MCC **−0,026** (recall 0,058, precision 0,260) — praktis setara tebak acak. Sebagai batas atas, model *centralized* (data kedua domain digabung, tak diizinkan di FL nyata) hanya mencapai MCC 0,545; sedangkan *local-only* juga buruk (CIC 0,115; UNSW −0,110). Dengan kata lain, menyatukan dua jaringan yang sangat berbeda lewat FedAvg dan penyelarasan sembilan fitur generik **gagal mentransfer**: tidak ada model tunggal yang baik di kedua domain sekaligus. Arah klaim Lavaur dkk. [F11] terkonfirmasi di lingkungan kami.
+4. **R4 — Biaya cloud nyata (SQ5).** Efisiensi komunikasi FL [F8]: komunikasi/latensi per ronde di AWS. Hasil: model ringan 9.601 parameter → 76,8 KB per unggahan klien, sehingga ≈300 KB lalu lintas agregator per ronde untuk dua klien (dua arah) — ongkos komunikasi sangat kecil. Dari jejak waktu objek pada run S\_R3 (tiga EC2 `t3.medium`, bobot via S3), 100 ronde memakan ≈27 menit (round 0 → ronde final), yakni ≈16 detik per ronde termasuk sinkronisasi S3; angka ini diukur saat dua run berjalan paralel sehingga menanggung CPU bersama (batas atas latensi, dilaporkan apa adanya).
 
 Sebagai pemeriksaan dasar bahwa federasi memang bermanfaat, kami membandingkan model
 federated dengan baseline *local-only* (tiap klien melatih sendiri tanpa agregasi)
@@ -334,27 +334,29 @@ p=0,0005). Jadi agregasi federated memberi keuntungan nyata di atas pelatihan lo
 terisolasi — prasyarat yang harus dipenuhi sebelum klaim-klaim lanjutan bermakna.
 
 **(B) Eksperimen adversarial**
-5. **R5 — Kerentanan evasion (SQ6).** Klaim: NIDS ML rapuh terhadap evasion [F28],[F33],[F34]; terapkan FGSM/PGD + saliency/JSMA; ukur attack success rate & ΔMCC (homogen & cross). Hasil: [TBD].
-6. **R6 — Adversarial training sebagai defense (SQ6).** Klaim: adversarial training menaikkan robustness dengan trade-off [F16],[F17],[F32]; latih ulang FL dgn adv-examples; ukur robust MCC vs penurunan clean accuracy. Hasil: [TBD].
+5. **R5 — Kerentanan evasion (SQ6).** Klaim: NIDS ML rapuh terhadap evasion [F28],[F33],[F34]; terapkan FGSM/PGD + saliency/JSMA (dibatasi agar flow tetap valid) pada model FL hasil R3, sapu ε ∈ {0,05; 0,1; 0,2; 0,5}. Hasil: klaim **bertahan telak**. Bahkan pada ε kecil (0,05), *attack success rate* sudah 0,96 untuk ketiga serangan; pada ε ≥ 0,2 FGSM/PGD mencapai ASR 1,00 (seluruh serangan yang semula terdeteksi berhasil lolos), menekan MCC dari −0,026 ke −0,15. JSMA sedikit kurang agresif (ASR 0,96–0,99) namun tetap sangat tinggi. Model FL lintas-dataset ini nyaris sepenuhnya dapat dielak.
+6. **R6 — Adversarial training sebagai defense (SQ6).** Klaim: adversarial training menaikkan robustness dengan trade-off [F16],[F17],[F32]; latih ulang FL dengan adv-examples (run S\_R6) lalu bandingkan dengan model bersih (S\_R3). Hasil: **tidak bertahan pada setting ini**, dengan nuansa yang kami laporkan jujur. Adversarial training sedikit menaikkan MCC *bersih* (−0,026 → 0,070) tetapi **gagal** pada robustness: MCC di bawah PGD justru memburuk (−0,152 → −0,222). Jadi menambahkan adv-examples pada FL lintas-dataset yang sudah lemah tidak memulihkan ketahanan evasion — menggemakan batas adversarial training pada domain sulit yang juga teramati di literatur. (Catatan: MCC absolut rendah di R5/R6 karena basis R3 sendiri sudah runtuh; nilai dibaca sebagai arah, bukan performa mutlak.)
 
 ### 4.3 Tabel hasil (ISI dari CSV/log nyata)
 
 > **Catatan sumber angka.** R1, R2, R4-komunikasi, dan uji signifikansi FL-vs-lokal
 > adalah **simulasi terkontrol** di notebook (logika FedAvg/FedProx/MLP/z-score identik
 > dengan node EC2 `fed_node_survey.py`); R1/R4 memakai klien CIC+UNSW (tiga seed), R2
-> menyapu Dirichlet α per domain. Fondasi single-dataset (CSE-CIC-IDS2018, K=4, lima
-> seed {13,42,101,202,303}) dilaporkan sebagai pembanding. R3, R5, R6 dan R4-latensi
-> dijalankan nyata pada testbed AWS tiga-EC2 dan masih `[TBD]`. Perbedaan simulasi vs
-> run EC2 dicatat terbuka di Bagian 6.
+> menyapu Dirichlet α per domain. **R3, R5, R6 dijalankan nyata** pada testbed AWS
+> tiga-EC2 `t3.medium` (100 ronde FedAvg, bobot via S3, akses SSM): R3 dari run bersih
+> (S\_R3), R6 dari run adversarial-training (S\_R6), R5 adalah evaluasi evasion offline
+> terhadap model S\_R3. R4-latensi diturunkan dari jejak waktu objek S3 per ronde.
+> Fondasi single-dataset (CSE-CIC-IDS2018, K=4, lima seed) dilaporkan sebagai pembanding.
+> Perbedaan simulasi vs run EC2 dicatat terbuka di Bagian 6.
 
 | Klaim | Jenis | Sumber literatur | Metrik | Angka dilaporkan asli | **Angka lab kami** | Bertahan? |
 |---|---|---|---|---|---|---|
 | R1 FedProx>FedAvg (non-IID) | reproduksi | [F16][F31] | MCC (cross-dataset, 3 seed) | [kutip] | FedAvg 0,572 vs FedProx(μ=0,1) 0,571; selisih ≈0,001, tak bermakna | **Tidak** |
 | R2 non-IID menurunkan FL | reproduksi | [F11] | MCC vs α per domain | [kutip] | CIC: 0,512→0,387 (α=100→0,1), runtuh & tak stabil. UNSW: 0,621→0,655, datar | **Bergantung domain** (ya di CIC, tidak di UNSW) |
-| R3 cross-dataset FL sulit | reproduksi | [F11] | MCC | [kutip] | [TBD] | [TBD] |
-| R4 biaya komunikasi | reproduksi | [F8] | bytes/round, latensi | [kutip] | 76,8 KB/unggahan klien; ≈300 KB/ronde (2 klien); latensi [TBD] | — |
-| R5 evasion FGSM/PGD/JSMA | adversarial | [F28][F33][F34] | attack success rate, ΔMCC | [kutip] | [TBD] | [TBD] |
-| R6 adversarial training | adversarial | [F16][F17][F32] | robust MCC, Δclean-acc | [kutip] | [TBD] | [TBD] |
+| R3 cross-dataset FL sulit | reproduksi | [F11] | MCC | [kutip] | federated −0,026 vs centralized 0,545; FL cross-dataset runtuh | **Ya** |
+| R4 biaya komunikasi | reproduksi | [F8] | bytes/round, latensi | [kutip] | 76,8 KB/unggahan; ≈300 KB/ronde (2 klien); ≈16 s/ronde (CPU bersama) | — |
+| R5 evasion FGSM/PGD/JSMA | adversarial | [F28][F33][F34] | attack success rate, ΔMCC | [kutip] | ASR 0,96 di ε=0,05; 1,00 di ε≥0,2 (FGSM/PGD); MCC −0,03→−0,15 | **Ya** (sangat rapuh) |
+| R6 adversarial training | adversarial | [F16][F17][F32] | robust MCC, Δclean-acc | [kutip] | clean −0,026→0,070 tapi robust −0,152→−0,222 (memburuk) | **Tidak** |
 
 ### 4.4 Catatan kehati-hatian metodologis
 - Reproduksi mengukur apakah **arah klaim** bertahan di testbed seragam — bukan meniru
