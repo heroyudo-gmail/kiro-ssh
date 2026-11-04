@@ -298,9 +298,7 @@ Justru ketaksebandingan inilah yang memotivasi verifikasi terkontrol pada testbe
 seragam di Bagian 4, di mana metode-metode tersebut dibandingkan dengan metrik dan
 data yang sama.
 
-*Table 1. Qualitative comparison of representative FL-NIDS frameworks. Performance
-figures are reported as-is by the original authors and are not directly comparable
-across rows (different metrics, datasets, and setups).*
+*Table 1. Comparison of representative FL-NIDS frameworks.*
 
 | Framework | Fokus | Metodologi kunci | Dataset | Performa (dilaporkan asli) | Cross-dataset? | Cloud deploy? |
 |---|---|---|---|---|---|---|
@@ -338,10 +336,7 @@ skema sembilan fitur ini **pada datanya sendiri**.
 ![Penyelarasan fitur: hanya sembilan fitur beririsan di kedua ekstraktor yang dipakai;
 fitur spesifik-ekstraktor dibuang.](figure-fed/fig_feature_alignment.png)
 
-*Figure 1. Cross-dataset feature alignment. From ~80 CICFlowMeter features and 42
-Argus/Bro features, only the nine features with a 1:1 counterpart are kept as a shared
-schema; extractor-specific features are dropped. Each client applies this schema to
-its own data.*
+*Figure 1. Cross-dataset feature alignment.*
 
 Arsitektur federasi yang kami bangun mengikuti pola horizontal cross-silo dengan satu
 **aggregator** dan dua **client**, masing-masing memegang satu dataset—Client-CIC
@@ -364,9 +359,7 @@ dilaporkan pada R4.
 ![Arsitektur federated learning: satu aggregator (FedAvg) dan dua client (CIC, UNSW)
 yang bertukar model global dan pembaruan lokal.](figure-fed/fig_fl_architecture.png)
 
-*Figure 2. The federated learning architecture used: one aggregator (FedAvg) and two
-clients (Client-CIC, Client-UNSW). Each round, the aggregator sends the global model;
-each client trains locally on its own data and returns a weight update.*
+*Figure 2. Federated learning architecture.*
 
 - **Topologi**: 1 agregator + K client (K=2 untuk cross-dataset; K=4–10 untuk partisi
   non-IID per-dataset); 3 EC2 publik nyata, transport bobot via S3, akses via SSM.
@@ -411,8 +404,7 @@ terisolasi — prasyarat yang harus dipenuhi sebelum klaim-klaim lanjutan bermak
 > Fondasi single-dataset (CSE-CIC-IDS2018, K=4, lima seed) dilaporkan sebagai pembanding.
 > Perbedaan simulasi vs run EC2 dicatat terbuka di Bagian 6.
 
-*Table 2. Reproducible verification of six representative FL-NIDS claims on a uniform
-testbed: our measured figures and whether each claim holds.*
+*Table 2. Verification results for the six FL-NIDS claims.*
 
 | Klaim | Jenis | Sumber literatur | Metrik | Angka dilaporkan asli | **Angka lab kami** | Bertahan? |
 |---|---|---|---|---|---|---|
