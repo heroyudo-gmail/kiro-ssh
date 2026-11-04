@@ -26,8 +26,9 @@
 >
 > **Daftar isi naskah (judul bab English, isi Indonesia):**
 > Abstract · 1 Introduction · 2 Survey Methodology · 3 Thematic Review ·
-> 4 Reproduction Study & Adversarial Experiments on AWS · 5 Discussion: Gaps & Research Agenda ·
-> 6 Threats to Validity · 7 Conclusion · References · (Lampiran: catatan kerja)
+> 4 Reproduction Study & Adversarial Experiments on AWS ·
+> 5 Discussion: Gaps, Research Agenda & Threats to Validity · 6 Conclusion ·
+> References · (Lampiran: catatan kerja)
 
 ---
 
@@ -154,8 +155,7 @@ Sisa makalah ini disusun sebagai berikut. Bagian 2 menjelaskan metodologi survei
 (protokol pencarian, kriteria inklusi, dan ekstraksi data). Bagian 3 menyajikan
 telaah tematik atas keempat tema beserta tabel komparatif. Bagian 4 memaparkan studi
 reproduksi dan eksperimen adversarial pada testbed AWS. Bagian 5 membahas pemetaan
-celah dan agenda riset, Bagian 6 ancaman validitas, dan Bagian 7 menutup dengan
-kesimpulan.
+celah, agenda riset, dan ancaman validitas; Bagian 6 menutup dengan kesimpulan.
 
 ---
 
@@ -226,7 +226,7 @@ identik agar perbedaan yang terukur benar-benar berasal dari faktor yang diuji
 implementasi. Kedua, **kehati-hatian interpretasi**: reproduksi mengukur apakah
 *arah* suatu klaim bertahan di lingkungan setara, bukan meniru persis setiap detail
 setup penulis asli; perbedaan setup dilaporkan terbuka sebagai ancaman validitas
-(Bagian 6). Ketiga, **keterulangan**: seluruh langkah, konfigurasi, dan biaya cloud
+(Bagian 5.1). Ketiga, **keterulangan**: seluruh langkah, konfigurasi, dan biaya cloud
 didokumentasikan agar dapat diulang dengan anggaran wajar. Rincian teknis
 testbed—topologi, dataset, model, dan daftar klaim yang diuji—dipaparkan pada
 Bagian 4, sedangkan prosedur operasional lengkap disediakan sebagai materi
@@ -402,7 +402,7 @@ terisolasi — prasyarat yang harus dipenuhi sebelum klaim-klaim lanjutan bermak
 > (S\_R3), R6 dari run adversarial-training (S\_R6), R5 adalah evaluasi evasion offline
 > terhadap model S\_R3. R4-latensi diturunkan dari jejak waktu objek S3 per ronde.
 > Fondasi single-dataset (CSE-CIC-IDS2018, K=4, lima seed) dilaporkan sebagai pembanding.
-> Perbedaan simulasi vs run EC2 dicatat terbuka di Bagian 6.
+> Perbedaan simulasi vs run EC2 dicatat terbuka di Bagian 5.1.
 
 *Table 2. Verification results for the six FL-NIDS claims.*
 
@@ -415,17 +415,19 @@ terisolasi — prasyarat yang harus dipenuhi sebelum klaim-klaim lanjutan bermak
 | R5 evasion FGSM/PGD/JSMA | adversarial | [F28][F33][F34] | attack success rate, ΔMCC | [kutip] | ASR 0,96 di ε=0,05; 1,00 di ε≥0,2 (FGSM/PGD); MCC −0,03→−0,15 | **Ya** (sangat rapuh) |
 | R6 adversarial training | adversarial | [F16][F17][F32] | robust MCC, Δclean-acc | [kutip] | clean −0,026→0,070 tapi robust −0,152→−0,222 (memburuk) | **Tidak** |
 
-### 4.4 Methodological caveats
-- Reproduksi mengukur apakah **arah klaim** bertahan di testbed seragam — bukan meniru
-  persis setup penulis asli (perbedaan dicatat di Bagian 6).
-- **Adversarial pada tabular flow ≠ pada citra.** Perturbasi FGSM/PGD/JSMA dibatasi
-  agar flow tetap valid (non-negatif, konsisten antar-fitur, dalam batas protokol) dan
-  hanya pada fitur yang dapat dimanipulasi penyerang. Konsekuensinya R5/R6 lebih
-  konservatif daripada serangan citra — itu disengaja dan dilaporkan di Bagian 6.
+Dua catatan metodologis perlu ditekankan dalam membaca Tabel 2. Pertama, verifikasi
+kami mengukur apakah *arah* sebuah klaim bertahan di testbed yang seragam, bukan meniru
+persis setup penulis asli; selisih angka absolut terhadap karya asli karenanya wajar
+dan bukan indikasi kegagalan reproduksi. Kedua, eksperimen adversarial pada R5 dan R6
+bekerja di ruang fitur aliran (tabular), bukan pada citra: perturbasi FGSM/PGD/JSMA
+kami batasi agar aliran tetap valid—non-negatif, konsisten antar-fitur, dan hanya pada
+fitur yang realistis dapat dimanipulasi penyerang—sehingga serangannya lebih
+konservatif daripada serangan tak-terkendala pada domain citra. Konsekuensi kedua hal
+ini terhadap generalisasi temuan dibahas lebih lanjut pada Bagian 5.1.
 
 ---
 
-## 5. Discussion: Gaps & Research Agenda
+## 5. Discussion: Gaps, Research Agenda & Threats to Validity
 
 Menyatukan telaah tematik (Bagian 3) dengan hasil verifikasi (Bagian 4) memunculkan
 sejumlah celah yang saling berkaitan, dan beberapa di antaranya justru dipertegas oleh
@@ -459,9 +461,7 @@ sadar-arah dan sadar-domain alih-alih adversarial training statis, protokol eval
 lintas-dataset yang bebas kebocoran, serta validasi pada testbed cloud yang lebih
 mendekati skala produksi.
 
----
-
-## 6. Threats to Validity
+### 5.1 Threats to Validity
 
 Beberapa hal membatasi sejauh mana temuan kami dapat digeneralisasi, dan kami
 menyampaikannya secara terbuka agar pembaca dapat menimbang bobot setiap klaim.
@@ -493,7 +493,7 @@ seberapa besar kendali yang sesungguhnya dimiliki penyerang atas lalu lintas.
 
 ---
 
-## 7. Conclusion
+## 6. Conclusion
 
 Survei ini menggabungkan telaah tematik literatur FL-NIDS terkini (2020–2026) dengan
 sesuatu yang jarang dilakukan survei lain: verifikasi reproduktif atas klaim-klaim
@@ -665,7 +665,7 @@ dibingkai sebagai verifikasi klaim literatur [F11], bukan temuan metode kami.
 - **C4 — Protokol & baseline reproduktif** (SQ4 → Bagian 2+4): resep lab beranggaran wajar.
 - **C5 — Eksperimen adversarial pada celah terbuka** (SQ6 → Bagian 4): evasion + adversarial training; mengisi gap a.
 
-**Antisipasi keberatan reviewer (jawab di Bagian 6):**
+**Antisipasi keberatan reviewer (jawab di Bagian 5.1):**
 - *"Hanya 2 dataset."* → controlled reproduction (kedalaman & kesebandingan), diakui sebagai batas.
 - *"Survey atau research paper?"* → survey ber-bukti; Bagian 4 melayani tujuan survei, bukan metode baru.
 - *"Temuan negatif?"* → dibingkai sebagai mengkuantifikasi KAPAN & MENGAPA FL gagal (informatif).
@@ -697,7 +697,7 @@ dibingkai sebagai verifikasi klaim literatur [F11], bukan temuan metode kami.
 3. [ ] Lengkapi tabel komparatif §3.5 dari `literature_review` §6.
 4. [ ] Kutip angka "dilaporkan asli" tiap klaim R1–R6.
 5. [ ] Naratifkan Bagian 3, 5, 6 (saat ini bullet).
-6. [ ] Finalkan Abstrak & Bagian 7 setelah angka masuk.
+6. [ ] Finalkan Abstrak & Bagian 6 (Conclusion) setelah angka masuk.
 7. [ ] Konversi ke `.tex`/template JICTRA; verifikasi DOI/venue (khususnya FedPKT).
 
 ## Lampiran B — Rencana praktik real-case di AWS (operasional)
