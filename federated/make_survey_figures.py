@@ -78,27 +78,27 @@ def fig_feature_alignment():
     ax.axis("off")
 
     # left: CIC raw features
-    _box(ax, 0.3, 5.6, 2.9, 3.4,
-         "CSE-CIC-IDS2018\n(CICFlowMeter)\n~80 raw features\ne.g. Flow Duration,\nTot Fwd Pkts,\nFlow IAT, flags ...",
+    _box(ax, 0.3, 6.1, 2.9, 2.9,
+         "CSE-CIC-IDS2018\n(CICFlowMeter)\n~80 raw features\ne.g. Flow Duration,\nTot Fwd Pkts, flags ...",
          "#d6e4f5", ec="#3a6ea5", fs=8.3)
     # right: UNSW raw features
-    _box(ax, 6.8, 5.6, 2.9, 3.4,
-         "UNSW-NB15\n(Argus/Bro)\n42 raw features\ne.g. dur, spkts,\nsttl, ct_srv_src,\ntrans_depth ...",
+    _box(ax, 6.8, 6.1, 2.9, 2.9,
+         "UNSW-NB15\n(Argus/Bro)\n42 raw features\ne.g. dur, spkts,\nsttl, ct_srv_src ...",
          "#d6e4f5", ec="#3a6ea5", fs=8.3)
 
     # center: 9 aligned features
-    _box(ax, 3.5, 5.9, 3.0, 2.9,
+    _box(ax, 3.5, 5.9, 3.0, 3.1,
          "9 aligned features\n(1:1 name mapping)\n\nduration, fwd_pkts,\nbwd_pkts, fwd_bytes,\nbwd_bytes, fwd_mean,\nbwd_mean, src_load,\ndst_load",
          "#cfe8d6", ec="#2e8b57", fs=8.2, bold=False)
 
     # arrows: raw -> aligned (keep only the intersection)
-    _arrow(ax, (3.2, 7.3), (3.5, 7.3), color="#2e8b57")
-    _arrow(ax, (6.8, 7.3), (6.5, 7.3), color="#2e8b57")
+    _arrow(ax, (3.2, 7.4), (3.5, 7.4), color="#2e8b57")
+    _arrow(ax, (6.8, 7.4), (6.5, 7.4), color="#2e8b57")
 
-    # dropped note
-    ax.text(1.75, 5.25, "extractor-specific\nfeatures dropped", fontsize=7.5,
+    # dropped note (below the shortened boxes, with clear gap)
+    ax.text(1.75, 5.55, "extractor-specific\nfeatures dropped", fontsize=7.5,
             color="#b03030", ha="center", style="italic")
-    ax.text(8.25, 5.25, "extractor-specific\nfeatures dropped", fontsize=7.5,
+    ax.text(8.25, 5.55, "extractor-specific\nfeatures dropped", fontsize=7.5,
             color="#b03030", ha="center", style="italic")
 
     # bottom: feeds each client
