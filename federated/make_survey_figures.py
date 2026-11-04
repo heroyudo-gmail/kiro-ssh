@@ -121,6 +121,62 @@ def fig_feature_alignment():
     print("  figure-fed/fig_feature_alignment.png")
 
 
+def fig_results():
+    """(a) R2: MCC vs Dirichlet alpha per domain; (b) R3: cross-dataset collapse.
+
+    Values copied from the measured CSVs (survey_out/r2_noniid_sweep_{cic,unsw}.csv
+    and survey_out/r3_crossdataset.csv); error bars are the std over 3 seeds.
+    """
+    import numpy as np
+
+    alphas = [100, 10, 1, 0.5, 0.1, 0.05]
+    cic_m = [0.5121, 0.5159, 0.5032, 0.5411, 0.3869, 0.3936]
+    cic_s = [0.0040, 0.0059, 0.0233, 0.0126, 0.2737, 0.2792]
+    unsw_m = [0.6205, 0.6241, 0.6448, 0.6384, 0.6552, 0.6477]
+    unsw_s = [0.0117, 0.0078, 0.0126, 0.0289, 0.0136, 0.0300]
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(7.4, 2.7),
+                                   gridspec_kw={"width_ratios": [1, 1.2]})
+    x = np.arange(len(alphas))
+    ax1.errorbar(x, cic_m, yerr=cic_s, marker="o", capsize=3, lw=1.6,
+                 color="#d1495b", label="Client-CIC")
+    ax1.errorbar(x, unsw_m, yerr=unsw_s, marker="s", capsize=3, lw=1.6,
+                 color="#3a6ea5", label="Client-UNSW")
+    ax1.set_xticks(x)
+    ax1.set_xticklabels([str(a) for a in alphas], fontsize=8)
+    ax1.set_xlabel("Dirichlet concentration (high = IID, low = non-IID)", fontsize=8)
+    ax1.set_ylabel("MCC", fontsize=8)
+    ax1.set_ylim(0.0, 0.8)
+    ax1.tick_params(labelsize=8)
+    ax1.legend(fontsize=8, loc="lower left")
+    ax1.set_title("(a) Non-IID impact per domain", fontsize=9)
+
+    # (b) R3 on the union test set (values from survey_out/r3_crossdataset.csv, single run)
+    labels = ["Central.\n(pooled)", "Central.\n(local norm)", "Local-only\n(CIC)",
+              "Local-only\n(UNSW)", "Federated\n(local norm)", "Federated\n(pooled eval)"]
+    vals = [0.5446, 0.6047, 0.2078, 0.0017, 0.6504, -0.0264]
+    cols = ["#9a9a9a", "#6b6b6b", "#d1495b", "#3a6ea5", "#2e8b57", "#bfe3cb"]
+    bars = ax2.bar(range(6), vals, color=cols, width=0.68)
+    bars[5].set_hatch("//")
+    bars[5].set_edgecolor("#2e8b57")
+    ax2.axhline(0, color="#333", lw=0.8)
+    for b, v in zip(bars, vals):
+        ax2.text(b.get_x() + b.get_width() / 2, v + (0.03 if v >= 0 else -0.07),
+                 f"{v:.2f}", ha="center", fontsize=7.5)
+    ax2.set_xticks(range(6))
+    ax2.set_xticklabels(labels, fontsize=6.3)
+    ax2.set_ylabel("MCC (union test)", fontsize=8)
+    ax2.set_ylim(-0.2, 0.8)
+    ax2.tick_params(axis="y", labelsize=8)
+    ax2.set_title("(b) Cross-dataset FL", fontsize=9)
+
+    fig.tight_layout()
+    fig.savefig(os.path.join(FIG, "fig_results.png"))
+    plt.close(fig)
+    print("  figure-fed/fig_results.png")
+
+
 if __name__ == "__main__":
     fig_feature_alignment()
     fig_architecture()
+    fig_results()
