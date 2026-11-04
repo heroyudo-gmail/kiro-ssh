@@ -287,8 +287,20 @@ pelengkap yang dapat direproduksi.
   survei ini mencatatnya sebagai celah terbuka, bukan mengisinya.
 
 ### 3.5 State-of-the-Art Comparison Table
-> Kolom "Cross-dataset?" dan "Cloud deploy?" adalah penanda yang jarang dibuat survei
-> lain — langsung memperlihatkan celah yang kami isi di Bagian 4.
+
+Tabel 1 merangkum karya representatif FL-NIDS secara kualitatif. Kolom "Cross-dataset?"
+dan "Cloud deploy?" adalah penanda yang jarang dibuat survei lain dan langsung
+memperlihatkan celah yang kami isi di Bagian 4. Perlu ditegaskan bahwa kolom
+"Performa" **tidak sebanding antar-baris**: tiap karya memakai metrik, dataset, dan
+setup yang berbeda (mis. akurasi pada satu dataset tidak setara dengan F1 pada dataset
+lain), sehingga angka hanya dikutip apa adanya sebagaimana dilaporkan penulis asli.
+Justru ketaksebandingan inilah yang memotivasi verifikasi terkontrol pada testbed
+seragam di Bagian 4, di mana metode-metode tersebut dibandingkan dengan metrik dan
+data yang sama.
+
+*Table 1. Qualitative comparison of representative FL-NIDS frameworks. Performance
+figures are reported as-is by the original authors and are not directly comparable
+across rows (different metrics, datasets, and setups).*
 
 | Framework | Fokus | Metodologi kunci | Dataset | Performa (dilaporkan asli) | Cross-dataset? | Cloud deploy? |
 |---|---|---|---|---|---|---|
@@ -315,7 +327,7 @@ diekstrak dengan CICFlowMeter (sekitar 80 fitur) sedangkan UNSW-NB15 dengan Argu
 (42 fitur), sehingga skema fiturnya berbeda. Agar kedua client berbicara dalam ruang
 fitur yang sama, kami hanya memakai **sembilan fitur** yang memiliki padanan nama 1:1
 di kedua ekstraktor—durasi aliran, jumlah dan volume paket arah maju/mundur, rata-rata
-ukuran paket, dan laju—sebagai skema bersama (Gambar 1). Fitur yang khas pada satu
+ukuran paket, dan laju—sebagai skema bersama (Figure 1). Fitur yang khas pada satu
 ekstraktor saja (misalnya `ct_srv_src`, TTL, atau `trans_depth` pada UNSW; fitur IAT
 atau flag pada CICFlowMeter) tidak memiliki padanan dan karenanya dibuang. Angka
 sembilan ini adalah konsekuensi dari irisan kedua ekstraktor, bukan pilihan desain;
@@ -326,14 +338,14 @@ skema sembilan fitur ini **pada datanya sendiri**.
 ![Penyelarasan fitur: hanya sembilan fitur beririsan di kedua ekstraktor yang dipakai;
 fitur spesifik-ekstraktor dibuang.](figure-fed/fig_feature_alignment.png)
 
-*Gambar 1. Penyelarasan fitur lintas-dataset. Dari ~80 fitur CICFlowMeter dan 42 fitur
-Argus/Bro, hanya sembilan fitur dengan padanan 1:1 yang dipertahankan sebagai skema
-bersama; fitur spesifik-ekstraktor dibuang. Tiap client melatih pada datanya sendiri,
-dibatasi pada sembilan fitur ini.*
+*Figure 1. Cross-dataset feature alignment. From ~80 CICFlowMeter features and 42
+Argus/Bro features, only the nine features with a 1:1 counterpart are kept as a shared
+schema; extractor-specific features are dropped. Each client applies this schema to
+its own data.*
 
 Arsitektur federasi yang kami bangun mengikuti pola horizontal cross-silo dengan satu
 **aggregator** dan dua **client**, masing-masing memegang satu dataset—Client-CIC
-untuk CSE-CIC-IDS2018 dan Client-UNSW untuk UNSW-NB15 (Gambar 2). Setiap client
+untuk CSE-CIC-IDS2018 dan Client-UNSW untuk UNSW-NB15 (Figure 2). Setiap client
 melatih model pada datanya **sendiri** tanpa pernah mengirim data mentah; yang
 dipertukarkan hanyalah bobot model. Normalisasi fitur (z-score) juga dihitung **lokal
 per-client** memakai statistik masing-masing, sehingga tidak ada statistik data yang
@@ -352,9 +364,9 @@ dilaporkan pada R4.
 ![Arsitektur federated learning: satu aggregator (FedAvg) dan dua client (CIC, UNSW)
 yang bertukar model global dan pembaruan lokal.](figure-fed/fig_fl_architecture.png)
 
-*Gambar 2. Arsitektur federated learning yang dibangun: satu aggregator (FedAvg) dan
-dua client (Client-CIC, Client-UNSW). Tiap ronde, aggregator mengirim model global,
-tiap client melatih lokal pada datanya sendiri lalu mengembalikan pembaruan bobot.*
+*Figure 2. The federated learning architecture used: one aggregator (FedAvg) and two
+clients (Client-CIC, Client-UNSW). Each round, the aggregator sends the global model;
+each client trains locally on its own data and returns a weight update.*
 
 - **Topologi**: 1 agregator + K client (K=2 untuk cross-dataset; K=4–10 untuk partisi
   non-IID per-dataset); 3 EC2 publik nyata, transport bobot via S3, akses via SSM.
@@ -398,6 +410,9 @@ terisolasi — prasyarat yang harus dipenuhi sebelum klaim-klaim lanjutan bermak
 > terhadap model S\_R3. R4-latensi diturunkan dari jejak waktu objek S3 per ronde.
 > Fondasi single-dataset (CSE-CIC-IDS2018, K=4, lima seed) dilaporkan sebagai pembanding.
 > Perbedaan simulasi vs run EC2 dicatat terbuka di Bagian 6.
+
+*Table 2. Reproducible verification of six representative FL-NIDS claims on a uniform
+testbed: our measured figures and whether each claim holds.*
 
 | Klaim | Jenis | Sumber literatur | Metrik | Angka dilaporkan asli | **Angka lab kami** | Bertahan? |
 |---|---|---|---|---|---|---|
