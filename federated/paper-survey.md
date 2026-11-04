@@ -32,6 +32,17 @@
 
 ---
 
+> **STATUS — HASIL R3, R5, R6 SEMENTARA (jangan dikutip).** Evaluasi awal model
+> federated dari EC2 memakai statistik z-score gabungan, padahal model dilatih dengan
+> z-score lokal per-client. Ketidakcocokan ini terbukti mengubah hasil secara drastis:
+> pada pemeriksaan diagnostik, MCC union model R3 berubah dari −0,026 (protokol lama) ke
+> sekitar +0,65 (statistik lokal). Notebook `s03`, `s14`, `s15` sudah dikoreksi (evaluasi
+> lokal per client + ASR didefinisikan ulang) dan menunggu dijalankan ulang di SageMaker.
+> Angka R3/R5/R6, Abstract, Bagian 5, dan Conclusion di bawah **harus ditulis ulang** dari
+> hasil baru. R1, R2, R4, dan perbandingan FL-vs-lokal berasal dari simulasi `s05–s07`
+> yang training dan evaluasinya sama-sama memakai z-score global bersama (konsisten),
+> tetapi itu **bukan** z-score lokal seperti pada run EC2.
+
 ## Abstract
 
 Federated Learning (FL) menjanjikan pelatihan Network Intrusion Detection System
@@ -48,7 +59,7 @@ yang seragam** menggunakan CSE-CIC-IDS2018 dan UNSW-NB15. Kami juga
 menjalankan eksperimen adversarial—evasion (FGSM, PGD, saliency/JSMA) dan adversarial
 training—pada setting lintas-dataset yang belum pernah diuji bersama. Dari enam klaim,
 dua terkonfirmasi (FL lintas-dataset runtuh, MCC −0,03 vs 0,55 terpusat; evasion
-sangat mudah, attack success rate hingga 1,00), satu bergantung domain
+menaikkan attack success rate dari 0,94 ke 1,00), satu bergantung domain
 (dampak non-IID nyata pada CIC tetapi tidak pada UNSW), dan dua tidak bertahan
 (FedProx tidak mengungguli FedAvg; adversarial training menaikkan akurasi bersih namun
 gagal memulihkan robustness). Biaya cloud terukur kecil (≈300 KB dan ≈16 detik per
@@ -387,7 +398,9 @@ yang bertukar model global dan pembaruan lokal.](figure-fed/fig_fl_architecture.
 - **Model terkontrol**: arsitektur ML/DL ringan identik di semua skenario; baseline
   centralized sebagai sanity-check.
 - **Metrik**: MCC (utama), recall/precision/F1, balanced-accuracy; + biaya FL
-  (rounds-to-converge, bytes/round, latensi, throughput). Multi-seed {13,42,101,202,303}.
+  (rounds-to-converge, bytes/round, latensi). Seed: R1/R2 memakai 3 seed {13,42,101};
+  perbandingan FL-vs-lokal memakai 5 seed {13,42,101,202,303}; run EC2 (R3/R5/R6) hanya
+  satu run (seed 42), sehingga tanpa interval kepercayaan.
 
 ### 4.2 Claims under test
 > Dua kelompok: **(A) reproduksi** klaim inti (R1–R4) dan **(B) eksperimen adversarial**
@@ -407,7 +420,7 @@ p=0,0005). Jadi agregasi federated memberi keuntungan nyata di atas pelatihan lo
 terisolasi — prasyarat yang harus dipenuhi sebelum klaim-klaim lanjutan bermakna.
 
 **(B) Eksperimen adversarial**
-5. **R5 — Kerentanan evasion (SQ6).** Klaim: NIDS ML rapuh terhadap evasion [25],[26],[8]; terapkan FGSM/PGD + saliency/JSMA (dibatasi agar flow tetap valid) pada model FL hasil R3, sapu ε ∈ {0,05; 0,1; 0,2; 0,5}. Hasil: klaim **bertahan telak**. Bahkan pada ε kecil (0,05), *attack success rate* sudah 0,96 untuk ketiga serangan; pada ε ≥ 0,2 FGSM/PGD mencapai ASR 1,00 (seluruh serangan yang semula terdeteksi berhasil lolos), menekan MCC dari −0,026 ke −0,15. JSMA sedikit kurang agresif (ASR 0,96–0,99) namun tetap sangat tinggi. Model FL lintas-dataset ini nyaris sepenuhnya dapat dielak.
+5. **R5 — Kerentanan evasion (SQ6).** Klaim: NIDS ML rapuh terhadap evasion [25],[26],[8]; terapkan FGSM/PGD + saliency/JSMA (perturbasi di-clip ke rentang persentil 1–99 tiap fitur pada ruang z-score) pada model FL hasil R3, sapu ε ∈ {0,05; 0,1; 0,2; 0,5}. Hasil: klaim **bertahan, tetapi harus dibaca hati-hati**. ASR di sini adalah proporsi serangan yang diprediksi benign setelah perturbasi, termasuk yang sudah lolos sebelum diserang. Karena model federated hasil R3 hanya mendeteksi 5,8% serangan (recall 0,058), ASR dasarnya sudah ≈0,94 tanpa perturbasi apa pun (1 − recall). Evasion menaikkannya menjadi 0,96 pada ε=0,05 dan 1,00 pada ε ≥ 0,2 untuk FGSM/PGD (JSMA 0,96–0,99), serta menekan MCC dari −0,026 ke −0,15. Jadi tambahan akibat serangan hanya ≈6 poin persentase: model ini sudah nyaris buta sebelum diserang, sehingga R5 menunjukkan kerapuhan tetapi tidak mengukur ketahanan model yang sehat.
 6. **R6 — Adversarial training sebagai defense (SQ6).** Klaim: adversarial training menaikkan robustness dengan trade-off [6],[21],[27]; latih ulang FL dengan adv-examples (run S\_R6) lalu bandingkan dengan model bersih (S\_R3). Hasil: **tidak bertahan pada setting ini**, dengan nuansa yang kami laporkan jujur. Adversarial training sedikit menaikkan MCC *bersih* (−0,026 → 0,070) tetapi **gagal** pada robustness: MCC di bawah PGD justru memburuk (−0,152 → −0,222). Jadi menambahkan adv-examples pada FL lintas-dataset yang sudah lemah tidak memulihkan ketahanan evasion — menggemakan batas adversarial training pada domain sulit yang juga teramati di literatur. (Catatan: MCC absolut rendah di R5/R6 karena basis R3 sendiri sudah runtuh; nilai dibaca sebagai arah, bukan performa mutlak.)
 
 ### 4.3 Results table
@@ -430,17 +443,18 @@ terisolasi — prasyarat yang harus dipenuhi sebelum klaim-klaim lanjutan bermak
 | R2 non-IID menurunkan FL | reproduksi | [5] | MCC vs α per domain | [kutip] | CIC: 0,512→0,387 (α=100→0,1), runtuh & tak stabil. UNSW: 0,621→0,655, datar | **Bergantung domain** (ya di CIC, tidak di UNSW) |
 | R3 cross-dataset FL sulit | reproduksi | [5] | MCC | [kutip] | federated −0,026 vs centralized 0,545; FL cross-dataset runtuh | **Ya** |
 | R4 biaya komunikasi | reproduksi | [15] | bytes/round, latensi | [kutip] | 76,8 KB/unggahan; ≈300 KB/ronde (2 klien); ≈16 s/ronde (CPU bersama) | — |
-| R5 evasion FGSM/PGD/JSMA | adversarial | [25][26][8] | attack success rate, ΔMCC | [kutip] | ASR 0,96 di ε=0,05; 1,00 di ε≥0,2 (FGSM/PGD); MCC −0,03→−0,15 | **Ya** (sangat rapuh) |
+| R5 evasion FGSM/PGD/JSMA | adversarial | [25][26][8] | attack success rate, ΔMCC | [kutip] | ASR dasar ≈0,94 (recall 0,058) → 0,96 (ε=0,05) → 1,00 (ε≥0,2); MCC −0,03→−0,15 | **Ya, namun basis sudah lemah** |
 | R6 adversarial training | adversarial | [6][21][27] | robust MCC, Δclean-acc | [kutip] | clean −0,026→0,070 tapi robust −0,152→−0,222 (memburuk) | **Tidak** |
 
 Dua catatan metodologis perlu ditekankan dalam membaca Tabel 2. Pertama, verifikasi
 kami mengukur apakah *arah* sebuah klaim bertahan di testbed yang seragam, bukan meniru
 persis setup penulis asli; selisih angka absolut terhadap karya asli karenanya wajar
 dan bukan indikasi kegagalan reproduksi. Kedua, eksperimen adversarial pada R5 dan R6
-bekerja di ruang fitur aliran (tabular), bukan pada citra: perturbasi FGSM/PGD/JSMA
-kami batasi agar aliran tetap valid—non-negatif, konsisten antar-fitur, dan hanya pada
-fitur yang realistis dapat dimanipulasi penyerang—sehingga serangannya lebih
-konservatif daripada serangan tak-terkendala pada domain citra. Konsekuensi kedua hal
+bekerja di ruang fitur aliran (tabular), bukan pada paket mentah: perturbasi FGSM/PGD/JSMA
+kami clip ke rentang persentil 1–99 tiap fitur pada ruang z-score, tanpa aturan konsistensi
+protokol antar-fitur (mis. hubungan byte dan paket), sehingga hasilnya merupakan taksiran
+kerentanan di ruang fitur, bukan bukti bahwa lalu lintas yang dimanipulasi dapat benar-benar
+dikirim. Konsekuensi kedua hal
 ini terhadap generalisasi temuan dibahas lebih lanjut pada Bagian 5.1.
 
 ---
@@ -454,7 +468,7 @@ learning dan robustness adversarial ketika diuji secara lintas-dataset. Literatu
 cenderung membahas keduanya secara terpisah—ada yang menguji FL lintas-jaringan, ada
 yang menguji evasion—tetapi jarang menggabungkannya pada satu eksperimen. Hasil R5 dan
 R6 memperlihatkan mengapa penggabungan itu penting: model FL lintas-dataset yang sudah
-rapuh ternyata nyaris sepenuhnya dapat dielak, dan adversarial training—pertahanan yang
+rapuh semakin mudah dielak (ASR naik dari 0,94 menjadi 1,00), dan adversarial training—pertahanan yang
 paling sering disarankan—gagal memulihkannya. Dengan kata lain, celah ini bukan sekadar
 kekosongan literatur, melainkan persoalan nyata yang baru terlihat saat kedua dimensi
 diuji bersama.
@@ -501,10 +515,10 @@ bias.
 
 Ketiga, dan paling penting untuk ditafsirkan dengan hati-hati, eksperimen adversarial
 kami (R5–R6) bekerja pada ruang fitur aliran (tabular), bukan pada paket mentah.
-Perturbasi FGSM/PGD/JSMA kami batasi agar aliran tetap valid—nilai non-negatif,
-konsisten antar-fitur, dan hanya pada fitur yang realistis dapat dimanipulasi
-penyerang. Akibatnya, serangan kami lebih konservatif daripada serangan tak-terkendala
-pada domain citra, dan hasil attack success rate harus dibaca dalam kerangka threat
+Perturbasi FGSM/PGD/JSMA kami clip ke rentang persentil 1–99 tiap fitur tanpa aturan
+konsistensi protokol antar-fitur, sehingga aliran hasil perturbasi belum tentu dapat dikirim
+secara nyata. Selain itu, ASR dihitung terhadap seluruh serangan, sedangkan model R3 sudah
+melewatkan sekitar 94% serangan sebelum diserang, sehingga hasil attack success rate harus dibaca dalam kerangka threat
 model yang kami asumsikan (pengetahuan white/black-box, kapabilitas terbatas pada
 fitur yang dapat diubah). Kerentanan nyata di lapangan bisa berbeda, bergantung pada
 seberapa besar kendali yang sesungguhnya dimiliki penyerang atas lalu lintas.
@@ -522,9 +536,9 @@ tidak bertahan.
 
 Dari enam klaim yang diuji, gambarannya beragam. Dua klaim terkonfirmasi: FL
 lintas-dataset memang sulit—menggabungkan CSE-CIC-IDS2018 dan UNSW-NB15 lewat FedAvg
-membuat MCC runtuh ke −0,03, jauh di bawah batas atas terpusat 0,55; dan model sangat
-rapuh terhadap evasion, dengan attack success rate 0,96 pada perturbasi kecil hingga
-1,00 pada perturbasi sedang untuk FGSM dan PGD. Satu klaim bergantung domain: dampak
+membuat MCC runtuh ke −0,03, jauh di bawah batas atas terpusat 0,55; dan evasion
+menaikkan attack success rate dari 0,94 (model sudah nyaris buta) menjadi 0,96 pada perturbasi
+kecil dan 1,00 pada perturbasi sedang untuk FGSM dan PGD. Satu klaim bergantung domain: dampak
 non-IID yang ditekankan literatur nyata pada klien CIC (MCC jatuh dari 0,51 ke 0,39
 seiring heterogenitas meningkat) tetapi hampir tidak terlihat pada UNSW yang kelasnya
 lebih mudah dipisah—sebuah nuansa yang menunjukkan bahwa "non-IID menurunkan FL" tidak
@@ -767,7 +781,7 @@ dibingkai sebagai verifikasi klaim literatur [F11], bukan temuan metode kami.
 
 ### B.5 Mekanik serangan adversarial pada flow (penting)
 - **Constrained perturbation**: hanya fitur yang dikuasai penyerang; bukan fitur turunan sistem.
-- **Hormati batas domain**: non-negatif, konsisten antar-fitur, clip ke range valid.
+- **Hormati batas domain**: (rencana awal: non-negatif, konsisten antar-fitur). Yang benar-benar diimplementasikan di s14: clip persentil 1–99 per fitur di ruang z-score saja.
 - **Metode (semua sudah ada)**: FGSM & PGD (ber-ε) + JSMA/saliency (pilih fitur via peta saliency).
 - **Pelaporan jujur**: penurunan kemungkinan lebih moderat daripada domain citra; wajar untuk NIDS.
 - **Threat model eksplisit**: pengetahuan (white/black-box), kapabilitas (fitur yang bisa diubah), tujuan (evasion).

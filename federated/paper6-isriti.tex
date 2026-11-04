@@ -1,3 +1,9 @@
+% STATUS: R3/R5/R6 numbers below are STALE. The federated model was evaluated with
+% pooled z-score statistics, but it was trained with per-client LOCAL z-score on EC2.
+% Fixing the normalization mismatch changes R3 union MCC from -0.026 to about +0.65 in
+% a diagnostic check. Notebooks s03/s14/s15 have been corrected and must be re-run on
+% SageMaker before Abstract, Results, and Conclusion here are rewritten. Do not submit
+% as-is.
 \documentclass[conference]{IEEEtran}
 \IEEEoverridecommandlockouts
 \usepackage{cite}
@@ -127,6 +133,45 @@ adversarial robustness experiments (evasion and adversarial training) in a
 cross-dataset setting not previously tested together; and (5) a reproducible protocol
 and lab recipe at reasonable cloud cost, as a baseline for the research community.
 
+\section{Survey Methodology}
+Our methodology has two complementary components: a systematic literature-review
+protocol that builds the thematic taxonomy (Section~II), and a reproducible
+verification protocol that drives the testbed experiments (Sections III--IV).
+
+\textit{Literature search.} We searched in three overlapping phases covering the main
+axes of FL-NIDS: (i) federated learning for NIDS and cross-dataset generalization;
+(ii) adversarial robustness and DDoS detection; and (iii) few-shot, meta-learning, and
+cross-domain feature alignment. Searches ran on SciSpace, Google Scholar, and arXiv,
+restricted to 2020--2026 to stay current, with queries refined iteratively from core
+terms such as \textit{federated learning}, \textit{network intrusion detection},
+\textit{non-IID}, \textit{adversarial}, \textit{few-shot}, and \textit{cross-dataset}.
+
+\textit{Inclusion/exclusion.} A work was included if it (i) was published in
+2020--2026; (ii) focused on federated learning, adversarial robustness, or
+few-shot/transfer in a network-intrusion-detection context; (iii) presented a clear
+experimental methodology or technical framework; and (iv) was peer-reviewed or a
+credible preprint. Works that only mentioned FL or NIDS in passing, without a
+reviewable methodological contribution, were excluded. For each included work we
+extracted a uniform set of attributes---federation architecture, aggregation
+algorithm, model, non-IID handling, adversarial/Byzantine defense, few-shot/transfer
+approach, dataset and metrics, and, importantly for this survey, whether the work was
+evaluated cross-dataset and whether it carried cloud-deployment evidence. These last
+two attributes become the marker columns in Table~\ref{tab:sota} and directly motivate
+the gap we fill in Section~\ref{sec:results}.
+
+\textit{Reproducible verification.} Rather than taking each author's reported numbers
+at face value, we select representative claims from already published methods and
+re-run them on one uniform testbed---same platform, model architecture,
+hyperparameters, metrics, and the same two benchmark datasets across scenarios---so
+results are comparable across methods. This enforces three disciplines: uniformity
+(every setting uses an identical model and pipeline, so measured differences stem from
+the tested factor---aggregation, non-IID degree, or cross-dataset transfer---not
+implementation differences); interpretive caution (reproduction measures whether the
+\emph{direction} of a claim holds in an equivalent environment, not an exact
+replication of every detail of the original setup); and repeatability (every step,
+configuration, and cloud cost is documented so the experiments can be repeated on a
+reasonable budget).
+
 \section{Related Work}
 We organize recent FL-NIDS literature into four themes.
 
@@ -231,6 +276,37 @@ the FL model itself.
 \label{fig:arch}
 \end{figure}
 
+\subsection{Dataset and Experimental Setup}
+Table~\ref{tab:dataset} summarizes the resulting per-client partitions after feature
+alignment. CSE-CIC-IDS2018 is split 70/30 and the training split is stratified
+down-sampled to about 100{,}000 flows to keep the CIC:UNSW ratio close to 1.2:1;
+UNSW-NB15 uses the dataset's original train/test release. Both clients keep their own
+held-out test set, and z-score statistics are fit per client on its own training split
+only, never shared.
+
+\begin{table}[htbp]
+\caption{Per-client dataset partitions (flow counts).}
+\label{tab:dataset}
+\begin{center}
+\footnotesize
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Client (split)} & \textbf{Total} & \textbf{Attack} & \textbf{Benign} \\
+\hline
+CIC (train) & 100{,}000 & 16{,}929 (16.9\%) & 83{,}071 \\
+CIC (test)  & 486{,}979 & 82{,}443 (16.9\%) & 404{,}536 \\
+UNSW (train)& 82{,}332  & 45{,}332 (55.1\%) & 37{,}000 \\
+UNSW (test) & 175{,}341 & 119{,}341 (68.1\%)& 56{,}000 \\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
+
+All clients use an identical lightweight MLP ($d{\to}128{\to}64{\to}1$, ReLU, sigmoid
+output, binary cross-entropy loss, SGD) trained for 5 local epochs per round. The
+model is intentionally small (9{,}601 parameters) so the study is reproducible on
+commodity cloud instances and so communication cost (R4) stays interpretable.
+
 \subsection{Claims and Metrics}
 We test six representative claims, grouped as reproduction (R1--R4) and adversarial
 (R5--R6): R1 FedAvg versus FedProx; R2 non-IID impact (Dirichlet $\alpha$ sweep); R3
@@ -268,10 +344,16 @@ upload is 76.8~KB, so aggregator traffic is about 300~KB per round for two clien
 From S3 object timestamps, 100 rounds take about 27 minutes (about 16 seconds per round
 including S3 sync), measured while two runs shared CPU.
 
-\textit{R5 (evasion vulnerability): holds strongly.} Even at a small budget
-($\epsilon{=}0.05$) the attack success rate is already 0.96 for all three attacks; at
-$\epsilon{\geq}0.2$, FGSM and PGD reach ASR 1.00, pushing MCC from $-0.026$ to $-0.15$.
-The cross-dataset FL model is almost fully evadable.
+\textit{R5 (evasion vulnerability): holds, but must be read carefully.} Attack success
+rate (ASR) here is the fraction of attack flows predicted benign after perturbation,
+including flows that were already missed before any attack. Because the federated
+model from R3 only detects 5.8\% of attacks (recall 0.058), the baseline ASR without
+any perturbation is already about 0.94 ($1-\text{recall}$). Evasion raises this to 0.96
+at $\epsilon{=}0.05$ and to 1.00 at $\epsilon{\geq}0.2$ for FGSM and PGD (JSMA
+0.96--0.99), and pushes MCC from $-0.026$ to $-0.15$. The marginal effect of the attack
+itself is therefore only about six percentage points: the model is already nearly blind
+before being attacked, so R5 demonstrates fragility but does not measure the robustness
+of a healthy detector.
 
 \textit{R6 (adversarial training as defense): does not hold here.} Adversarial training
 slightly raises clean MCC ($-0.026 \rightarrow 0.070$) but fails on robustness: MCC
@@ -287,8 +369,24 @@ Two caveats frame these results. First, verification measures whether the
 \emph{direction} of a claim holds on a uniform testbed, not an exact replication of the
 original setup, so absolute differences from the original papers are expected. Second,
 our adversarial experiments act on the tabular flow-feature space, not raw packets:
-FGSM/PGD/JSMA perturbations are constrained so flows stay valid, making the attacks
-more conservative than unconstrained image-domain attacks.
+FGSM/PGD/JSMA perturbations are clipped to the 1st--99th percentile range of each
+feature in z-score space, without enforcing cross-feature protocol consistency (e.g.,
+the byte-to-packet relationship), so the resulting flows are a feature-space estimate
+of vulnerability rather than evidence that the manipulated traffic could actually be
+sent on the wire.
+
+Fig.~\ref{fig:results} visualizes two of the sharpest findings: (a) the domain-dependent
+non-IID effect behind R2, where MCC collapses and destabilizes on Client-CIC at low
+$\alpha$ but stays flat on Client-UNSW; and (b) the cross-dataset collapse behind R3,
+where the federated model performs close to the weaker local-only baseline and far
+below the (unrealistic) centralized upper bound.
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=\columnwidth]{fig_results.png}}
+\caption{(a) Non-IID impact differs by domain (R2); (b) cross-dataset FL collapses
+relative to the centralized upper bound (R3).}
+\label{fig:results}
+\end{figure}
 
 \begin{table}[htbp]
 \caption{Verification results for the six FL-NIDS claims.}
@@ -303,9 +401,10 @@ R1 FedProx$>$FedAvg & 0.572 vs.\ 0.571, n.s. & No \\
 R2 non-IID harms FL & CIC drops; UNSW flat & Domain dep. \\
 R3 cross-dataset hard & fed.\ $-0.03$ vs.\ cen.\ 0.55 & Yes \\
 R4 comm.\ cost & 300 KB, 16 s / round & --- \\
-R5 evasion & ASR 0.96--1.00 & Yes \\
+R5 evasion & base ASR 0.94 $\rightarrow$ 1.00 & Yes* \\
 R6 adv.\ training & clean up, robust worse & No \\
 \hline
+\multicolumn{3}{l}{\footnotesize *Baseline already fragile (R3 recall 0.058).}
 \end{tabular}
 \end{center}
 \end{table}
