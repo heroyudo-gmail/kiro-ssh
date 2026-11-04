@@ -307,33 +307,30 @@ pelengkap yang dapat direproduksi.
 
 ### 4.1 Rancangan testbed
 
-Arsitektur federasi yang kami bangun terdiri atas **tiga server EC2 nyata** (tipe
-`t3.medium`) di dalam satu VPC AWS (`10.7.0.0/16`, region `ap-southeast-1`): satu
+Arsitektur federasi yang kami bangun mengikuti pola horizontal cross-silo dengan satu
 **aggregator** dan dua **client**, masing-masing memegang satu dataset—Client-CIC
-untuk CSE-CIC-IDS2018 dan Client-UNSW untuk UNSW-NB15. Berbeda dari implementasi FL
-yang membuka soket langsung antar-node, pertukaran bobot pada testbed ini dilakukan
-melalui **Amazon S3** sebagai hub: tidak ada koneksi masuk publik ke instance, dan
-akses operator hanya lewat AWS Systems Manager (SSM). Rancangan ini membuat teardown
-cukup dengan menghapus satu stack CloudFormation (biaya nol setelahnya) dan membuat
-seluruh lalu lintas model dapat diaudit sebagai objek S3.
+untuk CSE-CIC-IDS2018 dan Client-UNSW untuk UNSW-NB15 (Gambar 1). Setiap client
+melatih model pada datanya **sendiri** tanpa pernah mengirim data mentah; yang
+dipertukarkan hanyalah bobot model. Normalisasi fitur (z-score) juga dihitung **lokal
+per-client** memakai statistik masing-masing, sehingga tidak ada statistik data yang
+bocor antar-client—menjaga prinsip privasi FL.
 
-Aliran proses per ronde mengikuti FedAvg standar (Gambar~\ref{fig:arch}). Pada ronde
-$t$, aggregator mempublikasikan bobot global ke S3; kedua client mengunduhnya, melatih
-model secara lokal pada datanya sendiri (dengan z-score **lokal per-client** sehingga
-statistik mentah tidak pernah dibagikan), lalu mengunggah pembaruan bobotnya kembali
-ke S3; aggregator menunggu kedua pembaruan, menggabungkannya dengan FedAvg (rata-rata
-berbobot ukuran data), lalu memulai ronde berikutnya. Siklus ini diulang selama 100
-ronde hingga menghasilkan `global_final.npz`. Karena tidak ada soket langsung
-antar-node, komunikasi sepenuhnya termediasi S3—desain yang sekaligus menyederhanakan
-keamanan jaringan dan memudahkan pencatatan biaya komunikasi (R4).
+Aliran proses per ronde mengikuti FedAvg standar. Pada tiap ronde, aggregator
+mengirimkan model global ke kedua client; setiap client melatihnya secara lokal lalu
+mengembalikan pembaruan bobotnya; aggregator menggabungkan kedua pembaruan dengan
+FedAvg (rata-rata berbobot ukuran data) untuk membentuk model global ronde berikutnya.
+Siklus ini diulang selama 100 ronde. Pada realisasinya, ketiga simpul dijalankan
+sebagai tiga instans EC2 `t3.medium` dan pertukaran bobot dimediasi melalui Amazon S3
+(tanpa soket langsung antar-node), tetapi detail infrastruktur ini bersifat
+operasional dan tidak mengubah model FL itu sendiri; pengukuran biaya komunikasinya
+dilaporkan pada R4.
 
-![Arsitektur testbed FL: satu aggregator dan dua client (CIC, UNSW) bertukar bobot
-melalui S3; akses operator via SSM.](figure-fed/fig_fl_architecture.png)
+![Arsitektur federated learning: satu aggregator (FedAvg) dan dua client (CIC, UNSW)
+yang bertukar model global dan pembaruan lokal.](figure-fed/fig_fl_architecture.png)
 
-*Gambar 1. Arsitektur federated learning yang dibangun pada testbed AWS: satu
-aggregator dan dua client (Client-CIC, Client-UNSW) saling bertukar bobot per ronde
-melalui Amazon S3, tanpa soket langsung antar-node; operator mengakses instance hanya
-melalui SSM.*
+*Gambar 1. Arsitektur federated learning yang dibangun: satu aggregator (FedAvg) dan
+dua client (Client-CIC, Client-UNSW). Tiap ronde, aggregator mengirim model global,
+tiap client melatih lokal pada datanya sendiri lalu mengembalikan pembaruan bobot.*
 
 - **Topologi**: 1 agregator + K client (K=2 untuk cross-dataset; K=4–10 untuk partisi
   non-IID per-dataset); 3 EC2 publik nyata, transport bobot via S3, akses via SSM.
