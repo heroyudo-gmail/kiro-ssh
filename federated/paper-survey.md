@@ -442,6 +442,14 @@ federated yang sama memberi MCC 0,647 bila dievaluasi dengan statistik lokal yan
 bahwa kesimpulan lintas-dataset tidak boleh ditarik tanpa menyebutkan protokol normalisasinya.
 Konsekuensi terhadap generalisasi temuan dibahas lebih lanjut pada Bagian 5.1.
 
+Figure 3 meringkas dua hasil kunci tersebut: panel (a) memperlihatkan dampak non-IID yang
+berbeda antar-domain (R2), sedangkan panel (b) membandingkan model federated, centralized, dan
+local-only pada test gabungan lintas-dataset (R3).
+
+![(a) Dampak non-IID berbeda antar-domain (R2); (b) FL lintas-dataset pada test gabungan (R3). Batang galat: standar deviasi (a), CI95 (b).](figure-fed/fig_results.png)
+
+*Figure 3. Cross-dataset results.*
+
 ---
 
 ## 5. Discussion: Gaps, Research Agenda & Threats to Validity
