@@ -36,7 +36,7 @@ ferryas@pens.ac.id}
 \maketitle
 
 \begin{abstract}
-Federated learning (FL) promises collaborative training of network intrusion detection systems (NIDS) across organizations without centralizing sensitive traffic. However, the FL-NIDS literature is fragmented: datasets, architectures, aggregation strategies, and evaluation protocols differ across studies, so reported claims are hard to compare and evidence of public-cloud deployment is scarce. This paper surveys recent FL-NIDS work in four themes and, unlike prior surveys, empirically verifies representative claims from published methods on a uniform Amazon Web Services testbed using CSE-CIC-IDS2018 and UNSW-NB15, including evasion attacks (FGSM, PGD, JSMA) and adversarial training. One claim holds (a healthy model is highly vulnerable to evasion, with an attack success rate of 0.91 at a perturbation budget of 0.1), two do not hold (FedProx does not beat FedAvg; cross-dataset FL does not collapse, reaching an MCC of 0.65 versus 0.60 for centralized training), and two are domain dependent (the non-IID impact; adversarial training improves robustness on CIC but breaks UNSW). We also show that cross-dataset conclusions are sensitive to the normalization protocol: an inconsistent evaluation makes FL appear to collapse (MCC of minus 0.03). Cloud costs are small, about 300 KB and 16 seconds per round.
+Federated learning (FL) promises collaborative training of network intrusion detection systems (NIDS) across organizations without centralizing sensitive traffic. However, the FL-NIDS literature is fragmented: datasets, architectures, aggregation strategies, and evaluation protocols differ across studies, so reported claims are hard to compare and evidence of public-cloud deployment is scarce. This paper surveys recent FL-NIDS work in four themes and, unlike prior surveys, empirically verifies representative claims from published methods on a uniform Amazon Web Services testbed using CSE-CIC-IDS2018 (CIC) and UNSW-NB15 (UNSW), including three evasion attacks and adversarial training. One claim holds (a healthy model is highly vulnerable to evasion, with an attack success rate of 0.91 at a perturbation budget of 0.1), two do not hold (FedProx does not beat FedAvg; cross-dataset FL does not collapse, reaching a Matthews correlation coefficient (MCC) of 0.65 versus 0.60 for centralized training), and two are domain dependent (the non-IID impact; adversarial training improves robustness on CIC but breaks UNSW). We also show that cross-dataset conclusions are sensitive to the normalization protocol: an inconsistent evaluation makes FL appear to collapse (MCC of minus 0.03). Cloud costs are small, about 300 KB and 16 seconds per round.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -47,7 +47,7 @@ robustness, cross-dataset generalization, cloud deployment, reproducibility
 \section{Introduction}
 Machine-learning based network intrusion detection systems (NIDS) have become a core
 component of cyber defense, from enterprise networks to the Internet of Things (IoT)
-and Industrial IoT. Accurate models, however, demand large and representative traffic
+and Industrial IoT (IIoT). Accurate models, however, demand large and representative traffic
 data, while such data are sensitive and seldom allowed to leave an organization for
 privacy and compliance reasons. This tension---between the need for cross-organization
 data and the prohibition on sharing raw traffic---motivates strong interest in
@@ -87,8 +87,8 @@ robustness, and few-shot/cross-domain transfer. The second layer, which distingu
 this survey from prior ones, is empirical verification: we re-run several
 representative claims from already published methods (e.g., FedAvg, FedProx) on a
 single uniform Amazon Web Services (AWS) testbed, with controlled model,
-hyperparameters, and metrics, using two public benchmark datasets, CSE-CIC-IDS2018 and
-UNSW-NB15. Readers thus obtain comparable numbers on one platform rather than
+hyperparameters, and metrics, using two public benchmark datasets, CSE-CIC-IDS2018 (CIC) and
+UNSW-NB15 (UNSW). Readers thus obtain comparable numbers on one platform rather than
 non-equivalent aggregates across papers. We stress that this survey does not propose a
 new method and does not use our own feature-alignment technique that is still under
 review; for the cross-dataset need we use manual feature-name alignment, a method
@@ -118,7 +118,7 @@ and~\ref{sec:results}).
 
 \textit{Literature search.} We searched in three overlapping phases covering the main
 axes of FL-NIDS: (i) federated learning for NIDS and cross-dataset generalization;
-(ii) adversarial robustness and DDoS detection; and (iii) few-shot, meta-learning, and
+(ii) adversarial robustness and distributed denial-of-service (DDoS) detection; and (iii) few-shot, meta-learning, and
 cross-domain feature alignment. Searches ran on SciSpace, Google Scholar, and arXiv,
 restricted to 2020--2026 to stay current, with queries refined iteratively from core
 terms such as \textit{federated learning}, \textit{network intrusion detection},
@@ -150,7 +150,7 @@ replication of every detail of the original setup); and repeatability (every ste
 configuration, and cloud cost is documented so the experiments can be repeated on a
 reasonable budget).
 
-\section{Related Work}
+\section{Thematic Review}
 \label{sec:related}
 We organize recent FL-NIDS literature into four themes.
 
@@ -179,13 +179,13 @@ and HADA \cite{b22} reports 66--73\% accuracy under FGSM/PGD. On the poisoning s
 Byzantine defenses reject malicious updates: FedSecIoT \cite{b23} and Saha et al.\
 \cite{b7} use multi-Krum aggregation, and FORT-IDS \cite{b24} uses outlier-robust
 aggregation; label-flipping is also observed \cite{b5}. For DDoS, GADoT \cite{b25} uses
-a GAN to generate adversarial examples during training. Benchmarks and reviews survey
+a generative adversarial network (GAN) to generate adversarial examples during training. Benchmarks and reviews survey
 this landscape \cite{b26,b8,b27}. The robustness-accuracy trade-off remains unresolved,
 especially under non-IID, and integrating adversarial evaluation with a cross-dataset
 setting is still rare---the gap we test ourselves in Section~\ref{sec:results}.
 
 \textit{Few-shot, meta-learning, and cross-domain transfer.} Ceviz et al.\ \cite{b10}
-apply few-shot FL to UAV networks and FeCoGraph \cite{b28} uses graph contrastive
+apply few-shot FL to unmanned aerial vehicle (UAV) networks and FeCoGraph \cite{b28} uses graph contrastive
 learning; Hu et al.\ \cite{b9} design federated meta-learning against advanced
 persistent threats; FedPKT \cite{b29} uses prototypical knowledge transfer; and an
 ensemble of CNN, LSTM, and Transformer \cite{b30} reports 98.5\% accuracy on six
@@ -218,7 +218,7 @@ Hu et al.\ \cite{b9} & federated meta-learning & Partial & No \\
 \end{center}
 \end{table}
 
-\section{Methodology}
+\section{Experimental Setup}
 \label{sec:setup}
 \subsection{Feature Alignment}
 The two datasets are not used with all of their features. CSE-CIC-IDS2018 is extracted
@@ -246,7 +246,7 @@ are exchanged. Feature normalization (z-score) is also computed locally per clie
 no data statistics leak between clients. Each round, the aggregator sends the global
 model; each client trains locally and returns a weight update; the aggregator combines
 the updates with FedAvg (weighted by data size) to form the next global model, for 100
-rounds. In practice the three nodes run as three \texttt{t3.medium} EC2 instances with
+rounds. In practice the three nodes run as three \texttt{t3.medium} Amazon EC2 instances with
 weights exchanged via Amazon S3, but this is operational detail that does not change
 the FL model itself.
 
@@ -280,9 +280,9 @@ UNSW (test) & 175{,}341 & 119{,}341 (68.1\%)& 56{,}000 \\
 \end{center}
 \end{table}
 
-All clients use an identical lightweight MLP ($d{\to}128{\to}64{\to}1$ with ReLU hidden
+All clients use an identical lightweight multilayer perceptron (MLP) ($d{\to}128{\to}64{\to}1$ with ReLU hidden
 units, sigmoid output, and binary cross-entropy loss; 9{,}601 parameters), trained with
-mini-batch SGD (batch size 256, learning rate 0.003) for 5 local epochs per round over 100
+mini-batch stochastic gradient descent (SGD) (batch size 256, learning rate 0.003) for 5 local epochs per round over 100
 rounds. The model is intentionally small so the study is reproducible on commodity cloud
 instances and communication cost (R4) stays interpretable.
 
@@ -310,6 +310,26 @@ under heavy class imbalance; we also report recall, precision, and attack succes
 \subsection{Verification Results}
 Table~\ref{tab:results} summarizes the verification. We report every result as-is,
 including where a claim does not hold.
+
+\begin{table}[htbp]
+\caption{Verification results for the six FL-NIDS claims.}
+\label{tab:results}
+\begin{center}
+\footnotesize
+\begin{tabular}{|l|l|c|}
+\hline
+\textbf{Claim} & \textbf{Our lab result} & \textbf{Holds?} \\
+\hline
+R1 FedProx$>$FedAvg & 0.572 vs.\ 0.571, n.s. & No \\
+R2 non-IID harms FL & CIC drops; UNSW flat & Domain dep. \\
+R3 cross-dataset hard & fed.\ 0.65 vs.\ cen.\ 0.60 & No \\
+R4 comm.\ cost & 300 KB, 16 s / round & --- \\
+R5 evasion & ASR 0.91 at budget 0.1 & Yes \\
+R6 adv.\ training & CIC up; UNSW breaks & Domain dep. \\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
 
 \textit{R1 (FedProx vs.\ FedAvg): does not hold.} On the cross-dataset setting, FedAvg
 and FedProx are statistically indistinguishable (MCC 0.572 vs.\ 0.571; difference about
@@ -410,26 +430,6 @@ statistics appears to fail (hatched bar).
 \caption{(a) Non-IID impact differs by domain (R2); (b) cross-dataset FL on the union test set (R3).}
 \label{fig:results}
 \end{figure*}
-
-\begin{table}[htbp]
-\caption{Verification results for the six FL-NIDS claims.}
-\label{tab:results}
-\begin{center}
-\footnotesize
-\begin{tabular}{|l|l|c|}
-\hline
-\textbf{Claim} & \textbf{Our lab result} & \textbf{Holds?} \\
-\hline
-R1 FedProx$>$FedAvg & 0.572 vs.\ 0.571, n.s. & No \\
-R2 non-IID harms FL & CIC drops; UNSW flat & Domain dep. \\
-R3 cross-dataset hard & fed.\ 0.65 vs.\ cen.\ 0.60 & No \\
-R4 comm.\ cost & 300 KB, 16 s / round & --- \\
-R5 evasion & ASR 0.91 at budget 0.1 & Yes \\
-R6 adv.\ training & CIC up; UNSW breaks & Domain dep. \\
-\hline
-\end{tabular}
-\end{center}
-\end{table}
 
 \subsection{Threats to Validity}
 First, verification measures whether the \emph{direction} of a claim holds on a uniform
