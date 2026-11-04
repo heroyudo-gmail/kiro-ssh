@@ -75,20 +75,20 @@ jaringan.
 Federated Learning (FL) menawarkan jalan keluar yang menarik: alih-alih memusatkan
 data, setiap client melatih model pada datanya sendiri dan hanya mempertukarkan
 pembaruan model (bobot atau gradien), sehingga data mentah tetap berada di sisi
-masing-masing organisasi [F1]. Dalam satu dekade terakhir, penerapan FL untuk NIDS
+masing-masing organisasi [1]. Dalam satu dekade terakhir, penerapan FL untuk NIDS
 tumbuh pesat dan telah dirangkum oleh sejumlah survei dan taksonomi yang memetakan
-arsitektur, strategi agregasi, serta tantangan terbukanya [F1], [F2], [F3], [F4].
+arsitektur, strategi agregasi, serta tantangan terbukanya [1], [2], [3], [4].
 
 Meski menjanjikan, FL untuk NIDS menghadapi tiga tantangan mendasar yang berulang di
 seluruh literatur. Pertama, **heterogenitas data (non-IID)**: lalu lintas dan pola
 serangan tiap organisasi berbeda, dan telah ditunjukkan bahwa FedAvg—algoritma
 agregasi baku—menurun tajam ketika distribusi antar-klien menyimpang, bahkan gagal
-pada skenario lintas-dataset [F4], [F11]. Kedua, **kerentanan adversarial dan
+pada skenario lintas-dataset [4], [5]. Kedua, **kerentanan adversarial dan
 Byzantine**: model deteksi dapat dikelabui oleh perturbasi masukan yang kecil
 (evasion), sedangkan klien jahat dapat meracuni model global melalui pembaruan yang
-dimanipulasi [F16], [F23], [F34]. Ketiga, **serangan baru dengan data terbatas**:
+dimanipulasi [6], [7], [8]. Ketiga, **serangan baru dengan data terbatas**:
 sistem harus mengenali serangan zero-day dari sedikit contoh, memotivasi pendekatan
-few-shot dan transfer lintas-domain [F36], [F39].
+few-shot dan transfer lintas-domain [9], [10].
 
 Di tengah kemajuan ini, muncul satu masalah yang justru menyulitkan pembaca dan
 praktisi: **klaim performa FL-NIDS sulit dibandingkan antar-makalah.** Setiap studi
@@ -114,7 +114,7 @@ UNSW-NB15. Dengan begitu, pembaca memperoleh angka yang sebanding pada satu plat
 bukan agregat lintas-makalah yang tidak setara. Kami menegaskan bahwa survei ini
 **tidak** mengusulkan metode baru dan **tidak** memakai teknik penyelarasan fitur
 milik kami sendiri yang masih dalam proses tinjauan; untuk kebutuhan lintas-dataset,
-kami memakai penyelarasan nama fitur manual yang sudah lazim di literatur [F11]
+kami memakai penyelarasan nama fitur manual yang sudah lazim di literatur [5]
 sebagai bagian dari setup eksperimen.
 
 Melampaui reproduksi, kami juga menutup sebagian celah yang diakui kosong oleh
@@ -240,48 +240,48 @@ pelengkap yang dapat direproduksi.
 > ditandai "(dilaporkan penulis asli)". Jawab SQ1–SQ3.
 
 ### 3.1 FL-NIDS Architectures & Aggregation Strategies (SQ1)
-- **Arsitektur dominan**: horizontal cross-silo antar organisasi/domain [F1], [F5].
-- **Agregasi baseline**: FedAvg (rata-rata berbobot ukuran data) [F1].
+- **Arsitektur dominan**: horizontal cross-silo antar organisasi/domain [1], [11].
+- **Agregasi baseline**: FedAvg (rata-rata berbobot ukuran data) [1].
 - **Varian agregasi lanjutan**:
-  - Entente [F5]: Adaptive Contribution Scaling + graph sketching untuk GNIDS
+  - Entente [11]: Adaptive Contribution Scaling + graph sketching untuk GNIDS
     (OpTC, LANL Cyber1, Pivoting; precision/recall tinggi, FPR rendah — dilaporkan asli).
-  - FedAGRU [F6]: attention-based aggregation, GRU-SVM (KDD'99, CICIDS2017, WSN-DS).
-  - FedIn-NID [F7]: agregasi global dinamis (EMA) + pemilihan client multidimensi (IIoT).
-  - FLAD [F31]: FedAvg adaptif (arithmetic mean + pemilihan client by akurasi
+  - FedAGRU [12]: attention-based aggregation, GRU-SVM (KDD'99, CICIDS2017, WSN-DS).
+  - FedIn-NID [13]: agregasi global dinamis (EMA) + pemilihan client multidimensi (IIoT).
+  - FLAD [14]: FedAvg adaptif (arithmetic mean + pemilihan client by akurasi
     validasi) untuk DDoS (CIC-DDoS2019; konvergensi lebih cepat — dilaporkan asli).
-  - Resource-efficient FL [F8]: fokus efisiensi komunikasi/komputasi.
+  - Resource-efficient FL [15]: fokus efisiensi komunikasi/komputasi.
 
 ### 3.2 Heterogeneity & Non-IID Data (SQ2)
-- **Bukti penurunan non-IID**: Lavaur dkk. [F11] menunjukkan FL-NIDS turun drastis di
+- **Bukti penurunan non-IID**: Lavaur dkk. [5] menunjukkan FL-NIDS turun drastis di
   skenario cross-dataset (UNSW-NB15, Bot-IoT, ToN_IoT, CSE-CIC-IDS2018).
 - **Solusi non-IID**:
-  - Personalisasi/klasterisasi: Sentinel (knowledge distillation) [F13]; FedDB (DBSCAN) [F9].
-  - Alignment fitur/perilaku: FedCross-VAN [F15]; graph priors Entente [F5].
-  - Arsitektur hirarkis/mist: Mist-assisted FL [F14].
-  - Evaluasi IID vs non-IID eksplisit: Benkaddour [F12] (CNN di UNSW-NB15).
+  - Personalisasi/klasterisasi: Sentinel (knowledge distillation) [16]; FedDB (DBSCAN) [17].
+  - Alignment fitur/perilaku: FedCross-VAN [18]; graph priors Entente [11].
+  - Arsitektur hirarkis/mist: Mist-assisted FL [19].
+  - Evaluasi IID vs non-IID eksplisit: Benkaddour [20] (CNN di UNSW-NB15).
 - **Catatan**: istilah "semantic feature mapping" eksplisit jarang; umumnya "feature
   alignment" implisit. Survei ini tidak mengusulkan solusi alignment baru — untuk
   cross-dataset kami memakai alignment nama fitur manual yang sudah ada sebagai setup.
 
 ### 3.3 Adversarial Robustness & Byzantine/Poisoning (SQ3)
-- **Adversarial training dalam FL**: Ennaji dkk. [F17] (Edge-IIoTset, akurasi 91,23%
-  — dilaporkan asli); SFAT [F16] ("exacerbated heterogeneity" + α-slack); HADA [F18]
+- **Adversarial training dalam FL**: Ennaji dkk. [21] (Edge-IIoTset, akurasi 91,23%
+  — dilaporkan asli); SFAT [6] ("exacerbated heterogeneity" + α-slack); HADA [22]
   (66–73% di bawah FGSM/PGD — dilaporkan asli).
-- **Byzantine/poisoning**: Multi-Krum (FedSecIoT [F21], Saha dkk. [F23]); Rey dkk.
-  [F22] (N-BaIoT); label-flipping [F11]; backdoor FL [F24]; robustness FL [F25].
-- **GAN-based adversarial training (DDoS)**: GADoT [F28]; FGAN [F29]; FGA-IDS [F30].
-- **Benchmark & review adversarial**: Dadhwal dkk. [F33]; Saini dkk. [F34]; Wang dkk.
-  [F35]; Debicha dkk. [F32].
+- **Byzantine/poisoning**: Multi-Krum (FedSecIoT [23], Saha dkk. [7]); FORT-IDS
+  [24] (agregasi robust-outlier); label-flipping [5].
+- **GAN-based adversarial training (DDoS)**: GADoT [25].
+- **Benchmark & review adversarial**: Dadhwal dkk. [26]; Saini dkk. [8]; Debicha
+  dkk. [27].
 - **Catatan**: trade-off robustness vs accuracy belum tuntas, apalagi di non-IID;
   integrasi cross-dataset + adversarial masih langka (gap a). **Tema inilah yang kami
   uji sendiri di Bagian 4 (R5–R6)**, sehingga punya dua sisi: telaah di sini +
   eksperimen di Bagian 4.
 
 ### 3.4 Few-Shot, Meta-Learning & Cross-Domain Transfer (SQ2–SQ3)
-- **Few-shot FL**: Ceviz dkk. [F39] (UAV); FeCoGraph [F37] (graph contrastive).
-- **Meta-learning**: Hu dkk. [F36] (federated meta-learning lawan APT).
-- **Prototypical/transfer cross-domain**: FedPKT [F38]; transfer IIoT Zhang dkk. [F40].
-- **Ensemble + XAI**: [F41] (CNN+LSTM+Transformer, akurasi 98,5% multi-dataset —
+- **Few-shot FL**: Ceviz dkk. [10] (UAV); FeCoGraph [28] (graph contrastive).
+- **Meta-learning**: Hu dkk. [9] (federated meta-learning lawan APT).
+- **Prototypical/transfer cross-domain**: FedPKT [29].
+- **Ensemble + XAI**: [30] (CNN+LSTM+Transformer, akurasi 98,5% multi-dataset —
   dilaporkan asli; kompleksitas tinggi).
 - **Catatan**: semantic-mapping + few-shot cross-dataset masih jarang (gap b/c);
   survei ini mencatatnya sebagai celah terbuka, bukan mengisinya.
@@ -302,13 +302,13 @@ data yang sama.
 
 | Framework | Fokus | Metodologi kunci | Dataset | Performa (dilaporkan asli) | Cross-dataset? | Cloud deploy? |
 |---|---|---|---|---|---|---|
-| Entente [F5] | GNIDS cross-silo | ACS + graph sketching | OpTC, LANL, Pivoting | High P/R, low FPR | Tidak | Tidak |
-| FedAGRU [F6] | FL wireless edge | attention + GRU-SVM | KDD'99, CICIDS2017, WSN-DS | High acc, low FAR | Tidak | Tidak |
-| FedSecIoT [F21] | Byzantine-robust | Multi-Krum | N-BaIoT | 90%+ acc, +60% robust vs FedAvg | Tidak | Tidak |
-| FLAD [F31] | FL adaptif DDoS | adaptive selection | CIC-DDoS2019 | High F1, cepat konvergen | Tidak | Tidak |
-| HADA [F18] | privacy-preserving FL | HADA + SHAP + DP | Edge-IIoTset dll | 85–89% acc, 66–73% under adv | Tidak | Edge |
-| Ensemble+XAI [F41] | ensemble + XAI | CNN+LSTM+Transformer + GAN def | 6 dataset | 98,5% acc, AUC>0,99 | Multi-dataset | Tidak |
-| Hu dkk. [F36] | few-shot meta vs APT | federated meta-learning | IDS datasets | adaptasi cepat | Sebagian | Tidak |
+| Entente [11] | GNIDS cross-silo | ACS + graph sketching | OpTC, LANL, Pivoting | High P/R, low FPR | Tidak | Tidak |
+| FedAGRU [12] | FL wireless edge | attention + GRU-SVM | KDD'99, CICIDS2017, WSN-DS | High acc, low FAR | Tidak | Tidak |
+| FedSecIoT [23] | Byzantine-robust | Multi-Krum | N-BaIoT | 90%+ acc, +60% robust vs FedAvg | Tidak | Tidak |
+| FLAD [14] | FL adaptif DDoS | adaptive selection | CIC-DDoS2019 | High F1, cepat konvergen | Tidak | Tidak |
+| HADA [22] | privacy-preserving FL | HADA + SHAP + DP | Edge-IIoTset dll | 85–89% acc, 66–73% under adv | Tidak | Edge |
+| Ensemble+XAI [30] | ensemble + XAI | CNN+LSTM+Transformer + GAN def | 6 dataset | 98,5% acc, AUC>0,99 | Multi-dataset | Tidak |
+| Hu dkk. [9] | few-shot meta vs APT | federated meta-learning | IDS datasets | adaptasi cepat | Sebagian | Tidak |
 
 ---
 
@@ -330,7 +330,7 @@ ekstraktor saja (misalnya `ct_srv_src`, TTL, atau `trans_depth` pada UNSW; fitur
 atau flag pada CICFlowMeter) tidak memiliki padanan dan karenanya dibuang. Angka
 sembilan ini adalah konsekuensi dari irisan kedua ekstraktor, bukan pilihan desain;
 penyelarasan nama fitur manual semacam ini sudah lazim di literatur cross-dataset
-[F11] dan kami perlakukan sebagai setup, bukan kontribusi. Tiap client lalu menerapkan
+[5] dan kami perlakukan sebagai setup, bukan kontribusi. Tiap client lalu menerapkan
 skema sembilan fitur ini **pada datanya sendiri**.
 
 ![Penyelarasan fitur: hanya sembilan fitur beririsan di kedua ekstraktor yang dipakai;
@@ -376,10 +376,10 @@ yang bertukar model global dan pembaruan lokal.](figure-fed/fig_fl_architecture.
 > (R5–R6). Semua memakai metode terpublikasi; yang baru adalah buktinya.
 
 **(A) Reproduksi klaim inti FL-NIDS**
-1. **R1 — FedAvg vs FedProx (SQ3/SQ4).** Klaim: FedProx lebih stabil di non-IID [F16],[F31]. Hasil: pada setting lintas-dataset (klien CIC + UNSW, rata-rata tiga seed), FedAvg dan FedProx **tidak berbeda bermakna**: FedAvg MCC 0,572, FedProx(μ=0,01) 0,573, FedProx(μ=0,1) 0,571 — selisih ≈0,001, dan ketiganya konvergen cepat (7–11 ronde). Pola yang sama muncul pada fondasi single-dataset (α=0,1): FedAvg 0,555 vs FedProx(μ=0,1) 0,553. Di kedua setting FedProx **tidak** memperbaiki FedAvg; arah klaim tidak bertahan pada rentang hyperparameter yang kami uji.
-2. **R2 — Dampak non-IID (SQ2/SQ4).** Klaim: performa FL turun seiring heterogenitas [F11]; sweep Dirichlet α. Hasil: **dampaknya bergantung domain** — sebuah nuansa yang jarang disorot. Pada klien **CIC**, pola klasik muncul: MCC relatif stabil pada α besar (0,512 di α=100) lalu runtuh dan menjadi sangat tak stabil pada α rendah (0,387 di α=0,1, dengan std melonjak ke 0,27). Sebaliknya pada klien **UNSW**, performa **tidak** turun seiring non-IID — justru datar bahkan sedikit naik (0,621 di α=100; 0,655 di α=0,1), karena kelas UNSW relatif mudah dipisah sehingga partisi timpang pun tak merusak. Jadi klaim "non-IID menurunkan FL" **bertahan pada CIC tetapi tidak pada UNSW**: efeknya nyata namun tidak universal, tergantung separabilitas domain. Pada fondasi single-dataset penurunan juga tegas (0,826 di α=100 → 0,555 di α=0,1, CI membengkak ~46×).
-3. **R3 — Cross-dataset FL (SQ4).** Klaim: FL lintas-dataset sulit/menurun tajam [F11]; uji dengan alignment manual pada testbed AWS tiga-EC2 (100 ronde FedAvg, klien CIC + UNSW). Hasil: klaim **bertahan telak**. Model federated runtuh ke MCC **−0,026** (recall 0,058, precision 0,260) — praktis setara tebak acak. Sebagai batas atas, model *centralized* (data kedua domain digabung, tak diizinkan di FL nyata) hanya mencapai MCC 0,545; sedangkan *local-only* juga buruk (CIC 0,115; UNSW −0,110). Dengan kata lain, menyatukan dua jaringan yang sangat berbeda lewat FedAvg dan penyelarasan sembilan fitur generik **gagal mentransfer**: tidak ada model tunggal yang baik di kedua domain sekaligus. Arah klaim Lavaur dkk. [F11] terkonfirmasi di lingkungan kami.
-4. **R4 — Biaya cloud nyata (SQ5).** Efisiensi komunikasi FL [F8]: komunikasi/latensi per ronde di AWS. Hasil: model ringan 9.601 parameter → 76,8 KB per unggahan klien, sehingga ≈300 KB lalu lintas agregator per ronde untuk dua klien (dua arah) — ongkos komunikasi sangat kecil. Dari jejak waktu objek pada run S\_R3 (tiga EC2 `t3.medium`, bobot via S3), 100 ronde memakan ≈27 menit (round 0 → ronde final), yakni ≈16 detik per ronde termasuk sinkronisasi S3; angka ini diukur saat dua run berjalan paralel sehingga menanggung CPU bersama (batas atas latensi, dilaporkan apa adanya).
+1. **R1 — FedAvg vs FedProx (SQ3/SQ4).** Klaim: FedProx lebih stabil di non-IID [6],[14]. Hasil: pada setting lintas-dataset (klien CIC + UNSW, rata-rata tiga seed), FedAvg dan FedProx **tidak berbeda bermakna**: FedAvg MCC 0,572, FedProx(μ=0,01) 0,573, FedProx(μ=0,1) 0,571 — selisih ≈0,001, dan ketiganya konvergen cepat (7–11 ronde). Pola yang sama muncul pada fondasi single-dataset (α=0,1): FedAvg 0,555 vs FedProx(μ=0,1) 0,553. Di kedua setting FedProx **tidak** memperbaiki FedAvg; arah klaim tidak bertahan pada rentang hyperparameter yang kami uji.
+2. **R2 — Dampak non-IID (SQ2/SQ4).** Klaim: performa FL turun seiring heterogenitas [5]; sweep Dirichlet α. Hasil: **dampaknya bergantung domain** — sebuah nuansa yang jarang disorot. Pada klien **CIC**, pola klasik muncul: MCC relatif stabil pada α besar (0,512 di α=100) lalu runtuh dan menjadi sangat tak stabil pada α rendah (0,387 di α=0,1, dengan std melonjak ke 0,27). Sebaliknya pada klien **UNSW**, performa **tidak** turun seiring non-IID — justru datar bahkan sedikit naik (0,621 di α=100; 0,655 di α=0,1), karena kelas UNSW relatif mudah dipisah sehingga partisi timpang pun tak merusak. Jadi klaim "non-IID menurunkan FL" **bertahan pada CIC tetapi tidak pada UNSW**: efeknya nyata namun tidak universal, tergantung separabilitas domain. Pada fondasi single-dataset penurunan juga tegas (0,826 di α=100 → 0,555 di α=0,1, CI membengkak ~46×).
+3. **R3 — Cross-dataset FL (SQ4).** Klaim: FL lintas-dataset sulit/menurun tajam [5]; uji dengan alignment manual pada testbed AWS tiga-EC2 (100 ronde FedAvg, klien CIC + UNSW). Hasil: klaim **bertahan telak**. Model federated runtuh ke MCC **−0,026** (recall 0,058, precision 0,260) — praktis setara tebak acak. Sebagai batas atas, model *centralized* (data kedua domain digabung, tak diizinkan di FL nyata) hanya mencapai MCC 0,545; sedangkan *local-only* juga buruk (CIC 0,115; UNSW −0,110). Dengan kata lain, menyatukan dua jaringan yang sangat berbeda lewat FedAvg dan penyelarasan sembilan fitur generik **gagal mentransfer**: tidak ada model tunggal yang baik di kedua domain sekaligus. Arah klaim Lavaur dkk. [5] terkonfirmasi di lingkungan kami.
+4. **R4 — Biaya cloud nyata (SQ5).** Efisiensi komunikasi FL [15]: komunikasi/latensi per ronde di AWS. Hasil: model ringan 9.601 parameter → 76,8 KB per unggahan klien, sehingga ≈300 KB lalu lintas agregator per ronde untuk dua klien (dua arah) — ongkos komunikasi sangat kecil. Dari jejak waktu objek pada run S\_R3 (tiga EC2 `t3.medium`, bobot via S3), 100 ronde memakan ≈27 menit (round 0 → ronde final), yakni ≈16 detik per ronde termasuk sinkronisasi S3; angka ini diukur saat dua run berjalan paralel sehingga menanggung CPU bersama (batas atas latensi, dilaporkan apa adanya).
 
 Sebagai pemeriksaan dasar bahwa federasi memang bermanfaat, kami membandingkan model
 federated dengan baseline *local-only* (tiap klien melatih sendiri tanpa agregasi)
@@ -389,8 +389,8 @@ p=0,0005). Jadi agregasi federated memberi keuntungan nyata di atas pelatihan lo
 terisolasi — prasyarat yang harus dipenuhi sebelum klaim-klaim lanjutan bermakna.
 
 **(B) Eksperimen adversarial**
-5. **R5 — Kerentanan evasion (SQ6).** Klaim: NIDS ML rapuh terhadap evasion [F28],[F33],[F34]; terapkan FGSM/PGD + saliency/JSMA (dibatasi agar flow tetap valid) pada model FL hasil R3, sapu ε ∈ {0,05; 0,1; 0,2; 0,5}. Hasil: klaim **bertahan telak**. Bahkan pada ε kecil (0,05), *attack success rate* sudah 0,96 untuk ketiga serangan; pada ε ≥ 0,2 FGSM/PGD mencapai ASR 1,00 (seluruh serangan yang semula terdeteksi berhasil lolos), menekan MCC dari −0,026 ke −0,15. JSMA sedikit kurang agresif (ASR 0,96–0,99) namun tetap sangat tinggi. Model FL lintas-dataset ini nyaris sepenuhnya dapat dielak.
-6. **R6 — Adversarial training sebagai defense (SQ6).** Klaim: adversarial training menaikkan robustness dengan trade-off [F16],[F17],[F32]; latih ulang FL dengan adv-examples (run S\_R6) lalu bandingkan dengan model bersih (S\_R3). Hasil: **tidak bertahan pada setting ini**, dengan nuansa yang kami laporkan jujur. Adversarial training sedikit menaikkan MCC *bersih* (−0,026 → 0,070) tetapi **gagal** pada robustness: MCC di bawah PGD justru memburuk (−0,152 → −0,222). Jadi menambahkan adv-examples pada FL lintas-dataset yang sudah lemah tidak memulihkan ketahanan evasion — menggemakan batas adversarial training pada domain sulit yang juga teramati di literatur. (Catatan: MCC absolut rendah di R5/R6 karena basis R3 sendiri sudah runtuh; nilai dibaca sebagai arah, bukan performa mutlak.)
+5. **R5 — Kerentanan evasion (SQ6).** Klaim: NIDS ML rapuh terhadap evasion [25],[26],[8]; terapkan FGSM/PGD + saliency/JSMA (dibatasi agar flow tetap valid) pada model FL hasil R3, sapu ε ∈ {0,05; 0,1; 0,2; 0,5}. Hasil: klaim **bertahan telak**. Bahkan pada ε kecil (0,05), *attack success rate* sudah 0,96 untuk ketiga serangan; pada ε ≥ 0,2 FGSM/PGD mencapai ASR 1,00 (seluruh serangan yang semula terdeteksi berhasil lolos), menekan MCC dari −0,026 ke −0,15. JSMA sedikit kurang agresif (ASR 0,96–0,99) namun tetap sangat tinggi. Model FL lintas-dataset ini nyaris sepenuhnya dapat dielak.
+6. **R6 — Adversarial training sebagai defense (SQ6).** Klaim: adversarial training menaikkan robustness dengan trade-off [6],[21],[27]; latih ulang FL dengan adv-examples (run S\_R6) lalu bandingkan dengan model bersih (S\_R3). Hasil: **tidak bertahan pada setting ini**, dengan nuansa yang kami laporkan jujur. Adversarial training sedikit menaikkan MCC *bersih* (−0,026 → 0,070) tetapi **gagal** pada robustness: MCC di bawah PGD justru memburuk (−0,152 → −0,222). Jadi menambahkan adv-examples pada FL lintas-dataset yang sudah lemah tidak memulihkan ketahanan evasion — menggemakan batas adversarial training pada domain sulit yang juga teramati di literatur. (Catatan: MCC absolut rendah di R5/R6 karena basis R3 sendiri sudah runtuh; nilai dibaca sebagai arah, bukan performa mutlak.)
 
 ### 4.3 Results table
 
@@ -408,12 +408,12 @@ terisolasi — prasyarat yang harus dipenuhi sebelum klaim-klaim lanjutan bermak
 
 | Klaim | Jenis | Sumber literatur | Metrik | Angka dilaporkan asli | **Angka lab kami** | Bertahan? |
 |---|---|---|---|---|---|---|
-| R1 FedProx>FedAvg (non-IID) | reproduksi | [F16][F31] | MCC (cross-dataset, 3 seed) | [kutip] | FedAvg 0,572 vs FedProx(μ=0,1) 0,571; selisih ≈0,001, tak bermakna | **Tidak** |
-| R2 non-IID menurunkan FL | reproduksi | [F11] | MCC vs α per domain | [kutip] | CIC: 0,512→0,387 (α=100→0,1), runtuh & tak stabil. UNSW: 0,621→0,655, datar | **Bergantung domain** (ya di CIC, tidak di UNSW) |
-| R3 cross-dataset FL sulit | reproduksi | [F11] | MCC | [kutip] | federated −0,026 vs centralized 0,545; FL cross-dataset runtuh | **Ya** |
-| R4 biaya komunikasi | reproduksi | [F8] | bytes/round, latensi | [kutip] | 76,8 KB/unggahan; ≈300 KB/ronde (2 klien); ≈16 s/ronde (CPU bersama) | — |
-| R5 evasion FGSM/PGD/JSMA | adversarial | [F28][F33][F34] | attack success rate, ΔMCC | [kutip] | ASR 0,96 di ε=0,05; 1,00 di ε≥0,2 (FGSM/PGD); MCC −0,03→−0,15 | **Ya** (sangat rapuh) |
-| R6 adversarial training | adversarial | [F16][F17][F32] | robust MCC, Δclean-acc | [kutip] | clean −0,026→0,070 tapi robust −0,152→−0,222 (memburuk) | **Tidak** |
+| R1 FedProx>FedAvg (non-IID) | reproduksi | [6][14] | MCC (cross-dataset, 3 seed) | [kutip] | FedAvg 0,572 vs FedProx(μ=0,1) 0,571; selisih ≈0,001, tak bermakna | **Tidak** |
+| R2 non-IID menurunkan FL | reproduksi | [5] | MCC vs α per domain | [kutip] | CIC: 0,512→0,387 (α=100→0,1), runtuh & tak stabil. UNSW: 0,621→0,655, datar | **Bergantung domain** (ya di CIC, tidak di UNSW) |
+| R3 cross-dataset FL sulit | reproduksi | [5] | MCC | [kutip] | federated −0,026 vs centralized 0,545; FL cross-dataset runtuh | **Ya** |
+| R4 biaya komunikasi | reproduksi | [15] | bytes/round, latensi | [kutip] | 76,8 KB/unggahan; ≈300 KB/ronde (2 klien); ≈16 s/ronde (CPU bersama) | — |
+| R5 evasion FGSM/PGD/JSMA | adversarial | [25][26][8] | attack success rate, ΔMCC | [kutip] | ASR 0,96 di ε=0,05; 1,00 di ε≥0,2 (FGSM/PGD); MCC −0,03→−0,15 | **Ya** (sangat rapuh) |
+| R6 adversarial training | adversarial | [6][21][27] | robust MCC, Δclean-acc | [kutip] | clean −0,026→0,070 tapi robust −0,152→−0,222 (memburuk) | **Tidak** |
 
 Dua catatan metodologis perlu ditekankan dalam membaca Tabel 2. Pertama, verifikasi
 kami mengukur apakah *arah* sebuah klaim bertahan di testbed yang seragam, bukan meniru
@@ -532,83 +532,68 @@ mereproduksi dan membangun di atasnya.
 
 ## References
 
-> Gaya IEEE, 30 referensi. Dipilih dari `references/federated_refs_clean.md` dengan
-> keterwakilan empat tema + semua karya yang disitasi di Bagian 3–4. Penomoran di
-> bawah ([1]–[30]) adalah penomoran **final paper**; label lama [F*] disimpan dalam
-> kurung siku kecil sebagai jejak untuk pemetaan sitasi di naskah. Semua entri punya
-> DOI kecuali satu yang ditandai (verifikasi saat finalisasi).
+> Gaya IEEE, 30 referensi, dinomori sesuai urutan kemunculan pertama dalam naskah.
+> Semua entri punya DOI kecuali satu yang ditandai (verifikasi saat finalisasi).
 
-**A. Survei & landasan FL-NIDS**
+[1] A. Khraisat, A. Alazab, T. Jan, and A. Gopez, "Survey on federated learning for intrusion detection system: concept, architectures, aggregation strategies, challenges, and future directions," *ACM Comput. Surv.*, 2024, doi: 10.1145/3687124.
 
-[1] [F1] A. Khraisat, A. Alazab, T. Jan, and A. Gopez, "Survey on federated learning for intrusion detection system: concept, architectures, aggregation strategies, challenges, and future directions," *ACM Comput. Surv.*, 2024, doi: 10.1145/3687124.
+[2] J. L. Hernández-Ramos *et al.*, "Intrusion detection based on federated learning: a systematic review," *ACM Comput. Surv.*, Apr. 2025, doi: 10.1145/3731596.
 
-[2] [F2] J. L. Hernández-Ramos *et al.*, "Intrusion detection based on federated learning: a systematic review," *ACM Comput. Surv.*, Apr. 2025, doi: 10.1145/3731596.
+[3] A. A. Wardana and P. Sukarno, "Taxonomy and survey of collaborative intrusion detection system using federated learning," *ACM Comput. Surv.*, Oct. 2024, doi: 10.1145/3701724.
 
-[3] [F3] A. A. Wardana and P. Sukarno, "Taxonomy and survey of collaborative intrusion detection system using federated learning," *ACM Comput. Surv.*, Oct. 2024, doi: 10.1145/3701724.
+[4] E. V. Fedorchenko, E. Novikova, and A. N. Shulepov, "Comparative review of the intrusion detection systems based on federated learning: advantages and open challenges," *Algorithms*, vol. 15, no. 7, p. 247, 2022, doi: 10.3390/a15070247.
 
-[4] [F4] E. V. Fedorchenko, E. Novikova, and A. N. Shulepov, "Comparative review of the intrusion detection systems based on federated learning: advantages and open challenges," *Algorithms*, vol. 15, no. 7, p. 247, 2022, doi: 10.3390/a15070247.
+[5] L. Lavaur, Y. Busnel, and F. Autrel, "Demo: highlighting the limits of federated learning in intrusion detection," in *Proc. IEEE Int. Conf. Distrib. Comput. Syst. (ICDCS)*, 2024, pp. 1416–1419, doi: 10.1109/ICDCS60910.2024.00135.
 
-**B. Arsitektur & strategi agregasi**
+[6] J. Zhang *et al.*, "Combating exacerbated heterogeneity for robust models in federated learning (SFAT)," *arXiv:2303.00250*, 2023, doi: 10.48550/arXiv.2303.00250.
 
-[5] [F5] J. Xu, C. Li, Y. Zheng, and Z. Li, "Entente: cross-silo intrusion detection on network log graphs with federated learning," *arXiv:2503.14284*, 2025, doi: 10.48550/arXiv.2503.14284.
+[7] S. Saha, M. I. Sayed, M. Faezipour, and S. Bhatt, "Resilient federated learning for DDoS detection with multi-Krum aggregation and anomaly detection," in *Proc. IEEE SmartNets*, 2025, doi: 10.1109/SmartNets65254.2025.11106859.
 
-[6] [F6] Z. Chen, N. Lv, P. Li, Y. Fang, K. Chen, and W. Pan, "Intrusion detection for wireless edge networks based on federated learning," *IEEE Access*, vol. 8, pp. 217463–217472, 2020, doi: 10.1109/ACCESS.2020.3041793.
+[8] S. Saini, A. Chennamaneni, and B. A. Sawyerr, "A review of the duality of adversarial learning in network intrusion: attacks and countermeasures," *arXiv:2412.13880*, 2024, doi: 10.48550/arXiv.2412.13880.
 
-[7] [F7] J. Mao, Z. Wei, B. Li, R. Zhang, and L. Song, "FedIn-NID: a federated learning framework for network intrusion detection in large-scale heterogeneous industrial IoT," *IEEE Trans. Inf. Forensics Security*, 2025, doi: 10.1109/TIFS.2025.3602226.
+[9] Y. Hu, J. Wu, G. Li, J. Li, and J. Cheng, "Privacy-preserving few-shot traffic detection against advanced persistent threats via federated meta learning," *IEEE Trans. Netw. Sci. Eng.*, vol. 11, pp. 2549–2560, 2024, doi: 10.1109/TNSE.2023.3304556.
 
-[8] [F8] R. Doriguzzi-Corin, S. Cretti, and D. Siracusa, "Resource-efficient federated learning for network intrusion detection," in *Proc. IEEE Conf. Netw. Softwarization (NetSoft)*, 2024, doi: 10.1109/NetSoft60951.2024.10588938.
+[10] Ö. Ceviz, S. Şen, and P. Sadioglu, "Distributed intrusion detection in dynamic networks of UAVs using few-shot federated learning," *arXiv:2501.13213*, 2025, doi: 10.48550/arXiv.2501.13213.
 
-[9] [F9] Y.-C. Lee, W.-C. Chien, and Y.-C. Chang, "FedDB: a federated learning approach using DBSCAN for DDoS attack detection," *Appl. Sci.*, vol. 14, no. 22, 2024, doi: 10.3390/app142210236.
+[11] J. Xu, C. Li, Y. Zheng, and Z. Li, "Entente: cross-silo intrusion detection on network log graphs with federated learning," *arXiv:2503.14284*, 2025, doi: 10.48550/arXiv.2503.14284.
 
-**C. Non-IID, heterogenitas & personalisasi**
+[12] Z. Chen, N. Lv, P. Li, Y. Fang, K. Chen, and W. Pan, "Intrusion detection for wireless edge networks based on federated learning," *IEEE Access*, vol. 8, pp. 217463–217472, 2020, doi: 10.1109/ACCESS.2020.3041793.
 
-[10] [F11] L. Lavaur, Y. Busnel, and F. Autrel, "Demo: highlighting the limits of federated learning in intrusion detection," in *Proc. IEEE Int. Conf. Distrib. Comput. Syst. (ICDCS)*, 2024, pp. 1416–1419, doi: 10.1109/ICDCS60910.2024.00135.
+[13] J. Mao, Z. Wei, B. Li, R. Zhang, and L. Song, "FedIn-NID: a federated learning framework for network intrusion detection in large-scale heterogeneous industrial IoT," *IEEE Trans. Inf. Forensics Security*, 2025, doi: 10.1109/TIFS.2025.3602226.
 
-[11] [F12] M. Benkaddour, "Enhancing federated learning for privacy preserving intrusion detection in IoT networks," *Przegląd Elektrotechniczny*, 2025, doi: 10.15199/48.2025.09.21.
+[14] R. Doriguzzi-Corin and D. Siracusa, "FLAD: adaptive federated learning for DDoS attack detection," *arXiv:2205.06661*, 2022, doi: 10.48550/arXiv.2205.06661.
 
-[12] [F13] G. Singh, K. Singh, P. Rajalakshmi, and Y. Xong, "Sentinel: dynamic knowledge distillation for personalized federated intrusion detection in heterogeneous IoT networks," *arXiv:2510.23019*, 2025, doi: 10.48550/arXiv.2510.23019.
+[15] R. Doriguzzi-Corin, S. Cretti, and D. Siracusa, "Resource-efficient federated learning for network intrusion detection," in *Proc. IEEE Conf. Netw. Softwarization (NetSoft)*, 2024, doi: 10.1109/NetSoft60951.2024.10588938.
 
-[13] [F14] S. Ali, R. Alireza, and A. Mahmood, "Mist-assisted federated learning for intrusion detection in heterogeneous IoT networks," *arXiv:2511.00271*, 2025, doi: 10.48550/arXiv.2511.00271.
+[16] G. Singh, K. Singh, P. Rajalakshmi, and Y. Xong, "Sentinel: dynamic knowledge distillation for personalized federated intrusion detection in heterogeneous IoT networks," *arXiv:2510.23019*, 2025, doi: 10.48550/arXiv.2510.23019.
 
-[14] [F15] M. Khalid, U. Zukaib, M. Al-Rakhami, and A. M. Alamri, "FedCross-VAN: federated cross-domain behavior alignment for VANET intrusion detection," *Trans. Emerg. Telecommun. Technol.*, vol. 37, 2025, doi: 10.1002/ett.70309.
+[17] Y.-C. Lee, W.-C. Chien, and Y.-C. Chang, "FedDB: a federated learning approach using DBSCAN for DDoS attack detection," *Appl. Sci.*, vol. 14, no. 22, 2024, doi: 10.3390/app142210236.
 
-**D. Robustness adversarial, Byzantine & poisoning**
+[18] M. Khalid, U. Zukaib, M. Al-Rakhami, and A. M. Alamri, "FedCross-VAN: federated cross-domain behavior alignment for VANET intrusion detection," *Trans. Emerg. Telecommun. Technol.*, vol. 37, 2025, doi: 10.1002/ett.70309.
 
-[15] [F16] J. Zhang *et al.*, "Combating exacerbated heterogeneity for robust models in federated learning (SFAT)," *arXiv:2303.00250*, 2023, doi: 10.48550/arXiv.2303.00250.
+[19] S. Ali, R. Alireza, and A. Mahmood, "Mist-assisted federated learning for intrusion detection in heterogeneous IoT networks," *arXiv:2511.00271*, 2025, doi: 10.48550/arXiv.2511.00271.
 
-[16] [F17] E. M. Ennaji, S. E. Hajla, Y. Maleh, and S. Mounir, "Adversarially robust federated deep learning models for intrusion detection in IoT," *Indones. J. Electr. Eng. Comput. Sci.*, vol. 37, no. 2, p. 937, 2024, doi: 10.11591/ijeecs.v37.i2.pp937-947.
+[20] M. Benkaddour, "Enhancing federated learning for privacy preserving intrusion detection in IoT networks," *Przegląd Elektrotechniczny*, 2025, doi: 10.15199/48.2025.09.21.
 
-[17] [F18] G. Chandu, T. S. Karthik, and B. Parag, "Federated learning for distributed IoT security: a privacy-preserving approach to intrusion detection," *IEEE Access*, 2025, doi: 10.1109/ACCESS.2025.3592481.
+[21] E. M. Ennaji, S. E. Hajla, Y. Maleh, and S. Mounir, "Adversarially robust federated deep learning models for intrusion detection in IoT," *Indones. J. Electr. Eng. Comput. Sci.*, vol. 37, no. 2, p. 937, 2024, doi: 10.11591/ijeecs.v37.i2.pp937-947.
 
-[18] [F20] A. Al Mazroa *et al.*, "FORT-IDS: a federated, optimized, robust and trustworthy intrusion detection system for IIoT security," *Sci. Rep.*, 2025, doi: 10.1038/s41598-025-31025-x.
+[22] G. Chandu, T. S. Karthik, and B. Parag, "Federated learning for distributed IoT security: a privacy-preserving approach to intrusion detection," *IEEE Access*, 2025, doi: 10.1109/ACCESS.2025.3592481.
 
-[19] [F21] S. K. Ghimire and S. Lodh, "FedSecIoT: a federated learning framework for collaborative and privacy-preserving botnet detection in IoT with adversarial robustness," in *Proc. IEEE SILCON*, 2025, doi: 10.1109/SILCON67893.2025.11327096.
+[23] S. K. Ghimire and S. Lodh, "FedSecIoT: a federated learning framework for collaborative and privacy-preserving botnet detection in IoT with adversarial robustness," in *Proc. IEEE SILCON*, 2025, doi: 10.1109/SILCON67893.2025.11327096.
 
-[20] [F23] S. Saha, M. I. Sayed, M. Faezipour, and S. Bhatt, "Resilient federated learning for DDoS detection with multi-Krum aggregation and anomaly detection," in *Proc. IEEE SmartNets*, 2025, doi: 10.1109/SmartNets65254.2025.11106859.
+[24] A. Al Mazroa *et al.*, "FORT-IDS: a federated, optimized, robust and trustworthy intrusion detection system for IIoT security," *Sci. Rep.*, 2025, doi: 10.1038/s41598-025-31025-x.
 
-**E. GAN & adversarial training untuk DDoS/NIDS**
+[25] M. S. I. Sajid *et al.*, "GADoT: GAN-based adversarial training for robust DDoS attack detection," *arXiv:2201.13102*, 2022, doi: 10.48550/arXiv.2201.13102.
 
-[21] [F28] M. S. I. Sajid *et al.*, "GADoT: GAN-based adversarial training for robust DDoS attack detection," *arXiv:2201.13102*, 2022, doi: 10.48550/arXiv.2201.13102.
+[26] H. Dadhwal, M. de Abreu, N. Parvizi, and S. Saha, "Benchmarking the adversarial resilience of machine learning models for DDoS detection," *Array*, vol. 29, p. 100664, 2026, doi: 10.1016/j.array.2025.100664.
 
-[22] [F31] R. Doriguzzi-Corin and D. Siracusa, "FLAD: adaptive federated learning for DDoS attack detection," *arXiv:2205.06661*, 2022, doi: 10.48550/arXiv.2205.06661.
+[27] I. Debicha, T. Debatty, J.-M. Dricot, and W. Mees, "Adversarial training for deep learning-based intrusion detection systems," *arXiv:2104.09852*, 2021, doi: 10.48550/arXiv.2104.09852.
 
-[23] [F32] I. Debicha, T. Debatty, J.-M. Dricot, and W. Mees, "Adversarial training for deep learning-based intrusion detection systems," *arXiv:2104.09852*, 2021, doi: 10.48550/arXiv.2104.09852.
+[28] Q. Mao, X. Lin, G. Li, and J. Li, "FeCoGraph: label-aware federated graph contrastive learning for few-shot network intrusion detection," *IEEE Trans. Inf. Forensics Security*, 2025, doi: 10.1109/TIFS.2025.3541890.
 
-[24] [F33] H. Dadhwal, M. de Abreu, N. Parvizi, and S. Saha, "Benchmarking the adversarial resilience of machine learning models for DDoS detection," *Array*, vol. 29, p. 100664, 2026, doi: 10.1016/j.array.2025.100664.
+[29] K. Yin, J. Zhang, Z. Xia, and C. Yu, "FedPKT: robust cross-domain few-shot intrusion detection via prototypical knowledge transfer," *IEEE Trans. (early access)*, doc. 11360061. [DOI belum terbit — verifikasi saat finalisasi.]
 
-[25] [F34] S. Saini, A. Chennamaneni, and B. A. Sawyerr, "A review of the duality of adversarial learning in network intrusion: attacks and countermeasures," *arXiv:2412.13880*, 2024, doi: 10.48550/arXiv.2412.13880.
-
-**F. Few-shot, meta-learning & transfer lintas-domain**
-
-[26] [F36] Y. Hu, J. Wu, G. Li, J. Li, and J. Cheng, "Privacy-preserving few-shot traffic detection against advanced persistent threats via federated meta learning," *IEEE Trans. Netw. Sci. Eng.*, vol. 11, pp. 2549–2560, 2024, doi: 10.1109/TNSE.2023.3304556.
-
-[27] [F37] Q. Mao, X. Lin, G. Li, and J. Li, "FeCoGraph: label-aware federated graph contrastive learning for few-shot network intrusion detection," *IEEE Trans. Inf. Forensics Security*, 2025, doi: 10.1109/TIFS.2025.3541890.
-
-[28] [F38] K. Yin, J. Zhang, Z. Xia, and C. Yu, "FedPKT: robust cross-domain few-shot intrusion detection via prototypical knowledge transfer," *IEEE Trans. (early access)*, doc. 11360061. [DOI belum terbit — verifikasi saat finalisasi.]
-
-[29] [F39] Ö. Ceviz, S. Şen, and P. Sadioglu, "Distributed intrusion detection in dynamic networks of UAVs using few-shot federated learning," *arXiv:2501.13213*, 2025, doi: 10.48550/arXiv.2501.13213.
-
-[30] [F41] K. S, V. Malathi, B. J. Lakshmi, A. V. Sriharsha, T. D. Kumar, and T. Lakshmibai, "Federated and explainable intrusion detection systems for large-scale heterogeneous networks using ensemble deep learning," in *Proc. IEEE ICACRS*, 2025, doi: 10.1109/ICACRS67045.2025.11324277.
+[30] K. S, V. Malathi, B. J. Lakshmi, A. V. Sriharsha, T. D. Kumar, and T. Lakshmibai, "Federated and explainable intrusion detection systems for large-scale heterogeneous networks using ensemble deep learning," in *Proc. IEEE ICACRS*, 2025, doi: 10.1109/ICACRS67045.2025.11324277.
 
 > **Catatan verifikasi (sebelum submit):**
 > - 29 dari 30 entri sudah ber-DOI. Satu pengecualian: **[28] FedPKT** — baru tersedia
