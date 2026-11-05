@@ -11,7 +11,7 @@
 %  simulation for near-domain and non-IID sweeps). Convert to the JOIN Word
 %  template at submission time.
 %==============================================================================
-\documentclass[conference]{IEEEtran}
+\documentclass[conference,onecolumn]{IEEEtran}
 \IEEEoverridecommandlockouts
 \usepackage{cite}
 \usepackage{amsmath,amssymb,amsfonts}
@@ -181,7 +181,7 @@ not a design choice; such manual name alignment is common in cross-dataset work 
 it as setup, not a contribution.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics[width=\columnwidth]{fig_feature_alignment.png}}
+\centerline{\includegraphics[width=0.62\textwidth]{fig_feature_alignment.png}}
 \caption{Far-domain feature alignment (9-feature intersection).}
 \label{fig:align}
 \end{figure}
@@ -197,7 +197,7 @@ the near-domain and non-IID sweeps are run as controlled simulations with identi
 and model code.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics[width=0.85\columnwidth]{fig_fl_architecture.png}}
+\centerline{\includegraphics[width=0.58\textwidth]{fig_fl_architecture.png}}
 \caption{Federated learning architecture.}
 \label{fig:arch}
 \end{figure}
@@ -281,12 +281,12 @@ negative. JSMA, changing only two features, is weaker (ASR 0.37--0.91).
 ASR 0.74$\to$0.13), but on UNSW the clean MCC drops from 0.610 to 0.170 and recall from 0.70 to 0.10.
 We explain this in Section~\ref{sec:discuss}.
 
-\begin{figure*}[t]
-\centerline{\includegraphics[width=0.78\textwidth]{fig_results.png}}
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=0.75\textwidth]{fig_results.png}}
 \caption{Far-domain: (a) non-IID impact differs by domain (R2); (b) cross-dataset FL on the union test
 set (R3). Error bars: standard deviation (a), 95\% CI (b).}
 \label{fig:results}
-\end{figure*}
+\end{figure}
 
 \subsection{Near-Domain: Closer Domains, Richer Features}
 When both clients share an extractor (CIC-IDS2017 and CSE-CIC-IDS2018, 76 features), the feature space
@@ -341,7 +341,7 @@ Federated (pooled eval) & $0.536 \pm 0.038$ & 0.732 & 0.380 \\
 \end{table}
 
 \begin{figure}[htbp]
-\centerline{\includegraphics[width=\columnwidth]{fig_neardomain.png}}
+\centerline{\includegraphics[width=0.72\textwidth]{fig_neardomain.png}}
 \caption{Near-domain: (a) federated vs centralized vs local-only on the union test set; (b) non-IID
 impact (MCC vs Dirichlet concentration). Error bars: 95\% CI (a), standard deviation (b).}
 \label{fig:near}
@@ -375,7 +375,7 @@ static, uniform defense}---direct evidence that domain-aware adversarial defense
 heterogeneous FL.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics[width=\columnwidth]{fig_unsw_degradation.png}}
+\centerline{\includegraphics[width=0.72\textwidth]{fig_unsw_degradation.png}}
 \caption{Decision-score distributions (benign vs attack), clean vs adversarially trained, per domain.
 After adversarial training the UNSW attack scores shift below the 0.5 threshold and are no longer
 detected.}
