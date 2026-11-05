@@ -282,9 +282,17 @@ falls to $0.229 \pm 0.228$, erratic across seeds---an evaluation artifact, not a
 \textit{R4 (cloud cost): measured.} Each client upload is 76.8~KB, so aggregator traffic is about
 300~KB per round; 100 rounds take about 27 minutes (about 16 seconds per round including S3 sync).
 
-\textit{R5 (evasion): holds.} On a healthy base (recall 0.61, MCC 0.647), at $\epsilon{=}0.1$ ASR
-reaches 0.89 (FGSM) and 0.91 (PGD); for $\epsilon{\geq}0.2$ ASR is at least 0.98 and MCC turns
-negative. JSMA, changing only two features, is weaker (ASR 0.37--0.91).
+\textit{R5 (evasion): holds.} We state the threat model explicitly: the attack operates in the
+tabular flow-feature space under a white-box assumption, and perturbations are clipped per feature to
+its 1st--99th training percentile but are \emph{not} constrained to preserve cross-feature protocol
+consistency (for example, changing flow duration without re-deriving the corresponding byte and packet
+counts). Our ASR is therefore a measure of \emph{feature-space vulnerability as a worst-case upper
+bound}, not of packet-level deliverability; we do not claim the perturbed flows could be transmitted
+on the wire. This framing is intentional: it isolates how fragile the learned decision surface is,
+independent of the engineering effort an attacker would need to realize such a flow. On a healthy base
+(recall 0.61, MCC 0.647), at $\epsilon{=}0.1$ ASR reaches 0.89 (FGSM) and 0.91 (PGD); for
+$\epsilon{\geq}0.2$ ASR is at least 0.98 and MCC turns negative. JSMA, changing only two features, is
+weaker (ASR 0.37--0.91).
 
 \textit{R6 (adversarial training): domain dependent.} On CIC it helps (MCC under PGD 0.149$\to$0.500,
 ASR 0.74$\to$0.13), but on UNSW the clean MCC drops from 0.610 to 0.170 and recall from 0.70 to 0.10.
@@ -400,10 +408,14 @@ fixed. The decision-score explanation of the UNSW degradation is based on one da
 be tested on more pairs. Third, normalization and the evaluation protocol strongly affect results, and
 the EC2 (per-client z-score) and simulation (shared global z-score for R1/R2) figures should not be
 compared directly. Fourth, the adversarial experiments act on the tabular flow-feature space, not raw
-packets: perturbations are clipped to the 1st--99th percentile of each feature without enforcing
-cross-feature consistency, so they estimate feature-space vulnerability under a white-box threat model
-rather than prove that manipulated traffic could be sent on the wire; ASR is computed only over
-attacks detected before the perturbation and is not comparable across models with different recall.
+packets, and this is a deliberate scoping choice rather than an oversight: perturbations are clipped
+to the 1st--99th percentile of each feature but do not enforce cross-feature protocol or functional
+constraints (for instance, byte, packet, and duration relationships), so a perturbed flow need not be
+physically realizable on a real network. We therefore interpret the results as a feature-space,
+worst-case robustness baseline under a white-box threat model, deliberately separate from
+packet-level deliverability; demonstrating that such perturbations can be realized as sendable traffic
+is a distinct problem we do not address. Finally, ASR is computed only over attacks detected before
+the perturbation and is not comparable across models with different recall.
 Fifth, we deliberately fix a single shallow MLP as a controlled backbone (Section~\ref{sec:setup}), so
 our findings characterize federated behavior at a fixed, low model capacity; whether the cross-domain
 performance gap and the adversarial decision-score shift persist under deeper architectures (for
