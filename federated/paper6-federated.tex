@@ -218,8 +218,9 @@ model capacity. The primary metric is the Matthews correlation coefficient (MCC)
 class imbalance; we
 also report recall and attack success rate (ASR), the share of attacks detected before a perturbation
 that evade detection afterwards. We verify six claims: R1 FedAvg vs FedProx; R2 non-IID impact
-(Dirichlet $\alpha$ sweep); R3 cross-dataset feasibility; R4 cloud cost; R5 evasion (FGSM, PGD, JSMA);
-and R6 adversarial training as a defense. We use five seeds $\{13,42,101,202,303\}$ for R3/R5/R6 and
+(Dirichlet $\alpha$ sweep); R3 cross-dataset feasibility; R4 cloud cost; R5 evasion (FGSM, PGD, JSMA,
+evaluated in feature space as an upper-bound vulnerability analysis rather than packet-level wire
+transmission); and R6 adversarial training as a defense. We use five seeds $\{13,42,101,202,303\}$ for R3/R5/R6 and
 the near-domain runs, and three seeds for R1/R2, reporting mean and 95\% confidence interval. The data
 partition is fixed, so variation reflects training randomness only.
 

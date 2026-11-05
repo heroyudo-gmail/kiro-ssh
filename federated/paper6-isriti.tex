@@ -302,7 +302,8 @@ so the variation reflects training randomness only.
 We test six representative claims, grouped as reproduction (R1--R4) and adversarial
 (R5--R6): R1 FedAvg versus FedProx; R2 non-IID impact (Dirichlet $\alpha$ sweep); R3
 cross-dataset FL feasibility; R4 real cloud cost; R5 evasion vulnerability (FGSM, PGD,
-JSMA with clipped perturbations); and R6 adversarial training as a defense. The
+JSMA with clipped perturbations, evaluated in feature space as an upper-bound vulnerability analysis
+rather than packet-level wire transmission); and R6 adversarial training as a defense. The
 primary metric is the Matthews correlation coefficient (MCC), which stays reliable
 under heavy class imbalance; we also report recall, precision, and attack success rate (ASR), defined as the share of attacks detected before the perturbation that evade detection afterwards.
 
