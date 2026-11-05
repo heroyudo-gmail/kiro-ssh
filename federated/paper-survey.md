@@ -362,7 +362,13 @@ yang bertukar model global dan pembaruan lokal.](figure-fed/fig_fl_architecture.
 Pelatihan dan evaluasi memakai model yang sama pada semua skenario: MLP ringan
 9→128→64→1 (ReLU, keluaran sigmoid, loss cross-entropy biner, 9.601 parameter), dilatih
 dengan SGD mini-batch 256 pada laju belajar 0,003, lima epoch lokal per ronde, dan 100
-ronde. Tabel 2 merangkum partisi data tiap client setelah penyelarasan fitur: CSE-CIC-IDS2018
+ronde. MLP dangkal ini adalah **controlled backbone** yang dipilih sengaja, bukan demi memaksimalkan
+performa: model kecil menjaga payload per ronde tetap mungil (≈76,8 KB per client)—penting untuk
+deployment cross-silo dan menjadi objek pengukuran biaya R4—sekaligus mengisolasi efek yang kami
+teliti (agregasi, derajat non-IID, transfer lintas-domain, pergeseran skor adversarial) dari dinamika
+pelatihan model berkapasitas besar seperti overfitting representasi laten yang perilakunya sulit
+diatribusikan di bawah agregasi federated. Karena arsitektur dikunci identik di semua client dan
+skenario, perbedaan yang terukur dapat diatribusikan ke faktor yang diuji, bukan ke kapasitas model. Tabel 2 merangkum partisi data tiap client setelah penyelarasan fitur: CSE-CIC-IDS2018
 dibagi 70/30 dan bagian latihnya disubsampel terstratifikasi menjadi sekitar 100.000 aliran
 agar rasio CIC:UNSW mendekati 1,2:1, sedangkan UNSW-NB15 memakai pembagian latih/uji
 bawaannya. Perbedaan rasio serangan antar-domain (16,9% pada CIC, 55,1% pada UNSW latih)
@@ -393,7 +399,7 @@ efek federasi. Jumlah seed berbeda antar-eksperimen: tiga seed {13,42,101} untuk
 
 **(A) Reproduksi klaim inti FL-NIDS**
 1. **R1 — FedAvg vs FedProx (SQ3/SQ4).** Klaim: FedProx lebih stabil di non-IID [6],[14]. Hasil: pada setting lintas-dataset (klien CIC + UNSW, rata-rata tiga seed), FedAvg dan FedProx **tidak berbeda bermakna**: FedAvg MCC 0,572, FedProx(μ=0,01) 0,573, FedProx(μ=0,1) 0,571 — selisih ≈0,001, dan ketiganya konvergen cepat (7–11 ronde). Pola yang sama muncul pada fondasi single-dataset (α=0,1): FedAvg 0,555 vs FedProx(μ=0,1) 0,553. Di kedua setting FedProx **tidak** memperbaiki FedAvg; arah klaim tidak bertahan pada rentang hyperparameter yang kami uji.
-2. **R2 — Dampak non-IID (SQ2/SQ4).** Klaim: performa FL turun seiring heterogenitas [5]; sweep Dirichlet α. Hasil: **dampaknya bergantung domain** — sebuah nuansa yang jarang disorot. Pada klien **CIC**, pola klasik muncul: MCC relatif stabil pada α besar (0,512 di α=100) lalu runtuh dan menjadi sangat tak stabil pada α rendah (0,387 di α=0,1, dengan std melonjak ke 0,27). Sebaliknya pada klien **UNSW**, performa **tidak** turun seiring non-IID — justru datar bahkan sedikit naik (0,621 di α=100; 0,655 di α=0,1), karena kelas UNSW relatif mudah dipisah sehingga partisi timpang pun tak merusak. Jadi klaim "non-IID menurunkan FL" **bertahan pada CIC tetapi tidak pada UNSW**: efeknya nyata namun tidak universal, tergantung separabilitas domain. Pada fondasi single-dataset penurunan juga tegas (0,826 di α=100 → 0,555 di α=0,1, CI membengkak ~46×).
+2. **R2 — Dampak non-IID (SQ2/SQ4).** Klaim: performa FL turun seiring heterogenitas [5]; sweep Dirichlet α. Hasil: **dampaknya bergantung domain** — sebuah nuansa yang jarang disorot. Pada klien **CIC**, pola klasik muncul: MCC relatif stabil pada α besar (0,512 di α=100) lalu runtuh dan menjadi sangat tak stabil pada α rendah (0,387 di α=0,1, dengan std melonjak ke 0,27). Sebaliknya pada klien **UNSW**, performa **tidak** turun seiring non-IID — justru datar bahkan sedikit naik (0,621 di α=100; 0,655 di α=0,1). Asimetri ini kami atribusikan terutama pada komposisi kelas data latih, bukan sekadar separabilitas: CIC sangat condong-benign (16,9% serangan), sehingga partisi Dirichlet ekstrem dapat menyisakan sebagian shard lokal dengan terlalu sedikit sampel serangan untuk mempelajari kelas minoritas sehingga agregat runtuh dan tak stabil; sementara UNSW mayoritas-serangan (55,1%), sehingga partisi ekstrem pun menyisakan subset serangan yang cukup pekat di tiap shard untuk konvergensi lokal. Jadi klaim "non-IID menurunkan FL" **bertahan pada CIC tetapi tidak pada UNSW**: efeknya nyata namun tidak universal, dengan rasio serangan sebagai penyebab yang masuk akal. Pada fondasi single-dataset penurunan juga tegas (0,826 di α=100 → 0,555 di α=0,1, CI membengkak ~46×).
 3. **R3 — Cross-dataset FL (SQ4).** Klaim: FL lintas-dataset sulit/menurun tajam [5]; diuji pada testbed AWS tiga-EC2 (100 ronde FedAvg, client CIC dan UNSW, lima seed) dengan penyelarasan nama fitur manual. Hasil: klaim **tidak bertahan** pada protokol evaluasi yang konsisten. Bila setiap test set dinormalisasi dengan statistik client pemiliknya (sama seperti saat training), model federated mencapai MCC 0,647 ± 0,020 pada test gabungan (rata-rata dan CI95 lima seed; CIC 0,533; UNSW 0,610). Model *centralized* (data digabung, tidak diizinkan di FL nyata) mencapai 0,565 ± 0,028 dengan normalisasi gabungan dan 0,616 ± 0,012 dengan normalisasi per-domain; pada normalisasi yang sepadan, federated sedikit tetapi konsisten lebih baik (selisih +0,031; uji Welch p=0,009). Yang gagal berpindah antar-domain adalah model *local-only*: yang dilatih di CIC mencapai 0,226 ± 0,052 pada test gabungan (UNSW −0,223), dan yang dilatih di UNSW hanya 0,010 ± 0,068 (CIC −0,088). Jadi federasi memang menutup jurang antar-domain. Temuan metodologis penting: bila model federated yang sama dievaluasi dengan statistik gabungan—tidak konsisten dengan cara ia dilatih—MCC turun ke rata-rata 0,229 ± 0,228 dan bervariasi liar antar-seed (−0,026 hingga 0,425), sehingga kesimpulan dari evaluasi semacam itu bersifat pesimistis sekaligus tidak stabil.
 4. **R4 — Biaya cloud nyata (SQ5).** Efisiensi komunikasi FL [15]: komunikasi/latensi per ronde di AWS. Hasil: model ringan 9.601 parameter → 76,8 KB per unggahan klien, sehingga ≈300 KB lalu lintas agregator per ronde untuk dua klien (dua arah) — ongkos komunikasi sangat kecil. Dari jejak waktu objek pada run S\_R3 (tiga EC2 `t3.medium`, bobot via S3), 100 ronde memakan ≈27 menit (round 0 → ronde final), yakni ≈16 detik per ronde termasuk sinkronisasi S3; angka ini diukur saat dua run berjalan paralel sehingga menanggung CPU bersama (batas atas latensi, dilaporkan apa adanya).
 
@@ -405,7 +411,7 @@ p=0,0005). Jadi agregasi federated memberi keuntungan nyata di atas pelatihan lo
 terisolasi — prasyarat yang harus dipenuhi sebelum klaim-klaim lanjutan bermakna.
 
 **(B) Eksperimen adversarial**
-5. **R5 — Kerentanan evasion (SQ6).** Klaim: NIDS ML rapuh terhadap evasion [25],[26],[8]; diuji dengan FGSM, PGD, dan JSMA (perturbasi di-clip ke persentil 1–99 tiap fitur di ruang z-score lokal) terhadap model federated R3, dengan ε ∈ {0,05; 0,1; 0,2; 0,5}. ASR dihitung hanya pada serangan yang terdeteksi sebelum diserang; semua angka adalah rata-rata lima seed. Hasil: klaim **bertahan**, pada basis yang sehat (recall dasar 0,61; MCC 0,647). Pada ε=0,05, FGSM dan PGD membuat 58–59% serangan yang semula terdeteksi lolos (JSMA 37%) dan MCC turun ke sekitar 0,33 (JSMA 0,46); pada ε=0,1 ASR mencapai 0,89 (FGSM) dan 0,91 (PGD) dengan MCC 0,04–0,07 (JSMA: ASR 0,70; MCC 0,24); pada ε ≥ 0,2 FGSM dan PGD mencapai ASR ≥ 0,98 dan MCC menjadi negatif (sekitar −0,08 pada 0,2 dan −0,11 pada 0,5). FGSM dan PGD hampir sama efektif dan stabil antar-seed (interval 95% ASR dalam ±0,06), sedangkan JSMA yang hanya mengubah dua fitur lebih lemah dan lebih bervariasi (ASR 0,37; 0,70; 0,91 pada ε 0,05; 0,1; 0,2). Kerapuhan berbeda antar-domain: pada ε=0,05 ASR UNSW (0,70–0,71 untuk FGSM/PGD) jauh di atas CIC (0,32–0,33), dan pada ε=0,1 UNSW hampir seluruhnya lolos (0,99) dibanding 0,68–0,74 pada CIC.
+5. **R5 — Kerentanan evasion (SQ6).** Klaim: NIDS ML rapuh terhadap evasion [25],[26],[8]. **Model ancaman kami nyatakan eksplisit:** serangan bekerja di ruang fitur aliran (tabular) dengan asumsi white-box, dan perturbasi di-clip per fitur ke persentil 1–99 data latih tetapi **tidak** dibatasi menjaga konsistensi protokol antar-fitur (mis. mengubah durasi tanpa menurunkan ulang jumlah byte/paket terkait). ASR karenanya adalah ukuran **kerentanan ruang-fitur sebagai batas-atas worst-case**, bukan *packet-level deliverability*; kami tidak mengklaim aliran terperturbasi dapat benar-benar dikirim di jaringan. Pembingkaian ini disengaja: ia mengisolasi seberapa rapuh permukaan keputusan model, terlepas dari usaha rekayasa yang diperlukan penyerang nyata. Diuji dengan FGSM, PGD, dan JSMA terhadap model federated R3, dengan ε ∈ {0,05; 0,1; 0,2; 0,5}. ASR dihitung hanya pada serangan yang terdeteksi sebelum diserang; semua angka adalah rata-rata lima seed. Hasil: klaim **bertahan**, pada basis yang sehat (recall dasar 0,61; MCC 0,647). Pada ε=0,05, FGSM dan PGD membuat 58–59% serangan yang semula terdeteksi lolos (JSMA 37%) dan MCC turun ke sekitar 0,33 (JSMA 0,46); pada ε=0,1 ASR mencapai 0,89 (FGSM) dan 0,91 (PGD) dengan MCC 0,04–0,07 (JSMA: ASR 0,70; MCC 0,24); pada ε ≥ 0,2 FGSM dan PGD mencapai ASR ≥ 0,98 dan MCC menjadi negatif (sekitar −0,08 pada 0,2 dan −0,11 pada 0,5). FGSM dan PGD hampir sama efektif dan stabil antar-seed (interval 95% ASR dalam ±0,06), sedangkan JSMA yang hanya mengubah dua fitur lebih lemah dan lebih bervariasi (ASR 0,37; 0,70; 0,91 pada ε 0,05; 0,1; 0,2). Kerapuhan berbeda antar-domain: pada ε=0,05 ASR UNSW (0,70–0,71 untuk FGSM/PGD) jauh di atas CIC (0,32–0,33), dan pada ε=0,1 UNSW hampir seluruhnya lolos (0,99) dibanding 0,68–0,74 pada CIC.
 6. **R6 — Adversarial training sebagai defense (SQ6).** Klaim: adversarial training menaikkan robustness dengan trade-off [6],[21],[27]; pada run S\_R6 setiap client mengganti 50% sampel latihnya dengan contoh FGSM (ε=0,1), lalu dibandingkan dengan model bersih S\_R3 di bawah PGD ε=0,1 (rata-rata lima seed). Hasil: **bergantung domain**. Pada CIC adversarial training efektif: MCC di bawah serangan naik dari 0,149 ke 0,500 dan ASR turun dari 0,74 ke 0,13, sementara performa bersih juga membaik (MCC 0,533 → 0,585; recall 0,48 → 0,91). Pada UNSW model terdegradasi secara konsisten: MCC bersih turun dari 0,610 ke 0,170 (berkisar 0,07–0,27 pada kelima seed, tidak pernah di atas 0,27) dan recall dari 0,70 ke 0,10, sehingga MCC di bawah serangan (0,016) kehilangan makna. Pada test gabungan, MCC di bawah serangan naik (0,038 → 0,182) tetapi MCC bersih turun dari 0,647 ke 0,284. Seluruh perbedaan ini bermakna antar-seed (uji Welch p<0,01), dan karena degradasi UNSW muncul pada setiap seed, ia bukan ketidakstabilan pelatihan sesaat; penyebabnya kami selidiki pada Bagian 5 (pergeseran skor keputusan antar-domain). ASR gabungan model adv-trained (0,24) tidak sebanding dengan model bersih (0,91) karena dihitung pada himpunan serangan terdeteksi yang jauh lebih kecil, sehingga perbandingan sebaiknya per domain dan lewat MCC.
 
 ### 4.3 Results table
@@ -524,6 +530,18 @@ lintas-dataset tidak runtuh—justru menguat saat domain lebih dekat (0,851 near
 dan (iii) sensitivitas terhadap protokol normalisasi muncul di near maupun far-domain, menegaskan
 bahwa kesimpulan lintas-dataset tak dapat ditarik tanpa menyebutkan protokolnya.
 
+Satu *confound* perlu dibahas terbuka: near-domain memakai 76 fitur sedangkan far-domain hanya 9,
+sehingga sebagian kenaikan 0,647→0,851 bisa saja karena jumlah fitur, bukan jarak domain. Kami
+berargumen kedua faktor ini **tidak independen melainkan terkait secara kausal**: ruang fitur yang
+lebih kaya justru merupakan **konsekuensi inheren** dari kedekatan domain, karena kedua client
+near-domain dihasilkan oleh ekstraktor yang sama (CICFlowMeter) sehingga berbagi irisan besar dan
+konsisten secara semantik, sedangkan client far-domain memakai ekstraktor berbeda (CICFlowMeter vs
+Argus/Bro) yang irisan andalnya hanya sembilan fitur. Dengan kata lain, ruang fitur bersama yang
+lebih kaya persis itulah makna operasional "domain lebih dekat"; keduanya tak dapat dipisah penuh di
+praktik. Isolasi yang lebih bersih adalah membatasi client near-domain ke sembilan fitur yang sama
+dengan far-domain lalu memeriksa apakah keunggulannya bertahan; ablasi terkontrol-fitur ini kami
+tandai sebagai pekerjaan lanjutan jangka dekat.
+
 ---
 
 ## 5. Discussion: Gaps, Research Agenda & Threats to Validity
@@ -604,12 +622,21 @@ keduanya konsisten di dalam dirinya tetapi tidak setara satu sama lain, sehingga
 dan angka run EC2 tidak boleh dibandingkan langsung. Model federated yang sama memberi MCC 0,647
 atau hanya 0,229 rata-rata, bergantung pada apakah statistik evaluasi cocok dengan training.
 
-Keempat, eksperimen adversarial bekerja pada ruang fitur aliran (tabular), bukan paket mentah.
-Perturbasi FGSM/PGD/JSMA di-clip ke persentil 1–99 tiap fitur tanpa aturan konsistensi protokol
-antar-fitur, sehingga aliran hasil perturbasi belum tentu dapat dikirim secara nyata, dan hasilnya
-dibaca sebagai taksiran kerentanan dalam kerangka threat model white-box yang kami asumsikan.
+Keempat, eksperimen adversarial bekerja pada ruang fitur aliran (tabular), bukan paket mentah, dan ini
+adalah pembatasan lingkup yang disengaja, bukan kelalaian. Perturbasi FGSM/PGD/JSMA di-clip ke
+persentil 1–99 tiap fitur tanpa memaksakan batasan protokol/fungsional antar-fitur (mis. hubungan
+byte, paket, dan durasi), sehingga aliran hasil perturbasi belum tentu dapat direalisasikan di jaringan
+nyata. Kami memaknai hasilnya sebagai **baseline robustness ruang-fitur worst-case** di bawah threat
+model white-box, sengaja dipisahkan dari *packet-level deliverability*; membuktikan bahwa perturbasi
+semacam itu dapat dikirim sebagai lalu lintas nyata adalah masalah tersendiri yang tidak kami bahas.
 Selain itu, ASR dihitung hanya pada serangan yang terdeteksi sebelum diserang sehingga tidak
 sebanding antar-model dengan recall yang berbeda.
+
+Kelima, kami sengaja mengunci satu MLP dangkal sebagai *controlled backbone* (Bagian 4.1), sehingga
+temuan kami mencirikan perilaku federated pada kapasitas model yang tetap dan rendah; apakah gap
+performa lintas-domain dan pergeseran skor adversarial bertahan pada arsitektur yang lebih dalam
+(mis. 1D-CNN atau encoder transformer) belum dipastikan di sini dan menjadi pekerjaan lanjutan, yang
+akan memisahkan batas kapasitas model dari efek federated yang sesungguhnya.
 
 ---
 
