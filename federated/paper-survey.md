@@ -406,7 +406,7 @@ terisolasi — prasyarat yang harus dipenuhi sebelum klaim-klaim lanjutan bermak
 
 **(B) Eksperimen adversarial**
 5. **R5 — Kerentanan evasion (SQ6).** Klaim: NIDS ML rapuh terhadap evasion [25],[26],[8]; diuji dengan FGSM, PGD, dan JSMA (perturbasi di-clip ke persentil 1–99 tiap fitur di ruang z-score lokal) terhadap model federated R3, dengan ε ∈ {0,05; 0,1; 0,2; 0,5}. ASR dihitung hanya pada serangan yang terdeteksi sebelum diserang; semua angka adalah rata-rata lima seed. Hasil: klaim **bertahan**, pada basis yang sehat (recall dasar 0,61; MCC 0,647). Pada ε=0,05, FGSM dan PGD membuat 58–59% serangan yang semula terdeteksi lolos (JSMA 37%) dan MCC turun ke sekitar 0,33 (JSMA 0,46); pada ε=0,1 ASR mencapai 0,89 (FGSM) dan 0,91 (PGD) dengan MCC 0,04–0,07 (JSMA: ASR 0,70; MCC 0,24); pada ε ≥ 0,2 FGSM dan PGD mencapai ASR ≥ 0,98 dan MCC menjadi negatif (sekitar −0,08 pada 0,2 dan −0,11 pada 0,5). FGSM dan PGD hampir sama efektif dan stabil antar-seed (interval 95% ASR dalam ±0,06), sedangkan JSMA yang hanya mengubah dua fitur lebih lemah dan lebih bervariasi (ASR 0,37; 0,70; 0,91 pada ε 0,05; 0,1; 0,2). Kerapuhan berbeda antar-domain: pada ε=0,05 ASR UNSW (0,70–0,71 untuk FGSM/PGD) jauh di atas CIC (0,32–0,33), dan pada ε=0,1 UNSW hampir seluruhnya lolos (0,99) dibanding 0,68–0,74 pada CIC.
-6. **R6 — Adversarial training sebagai defense (SQ6).** Klaim: adversarial training menaikkan robustness dengan trade-off [6],[21],[27]; pada run S\_R6 setiap client mengganti 50% sampel latihnya dengan contoh FGSM (ε=0,1), lalu dibandingkan dengan model bersih S\_R3 di bawah PGD ε=0,1 (rata-rata lima seed). Hasil: **bergantung domain**. Pada CIC adversarial training efektif: MCC di bawah serangan naik dari 0,149 ke 0,500 dan ASR turun dari 0,74 ke 0,13, sementara performa bersih juga membaik (MCC 0,533 → 0,585; recall 0,48 → 0,91). Pada UNSW model terdegradasi secara konsisten: MCC bersih turun dari 0,610 ke 0,170 (berkisar 0,07–0,27 pada kelima seed, tidak pernah di atas 0,27) dan recall dari 0,70 ke 0,10, sehingga MCC di bawah serangan (0,016) kehilangan makna. Pada test gabungan, MCC di bawah serangan naik (0,038 → 0,182) tetapi MCC bersih turun dari 0,647 ke 0,284. Seluruh perbedaan ini bermakna antar-seed (uji Welch p<0,01), dan karena degradasi UNSW muncul pada setiap seed, ia bukan ketidakstabilan pelatihan sesaat; penyebabnya belum kami selidiki. ASR gabungan model adv-trained (0,24) tidak sebanding dengan model bersih (0,91) karena dihitung pada himpunan serangan terdeteksi yang jauh lebih kecil, sehingga perbandingan sebaiknya per domain dan lewat MCC.
+6. **R6 — Adversarial training sebagai defense (SQ6).** Klaim: adversarial training menaikkan robustness dengan trade-off [6],[21],[27]; pada run S\_R6 setiap client mengganti 50% sampel latihnya dengan contoh FGSM (ε=0,1), lalu dibandingkan dengan model bersih S\_R3 di bawah PGD ε=0,1 (rata-rata lima seed). Hasil: **bergantung domain**. Pada CIC adversarial training efektif: MCC di bawah serangan naik dari 0,149 ke 0,500 dan ASR turun dari 0,74 ke 0,13, sementara performa bersih juga membaik (MCC 0,533 → 0,585; recall 0,48 → 0,91). Pada UNSW model terdegradasi secara konsisten: MCC bersih turun dari 0,610 ke 0,170 (berkisar 0,07–0,27 pada kelima seed, tidak pernah di atas 0,27) dan recall dari 0,70 ke 0,10, sehingga MCC di bawah serangan (0,016) kehilangan makna. Pada test gabungan, MCC di bawah serangan naik (0,038 → 0,182) tetapi MCC bersih turun dari 0,647 ke 0,284. Seluruh perbedaan ini bermakna antar-seed (uji Welch p<0,01), dan karena degradasi UNSW muncul pada setiap seed, ia bukan ketidakstabilan pelatihan sesaat; penyebabnya kami selidiki pada Bagian 5 (pergeseran skor keputusan antar-domain). ASR gabungan model adv-trained (0,24) tidak sebanding dengan model bersih (0,91) karena dihitung pada himpunan serangan terdeteksi yang jauh lebih kecil, sehingga perbandingan sebaiknya per domain dan lewat MCC.
 
 ### 4.3 Results table
 
@@ -544,8 +544,29 @@ sangat rapuh (ASR 0,91 pada ε=0,1) dan bahwa adversarial training—pertahanan 
 disarankan—memberi hasil yang bergantung domain: efektif pada CIC tetapi merusak UNSW. Pola
 pertahanan yang membantu di satu domain dan merugikan di domain lain menunjukkan bahwa
 pertahanan adversarial statis tidak dapat diasumsikan aman bagi seluruh client dalam federasi
-yang heterogen. Efek ini konsisten pada kelima seed, tetapi penyebabnya belum kami selidiki dan
-perlu diuji pada lebih banyak pasangan dataset.
+yang heterogen.
+
+Untuk menjawab mengapa UNSW terdegradasi, kami menganalisis distribusi skor keputusan model clean
+versus adversarial-trained pada kelima seed. Penyebabnya spesifik dan konsisten: adversarial
+training menggeser skor keputusan global **ke arah "attack"** secara seragam, dan arah seragam itu
+menolong CIC tetapi menghancurkan UNSW karena titik awal kedua domain berbeda. Pada CIC, skor
+rata-rata untuk serangan naik dari 0,534 ke 0,751, sehingga serangan yang semula berada di bawah
+ambang 0,5 terdorong melewatinya dan recall naik dari 0,48 ke 0,91. Pada UNSW, sebaliknya, skor
+rata-rata untuk serangan **turun** dari 0,687 ke 0,325—melewati ambang ke arah berlawanan—sehingga
+recall anjlok dari 0,70 ke 0,10 dan fraksi aliran yang ditandai sebagai serangan jatuh dari 0,49
+ke 0,07. Figure 5 memvisualkan pergeseran ini: seluruh distribusi skor serangan UNSW bergeser ke
+kiri ambang setelah adversarial training, sehingga model nyaris tak pernah lagi menandai serangan
+UNSW. Karena contoh FGSM dari kedua klien diagregasi menjadi satu model global melalui FedAvg
+sedangkan tiap klien memakai z-score lokalnya sendiri, "arah" yang memperbaiki CIC berlawanan
+dengan yang dibutuhkan UNSW; model global tidak dapat memenuhi keduanya dan memihak CIC yang
+serangannya memang lebih sulit dideteksi. Jadi degradasi UNSW bukan ketidakstabilan acak (konsisten
+di kelima seed) melainkan **konflik arah pembaruan antar-domain pada pertahanan statis dan
+seragam**—bukti langsung mengapa pertahanan adversarial yang sadar-domain diperlukan pada FL
+heterogen.
+
+![Distribusi skor keputusan (benign vs attack) model clean vs adversarial-trained, per domain. Setelah adversarial training, skor serangan UNSW bergeser ke bawah ambang 0,5 sehingga tak lagi terdeteksi.](figure-fed/fig_unsw_degradation.png)
+
+*Figure 5. Decision-score shift from adversarial training.*
 
 Dua celah terakhir bersifat lebih praktis. Pertama, skalabilitas dan heterogenitas pada
 skala produksi—ribuan klien dengan lalu lintas nyata—nyaris tidak memiliki bukti
@@ -571,8 +592,9 @@ benchmark (CSE-CIC-IDS2018 dan UNSW-NB15) dan dua client, sehingga temuan sepert
 non-IID bergantung domain" perlu diuji pada lebih banyak pasangan jaringan. R1 dan R2 memakai tiga
 seed dan eksperimen lainnya lima seed. Interval kepercayaan antar-seed hanya mencerminkan
 keacakan training karena partisi data dibuat sekali dan tetap, sehingga tidak mencakup variasi
-akibat pengambilan sampel data ulang. Penyebab degradasi UNSW pada adversarial training, meski
-konsisten antar-seed, belum kami selidiki. Untuk komponen telaah pustaka, potensi bias seleksi
+akibat pengambilan sampel data ulang. Penyebab degradasi UNSW pada adversarial training
+kami selidiki pada Bagian 5 dan ditelusuri ke pergeseran skor keputusan yang seragam antar-domain;
+namun analisis itu terbatas pada satu pasangan dataset dan perlu diuji pada pasangan lain. Untuk komponen telaah pustaka, potensi bias seleksi
 kami mitigasi dengan protokol pencarian yang eksplisit (Bagian 2), meski tidak ada protokol yang
 sepenuhnya bebas bias.
 
