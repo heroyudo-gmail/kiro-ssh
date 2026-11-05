@@ -12,7 +12,7 @@ from pptx.enum.text import PP_ALIGN
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FIG = os.path.join(HERE, "figure-fed")
-OUT = os.path.join(HERE, "ppt-promotor-metode-v2.pptx")
+OUT = os.path.join(HERE, "ppt-promotor-metode-v3.pptx")
 
 NAVY = RGBColor(0x1F, 0x3A, 0x5F)
 GREEN = RGBColor(0x2E, 0x8B, 0x57)
@@ -330,7 +330,33 @@ bullets(s, [
 ], Inches(0.6), Inches(1.7), Inches(12.1), Inches(5.2), size=17, gap=6)
 
 
-# ============== SLIDE 11 — KESIMPULAN: CONFERENCE vs JURNAL ==============
+# ============== SLIDE 11 — HASIL PERCOBAAN (TABEL) ==============
+s = add_slide()
+title_bar(s, "Hasil Percobaan (Ringkasan Terukur)",
+          "Semua angka = rata-rata multi-seed dari eksekusi nyata; metrik utama MCC")
+rows = [
+    ("Klaim / uji", "Hasil terukur (MCC / metrik)", "Bertahan?"),
+    ("R1 FedProx > FedAvg", "0,571 vs 0,572 (tak beda bermakna)", "Tidak"),
+    ("R2 non-IID menurunkan FL", "CIC turun (0,39 @α0,1); UNSW datar", "Bergantung domain"),
+    ("R3 cross-dataset FL sulit", "federated 0,65 vs centralized 0,62 (far)", "Tidak"),
+    ("R3 near-domain", "federated 0,85 vs centralized 0,83", "FL unggul"),
+    ("Local-only (lintas-domain)", "0,23 / 0,01 (far); 0,43 / 0,60 (near)", "Gagal transfer"),
+    ("R4 biaya cloud", "±300 KB & ±16 detik per ronde", "Terukur"),
+    ("R5 evasion (PGD @ε0,1)", "ASR 0,91; MCC 0,65 -> 0,04", "Ya (rapuh)"),
+    ("R6 adversarial training", "CIC: recall 0,48->0,91; UNSW: 0,70->0,10", "Bergantung domain"),
+    ("Protokol evaluasi (bocor vs tidak)", "0,65/0,85  vs  0,23/0,54", "Sensitif protokol"),
+]
+simple_table(s, rows, Inches(0.5), Inches(1.75), Inches(12.3), Inches(5.1),
+             col_widths=[Inches(4.0), Inches(5.6), Inches(2.7)], font=12.5,
+             red_if=lambda r, c, v: c == 2 and v in ("Tidak", "Gagal transfer"))
+note = textbox(s, Inches(0.5), Inches(6.95), Inches(12.3), Inches(0.4))
+rn = note.paragraphs[0].add_run()
+rn.text = ("Angka kunci: federated menang di kedua jarak domain; local-only selalu gagal "
+           "menyeberang; kesimpulan sensitif pada protokol evaluasi.")
+rn.font.size = Pt(12); rn.font.italic = True; rn.font.color.rgb = GREY
+
+
+# ============== SLIDE 12 — KESIMPULAN: CONFERENCE vs JURNAL ==============
 s = add_slide()
 title_bar(s, "Kesimpulan: Cakupan Conference (ISRITI) vs Jurnal (JOIN)",
           "Jurnal = isi konferensi + material baru (>50%) di sepanjang sumbu jarak domain")
