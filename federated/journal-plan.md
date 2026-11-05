@@ -96,8 +96,13 @@ Narasi: "seberapa jauh FL-NIDS bertahan saat domain makin jauh — near (76 fitu
 
 1. `jA_01_partition_neardomain.ipynb` — partisi 2017 & 2018 ke ruang 76-fitur, tulis ke
    S3 `federated_journal/neardomain/`. Reuse loader Paper 4.
-2. `jA_02_fed_neardomain.ipynb` (atau extend `run_survey_blockB.py`) — FL 2-client near-domain,
-   100 ronde, 5 seed. Output R3-near (MCC per client + union, fed vs centralized vs local-only).
+2. `jA_02_fed_neardomain_sim.ipynb` — FL 2-client near-domain, 100 ronde, 5 seed,
+   **SIMULASI penuh di kernel SageMaker** (Opsi B). Alasan: role SageMaker tak punya
+   izin `cloudformation:CreateStack`/`DeleteStack`, jadi jalur EC2 (CloudFormation+SSM)
+   tidak bisa dipakai dari SageMaker. Matematika FedAvg/z-score/MLP identik dgn node EC2.
+   Near-domain ditulis sbg *simulasi FL terkontrol* (sama status R1/R2 ISRITI); bukti
+   deployment cloud nyata tetap dipegang jalur cross-domain (ISRITI R3/R5/R6).
+   Output R3-near (MCC per client + union, fed vs centralized vs local-only) ke S3.
 3. `jA_03_noniid_neardomain.ipynb` — sweep Dirichlet α near-domain (R2-near).
 4. `jB_01_epsilon_curve.ipynb` — kurva ε halus (mis. 0.01..0.5, ~10 titik) FGSM/PGD/JSMA
    untuk near & far + **analisis per-fitur** (fitur mana paling rentan).
