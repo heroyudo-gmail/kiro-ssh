@@ -486,7 +486,7 @@ deployment cloud nyata tetap berasal dari jalur far-domain (R3–R6).
 
 **R3 near-domain (FL lintas-dataset saat domain dekat).** Dengan protokol evaluasi yang sama
 (tiap test set dinormalisasi dengan statistik latih klien pemiliknya), model federated mencapai
-MCC gabungan **0,851 ± 0,020** (lima seed), jauh di atas far-domain (0,647). Model *centralized*
+MCC gabungan **0,851 ± 0,010** (lima seed), jauh di atas far-domain (0,647). Model *centralized*
 mencapai 0,828 (normalisasi gabungan), sehingga—seperti di far-domain—federated **sedikit tetapi
 konsisten lebih baik** meski data tak pernah dipusatkan. Model *local-only* kembali gagal
 berpindah: dilatih pada CIC2017 hanya 0,433 pada test gabungan (0,076 di CIC2018), dan dilatih
