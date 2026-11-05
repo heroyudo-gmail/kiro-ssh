@@ -1,10 +1,12 @@
-# Federated Learning for Network Intrusion Detection Systems: A Survey with Reproducible Verification and Adversarial Experiments on a Cloud Testbed
+# Federated Learning for Cross-Domain Network Intrusion Detection: A Domain-Distance Study with a Leakage-Free Evaluation Protocol and Adversarial Robustness Analysis on a Cloud Testbed
 
-> **Judul paper (English, final untuk JICTRA)** = baris di atas.
+> **Judul paper (English, final = acuan `paper6-federated.tex` untuk JOIN)** = baris di atas.
+> Judul lama ber-"Survey" sudah ditinggalkan (lihat arsip di bawah) karena naskah bersifat
+> studi empiris, bukan survei.
 >
-> **Opsi judul English (arsip; final = baris di atas):**
+> **Opsi judul English lama (arsip, TIDAK dipakai):**
 > 1. *Federated Learning for Network Intrusion Detection Systems: A Survey with
->    Reproducible Verification and Adversarial Experiments on a Cloud Testbed* ← dipilih
+>    Reproducible Verification and Adversarial Experiments on a Cloud Testbed*
 > 2. *Does It Still Hold? A Survey of Federated Learning for Network Intrusion
 >    Detection with Reproducible Verification on AWS*
 > 3. *From Reading to Running: A Reproducible Survey of Federated Learning for
