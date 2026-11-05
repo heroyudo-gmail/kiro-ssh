@@ -206,7 +206,16 @@ and model code.
 All clients use an identical lightweight multilayer perceptron ($d{\to}128{\to}64{\to}1$ with ReLU
 hidden units, sigmoid output, binary cross-entropy loss), trained with mini-batch SGD (batch 256,
 learning rate 0.003) for five local epochs per round over 100 rounds; $d$ is 9 (far) or 76 (near).
-The primary metric is the Matthews correlation coefficient (MCC), reliable under class imbalance; we
+This shallow MLP is a deliberate \emph{controlled backbone} rather than a performance-maximizing
+choice. A small model keeps the per-round payload tiny (about 76.8~KB per client), which is essential
+for a cross-silo deployment and is itself the object of the R4 cost measurement; it also isolates the
+effects we study---aggregation (FedAvg vs FedProx), non-IID degree, cross-domain transfer, and the
+adversarial decision-score shift---from the confounding training dynamics of large, high-capacity
+models, such as latent-representation overfitting, whose behavior under federated aggregation is
+harder to attribute. Because the architecture is held fixed and identical across all clients and
+scenarios, any measured difference is attributable to the factor under test rather than to
+model capacity. The primary metric is the Matthews correlation coefficient (MCC), reliable under
+class imbalance; we
 also report recall and attack success rate (ASR), the share of attacks detected before a perturbation
 that evade detection afterwards. We verify six claims: R1 FedAvg vs FedProx; R2 non-IID impact
 (Dirichlet $\alpha$ sweep); R3 cross-dataset feasibility; R4 cloud cost; R5 evasion (FGSM, PGD, JSMA);
@@ -395,12 +404,18 @@ packets: perturbations are clipped to the 1st--99th percentile of each feature w
 cross-feature consistency, so they estimate feature-space vulnerability under a white-box threat model
 rather than prove that manipulated traffic could be sent on the wire; ASR is computed only over
 attacks detected before the perturbation and is not comparable across models with different recall.
+Fifth, we deliberately fix a single shallow MLP as a controlled backbone (Section~\ref{sec:setup}), so
+our findings characterize federated behavior at a fixed, low model capacity; whether the cross-domain
+performance gap and the adversarial decision-score shift persist under deeper architectures (for
+example 1D-CNN or transformer encoders) is not established here and is left to future work, which
+would separate model-capacity limits from genuinely federated effects.
 
 \subsection{Research Directions}
 The most pressing directions are standardized, leakage-free normalization and evaluation protocols for
-cross-dataset FL; domain-aware evasion defenses instead of static adversarial training; semantic-aware
-feature alignment (which we pursue separately); and validation at a client and traffic scale closer to
-production, including IoT traffic domains.
+cross-dataset FL; domain-aware evasion defenses instead of static adversarial training; verification of
+the reported phenomena under deeper architectures (1D-CNN, transformer) to test whether they are
+capacity-independent; semantic-aware feature alignment (which we pursue separately); and validation at
+a client and traffic scale closer to production, including IoT traffic domains.
 
 \section{Conclusion}
 We studied when cross-dataset federated learning works for network intrusion detection along a
