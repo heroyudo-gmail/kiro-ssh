@@ -450,6 +450,80 @@ local-only pada test gabungan lintas-dataset (R3).
 
 *Figure 3. Cross-dataset results.*
 
+### 4.4 Near-domain: FL saat kedua klien memakai ekstraktor yang sama
+
+Semua hasil di atas (R1–R6) adalah skenario **far-domain**: Client-CIC dan Client-UNSW memakai
+ekstraktor fitur yang berbeda (CICFlowMeter vs Argus/Bro), sehingga hanya sembilan fitur yang
+dapat diselaraskan. Pertanyaan lanjutan yang wajar adalah: bagaimana perilaku FL ketika kedua
+domain **lebih dekat**—yakni diekstrak dengan alat yang sama sehingga ruang fiturnya jauh lebih
+kaya? Untuk menjawabnya kami menambahkan konfigurasi **near-domain** dengan dua klien yang
+sama-sama berbasis CICFlowMeter: **Client-CIC2017** (CIC-IDS2017) dan **Client-CIC2018**
+(CSE-CIC-IDS2018). Karena ekstraktornya sama, irisan nama fitur yang andal bukan lagi sembilan
+melainkan **76 fitur**. Dengan begitu kami dapat menempatkan temuan pada sebuah *gradasi jarak
+domain*: dari near-domain (76 fitur, satu ekstraktor) ke far-domain (9 fitur, dua ekstraktor).
+
+Tabel 4 merangkum partisi near-domain. Keduanya memakai pembagian 70/30 dengan latih
+disubsampel ke 100.000 aliran, dan rasio serangannya mirip (19,3% vs 23,8%)—kontras dengan
+far-domain yang rasionya sangat timpang (16,9% CIC vs 55,1% UNSW). Protokol pelatihan, model MLP,
+jumlah ronde, seed, dan protokol normalisasi bebas-kebocoran identik dengan konfigurasi utama;
+near-domain dijalankan sebagai simulasi FL terkontrol (sama status dengan R1–R2), sedangkan bukti
+deployment cloud nyata tetap berasal dari jalur far-domain (R3–R6).
+
+*Table 4. Partisi data near-domain (CICFlowMeter 2017 vs 2018, 76 fitur).*
+
+| Client (split) | Total aliran | Serangan | Rasio serangan |
+|---|---|---|---|
+| CIC2017 (train) | 100.000 | 19.261 | 0,193 |
+| CIC2017 (test) | 239.997 | 46.226 | 0,193 |
+| CIC2018 (train) | 100.000 | 23.829 | 0,238 |
+| CIC2018 (test) | 299.997 | 71.487 | 0,238 |
+
+**R3 near-domain (FL lintas-dataset saat domain dekat).** Dengan protokol evaluasi yang sama
+(tiap test set dinormalisasi dengan statistik latih klien pemiliknya), model federated mencapai
+MCC gabungan **0,851 ± 0,020** (lima seed), jauh di atas far-domain (0,647). Model *centralized*
+mencapai 0,828 (normalisasi gabungan), sehingga—seperti di far-domain—federated **sedikit tetapi
+konsisten lebih baik** meski data tak pernah dipusatkan. Model *local-only* kembali gagal
+berpindah: dilatih pada CIC2017 hanya 0,433 pada test gabungan (0,076 di CIC2018), dan dilatih
+pada CIC2018 hanya 0,598 (0,047 di CIC2017), walaupun masing-masing kuat di domainnya sendiri
+(~0,86 dan ~0,84). Temuan metodologis far-domain juga berulang: model federated yang sama turun
+ke MCC 0,536 bila dievaluasi dengan statistik gabungan yang tidak konsisten dengan training.
+Tabel 5 merangkum perbandingan ini.
+
+*Table 5. Near-domain: MCC test gabungan (mean ± CI95, lima seed).*
+
+| Model | Union MCC | CIC2017 | CIC2018 |
+|---|---|---|---|
+| Federated (normalisasi lokal) | **0,851 ± 0,010** | 0,895 | 0,821 |
+| Centralized (normalisasi gabungan) | 0,828 ± 0,017 | 0,847 | 0,815 |
+| Centralized (normalisasi lokal) | 0,572 ± 0,122 | 0,806 | 0,421 |
+| Local-only [CIC2017] | 0,433 ± 0,085 | 0,865 | 0,076 |
+| Local-only [CIC2018] | 0,598 ± 0,025 | 0,047 | 0,837 |
+| Federated, eval gabungan (diagnostik) | 0,536 ± 0,038 | 0,732 | 0,380 |
+
+Figure 4 memvisualkan dua sisi near-domain: panel (a) perbandingan model pada test gabungan (R3
+near-domain), panel (b) dampak non-IID (R2 near-domain, dibahas berikut).
+
+![(a) FL lintas-dataset near-domain pada test gabungan; (b) dampak non-IID near-domain (MCC vs konsentrasi Dirichlet). Batang galat: CI95 (a), standar deviasi (b).](figure-fed/fig_neardomain.png)
+
+*Figure 4. Near-domain results.*
+
+**R2 near-domain (dampak non-IID saat domain dekat).** Dengan protokol sweep yang identik dengan
+R2 far-domain (satu dataset dipecah K=4 klien via Dirichlet α, tiga seed), kami menguji apakah
+"non-IID menurunkan FL" juga berlaku di ruang 76-fitur. Hasilnya **lebih seragam antar-dataset**
+dibanding far-domain. Pada kedua dataset, MCC relatif stabil hingga α=0,5 (CIC2017 0,79–0,86;
+CIC2018 0,83–0,84) lalu menurun pada α≤0,1, dengan titik putus di α=0,05 (CIC2017 0,569;
+CIC2018 0,680). Yang menonjol, bukan hanya rata-rata yang turun melainkan juga **kestabilannya**:
+pada α rendah standar deviasi melonjak (CIC2017 ±0,135 di α=0,1; CIC2018 ±0,231 di α=0,05),
+menandakan sebagian partisi ekstrem membuat FL gagal konvergen. Jadi di near-domain, klaim R2
+bertahan tetapi hanya pada heterogenitas ekstrem, dan efeknya lebih konsisten antar-dataset
+daripada di far-domain yang sangat bergantung domain.
+
+Ditempatkan pada gradasi jarak domain, ketiga pelajaran far-domain terbukti **kokoh**: (i) FL
+lintas-dataset tidak runtuh—justru menguat saat domain lebih dekat (0,851 near vs 0,647 far);
+(ii) local-only selalu gagal berpindah domain, sehingga manfaat federasi nyata di kedua jarak;
+dan (iii) sensitivitas terhadap protokol normalisasi muncul di near maupun far-domain, menegaskan
+bahwa kesimpulan lintas-dataset tak dapat ditarik tanpa menyebutkan protokolnya.
+
 ---
 
 ## 5. Discussion: Gaps, Research Agenda & Threats to Validity

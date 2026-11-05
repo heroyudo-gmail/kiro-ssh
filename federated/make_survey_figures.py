@@ -179,7 +179,69 @@ def fig_results():
     print("  figure-fed/fig_results.png")
 
 
+def fig_neardomain():
+    """Near-domain (CIC2017 vs CIC2018, 76 features).
+
+    (a) R3-near: union MCC of federated vs centralized vs local-only (mean, 95% CI over
+        5 seeds), from journal_out/neardomain_fed_agg.csv (scope=union, metric=mcc).
+    (b) R2-near: MCC vs Dirichlet alpha per dataset (mean, std over 3 seeds), from
+        journal_out/r2near_noniid_{cic2017,cic2018}.csv.
+    All numbers are from real SageMaker runs.
+    """
+    import numpy as np
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8.0, 2.8),
+                                   gridspec_kw={"width_ratios": [1.3, 1]})
+
+    # (a) R3-near union MCC
+    labels = ["Federated\n(local norm)", "Central.\n(pooled)", "Central.\n(local norm)",
+              "Local-only\n(2017)", "Local-only\n(2018)", "Federated\n(pooled eval)"]
+    vals = [0.8511, 0.8278, 0.5721, 0.4328, 0.5983, 0.5358]
+    cis = [0.0100, 0.0165, 0.1219, 0.0849, 0.0252, 0.0381]
+    cols = ["#2e8b57", "#9a9a9a", "#6b6b6b", "#d1495b", "#3a6ea5", "#bfe3cb"]
+    bars = ax1.bar(range(6), vals, color=cols, width=0.68, yerr=cis, capsize=3,
+                   error_kw=dict(lw=1.0, ecolor="#222"))
+    bars[5].set_hatch("//")
+    bars[5].set_edgecolor("#2e8b57")
+    ax1.axhline(0, color="#333", lw=0.8)
+    for b, v, c in zip(bars, vals, cis):
+        ax1.text(b.get_x() + b.get_width() / 2, v + c + 0.02,
+                 f"{v:.2f}", ha="center", fontsize=7.5)
+    ax1.set_xticks(range(6))
+    ax1.set_xticklabels(labels, fontsize=5.6)
+    ax1.set_ylabel("MCC (union test)", fontsize=8)
+    ax1.set_ylim(0.0, 1.0)
+    ax1.tick_params(axis="y", labelsize=8)
+    ax1.set_title("(a) Near-domain cross-dataset FL", fontsize=9)
+
+    # (b) R2-near: MCC vs alpha per dataset
+    alphas = [100, 10, 1, 0.5, 0.1, 0.05]
+    c17_m = [0.858, 0.856, 0.826, 0.793, 0.670, 0.569]
+    c17_s = [0.002, 0.005, 0.034, 0.044, 0.135, 0.009]
+    c18_m = [0.826, 0.827, 0.838, 0.836, 0.784, 0.680]
+    c18_s = [0.001, 0.003, 0.003, 0.002, 0.081, 0.231]
+    x = np.arange(len(alphas))
+    ax2.errorbar(x, c17_m, yerr=c17_s, marker="o", capsize=3, lw=1.6,
+                 color="#e08a1e", label="CIC2017")
+    ax2.errorbar(x, c18_m, yerr=c18_s, marker="s", capsize=3, lw=1.6,
+                 color="#3a6ea5", label="CIC2018")
+    ax2.set_xticks(x)
+    ax2.set_xticklabels([str(a) for a in alphas], fontsize=8)
+    ax2.set_xlabel("Dirichlet concentration (high = IID, low = non-IID)", fontsize=8)
+    ax2.set_ylabel("MCC", fontsize=8)
+    ax2.set_ylim(0.4, 0.95)
+    ax2.tick_params(labelsize=8)
+    ax2.legend(fontsize=8, loc="lower left")
+    ax2.set_title("(b) Non-IID impact (near-domain)", fontsize=9)
+
+    fig.tight_layout()
+    fig.savefig(os.path.join(FIG, "fig_neardomain.png"))
+    plt.close(fig)
+    print("  figure-fed/fig_neardomain.png")
+
+
 if __name__ == "__main__":
     fig_feature_alignment()
     fig_architecture()
     fig_results()
+    fig_neardomain()
