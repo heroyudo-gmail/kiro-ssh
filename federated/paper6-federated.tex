@@ -266,8 +266,12 @@ indistinguishable (MCC 0.572 vs 0.571), both converging in 7--11 rounds.
 
 \textit{R2 (non-IID impact): domain dependent.} On Client-CIC, MCC is stable at high $\alpha$ and
 falls to 0.387 at $\alpha{=}0.1$ with a large standard deviation; on Client-UNSW it stays flat or
-rises, because UNSW classes are easier to separate. The claim holds for CIC at low $\alpha$ but not
-for UNSW.
+rises. We attribute this asymmetry mainly to the class balance of the two training sets rather than to
+intrinsic separability alone: CIC is strongly benign-skewed (16.9\% attacks), so an extreme Dirichlet
+partition can leave some local shards with too few attack samples to learn the minority class,
+collapsing and destabilizing the aggregate; UNSW is attack-majority (55.1\%), so even an extreme
+partition leaves every shard with a dense-enough attack subset for local convergence. The claim thus
+holds for CIC at low $\alpha$ but not for UNSW, with the attack ratio as the plausible driver.
 
 \textit{R3 (cross-dataset FL is hard): does not hold under a consistent protocol.} Under the
 leakage-free protocol the federated model reaches a union-test MCC of $0.647 \pm 0.020$ (five seeds;
@@ -375,6 +379,19 @@ local-only models always fail to transfer, so federation gives a real benefit at
 model scores 0.65/0.85 under the leakage-free protocol but only 0.23/0.54 under an inconsistent pooled
 evaluation. The claim that cross-dataset FL is hard \cite{b5} therefore cannot be assessed without
 stating the normalization protocol and a matched baseline.
+
+One confound deserves explicit discussion: the near-domain configuration uses 76 features and the
+far-domain one only 9, so part of the 0.65$\to$0.85 improvement could reflect feature count rather
+than domain distance. We argue these two factors are not independent but causally linked: the larger
+feature space is itself an \emph{inherent consequence} of domain proximity, because both near-domain
+clients are produced by the same extractor (CICFlowMeter) and thus share a large, semantically
+consistent intersection, whereas the far-domain clients use different extractors (CICFlowMeter vs
+Argus/Bro) whose reliable intersection is only nine features. In other words, a richer shared feature
+space is precisely what ``closer domain'' means operationally; the two cannot be fully decoupled in
+practice. A cleaner isolation would restrict the near-domain clients to the same nine features used in
+the far-domain setting and check whether the advantage over far-domain persists; we leave this
+feature-controlled ablation as near-term future work, noting that it would attribute the gain to
+domain distance net of feature count.
 
 \subsection{Why Adversarial Training Breaks One Domain}
 R6 is domain dependent, and we traced the cause by comparing decision-score distributions of the clean
