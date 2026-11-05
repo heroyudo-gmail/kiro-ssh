@@ -11,8 +11,8 @@
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 \begin{document}
 
-\title{Federated Learning for Network Intrusion Detection Systems: A Survey with
-Reproducible Verification and Adversarial Experiments on a Cloud Testbed}
+\title{Empirical Verification of Federated Learning for Network Intrusion
+Detection: A Cross-Dataset and Adversarial Study on a Cloud Testbed}
 
 \author{\IEEEauthorblockN{Hero Yudo Martono}
 \IEEEauthorblockA{\textit{Dept. of Informatics and Computer Eng.} \\
@@ -36,7 +36,7 @@ ferryas@pens.ac.id}
 \maketitle
 
 \begin{abstract}
-Federated learning (FL) promises collaborative training of network intrusion detection systems (NIDS) across organizations without centralizing sensitive traffic. However, the FL-NIDS literature is fragmented: datasets, architectures, aggregation strategies, and evaluation protocols differ across studies, so reported claims are hard to compare and evidence of public-cloud deployment is scarce. This paper surveys recent FL-NIDS work in four themes and, unlike prior surveys, empirically verifies representative claims from published methods on a uniform Amazon Web Services testbed using CSE-CIC-IDS2018 (CIC) and UNSW-NB15 (UNSW), including three evasion attacks and adversarial training. One claim holds (a healthy model is highly vulnerable to evasion, with an attack success rate of 0.91 at a perturbation budget of 0.1), two do not hold (FedProx does not beat FedAvg; cross-dataset FL does not collapse, reaching a Matthews correlation coefficient (MCC) of 0.65 versus 0.62 for centralized training), and two are domain dependent (the non-IID impact; adversarial training improves robustness on CIC but breaks UNSW). We also show that cross-dataset conclusions are sensitive to the normalization protocol: an inconsistent evaluation cuts the federated MCC from 0.65 to 0.23 on average. Cloud costs are small, about 300 KB and 16 seconds per round.
+Federated learning (FL) promises collaborative training of network intrusion detection systems (NIDS) across organizations without centralizing sensitive traffic. However, the FL-NIDS literature is fragmented: datasets, architectures, aggregation strategies, and evaluation protocols differ across studies, so reported claims are hard to compare and evidence of public-cloud deployment is scarce. This paper surveys recent FL-NIDS work in four themes and, unlike prior surveys, empirically verifies representative claims from published methods on a uniform Amazon Web Services testbed using CSE-CIC-IDS2018 (CIC) and UNSW-NB15 (UNSW), including three evasion attacks and adversarial training. One claim holds (a healthy model is highly vulnerable to evasion, with an attack success rate of 0.91 at a perturbation budget of 0.1), two do not hold (FedProx does not beat FedAvg; cross-dataset FL does not collapse, reaching a Matthews correlation coefficient (MCC) of 0.65 versus 0.62 for centralized training), and two are domain dependent (the non-IID impact; adversarial training improves robustness on CIC but breaks UNSW, which we trace to a uniform shift of the global decision boundary). We also show that cross-dataset conclusions are sensitive to the normalization protocol: an inconsistent evaluation cuts the federated MCC from 0.65 to 0.23 on average. Cloud costs are small, about 300 KB and 16 seconds per round.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -386,10 +386,15 @@ consistently: clean MCC falls from 0.610 to 0.170 (between 0.07 and 0.27 in ever
 recall from 0.70 to 0.10, so the MCC under attack (0.016) loses its meaning. On the union test
 set, MCC under attack improves (0.038 to 0.182) but clean MCC drops from 0.647 to 0.284. All
 these differences are significant across seeds (Welch tests, $p{<}0.01$), and because the UNSW
-degradation appears in every seed it is not a one-off training instability; we did not
-investigate its cause. The union ASR of the adversarially trained model (0.24) is not
-comparable with the clean model (0.91), since it is computed over a much smaller set of
-detected attacks.
+degradation appears in every seed it is not a one-off training instability. Comparing the
+decision-score distributions of the clean and adversarially trained models explains the cause:
+adversarial training shifts the global decision score uniformly toward ``attack,'' which helps CIC
+(mean attack score rises from 0.53 to 0.75, pushing attacks past the 0.5 threshold) but harms UNSW
+(mean attack score instead falls from 0.69 to 0.33, crossing the threshold the other way), because
+FGSM examples from both clients are aggregated into one model while each uses its own local z-score,
+so the direction that improves CIC opposes the one UNSW needs. The union ASR of the adversarially
+trained model (0.24) is not comparable with the clean model (0.91), since it is computed over a much
+smaller set of detected attacks.
 
 Table~\ref{tab:adv} reports the same comparison per client. The union row averages two
 opposite effects, which is why we report each client separately: on CIC the defense raises
@@ -440,8 +445,8 @@ testbed, not an exact replication of the original setup, so absolute differences
 original papers are expected. Second, the scope is narrow: two datasets and two clients, with
 three seeds for R1 and R2 and five seeds for the other experiments. Confidence intervals over
 seeds capture training randomness only, because the data partition is fixed, so they do not
-reflect variation from resampling the data. The cause of the UNSW degradation under adversarial
-training, although consistent across seeds, was not investigated. Third, normalization and the
+reflect variation from resampling the data. The decision-score explanation of the UNSW degradation is
+based on this single dataset pair and should be confirmed on more pairs. Third, normalization and the
 evaluation protocol strongly affect results. The EC2 runs use per-client z-score while the R1
 and R2 simulations use one shared global z-score, so simulation and EC2 figures should not be
 compared directly, and the same federated models score 0.647 or only 0.229 on average depending
