@@ -12,7 +12,7 @@ from pptx.enum.text import PP_ALIGN
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FIG = os.path.join(HERE, "figure-fed")
-OUT = os.path.join(HERE, "ppt-promotor-metode.pptx")
+OUT = os.path.join(HERE, "ppt-promotor-metode-v2.pptx")
 
 NAVY = RGBColor(0x1F, 0x3A, 0x5F)
 GREEN = RGBColor(0x2E, 0x8B, 0x57)
@@ -209,6 +209,149 @@ bullets(s, [
 img = os.path.join(FIG, "fig_feature_alignment.png")
 if os.path.exists(img):
     s.shapes.add_picture(img, Inches(7.9), Inches(2.0), width=Inches(5.0))
+
+
+def simple_table(slide, rows, left, top, width, height, col_widths=None,
+                 header_color=NAVY, font=12.5, red_if=None):
+    nr, nc = len(rows), len(rows[0])
+    table = slide.shapes.add_table(nr, nc, left, top, width, height).table
+    if col_widths:
+        for i, w in enumerate(col_widths):
+            table.columns[i].width = w
+    for c in range(nc):
+        cell = table.cell(0, c); cell.fill.solid(); cell.fill.fore_color.rgb = header_color
+        run = cell.text_frame.paragraphs[0].add_run(); run.text = rows[0][c]
+        run.font.size = Pt(font + 1); run.font.bold = True
+        run.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
+    for r_i in range(1, nr):
+        for c in range(nc):
+            cell = table.cell(r_i, c); cell.fill.solid()
+            cell.fill.fore_color.rgb = RGBColor(0xF2, 0xF6, 0xFB) if r_i % 2 else RGBColor(0xE4, 0xEC, 0xF5)
+            run = cell.text_frame.paragraphs[0].add_run(); run.text = rows[r_i][c]
+            run.font.size = Pt(font)
+            run.font.bold = (c == 0)
+            if red_if and red_if(r_i, c, rows[r_i][c]):
+                run.font.color.rgb = RED
+            else:
+                run.font.color.rgb = NAVY if c == 0 else RGBColor(0x22, 0x22, 0x22)
+    return table
+
+
+# ============== SLIDE 6 — DATASET & PARTISI ==============
+s = add_slide()
+title_bar(s, "Dataset & Partisi",
+          "Tiga dataset benchmark; jumlah fitur ditentukan oleh irisan ekstraktor")
+bullets(s, [
+    (0, "Tiga dataset, dua konfigurasi:", GREEN),
+    (1, "Near-domain: CIC-IDS2017 + CSE-CIC-IDS2018 (keduanya CICFlowMeter)."),
+    (1, "Far-domain: CSE-CIC-IDS2018 + UNSW-NB15 (CICFlowMeter vs Argus/Bro)."),
+    (0, "Jumlah fitur = konsekuensi irisan ekstraktor, bukan pilihan desain:", GREEN),
+    (1, "Ekstraktor SAMA -> 76 fitur bersama (near)."),
+    (1, "Ekstraktor BEDA -> hanya 9 fitur yang berpadanan 1:1 (far)."),
+    (0, "Label biner: benign = 0, attack = 1. Split 70/30, train di-subsample ~100k.", NAVY),
+], Inches(0.6), Inches(1.7), Inches(6.4), Inches(3.1), size=16, gap=4)
+rows = [
+    ("Client (split)", "Total", "Attack", "Rasio"),
+    ("CIC2017 train", "100.000", "19.261", "0,193"),
+    ("CIC2018 train", "100.000", "23.829", "0,238"),
+    ("CIC2018 (far) train", "100.000", "16.929", "0,169"),
+    ("UNSW (far) train", "82.332", "45.332", "0,551"),
+]
+simple_table(s, rows, Inches(0.6), Inches(5.0), Inches(7.0), Inches(2.0),
+             col_widths=[Inches(2.8), Inches(1.5), Inches(1.5), Inches(1.2)], font=12)
+img = os.path.join(FIG, "fig_feature_alignment.png")
+if os.path.exists(img):
+    s.shapes.add_picture(img, Inches(7.8), Inches(1.9), width=Inches(5.1))
+
+
+# ============== SLIDE 7 — MODEL (CONTROLLED BACKBONE) ==============
+s = add_slide()
+title_bar(s, "Model: MLP Ringan sebagai Controlled Backbone",
+          "Dangkal SENGAJA — bukan untuk memaksimalkan akurasi, tapi untuk mengisolasi efek")
+bullets(s, [
+    (0, "Arsitektur: MLP d -> 128 -> 64 -> 1 (ReLU, sigmoid, BCE); d = 9 (far) / 76 (near).",),
+    (0, "Mengapa sengaja DANGKAL?", GREEN),
+    (1, "Payload kecil (±76,8 KB/unggahan) -> cocok cross-silo & jadi objek ukur biaya (R4)."),
+    (1, "Mengisolasi efek yang diteliti (agregasi, non-IID, cross-domain, pergeseran skor)"),
+    (2, "dari dinamika model besar seperti overfitting representasi laten."),
+    (1, "Arsitektur dikunci identik di semua client & skenario -> perbedaan terukur"),
+    (2, "dapat diatribusikan ke faktor yang diuji, bukan ke kapasitas model."),
+    (0, "Catatan (Threats to Validity):", NAVY),
+    (1, "Uji arsitektur lebih dalam (1D-CNN, transformer) = arah lanjutan."),
+], Inches(0.6), Inches(1.7), Inches(12.1), Inches(5.2), size=17, gap=6)
+
+
+# ============== SLIDE 8 — PROTOKOL BEBAS-KEBOCORAN ==============
+s = add_slide()
+title_bar(s, "Protokol Evaluasi Bebas-Kebocoran (Kontribusi Utama)",
+          "Cara normalisasi data uji MENENTUKAN kesimpulan — sering terlewat di literatur")
+bullets(s, [
+    (0, "Masalah: statistik normalisasi (z-score) bisa 'bocor' antar-client.", RED),
+    (0, "Protokol kami (bebas-kebocoran):", GREEN),
+    (1, "z-score dihitung LOKAL dari data latih tiap client (tak pernah dibagikan)."),
+    (1, "Test set tiap client dinormalisasi dgn statistik latih PEMILIKNYA (konsisten training)."),
+    (0, "Bukti dampaknya (model federated yang SAMA):", GREEN),
+    (1, "Protokol bebas-kebocoran: MCC 0,65 (far) / 0,85 (near)."),
+    (1, "Evaluasi tak konsisten (pooled): MCC anjlok 0,23 (far) / 0,54 (near)."),
+    (0, "Pesan: 'FL lintas-dataset runtuh' bisa jadi ARTEFAK evaluasi, bukan sifat FL.", NAVY),
+], Inches(0.6), Inches(1.7), Inches(12.1), Inches(5.2), size=17, gap=6)
+
+
+# ============== SLIDE 9 — EKSPERIMEN ADVERSARIAL ==============
+s = add_slide()
+title_bar(s, "Eksperimen Adversarial",
+          "Serangan evasion + pertahanan adversarial training, pada ruang fitur (worst-case)")
+bullets(s, [
+    (0, "Serangan evasion (R5): FGSM, PGD, JSMA.", GREEN),
+    (1, "Perturbasi di-clip ke persentil 1-99 tiap fitur (ruang z-score lokal)."),
+    (1, "Threat model: ruang-fitur sebagai batas-atas worst-case,"),
+    (2, "BUKAN packet-level (aliran belum tentu bisa dikirim nyata) — disengaja."),
+    (0, "Pertahanan (R6): adversarial training (50% sampel diganti contoh FGSM).", GREEN),
+    (1, "Efektif di CIC (recall 0,48 -> 0,91) tetapi MERUSAK UNSW (recall 0,70 -> 0,10)."),
+    (1, "Sebab: pergeseran batas keputusan seragam ke arah 'attack' —"),
+    (2, "menolong satu domain, melukai domain lain (konflik arah antar-domain)."),
+    (0, "Implikasi: pertahanan adversarial harus SADAR-DOMAIN, bukan statis.", NAVY),
+], Inches(0.6), Inches(1.7), Inches(12.1), Inches(5.2), size=16, gap=5)
+
+
+# ============== SLIDE 10 — TESTBED AWS & REPRODUCIBILITY ==============
+s = add_slide()
+title_bar(s, "Testbed AWS & Reproducibility",
+          "Semua angka dari eksekusi NYATA, bukan dikarang")
+bullets(s, [
+    (0, "Infrastruktur:", GREEN),
+    (1, "Far-domain (R3/R5/R6): 3 EC2 t3.medium (1 aggregator + 2 client), bobot via S3."),
+    (1, "Near-domain & sweep non-IID: simulasi FL terkontrol di SageMaker (kode identik)."),
+    (0, "Reproducibility:", GREEN),
+    (1, "Multi-seed {13,42,101,202,303}; dilaporkan mean +/- CI95."),
+    (1, "Partisi data tetap -> variasi hanya dari keacakan training."),
+    (1, "Biaya cloud kecil: ±300 KB & ±16 detik per ronde; teardown tiap sesi."),
+    (0, "Seluruh skrip, notebook, dan konfigurasi cloud dirilis untuk direproduksi.", NAVY),
+], Inches(0.6), Inches(1.7), Inches(12.1), Inches(5.2), size=17, gap=6)
+
+
+# ============== SLIDE 11 — KESIMPULAN: CONFERENCE vs JURNAL ==============
+s = add_slide()
+title_bar(s, "Kesimpulan: Cakupan Conference (ISRITI) vs Jurnal (JOIN)",
+          "Jurnal = isi konferensi + material baru (>50%) di sepanjang sumbu jarak domain")
+rows = [
+    ("Fitur / cakupan", "Conference (ISRITI)", "Jurnal (JOIN)"),
+    ("Verifikasi 6 klaim (R1-R6)", "Ya (far-domain)", "Ya (dirangkum)"),
+    ("Far-domain (9 fitur)", "Ya", "Ya"),
+    ("Near-domain (76 fitur)", "Tidak", "Ya (BARU)"),
+    ("Gradasi jarak domain", "Tidak", "Ya (BARU)"),
+    ("Protokol bebas-kebocoran", "Sebagai temuan", "Sebagai kontribusi"),
+    ("Sebab degradasi UNSW", "1 kalimat ringkas", "Analisis penuh + gambar"),
+    ("Jumlah halaman", "6 (batas)", "Penuh (jurnal)"),
+]
+simple_table(s, rows, Inches(1.0), Inches(1.9), Inches(11.3), Inches(4.6),
+             col_widths=[Inches(4.3), Inches(3.5), Inches(3.5)], font=13,
+             red_if=lambda r, c, v: v == "Tidak")
+note = textbox(s, Inches(1.0), Inches(6.7), Inches(11.3), Inches(0.6))
+rn = note.paragraphs[0].add_run()
+rn.text = ("Material baru jurnal: near-domain, sumbu jarak domain, protokol sebagai kontribusi, "
+           "dan investigasi sebab degradasi UNSW.")
+rn.font.size = Pt(13); rn.font.italic = True; rn.font.color.rgb = GREY
 
 
 prs.save(OUT)
