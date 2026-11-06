@@ -12,7 +12,7 @@ from pptx.enum.text import PP_ALIGN
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FIG = os.path.join(HERE, "figure-fed")
-OUT = os.path.join(HERE, "ppt-promotor-metode-v3.pptx")
+OUT = os.path.join(HERE, "ppt-promotor-metode.pptx")
 
 NAVY = RGBColor(0x1F, 0x3A, 0x5F)
 GREEN = RGBColor(0x2E, 0x8B, 0x57)
@@ -356,7 +356,31 @@ rn.text = ("Angka kunci: federated menang di kedua jarak domain; local-only sela
 rn.font.size = Pt(12); rn.font.italic = True; rn.font.color.rgb = GREY
 
 
-# ============== SLIDE 12 — KESIMPULAN: CONFERENCE vs JURNAL ==============
+# ============== SLIDE 12 — HASIL (VISUAL) ==============
+s = add_slide()
+title_bar(s, "Hasil Percobaan (Visual)",
+          "Federated unggul di near & far; local-only gagal transfer; non-IID bergantung domain")
+far = os.path.join(FIG, "fig_results.png")
+near = os.path.join(FIG, "fig_neardomain.png")
+if os.path.exists(far):
+    s.shapes.add_picture(far, Inches(0.5), Inches(2.0), width=Inches(6.1))
+if os.path.exists(near):
+    s.shapes.add_picture(near, Inches(6.9), Inches(2.0), width=Inches(6.0))
+cap = textbox(s, Inches(0.5), Inches(5.9), Inches(12.3), Inches(1.0))
+p = cap.paragraphs[0]
+r = p.add_run(); r.text = "Kiri: far-domain (CIC2018 + UNSW, 9 fitur)."
+r.font.size = Pt(13); r.font.color.rgb = GREY
+p2 = cap.add_paragraph()
+r2 = p2.add_run(); r2.text = "Kanan: near-domain (CIC2017 + CIC2018, 76 fitur)."
+r2.font.size = Pt(13); r2.font.color.rgb = GREY
+p3 = cap.add_paragraph()
+r3 = p3.add_run()
+r3.text = ("Batang hijau (federated) >= batang abu (centralized), dan jauh di atas merah/biru "
+           "(local-only) — manfaat federasi nyata di kedua jarak domain.")
+r3.font.size = Pt(13); r3.font.italic = True; r3.font.color.rgb = NAVY
+
+
+# ============== SLIDE 13 — KESIMPULAN: CONFERENCE vs JURNAL ==============
 s = add_slide()
 title_bar(s, "Kesimpulan: Cakupan Conference (ISRITI) vs Jurnal (JOIN)",
           "Jurnal = isi konferensi + material baru (>50%) di sepanjang sumbu jarak domain")
