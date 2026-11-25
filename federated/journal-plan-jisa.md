@@ -80,9 +80,11 @@ Bila gagal, kita laporkan apa adanya dan menimbang jurnal lain (mis. JOIN sebaga
 | Tahap | Status |
 |---|---|
 | 1A | selesai (`jC_01`): kekayaan fitur, bukan kedekatan domain, menjelaskan near>far; naskah sudah direvisi |
-| 1B | `jC_03` DIJALANKAN dulu (far-domain x rasio serangan); `jC_02` (non-IID x rasio) ditunda |
+| 1B | selesai: `jC_03` (rasio serangan menjelaskan ±30% selisih far vs near@9) dan `jC_02` (3 seed; asimetri non-IID = keruntuhan sesekali). Naskah sudah direvisi |
+| A+B | `jE_01_distance_normshift` siap dijalankan (jarak antar-dataset, separabilitas internal, ketakcocokan normalisasi); tanpa pelatihan model baru |
 | 1C | belum; percobaan baru ditahan sampai gagasan inti dipilih |
 | 2–7 | belum |
+
 
 
 
