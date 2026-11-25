@@ -1,4 +1,4 @@
-# Rencana Menuju Jurnal Q1 (JISA) — Tahapan
+﻿# Rencana Menuju Jurnal Q1 (JISA) — Tahapan
 
 > Target: Journal of Information Security and Applications (Elsevier, Q1, review single-anonymized).
 > Naskah acuan: `paper6-federated.tex`. Semua komputasi di SageMaker (notebook `.ipynb`),
@@ -27,8 +27,8 @@ hipotesis menjadi bukti dan menambah satu kontribusi keamanan.
 | Sub | Pertanyaan yang dijawab | Notebook | Hasil yang dicari |
 |---|---|---|---|
 | 1A | Apakah near-domain lebih baik karena jarak domain, atau hanya karena 76 fitur vs 9? | `jC_01_neardomain_9feat` | MCC near-domain dengan 9 fitur yang sama dgn far-domain |
-| 1B | Apakah non-IID di UNSW datar karena rasio serangannya 55%? | `jC_02_attack_ratio` | Sweep non-IID setelah rasio serangan diseimbangkan |
-| 1C | Apakah temuan hanya berlaku untuk MLP dangkal? | `jC_03_deeper_model` | MLP lebih dalam / 1D-CNN + baseline XGBoost |
+| 1B | Apakah non-IID di UNSW datar karena rasio serangannya 55%? Apakah far-domain unggul atas near@9 karena UNSW bermayoritas serangan? | `jC_02_noniid_ratio` dan `jC_03_far_ratio` | Rasio serangan ditukar lalu sweep non-IID dan federasi far-domain diulang |
+| 1C | Apakah temuan hanya berlaku untuk MLP dangkal? | `jC_04_deeper_model` | MLP lebih dalam / 1D-CNN + baseline XGBoost |
 
 Keputusan: bila 1A–1C mengonfirmasi penjelasan kita, kalimat "future work" di naskah diganti bukti.
 Bila ada yang tidak terkonfirmasi, penjelasan di naskah direvisi (ini tetap hasil yang valid).
@@ -79,6 +79,8 @@ Bila gagal, kita laporkan apa adanya dan menimbang jurnal lain (mis. JOIN sebaga
 
 | Tahap | Status |
 |---|---|
-| 1A | notebook disiapkan (`jC_01`), menunggu dijalankan |
-| 1B, 1C | belum |
+| 1A | selesai (`jC_01`): kekayaan fitur, bukan kedekatan domain, menjelaskan near>far; naskah sudah direvisi |
+| 1B | notebook disiapkan (`jC_02`, `jC_03`), menunggu dijalankan |
+| 1C | belum |
 | 2–7 | belum |
+
