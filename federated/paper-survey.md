@@ -1,4 +1,4 @@
-# Federated Learning for Cross-Domain Network Intrusion Detection: A Domain-Distance Study with a Leakage-Free Evaluation Protocol and Adversarial Robustness Analysis on a Cloud Testbed
+# Federated Learning for Cross-Dataset Network Intrusion Detection: Evaluation Protocol, Feature Richness, and Adversarial Robustness on a Cloud Testbed
 
 > **Judul paper (English, final = acuan `paper6-federated.tex` untuk JOIN)** = baris di atas.
 > Judul lama ber-"Survey" sudah ditinggalkan (lihat arsip di bawah) karena naskah bersifat
@@ -458,17 +458,18 @@ local-only pada test gabungan lintas-dataset (R3).
 
 *Figure 3. Cross-dataset results.*
 
-### 4.4 Near-domain: FL saat kedua klien memakai ekstraktor yang sama
+### 4.4 Near-domain: pasangan dengan ekstraktor yang sama
 
 Semua hasil di atas (R1–R6) adalah skenario **far-domain**: Client-CIC dan Client-UNSW memakai
 ekstraktor fitur yang berbeda (CICFlowMeter vs Argus/Bro), sehingga hanya sembilan fitur yang
 dapat diselaraskan. Pertanyaan lanjutan yang wajar adalah: bagaimana perilaku FL ketika kedua
-domain **lebih dekat**—yakni diekstrak dengan alat yang sama sehingga ruang fiturnya jauh lebih
-kaya? Untuk menjawabnya kami menambahkan konfigurasi **near-domain** dengan dua klien yang
-sama-sama berbasis CICFlowMeter: **Client-CIC2017** (CIC-IDS2017) dan **Client-CIC2018**
-(CSE-CIC-IDS2018). Karena ekstraktornya sama, irisan nama fitur yang andal bukan lagi sembilan
-melainkan **76 fitur**. Dengan begitu kami dapat menempatkan temuan pada sebuah *gradasi jarak
-domain*: dari near-domain (76 fitur, satu ekstraktor) ke far-domain (9 fitur, dua ekstraktor).
+client diekstrak dengan alat yang sama sehingga ruang fiturnya jauh lebih kaya? Untuk menjawabnya
+kami menambahkan pasangan **near-domain** dengan dua klien yang sama-sama berbasis CICFlowMeter:
+**Client-CIC2017** (CIC-IDS2017) dan **Client-CIC2018** (CSE-CIC-IDS2018). Karena ekstraktornya
+sama, irisan nama fitur yang andal bukan lagi sembilan melainkan **76 fitur**. Kedua pasangan
+berbeda tidak hanya pada jarak domain tetapi juga pada jumlah fitur dan tingkat kesulitan
+dataset, sehingga kami menambahkan ablasi terkontrol-fitur (Tabel 6) untuk memisahkan
+faktor-faktor tersebut.
 
 Tabel 4 merangkum partisi near-domain. Keduanya memakai pembagian 70/30 dengan latih
 disubsampel ke 100.000 aliran, dan rasio serangannya mirip (19,3% vs 23,8%)—kontras dengan
@@ -488,7 +489,7 @@ deployment cloud nyata tetap berasal dari jalur far-domain (R3–R6).
 
 **R3 near-domain (FL lintas-dataset saat domain dekat).** Dengan protokol evaluasi yang sama
 (tiap test set dinormalisasi dengan statistik latih klien pemiliknya), model federated mencapai
-MCC gabungan **0,851 ± 0,010** (lima seed), jauh di atas far-domain (0,647). Model *centralized*
+MCC gabungan **0,851 ± 0,010** (lima seed), di atas far-domain (0,647), tetapi selisih ini tidak disebabkan oleh kedekatan domain (lihat ablasi di bawah). Model *centralized*
 mencapai 0,828 (normalisasi gabungan), sehingga—seperti di far-domain—federated **sedikit tetapi
 konsisten lebih baik** meski data tak pernah dipusatkan. Model *local-only* kembali gagal
 berpindah: dilatih pada CIC2017 hanya 0,433 pada test gabungan (0,076 di CIC2018), dan dilatih
@@ -526,23 +527,42 @@ menandakan sebagian partisi ekstrem membuat FL gagal konvergen. Jadi di near-dom
 bertahan tetapi hanya pada heterogenitas ekstrem, dan efeknya lebih konsisten antar-dataset
 daripada di far-domain yang sangat bergantung domain.
 
-Ditempatkan pada gradasi jarak domain, ketiga pelajaran far-domain terbukti **kokoh**: (i) FL
-lintas-dataset tidak runtuh—justru menguat saat domain lebih dekat (0,851 near vs 0,647 far);
-(ii) local-only selalu gagal berpindah domain, sehingga manfaat federasi nyata di kedua jarak;
-dan (iii) sensitivitas terhadap protokol normalisasi muncul di near maupun far-domain, menegaskan
-bahwa kesimpulan lintas-dataset tak dapat ditarik tanpa menyebutkan protokolnya.
+**Ablasi terkontrol-fitur.** Pasangan near-domain mencapai MCC lebih tinggi daripada far-domain,
+tetapi keduanya berbeda pada domain sekaligus jumlah fitur (76 vs 9). Untuk memisahkannya, kami
+menjalankan ulang federasi near-domain hanya dengan sembilan fitur yang mendefinisikan ruang
+far-domain (nama kolom sama setelah alias); semua pengaturan lain identik: model, FedAvg, 100 ronde,
+lima seed, dan protokol bebas-kebocoran. Tabel 6 melaporkan hasilnya.
 
-Satu *confound* perlu dibahas terbuka: near-domain memakai 76 fitur sedangkan far-domain hanya 9,
-sehingga sebagian kenaikan 0,647→0,851 bisa saja karena jumlah fitur, bukan jarak domain. Kami
-berargumen kedua faktor ini **tidak independen melainkan terkait secara kausal**: ruang fitur yang
-lebih kaya justru merupakan **konsekuensi inheren** dari kedekatan domain, karena kedua client
-near-domain dihasilkan oleh ekstraktor yang sama (CICFlowMeter) sehingga berbagi irisan besar dan
-konsisten secara semantik, sedangkan client far-domain memakai ekstraktor berbeda (CICFlowMeter vs
-Argus/Bro) yang irisan andalnya hanya sembilan fitur. Dengan kata lain, ruang fitur bersama yang
-lebih kaya persis itulah makna operasional "domain lebih dekat"; keduanya tak dapat dipisah penuh di
-praktik. Isolasi yang lebih bersih adalah membatasi client near-domain ke sembilan fitur yang sama
-dengan far-domain lalu memeriksa apakah keunggulannya bertahan; ablasi terkontrol-fitur ini kami
-tandai sebagai pekerjaan lanjutan jangka dekat.
+*Table 6. Feature-controlled ablation: MCC test gabungan (mean ± CI95, lima seed).*
+
+| Pasangan | Fitur | Federated | Centralized (pooled) | Local-only |
+|---|---|---|---|---|
+| Near (2017+2018) | 76 | 0,851 ± 0,010 | 0,828 ± 0,017 | 0,433 / 0,598 |
+| Near (2017+2018) | 9 | 0,537 ± 0,022 | 0,435 ± 0,012 | 0,444 / 0,430 |
+| Far (2018+UNSW) | 9 | 0,647 ± 0,020 | 0,565 ± 0,028 | 0,226 / 0,010 |
+
+Mengurangi pasangan near-domain dari 76 ke 9 fitur menurunkan MCC gabungan federated dari 0,851 ke
+0,537 ± 0,022 (uji Welch p<10⁻⁷ pada lima seed). Pada sembilan fitur yang sama, pasangan near-domain
+justru **di bawah** far-domain (0,537 vs 0,647; p<10⁻⁵). Jadi kekayaan fitur menjelaskan selisih
+0,65→0,85, sedangkan kedekatan domain (diukur dari ekstraktor yang sama) tidak. Federasi tetap
+unggul pada sembilan fitur: ia melampaui model terpusat (0,435 dengan normalisasi gabungan dan 0,372
+dengan normalisasi lokal) dan kedua model local-only (0,444 dan 0,430). Kedua pasangan juga berbeda
+tingkat kesulitannya: far-domain memuat UNSW-NB15 yang mayoritas-serangan (55,1%) dan lebih mudah
+dipisah, yang mungkin menjelaskan mengapa ia mengungguli near-domain pada jumlah fitur sama; hal ini
+tidak kami uji di sini.
+
+Dari ketiga konfigurasi, empat pelajaran bersifat **kokoh**: (i) FL lintas-dataset tidak runtuh dan
+setara atau lebih baik daripada model terpusat di setiap pengukuran, termasuk pada sembilan fitur;
+(ii) local-only selalu gagal berpindah domain, sehingga manfaat federasi nyata di semua setting;
+(iii) kesimpulan sensitif terhadap protokol normalisasi (model federated yang sama: 0,65/0,85 vs
+0,23/0,54, dan 0,54 vs 0,34 pada sembilan fitur near-domain); dan (iv) kualitas hasil terutama
+ditentukan oleh **kekayaan fitur**, bukan kedekatan domain.
+
+Karena itu kami **tidak** mengklaim bahwa FL membaik ketika domain makin dekat. Data kami tidak dapat
+mengisolasi efek kedekatan domain murni, sebab kedua pasangan juga berbeda tingkat kesulitan dan rasio
+serangan. Uji yang lebih bersih memakai pasangan dengan ekstraktor, himpunan fitur, dan tingkat
+kesulitan yang setara, misalnya dataset yang diekstrak ulang dengan satu eksportir aliran standar;
+ini kami tandai sebagai pekerjaan lanjutan.
 
 ---
 

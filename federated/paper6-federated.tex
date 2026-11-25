@@ -1,7 +1,7 @@
 %==============================================================================
-%  Paper 6 (JOURNAL) - Federated Learning for Cross-Domain Network Intrusion
-%  Detection: A Domain-Distance Study with a Leakage-Free Evaluation Protocol
-%  and Adversarial Robustness Analysis on a Cloud Testbed.
+%  Paper 6 (JOURNAL) - Federated Learning for Cross-Dataset Network Intrusion
+%  Detection: Evaluation Protocol, Feature Richness, and Adversarial Robustness
+%  on a Cloud Testbed.
 %  Target venue: JOIN (Jurnal Online Informatika), UIN Sunan Gunung Djati (SINTA 1).
 %  Scope fit: Network Security, Cloud Computing, Distributed Systems, Deep Learning.
 %  NOTE: this paper does NOT use SFM (semantic feature mapping). Feature alignment
@@ -24,9 +24,9 @@
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 \begin{document}
 
-\title{Federated Learning for Cross-Domain Network Intrusion Detection:
-A Domain-Distance Study with a Leakage-Free Evaluation Protocol
-and Adversarial Robustness Analysis on a Cloud Testbed}
+\title{Federated Learning for Cross-Dataset Network Intrusion Detection:
+Evaluation Protocol, Feature Richness, and Adversarial Robustness
+on a Cloud Testbed}
 
 \author{\IEEEauthorblockN{Hero Yudo Martono}
 \IEEEauthorblockA{\textit{Dept. of Informatics and Computer Eng.} \\
@@ -53,19 +53,20 @@ ferryas@pens.ac.id}
 Federated learning (FL) lets organizations train a network intrusion detection system (NIDS)
 collaboratively without centralizing sensitive traffic, but results across the FL-NIDS literature are
 hard to compare because datasets, aggregation, and evaluation protocols differ. This paper studies
-when cross-dataset FL-NIDS actually works, along a controlled \emph{domain-distance} axis: a
-near-domain setting with the same extractor (CIC-IDS2017 and CSE-CIC-IDS2018, 76 aligned features) and
-a far-domain setting with different extractors (CSE-CIC-IDS2018 and UNSW-NB15, 9 features). We verify
-six representative claims on a uniform Amazon Web Services testbed and add three contributions. First,
-a leakage-free evaluation protocol that normalizes each test set with its owner client's training
-statistics; an inconsistent pooled evaluation makes the same federated model look far worse (union
-Matthews correlation coefficient, MCC, drops from 0.65 to 0.23 in far-domain and 0.85 to 0.54 in
-near-domain). Second, federated learning does not collapse but strengthens as domains get closer
-(union MCC 0.85 near vs 0.65 far), while single-network models always fail to transfer. Third, we
-explain a previously open finding: adversarial training helps one domain but breaks another because it
-shifts the global decision boundary in a single uniform direction that cannot serve heterogeneous
-clients at once. Cloud cost is small (about 300 KB and 16 seconds per round). All numbers come from
-real executions and the full protocol is released for reproducibility.
+when cross-dataset FL-NIDS actually works, using two dataset pairs: clients that share one extractor
+(CIC-IDS2017 and CSE-CIC-IDS2018, 76 aligned features) and clients that use different extractors
+(CSE-CIC-IDS2018 and UNSW-NB15, 9 aligned features). We verify six representative claims on a uniform
+Amazon Web Services testbed and add three contributions. First, a leakage-free evaluation protocol that
+normalizes each test set with its owner client's training statistics; an inconsistent pooled evaluation
+makes the same federated model look far worse (union Matthews correlation coefficient, MCC, drops from
+0.65 to 0.23 on the different-extractor pair and from 0.85 to 0.54 on the same-extractor pair). Second,
+federated learning does not collapse and beats single-network models in every setting we test, but its
+quality is governed mainly by feature richness rather than by how close the domains are: restricting
+the same-extractor pair to the same nine features lowers MCC from 0.85 to 0.54, below the 0.65 of the
+different-extractor pair. Third, we explain why adversarial training helps one domain but breaks
+another: it shifts the global decision boundary in one uniform direction that cannot serve
+heterogeneous clients at once. Cloud cost is small (about 300 KB and 16 seconds per round). All numbers
+come from real executions; the protocol is released for reproducibility.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -92,20 +93,24 @@ public-cloud deployment: most validations run on small edge testbeds or simulati
 communication and latency costs are poorly documented.
 
 This paper asks a focused question: \emph{when does cross-dataset FL-NIDS actually work, and why does
-it sometimes appear not to?} We answer it along a controlled \emph{domain-distance} axis. In the
-near-domain setting both clients are extracted with the same tool (CICFlowMeter), so the reliable
-feature intersection is large (76 features); the clients are CIC-IDS2017 and CSE-CIC-IDS2018. In the
-far-domain setting the clients use different extractors (CICFlowMeter vs Argus/Bro), so only nine
-features align; the clients are CSE-CIC-IDS2018 and UNSW-NB15. Placing results on this axis separates
-``FL is hard across datasets'' from ``our evaluation was inconsistent.'' We stress that this paper
+it sometimes appear not to?} We answer it with two dataset pairs. In the near-domain pair both clients
+are extracted with the same tool (CICFlowMeter), so the reliable feature intersection is large (76
+features); the clients are CIC-IDS2017 and CSE-CIC-IDS2018. In the far-domain pair the clients use
+different extractors (CICFlowMeter vs Argus/Bro), so only nine features align; the clients are
+CSE-CIC-IDS2018 and UNSW-NB15. Because the two pairs differ both in domain and in the number of
+aligned features, we add a feature-controlled ablation that restricts the near-domain pair to the same
+nine features. Together with a leakage-free evaluation protocol, this separates ``FL is hard across
+datasets'' from ``our evaluation was inconsistent'' and from ``the shared feature space was poor.''
+We stress that this paper
 does \emph{not} propose a feature-mapping method; feature alignment here is plain column-name
 intersection, treated as experimental setup, common in cross-dataset work \cite{b5}.
 
 Our contributions are: (1) a \emph{leakage-free evaluation protocol} in which each client's test set
 is normalized with that client's own training statistics, matching how the federated model is trained,
 and a demonstration that an inconsistent pooled evaluation severely and misleadingly deflates the
-measured performance; (2) a \emph{domain-distance study} showing cross-dataset FL does not collapse
-and in fact strengthens as domains get closer, while single-network models always fail to transfer;
+measured performance; (2) a \emph{feature-controlled comparison} of two dataset pairs showing that
+cross-dataset FL does not collapse and beats single-network models in every setting, and that its
+quality tracks feature richness rather than domain proximity;
 (3) an \emph{explanation of a previously open finding}, namely why adversarial training helps one
 domain but breaks another; and (4) a uniform, reproducible AWS testbed with measured cloud cost,
 released as a baseline. The remainder of the paper covers related work (Section~\ref{sec:related}),
@@ -169,7 +174,7 @@ Hu et al.\ \cite{b9} & federated meta-learning & Partial & No \\
 \section{Problem Setup and Leakage-Free Protocol}
 \label{sec:setup}
 
-\subsection{Domain-Distance Axis and Feature Alignment}
+\subsection{Dataset Pairs and Feature Alignment}
 We study two configurations. In the \emph{far-domain} configuration the clients are
 CSE-CIC-IDS2018 (CIC, CICFlowMeter, about 80 features) and UNSW-NB15 (UNSW, Argus/Bro, 42 features);
 because the extractors differ, only nine features have a one-to-one counterpart in both schemas
@@ -178,7 +183,9 @@ shared space is nine features (Fig.~\ref{fig:align}). In the \emph{near-domain} 
 clients are CICFlowMeter-based (CIC-IDS2017 and CSE-CIC-IDS2018), so the reliable name intersection is
 76 features. The number of shared features is therefore a consequence of the extractor intersection,
 not a design choice; such manual name alignment is common in cross-dataset work \cite{b5} and we treat
-it as setup, not a contribution.
+it as setup, not a contribution. The two pairs therefore differ in more than one respect (extractor,
+number of aligned features, and dataset difficulty), which is why Section~\ref{sec:results} adds a
+feature-controlled ablation on the near-domain pair.
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=0.62\textwidth]{fig_feature_alignment.png}}
@@ -310,7 +317,7 @@ set (R3). Error bars: standard deviation (a), 95\% CI (b).}
 \label{fig:results}
 \end{figure}
 
-\subsection{Near-Domain: Closer Domains, Richer Features}
+\subsection{Near-Domain Pair: Shared Extractor, Richer Features}
 When both clients share an extractor (CIC-IDS2017 and CSE-CIC-IDS2018, 76 features), the feature space
 is far richer and the attack ratios are similar (19.3\% vs 23.8\%), unlike the far-domain case
 (16.9\% vs 55.1\%). Table~\ref{tab:near} reports the partitions and Table~\ref{tab:nearres} the
@@ -334,8 +341,9 @@ CIC2018 (test)  & 299{,}997 & 71{,}487 & 0.238 \\
 \end{center}
 \end{table}
 
-The federated model reaches a union-test MCC of $0.851 \pm 0.010$, well above the far-domain value
-(0.647) and slightly above the centralized baseline (0.828), while local-only models again fail to
+The federated model reaches a union-test MCC of $0.851 \pm 0.010$, above the far-domain value (0.647;
+Section~\ref{sec:ablate} shows this gap is not due to domain proximity) and slightly above the
+centralized baseline (0.828), while local-only models again fail to
 transfer (0.433 and 0.598 on the union set, despite about 0.86 on their own domain). The same
 federated model under a pooled evaluation falls to 0.536---the leakage artifact reappears.
 Fig.~\ref{fig:near}(a) visualizes this. On non-IID, Fig.~\ref{fig:near}(b) shows both datasets stay
@@ -369,30 +377,61 @@ impact (MCC vs Dirichlet concentration). Error bars: 95\% CI (a), standard devia
 \label{fig:near}
 \end{figure}
 
+\subsection{Feature-Controlled Ablation}
+\label{sec:ablate}
+The near-domain pair reaches a higher MCC than the far-domain pair, but the two pairs differ in both
+domain and feature count (76 vs 9). To separate the two factors we rerun the near-domain federation
+using only the nine features that define the far-domain space (the same column names after alias
+matching); every other setting is identical: model, FedAvg, 100 rounds, five seeds, and the
+leakage-free protocol. Table~\ref{tab:ablate} reports the result.
+
+\begin{table}[htbp]
+\caption{Feature-controlled ablation: union-test MCC (mean $\pm$ 95\% CI, five seeds). Local-only: the
+two single-client models.}
+\label{tab:ablate}
+\begin{center}
+\footnotesize
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Pair} & \textbf{Feat.} & \textbf{Federated} & \textbf{Central.} & \textbf{Local-only} \\
+\hline
+Near (2017+2018) & 76 & $0.851 \pm 0.010$ & $0.828 \pm 0.017$ & 0.433 / 0.598 \\
+Near (2017+2018) & 9  & $0.537 \pm 0.022$ & $0.435 \pm 0.012$ & 0.444 / 0.430 \\
+Far (2018+UNSW)  & 9  & $0.647 \pm 0.020$ & $0.565 \pm 0.028$ & 0.226 / 0.010 \\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
+
+Reducing the near-domain pair from 76 to 9 features lowers the federated union MCC from 0.851 to
+$0.537 \pm 0.022$ (Welch $p<10^{-7}$ over five seeds). At the same nine features the near-domain pair
+is \emph{below} the far-domain pair (0.537 vs 0.647, $p<10^{-5}$). Feature richness therefore explains
+the $0.65{\to}0.85$ gap, whereas domain proximity, as measured by a shared extractor, does not. Federation
+keeps its advantage at nine features: it exceeds centralized training (0.435 with pooled and 0.372 with
+local normalization) and both local-only models (0.444 and 0.430). The pairs also differ in difficulty:
+the far-domain pair includes UNSW-NB15, which is attack-majority (55.1\%) and easier to separate, which
+may explain why it outperforms the near-domain pair at equal feature count; we did not test this here.
+
 \section{Discussion and Threats to Validity}
 \label{sec:discuss}
 
-\subsection{Domain-Distance Lesson}
-Placed on the domain-distance axis, three lessons are robust. (i) Cross-dataset FL does not collapse;
-it \emph{strengthens} as domains get closer (union MCC 0.851 near vs 0.647 far). (ii) Single-network
-local-only models always fail to transfer, so federation gives a real benefit at both distances.
-(iii) The conclusion is sensitive to the evaluation protocol at both distances: the same federated
-model scores 0.65/0.85 under the leakage-free protocol but only 0.23/0.54 under an inconsistent pooled
-evaluation. The claim that cross-dataset FL is hard \cite{b5} therefore cannot be assessed without
-stating the normalization protocol and a matched baseline.
+\subsection{What Governs Cross-Dataset FL Quality}
+Across both dataset pairs and the feature-controlled ablation, four lessons are robust. (i)
+Cross-dataset FL does not collapse: it matches or exceeds centralized training wherever we measured
+both, and the same holds at nine features. (ii) Single-network local-only models always fail to
+transfer, so federation gives a real benefit in every setting. (iii) The conclusion is sensitive to the
+evaluation protocol: the same federated model scores 0.65/0.85 under the leakage-free protocol but only
+0.23/0.54 under an inconsistent pooled evaluation (and 0.54/0.34 at nine features on the near-domain
+pair). The claim that cross-dataset FL is hard \cite{b5} therefore cannot be assessed without stating
+the normalization protocol and a matched baseline. (iv) Quality is governed mainly by feature richness
+rather than by domain proximity: with the feature count held at nine, the shared-extractor pair is not
+better than the different-extractor pair (Table~\ref{tab:ablate}), and moving that pair from nine to 76
+features raises the union MCC by 0.31.
 
-One confound deserves explicit discussion: the near-domain configuration uses 76 features and the
-far-domain one only 9, so part of the 0.65$\to$0.85 improvement could reflect feature count rather
-than domain distance. We argue these two factors are not independent but causally linked: the larger
-feature space is itself an \emph{inherent consequence} of domain proximity, because both near-domain
-clients are produced by the same extractor (CICFlowMeter) and thus share a large, semantically
-consistent intersection, whereas the far-domain clients use different extractors (CICFlowMeter vs
-Argus/Bro) whose reliable intersection is only nine features. In other words, a richer shared feature
-space is precisely what ``closer domain'' means operationally; the two cannot be fully decoupled in
-practice. A cleaner isolation would restrict the near-domain clients to the same nine features used in
-the far-domain setting and check whether the advantage over far-domain persists; we leave this
-feature-controlled ablation as near-term future work, noting that it would attribute the gain to
-domain distance net of feature count.
+We therefore do not claim that FL improves as domains get closer. Our data cannot isolate a pure
+domain-proximity effect, because the two pairs also differ in dataset difficulty and attack ratio. A
+cleaner test would use pairs with the same extractor, the same feature set, and matched difficulty, for
+example datasets re-extracted with one standardized flow exporter; we leave this to future work.
 
 \subsection{Why Adversarial Training Breaks One Domain}
 R6 is domain dependent, and we traced the cause by comparing decision-score distributions of the clean
@@ -448,12 +487,14 @@ capacity-independent; semantic-aware feature alignment (which we pursue separate
 a client and traffic scale closer to production, including IoT traffic domains.
 
 \section{Conclusion}
-We studied when cross-dataset federated learning works for network intrusion detection along a
-domain-distance axis and under a leakage-free evaluation protocol. Cross-dataset FL does not collapse;
-it strengthens as domains get closer (union MCC 0.85 near vs 0.65 far) and consistently beats
-single-network models, which fail to transfer. The apparent collapse reported for cross-dataset FL can
-be an evaluation artifact: the same federated model falls to 0.23--0.54 when normalized inconsistently
-with its training. A healthy model remains highly vulnerable to evasion (ASR 0.91 at budget 0.1), and
+We studied when cross-dataset federated learning works for network intrusion detection on two dataset
+pairs, under a leakage-free evaluation protocol and with a feature-controlled ablation. Cross-dataset FL
+does not collapse and consistently beats single-network models, which fail to transfer. Its quality is
+governed mainly by feature richness rather than domain proximity: the same-extractor pair reaches a
+union MCC of 0.85 with 76 features but only 0.54 with the nine features of the different-extractor
+pair, which reaches 0.65. The apparent collapse reported for cross-dataset FL can be an evaluation
+artifact: the same federated model falls to 0.23--0.54 when normalized inconsistently with its
+training. A healthy model remains highly vulnerable to evasion (ASR 0.91 at budget 0.1), and
 adversarial training is domain dependent because it shifts the global decision boundary in a single
 direction that cannot serve heterogeneous clients at once---helping one domain while breaking another.
 Cloud cost is small (about 300 KB and 16 seconds per round). The main contribution is evidence and
