@@ -80,7 +80,8 @@ Bila gagal, kita laporkan apa adanya dan menimbang jurnal lain (mis. JOIN sebaga
 | Tahap | Status |
 |---|---|
 | 1A | selesai (`jC_01`): kekayaan fitur, bukan kedekatan domain, menjelaskan near>far; naskah sudah direvisi |
-| 1B | notebook disiapkan (`jC_02`, `jC_03`), menunggu dijalankan |
-| 1C | belum |
+| 1B | notebook ada (`jC_02`, `jC_03`) tetapi DITUNDA: fokus dulu memaksimalkan data yang ada dan memilih gagasan inti |
+| 1C | belum; percobaan baru ditahan sampai gagasan inti dipilih |
 | 2–7 | belum |
+
 
