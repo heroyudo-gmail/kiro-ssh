@@ -201,7 +201,8 @@ between clients. Each round the aggregator sends the global model, each client t
 aggregator combines updates with FedAvg (weighted by data size) for 100 rounds. In the far-domain runs
 the three nodes are three \texttt{t3.medium} Amazon EC2 instances exchanging weights via Amazon S3;
 the near-domain and non-IID sweeps are run as controlled simulations with identical FedAvg, z-score,
-and model code.
+and model code. Run on the far-domain pair with the same seeds, the simulation reproduces the EC2 result
+exactly (union MCC $0.647 \pm 0.020$ in both), so the two pipelines are functionally equivalent.
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=0.58\textwidth]{fig_fl_architecture.png}}
@@ -274,12 +275,14 @@ indistinguishable (MCC 0.572 vs 0.571), both converging in 7--11 rounds.
 
 \textit{R2 (non-IID impact): domain dependent.} On Client-CIC, MCC is stable at high $\alpha$ and
 falls to 0.387 at $\alpha{=}0.1$ with a large standard deviation; on Client-UNSW it stays flat or
-rises. We attribute this asymmetry mainly to the class balance of the two training sets rather than to
-intrinsic separability alone: CIC is strongly benign-skewed (16.9\% attacks), so an extreme Dirichlet
-partition can leave some local shards with too few attack samples to learn the minority class,
-collapsing and destabilizing the aggregate; UNSW is attack-majority (55.1\%), so even an extreme
-partition leaves every shard with a dense-enough attack subset for local convergence. The claim thus
-holds for CIC at low $\alpha$ but not for UNSW, with the attack ratio as the plausible driver.
+rises. The CIC mean is driven by a single run: at $\alpha{=}0.1$ two of three seeds score 0.57--0.59 and
+one collapses to MCC 0 (a degenerate model that predicts a single class). A follow-up that swapped the
+attack ratios (CIC raised to 55\%, UNSW lowered to 17\%, same protocol, three seeds) did not reproduce
+the asymmetry as a difference in mean decline: the drop from $\alpha{=}100$ to $\alpha{=}0.1$ was 0.07
+for CIC at 55\% and 0.02 for UNSW at 17\%. Collapsed runs (MCC below 0.1) occurred only at the low
+attack ratio (3 of 24 runs versus 0 of 24; Fisher $p{=}0.23$), which is suggestive but not significant
+with three seeds. We therefore report the CIC--UNSW asymmetry as an observation of occasional collapse
+under extreme non-IID, and we do not establish the attack ratio as its cause.
 
 \textit{R3 (cross-dataset FL is hard): does not hold under a consistent protocol.} Under the
 leakage-free protocol the federated model reaches a union-test MCC of $0.647 \pm 0.020$ (five seeds;
@@ -398,6 +401,7 @@ two single-client models.}
 Near (2017+2018) & 76 & $0.851 \pm 0.010$ & $0.828 \pm 0.017$ & 0.433 / 0.598 \\
 Near (2017+2018) & 9  & $0.537 \pm 0.022$ & $0.435 \pm 0.012$ & 0.444 / 0.430 \\
 Far (2018+UNSW)  & 9  & $0.647 \pm 0.020$ & $0.565 \pm 0.028$ & 0.226 / 0.010 \\
+Far, UNSW at 17\% & 9 & $0.614 \pm 0.002$ & -- & -- \\
 \hline
 \end{tabular}
 \end{center}
@@ -408,9 +412,15 @@ $0.537 \pm 0.022$ (Welch $p<10^{-7}$ over five seeds). At the same nine features
 is \emph{below} the far-domain pair (0.537 vs 0.647, $p<10^{-5}$). Feature richness therefore explains
 the $0.65{\to}0.85$ gap, whereas domain proximity, as measured by a shared extractor, does not. Federation
 keeps its advantage at nine features: it exceeds centralized training (0.435 with pooled and 0.372 with
-local normalization) and both local-only models (0.444 and 0.430). The pairs also differ in difficulty:
-the far-domain pair includes UNSW-NB15, which is attack-majority (55.1\%) and easier to separate, which
-may explain why it outperforms the near-domain pair at equal feature count; we did not test this here.
+local normalization) and both local-only models (0.444 and 0.430). The pairs also differ in class
+balance: UNSW-NB15 is attack-majority (55.1\%). To test whether this explains the far-domain advantage, we
+reran the far-domain federation in simulation with UNSW resampled to 17\% attacks (train and test), close
+to the near-domain pair (last row of Table~\ref{tab:ablate}). The union MCC fell only from 0.647 to
+$0.614 \pm 0.002$ ($-0.033$, $p{=}0.01$), which accounts for about 30\% of the 0.11 gap to the
+near-domain pair at nine features. The remaining 0.077 ($p<10^{-3}$) is not explained by the attack
+ratio; we attribute it provisionally to differences in separability between the datasets, which we did
+not test. Per client, the lower UNSW ratio even raised CIC (0.533 to 0.610), so a partner's class balance
+affects the other client.
 
 \section{Discussion and Threats to Validity}
 \label{sec:discuss}
@@ -429,7 +439,8 @@ better than the different-extractor pair (Table~\ref{tab:ablate}), and moving th
 features raises the union MCC by 0.31.
 
 We therefore do not claim that FL improves as domains get closer. Our data cannot isolate a pure
-domain-proximity effect, because the two pairs also differ in dataset difficulty and attack ratio. A
+domain-proximity effect: equalizing the attack ratio closes only about 30\% of the remaining gap, and the
+pairs still differ in dataset difficulty. A
 cleaner test would use pairs with the same extractor, the same feature set, and matched difficulty, for
 example datasets re-extracted with one standardized flow exporter; we leave this to future work.
 

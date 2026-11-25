@@ -401,7 +401,7 @@ efek federasi. Jumlah seed berbeda antar-eksperimen: tiga seed {13,42,101} untuk
 
 **(A) Reproduksi klaim inti FL-NIDS**
 1. **R1 — FedAvg vs FedProx (SQ3/SQ4).** Klaim: FedProx lebih stabil di non-IID [6],[14]. Hasil: pada setting lintas-dataset (klien CIC + UNSW, rata-rata tiga seed), FedAvg dan FedProx **tidak berbeda bermakna**: FedAvg MCC 0,572, FedProx(μ=0,01) 0,573, FedProx(μ=0,1) 0,571 — selisih ≈0,001, dan ketiganya konvergen cepat (7–11 ronde). Pola yang sama muncul pada fondasi single-dataset (α=0,1): FedAvg 0,555 vs FedProx(μ=0,1) 0,553. Di kedua setting FedProx **tidak** memperbaiki FedAvg; arah klaim tidak bertahan pada rentang hyperparameter yang kami uji.
-2. **R2 — Dampak non-IID (SQ2/SQ4).** Klaim: performa FL turun seiring heterogenitas [5]; sweep Dirichlet α. Hasil: **dampaknya bergantung domain** — sebuah nuansa yang jarang disorot. Pada klien **CIC**, pola klasik muncul: MCC relatif stabil pada α besar (0,512 di α=100) lalu runtuh dan menjadi sangat tak stabil pada α rendah (0,387 di α=0,1, dengan std melonjak ke 0,27). Sebaliknya pada klien **UNSW**, performa **tidak** turun seiring non-IID — justru datar bahkan sedikit naik (0,621 di α=100; 0,655 di α=0,1). Asimetri ini kami atribusikan terutama pada komposisi kelas data latih, bukan sekadar separabilitas: CIC sangat condong-benign (16,9% serangan), sehingga partisi Dirichlet ekstrem dapat menyisakan sebagian shard lokal dengan terlalu sedikit sampel serangan untuk mempelajari kelas minoritas sehingga agregat runtuh dan tak stabil; sementara UNSW mayoritas-serangan (55,1%), sehingga partisi ekstrem pun menyisakan subset serangan yang cukup pekat di tiap shard untuk konvergensi lokal. Jadi klaim "non-IID menurunkan FL" **bertahan pada CIC tetapi tidak pada UNSW**: efeknya nyata namun tidak universal, dengan rasio serangan sebagai penyebab yang masuk akal. Pada fondasi single-dataset penurunan juga tegas (0,826 di α=100 → 0,555 di α=0,1, CI membengkak ~46×).
+2. **R2 — Dampak non-IID (SQ2/SQ4).** Klaim: performa FL turun seiring heterogenitas [5]; sweep Dirichlet α. Hasil: **dampaknya bergantung domain** — sebuah nuansa yang jarang disorot. Pada klien **CIC**, pola klasik muncul: MCC relatif stabil pada α besar (0,512 di α=100) lalu runtuh dan menjadi sangat tak stabil pada α rendah (0,387 di α=0,1, dengan std melonjak ke 0,27). Sebaliknya pada klien **UNSW**, performa **tidak** turun seiring non-IID — justru datar bahkan sedikit naik (0,621 di α=100; 0,655 di α=0,1). Rata-rata CIC dipengaruhi satu run: pada α=0,1 dua dari tiga seed mencapai 0,57–0,59 dan satu runtuh ke MCC 0 (model degenerasi yang hanya memprediksi satu kelas). Percobaan lanjutan yang menukar rasio serangan (CIC dinaikkan ke 55%, UNSW diturunkan ke 17%, protokol sama, tiga seed) tidak mereproduksi asimetri sebagai selisih penurunan rata-rata: penurunan dari α=100 ke α=0,1 adalah 0,07 untuk CIC 55% dan 0,02 untuk UNSW 17%. Run yang runtuh (MCC di bawah 0,1) hanya muncul pada rasio serangan rendah (3 dari 24 run vs 0 dari 24; uji Fisher p=0,23), yang menarik tetapi belum signifikan dengan tiga seed. Karena itu kami melaporkan asimetri CIC–UNSW sebagai pengamatan keruntuhan sesekali pada non-IID ekstrem, dan tidak menetapkan rasio serangan sebagai penyebabnya. Jadi klaim "non-IID menurunkan FL" pada CIC hanya bertahan sebagai instabilitas sesekali, bukan penurunan yang konsisten, dan tidak bertahan pada UNSW. Pada fondasi single-dataset penurunan juga tegas (0,826 di α=100 → 0,555 di α=0,1, CI membengkak ~46×).
 3. **R3 — Cross-dataset FL (SQ4).** Klaim: FL lintas-dataset sulit/menurun tajam [5]; diuji pada testbed AWS tiga-EC2 (100 ronde FedAvg, client CIC dan UNSW, lima seed) dengan penyelarasan nama fitur manual. Hasil: klaim **tidak bertahan** pada protokol evaluasi yang konsisten. Bila setiap test set dinormalisasi dengan statistik client pemiliknya (sama seperti saat training), model federated mencapai MCC 0,647 ± 0,020 pada test gabungan (rata-rata dan CI95 lima seed; CIC 0,533; UNSW 0,610). Model *centralized* (data digabung, tidak diizinkan di FL nyata) mencapai 0,565 ± 0,028 dengan normalisasi gabungan dan 0,616 ± 0,012 dengan normalisasi per-domain; pada normalisasi yang sepadan, federated sedikit tetapi konsisten lebih baik (selisih +0,031; uji Welch p=0,009). Yang gagal berpindah antar-domain adalah model *local-only*: yang dilatih di CIC mencapai 0,226 ± 0,052 pada test gabungan (UNSW −0,223), dan yang dilatih di UNSW hanya 0,010 ± 0,068 (CIC −0,088). Jadi federasi memang menutup jurang antar-domain. Temuan metodologis penting: bila model federated yang sama dievaluasi dengan statistik gabungan—tidak konsisten dengan cara ia dilatih—MCC turun ke rata-rata 0,229 ± 0,228 dan bervariasi liar antar-seed (−0,026 hingga 0,425), sehingga kesimpulan dari evaluasi semacam itu bersifat pesimistis sekaligus tidak stabil.
 4. **R4 — Biaya cloud nyata (SQ5).** Efisiensi komunikasi FL [15]: komunikasi/latensi per ronde di AWS. Hasil: model ringan 9.601 parameter → 76,8 KB per unggahan klien, sehingga ≈300 KB lalu lintas agregator per ronde untuk dua klien (dua arah) — ongkos komunikasi sangat kecil. Dari jejak waktu objek pada run S\_R3 (tiga EC2 `t3.medium`, bobot via S3), 100 ronde memakan ≈27 menit (round 0 → ronde final), yakni ≈16 detik per ronde termasuk sinkronisasi S3; angka ini diukur saat dua run berjalan paralel sehingga menanggung CPU bersama (batas atas latensi, dilaporkan apa adanya).
 
@@ -476,7 +476,7 @@ disubsampel ke 100.000 aliran, dan rasio serangannya mirip (19,3% vs 23,8%)—ko
 far-domain yang rasionya sangat timpang (16,9% CIC vs 55,1% UNSW). Protokol pelatihan, model MLP,
 jumlah ronde, seed, dan protokol normalisasi bebas-kebocoran identik dengan konfigurasi utama;
 near-domain dijalankan sebagai simulasi FL terkontrol (sama status dengan R1–R2), sedangkan bukti
-deployment cloud nyata tetap berasal dari jalur far-domain (R3–R6).
+deployment cloud nyata tetap berasal dari jalur far-domain (R3–R6). Pada pasangan far-domain dengan seed yang sama, simulasi ini mereproduksi hasil EC2 persis (MCC gabungan 0,647 ± 0,020 pada keduanya), sehingga kedua pipeline setara secara fungsional.
 
 *Table 4. Partisi data near-domain (CICFlowMeter 2017 vs 2018, 76 fitur).*
 
@@ -540,16 +540,14 @@ lima seed, dan protokol bebas-kebocoran. Tabel 6 melaporkan hasilnya.
 | Near (2017+2018) | 76 | 0,851 ± 0,010 | 0,828 ± 0,017 | 0,433 / 0,598 |
 | Near (2017+2018) | 9 | 0,537 ± 0,022 | 0,435 ± 0,012 | 0,444 / 0,430 |
 | Far (2018+UNSW) | 9 | 0,647 ± 0,020 | 0,565 ± 0,028 | 0,226 / 0,010 |
+| Far, UNSW 17% | 9 | 0,614 ± 0,002 | – | – |
 
 Mengurangi pasangan near-domain dari 76 ke 9 fitur menurunkan MCC gabungan federated dari 0,851 ke
 0,537 ± 0,022 (uji Welch p<10⁻⁷ pada lima seed). Pada sembilan fitur yang sama, pasangan near-domain
 justru **di bawah** far-domain (0,537 vs 0,647; p<10⁻⁵). Jadi kekayaan fitur menjelaskan selisih
 0,65→0,85, sedangkan kedekatan domain (diukur dari ekstraktor yang sama) tidak. Federasi tetap
 unggul pada sembilan fitur: ia melampaui model terpusat (0,435 dengan normalisasi gabungan dan 0,372
-dengan normalisasi lokal) dan kedua model local-only (0,444 dan 0,430). Kedua pasangan juga berbeda
-tingkat kesulitannya: far-domain memuat UNSW-NB15 yang mayoritas-serangan (55,1%) dan lebih mudah
-dipisah, yang mungkin menjelaskan mengapa ia mengungguli near-domain pada jumlah fitur sama; hal ini
-tidak kami uji di sini.
+dengan normalisasi lokal) dan kedua model local-only (0,444 dan 0,430). Kedua pasangan juga berbeda proporsi kelasnya: UNSW-NB15 mayoritas-serangan (55,1%). Untuk menguji apakah ini menjelaskan keunggulan far-domain, kami menjalankan ulang federasi far-domain (simulasi) dengan UNSW diturunkan ke 17% serangan (train dan test), mendekati pasangan near-domain (baris terakhir Tabel 6). MCC gabungan hanya turun dari 0,647 ke 0,614 ± 0,002 (−0,033; p=0,01), yang menjelaskan sekitar 30% dari selisih 0,11 terhadap near-domain pada sembilan fitur. Sisanya 0,077 (p<10⁻³) tidak dijelaskan oleh rasio serangan; sementara kami duga berasal dari perbedaan separabilitas antar-dataset, yang tidak kami uji. Per client, rasio UNSW yang lebih rendah bahkan menaikkan CIC (0,533 ke 0,610), sehingga proporsi kelas mitra memengaruhi client lain.
 
 Dari ketiga konfigurasi, empat pelajaran bersifat **kokoh**: (i) FL lintas-dataset tidak runtuh dan
 setara atau lebih baik daripada model terpusat di setiap pengukuran, termasuk pada sembilan fitur;
@@ -559,8 +557,7 @@ setara atau lebih baik daripada model terpusat di setiap pengukuran, termasuk pa
 ditentukan oleh **kekayaan fitur**, bukan kedekatan domain.
 
 Karena itu kami **tidak** mengklaim bahwa FL membaik ketika domain makin dekat. Data kami tidak dapat
-mengisolasi efek kedekatan domain murni, sebab kedua pasangan juga berbeda tingkat kesulitan dan rasio
-serangan. Uji yang lebih bersih memakai pasangan dengan ekstraktor, himpunan fitur, dan tingkat
+mengisolasi efek kedekatan domain murni, sebab menyamakan rasio serangan hanya menutup sekitar 30% selisih dan kedua pasangan masih berbeda tingkat kesulitan. Uji yang lebih bersih memakai pasangan dengan ekstraktor, himpunan fitur, dan tingkat
 kesulitan yang setara, misalnya dataset yang diekstrak ulang dengan satu eksportir aliran standar;
 ini kami tandai sebagai pekerjaan lanjutan.
 
