@@ -418,9 +418,19 @@ reran the far-domain federation in simulation with UNSW resampled to 17\% attack
 to the near-domain pair (last row of Table~\ref{tab:ablate}). The union MCC fell only from 0.647 to
 $0.614 \pm 0.002$ ($-0.033$, $p{=}0.01$), which accounts for about 30\% of the 0.11 gap to the
 near-domain pair at nine features. The remaining 0.077 ($p<10^{-3}$) is not explained by the attack
-ratio; we attribute it provisionally to differences in separability between the datasets, which we did
-not test. Per client, the lower UNSW ratio even raised CIC (0.533 to 0.610), so a partner's class balance
-affects the other client.
+ratio. Nor is it explained by within-dataset separability: a per-client gradient-boosted tree separates
+attacks from benign flows almost equally well on every client at nine features (AUC 0.957--0.998; UNSW
+0.983 against 0.998 and 0.957 on the two near-domain clients), so the gap remains unexplained. Per
+client, the lower UNSW ratio even raised CIC (0.533 to 0.610), so a partner's class balance affects the
+other client.
+
+To replace the near/far labels with a measurement, we computed the mean per-feature Wasserstein-1
+distance between the two clients' training sets (winsorized at the 1st--99th percentile and standardized
+with pooled statistics). At the same nine features the far-domain pair is about twice as distant as the
+near-domain pair (0.455 against 0.235; 0.205 with 76 features), yet the far-domain federation scores
+higher. Measured distance therefore does not predict federated quality here. A domain classifier
+separates every pair almost perfectly (AUC 0.978--1.000), so even the near-domain pair is far from
+identically distributed and this statistic does not discriminate between pairs.
 
 \section{Discussion and Threats to Validity}
 \label{sec:discuss}
@@ -437,6 +447,12 @@ the normalization protocol and a matched baseline. (iv) Quality is governed main
 rather than by domain proximity: with the feature count held at nine, the shared-extractor pair is not
 better than the different-extractor pair (Table~\ref{tab:ablate}), and moving that pair from nine to 76
 features raises the union MCC by 0.31.
+
+We also tested whether a simple index of the mismatch between each client's statistics and the pooled
+statistics (mean shift plus scale shift) predicts the MCC drop under inconsistent normalization. It did
+not (Spearman $\rho{=}0.54$ over six clients, below the 0.89 needed for significance at $n{=}6$), so the
+size of the artifact cannot be forecast from simple moments, and the protocol has to be fixed by
+construction rather than corrected afterwards.
 
 We therefore do not claim that FL improves as domains get closer. Our data cannot isolate a pure
 domain-proximity effect: equalizing the attack ratio closes only about 30\% of the remaining gap, and the
@@ -488,7 +504,11 @@ Fifth, we deliberately fix a single shallow MLP as a controlled backbone (Sectio
 our findings characterize federated behavior at a fixed, low model capacity; whether the cross-domain
 performance gap and the adversarial decision-score shift persist under deeper architectures (for
 example 1D-CNN or transformer encoders) is not established here and is left to future work, which
-would separate model-capacity limits from genuinely federated effects.
+would separate model-capacity limits from genuinely federated effects. The gap to simpler learners is
+large: at nine features a per-client gradient-boosted tree reaches an in-domain MCC of 0.84--0.95 on
+the two near-domain clients, versus 0.59--0.65 for the local-only MLP, so the absolute MCC values we
+report characterize this controlled backbone and its training budget rather than an information limit
+of the features.
 
 \subsection{Research Directions}
 The most pressing directions are standardized, leakage-free normalization and evaluation protocols for

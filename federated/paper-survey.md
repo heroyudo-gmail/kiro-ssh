@@ -547,7 +547,9 @@ Mengurangi pasangan near-domain dari 76 ke 9 fitur menurunkan MCC gabungan feder
 justru **di bawah** far-domain (0,537 vs 0,647; p<10⁻⁵). Jadi kekayaan fitur menjelaskan selisih
 0,65→0,85, sedangkan kedekatan domain (diukur dari ekstraktor yang sama) tidak. Federasi tetap
 unggul pada sembilan fitur: ia melampaui model terpusat (0,435 dengan normalisasi gabungan dan 0,372
-dengan normalisasi lokal) dan kedua model local-only (0,444 dan 0,430). Kedua pasangan juga berbeda proporsi kelasnya: UNSW-NB15 mayoritas-serangan (55,1%). Untuk menguji apakah ini menjelaskan keunggulan far-domain, kami menjalankan ulang federasi far-domain (simulasi) dengan UNSW diturunkan ke 17% serangan (train dan test), mendekati pasangan near-domain (baris terakhir Tabel 6). MCC gabungan hanya turun dari 0,647 ke 0,614 ± 0,002 (−0,033; p=0,01), yang menjelaskan sekitar 30% dari selisih 0,11 terhadap near-domain pada sembilan fitur. Sisanya 0,077 (p<10⁻³) tidak dijelaskan oleh rasio serangan; sementara kami duga berasal dari perbedaan separabilitas antar-dataset, yang tidak kami uji. Per client, rasio UNSW yang lebih rendah bahkan menaikkan CIC (0,533 ke 0,610), sehingga proporsi kelas mitra memengaruhi client lain.
+dengan normalisasi lokal) dan kedua model local-only (0,444 dan 0,430). Kedua pasangan juga berbeda proporsi kelasnya: UNSW-NB15 mayoritas-serangan (55,1%). Untuk menguji apakah ini menjelaskan keunggulan far-domain, kami menjalankan ulang federasi far-domain (simulasi) dengan UNSW diturunkan ke 17% serangan (train dan test), mendekati pasangan near-domain (baris terakhir Tabel 6). MCC gabungan hanya turun dari 0,647 ke 0,614 ± 0,002 (−0,033; p=0,01), yang menjelaskan sekitar 30% dari selisih 0,11 terhadap near-domain pada sembilan fitur. Sisanya 0,077 (p<10⁻³) tidak dijelaskan oleh rasio serangan. Ia juga tidak dijelaskan oleh separabilitas internal dataset: pohon gradient-boosting per client memisahkan serangan dari normal hampir sama baiknya pada setiap client dengan sembilan fitur (AUC 0,957–0,998; UNSW 0,983 dibanding 0,998 dan 0,957 pada dua client near-domain), sehingga selisih itu tetap belum terjelaskan. Per client, rasio UNSW yang lebih rendah bahkan menaikkan CIC (0,533 ke 0,610), sehingga proporsi kelas mitra memengaruhi client lain.
+
+**Jarak antar-client.** Untuk mengganti label near/far dengan pengukuran, kami menghitung rata-rata jarak Wasserstein-1 per fitur antara data latih kedua client (di-winsorize pada persentil 1–99 dan distandarkan dengan statistik gabungan). Pada sembilan fitur yang sama, pasangan far-domain sekitar dua kali lebih jauh daripada near-domain (0,455 vs 0,235; 0,205 dengan 76 fitur), namun federasi far-domain justru menghasilkan skor lebih tinggi. Jarak terukur karenanya tidak memprediksi kualitas federated di sini. Pengklasifikasi domain membedakan setiap pasangan hampir sempurna (AUC 0,978–1,000), sehingga bahkan near-domain jauh dari terdistribusi identik dan statistik ini tidak membedakan antar-pasangan.
 
 Dari ketiga konfigurasi, empat pelajaran bersifat **kokoh**: (i) FL lintas-dataset tidak runtuh dan
 setara atau lebih baik daripada model terpusat di setiap pengukuran, termasuk pada sembilan fitur;
@@ -555,6 +557,8 @@ setara atau lebih baik daripada model terpusat di setiap pengukuran, termasuk pa
 (iii) kesimpulan sensitif terhadap protokol normalisasi (model federated yang sama: 0,65/0,85 vs
 0,23/0,54, dan 0,54 vs 0,34 pada sembilan fitur near-domain); dan (iv) kualitas hasil terutama
 ditentukan oleh **kekayaan fitur**, bukan kedekatan domain.
+
+Kami juga menguji apakah indeks sederhana ketakcocokan antara statistik tiap client dan statistik gabungan (pergeseran rata-rata ditambah pergeseran skala) memprediksi penurunan MCC pada normalisasi yang tidak konsisten. Ternyata tidak (Spearman ρ=0,54 pada enam client, di bawah 0,89 yang dibutuhkan untuk signifikansi pada n=6), sehingga besarnya artefak tidak dapat diperkirakan dari momen sederhana, dan protokol harus dibenahi sejak awal, bukan dikoreksi sesudahnya.
 
 Karena itu kami **tidak** mengklaim bahwa FL membaik ketika domain makin dekat. Data kami tidak dapat
 mengisolasi efek kedekatan domain murni, sebab menyamakan rasio serangan hanya menutup sekitar 30% selisih dan kedua pasangan masih berbeda tingkat kesulitan. Uji yang lebih bersih memakai pasangan dengan ekstraktor, himpunan fitur, dan tingkat
@@ -655,7 +659,7 @@ Kelima, kami sengaja mengunci satu MLP dangkal sebagai *controlled backbone* (Ba
 temuan kami mencirikan perilaku federated pada kapasitas model yang tetap dan rendah; apakah gap
 performa lintas-domain dan pergeseran skor adversarial bertahan pada arsitektur yang lebih dalam
 (mis. 1D-CNN atau encoder transformer) belum dipastikan di sini dan menjadi pekerjaan lanjutan, yang
-akan memisahkan batas kapasitas model dari efek federated yang sesungguhnya.
+akan memisahkan batas kapasitas model dari efek federated yang sesungguhnya. Selisihnya besar: pada sembilan fitur, pohon gradient-boosting per client mencapai MCC dalam-domain 0,84–0,95 pada dua client near-domain, dibanding 0,59–0,65 untuk MLP local-only, sehingga nilai MCC absolut yang kami laporkan mencirikan backbone terkontrol ini beserta anggaran pelatihannya, bukan batas informasi dari fitur.
 
 ---
 
