@@ -558,12 +558,39 @@ setara atau lebih baik daripada model terpusat di setiap pengukuran, termasuk pa
 0,23/0,54, dan 0,54 vs 0,34 pada sembilan fitur near-domain); dan (iv) kualitas hasil terutama
 ditentukan oleh **kekayaan fitur**, bukan kedekatan domain.
 
+Pelajaran-pelajaran ini diambil pada setup pelatihan dasar, yang menurut uji sensitivitas backbone (Tabel 7) kurang terlatih; karena itu kami memandang arah tiap efek sebagai terdukung tetapi besarnya spesifik pada setup ini sampai percobaan diulang dengan setup yang lebih kuat.
+
 Kami juga menguji apakah indeks sederhana ketakcocokan antara statistik tiap client dan statistik gabungan (pergeseran rata-rata ditambah pergeseran skala) memprediksi penurunan MCC pada normalisasi yang tidak konsisten. Ternyata tidak (Spearman ρ=0,54 pada enam client, di bawah 0,89 yang dibutuhkan untuk signifikansi pada n=6), sehingga besarnya artefak tidak dapat diperkirakan dari momen sederhana, dan protokol harus dibenahi sejak awal, bukan dikoreksi sesudahnya.
 
 Karena itu kami **tidak** mengklaim bahwa FL membaik ketika domain makin dekat. Data kami tidak dapat
 mengisolasi efek kedekatan domain murni, sebab menyamakan rasio serangan hanya menutup sekitar 30% selisih dan kedua pasangan masih berbeda tingkat kesulitan. Uji yang lebih bersih memakai pasangan dengan ekstraktor, himpunan fitur, dan tingkat
 kesulitan yang setara, misalnya dataset yang diekstrak ulang dengan satu eksportir aliran standar;
 ini kami tandai sebagai pekerjaan lanjutan.
+
+
+**Uji sensitivitas backbone.** Bagian 5.1 mencatat bahwa pohon gradient-boosting mencapai MCC dalam-domain
+jauh lebih tinggi daripada MLP local-only kami. Untuk menguji apakah MLP itu sekadar kurang terlatih, kami
+melatih MLP yang sama di dalam satu client, tanpa federasi, dengan lima pengaturan pada empat client
+dengan sembilan fitur (satu seed), lalu membandingkannya dengan pohon gradient-boosting (Tabel 7).
+Pengaturan dasar mereproduksi nilai local-only sebelumnya (0,644 dan 0,594 pada CIC2017 dan CIC2018,
+dibanding 0,645 dan 0,592). Pelatihan SGD lebih lama menambah 0,01–0,07 dan Adam menambah 0,08–0,21.
+Transformasi logaritmik bertanda pada fitur aliran yang berekor berat sebelum standardisasi menambah
+0,02–0,27 lagi, sedangkan jaringan yang lebih dalam menambah paling banyak 0,01. Dengan transformasi dan
+Adam, MLP berada dalam 0,025 dari pohon pada setiap client. Jadi kelemahan setup dasar terletak pada
+preproses dan optimisasi, bukan pada kapasitas model atau informasi fitur. Seluruh hasil federated dalam
+naskah ini memakai setup dasar (z-score, SGD) dan belum diulang dengan setup yang lebih kuat, sehingga
+nilai MCC absolut, dan mungkin besar efek yang dilaporkan di atas, bersifat spesifik pada setup tersebut.
+
+*Table 7. In-domain MCC of the MLP under five training settings and of a gradient-boosted tree (nine features, one seed, no federation).*
+
+| Pasangan | Client | S0 | S1 | S2 | S3 | S4 | Pohon |
+|---|---|---|---|---|---|---|---|
+| Far | CIC | 0,537 | 0,604 | 0,634 | 0,902 | 0,903 | 0,911 |
+| Far | UNSW | 0,662 | 0,705 | 0,749 | 0,771 | 0,778 | 0,789 |
+| Near | CIC2017 | 0,644 | 0,655 | 0,857 | 0,935 | 0,934 | 0,956 |
+| Near | CIC2018 | 0,594 | 0,630 | 0,677 | 0,828 | 0,836 | 0,842 |
+
+S0: z-score, SGD, 100 epoch; S1: S0 dengan 300 epoch; S2: z-score, Adam; S3: transformasi log bertanda, Adam; S4: S3 dengan jaringan lebih dalam.
 
 ---
 
@@ -659,7 +686,7 @@ Kelima, kami sengaja mengunci satu MLP dangkal sebagai *controlled backbone* (Ba
 temuan kami mencirikan perilaku federated pada kapasitas model yang tetap dan rendah; apakah gap
 performa lintas-domain dan pergeseran skor adversarial bertahan pada arsitektur yang lebih dalam
 (mis. 1D-CNN atau encoder transformer) belum dipastikan di sini dan menjadi pekerjaan lanjutan, yang
-akan memisahkan batas kapasitas model dari efek federated yang sesungguhnya. Selisihnya besar: pada sembilan fitur, pohon gradient-boosting per client mencapai MCC dalam-domain 0,84–0,95 pada dua client near-domain, dibanding 0,59–0,65 untuk MLP local-only, sehingga nilai MCC absolut yang kami laporkan mencirikan backbone terkontrol ini beserta anggaran pelatihannya, bukan batas informasi dari fitur.
+akan memisahkan batas kapasitas model dari efek federated yang sesungguhnya. Selisihnya besar: pada sembilan fitur, pohon gradient-boosting per client mencapai MCC dalam-domain 0,84–0,95 pada dua client near-domain, dibanding 0,59–0,65 untuk MLP local-only. Uji sensitivitas backbone (Tabel 7) menunjukkan bahwa selisih ini sebagian besar efek preproses dan optimizer, bukan batas kapasitas atau informasi: transformasi log bertanda dan Adam membawa MLP yang sama dalam 0,025 dari pohon. Eksperimen federated kami memakai setup dasar yang lebih lemah dan belum diulang dengan setup yang lebih kuat, sehingga nilai MCC absolut, dan mungkin besar efek kekayaan fitur dan normalisasi, bersifat spesifik pada setup ini. Memvalidasi ulang di bawah setup yang lebih kuat adalah butir terbuka terpenting dari studi ini.
 
 ---
 

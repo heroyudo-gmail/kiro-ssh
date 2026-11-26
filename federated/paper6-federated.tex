@@ -60,7 +60,7 @@ Amazon Web Services testbed and add three contributions. First, a leakage-free e
 normalizes each test set with its owner client's training statistics; an inconsistent pooled evaluation
 makes the same federated model look far worse (union Matthews correlation coefficient, MCC, drops from
 0.65 to 0.23 on the different-extractor pair and from 0.85 to 0.54 on the same-extractor pair). Second,
-federated learning does not collapse and beats single-network models in every setting we test, but its
+federated learning does not collapse and beats single-network models in every setting we test, but under our baseline training setup its
 quality is governed mainly by feature richness rather than by how close the domains are: restricting
 the same-extractor pair to the same nine features lowers MCC from 0.85 to 0.54, below the 0.65 of the
 different-extractor pair. Third, we explain why adversarial training helps one domain but breaks
@@ -432,6 +432,41 @@ higher. Measured distance therefore does not predict federated quality here. A d
 separates every pair almost perfectly (AUC 0.978--1.000), so even the near-domain pair is far from
 identically distributed and this statistic does not discriminate between pairs.
 
+\subsection{Backbone Sensitivity Probe}
+\label{sec:probe}
+Section~\ref{sec:discuss} notes that a gradient-boosted tree reaches a much higher in-domain MCC than our
+local-only MLP. To test whether the MLP is simply undertrained, we trained the same MLP within a single
+client, without federation, under five settings on the four clients at nine features (one seed), and
+compared it with a gradient-boosted tree (Table~\ref{tab:probe}). The baseline setting reproduces the
+earlier local-only values (0.644 and 0.594 on CIC2017 and CIC2018, against 0.645 and 0.592). Longer SGD
+training adds 0.01--0.07 and Adam adds 0.08--0.21. A signed logarithmic transform of the heavy-tailed
+flow features before standardization adds a further 0.02--0.27, and a deeper network adds at most 0.01.
+With the transform and Adam, the MLP comes within 0.025 of the tree on every client. The weakness of the
+baseline is therefore one of preprocessing and optimization rather than of model capacity or feature
+information. All federated results in this paper use the baseline setting (z-score, SGD) and were not
+repeated with the stronger one, so absolute MCC values, and possibly the size of the effects reported
+above, are specific to that setup.
+
+\begin{table}[htbp]
+\caption{In-domain MCC of the MLP under five training settings and of a gradient-boosted tree (nine
+features, one seed, no federation). S0: z-score, SGD, 100 epochs; S1: S0 with 300 epochs; S2: z-score,
+Adam; S3: signed log transform, Adam; S4: S3 with a deeper network.}
+\label{tab:probe}
+\begin{center}
+\footnotesize
+\begin{tabular}{|l|l|c|c|c|c|c|c|}
+\hline
+\textbf{Pair} & \textbf{Client} & \textbf{S0} & \textbf{S1} & \textbf{S2} & \textbf{S3} & \textbf{S4} & \textbf{Tree} \\
+\hline
+Far  & CIC     & 0.537 & 0.604 & 0.634 & 0.902 & 0.903 & 0.911 \\
+Far  & UNSW    & 0.662 & 0.705 & 0.749 & 0.771 & 0.778 & 0.789 \\
+Near & CIC2017 & 0.644 & 0.655 & 0.857 & 0.935 & 0.934 & 0.956 \\
+Near & CIC2018 & 0.594 & 0.630 & 0.677 & 0.828 & 0.836 & 0.842 \\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
+
 \section{Discussion and Threats to Validity}
 \label{sec:discuss}
 
@@ -446,7 +481,9 @@ pair). The claim that cross-dataset FL is hard \cite{b5} therefore cannot be ass
 the normalization protocol and a matched baseline. (iv) Quality is governed mainly by feature richness
 rather than by domain proximity: with the feature count held at nine, the shared-extractor pair is not
 better than the different-extractor pair (Table~\ref{tab:ablate}), and moving that pair from nine to 76
-features raises the union MCC by 0.31.
+features raises the union MCC by 0.31. These lessons are drawn under the baseline training setting, which
+Section~\ref{sec:probe} shows to underfit; we therefore regard the direction of each effect as supported
+but its size as specific to this setup until the experiments are repeated under the stronger setting.
 
 We also tested whether a simple index of the mismatch between each client's statistics and the pooled
 statistics (mean shift plus scale shift) predicts the MCC drop under inconsistent normalization. It did
@@ -506,21 +543,24 @@ performance gap and the adversarial decision-score shift persist under deeper ar
 example 1D-CNN or transformer encoders) is not established here and is left to future work, which
 would separate model-capacity limits from genuinely federated effects. The gap to simpler learners is
 large: at nine features a per-client gradient-boosted tree reaches an in-domain MCC of 0.84--0.95 on
-the two near-domain clients, versus 0.59--0.65 for the local-only MLP, so the absolute MCC values we
-report characterize this controlled backbone and its training budget rather than an information limit
-of the features.
+the two near-domain clients, versus 0.59--0.65 for the local-only MLP. Section~\ref{sec:probe} shows
+that this gap is mostly a preprocessing and optimizer effect rather than a capacity or information limit:
+a signed log transform and Adam bring the same MLP within 0.025 of the tree. Our federated experiments
+use the weaker baseline setting and have not been repeated with the stronger one, so the absolute MCC
+values, and possibly the size of the feature-richness and normalization effects, are specific to this
+setup. Re-validating them under the stronger setting is the most important open item of this study.
 
 \subsection{Research Directions}
 The most pressing directions are standardized, leakage-free normalization and evaluation protocols for
-cross-dataset FL; domain-aware evasion defenses instead of static adversarial training; verification of
-the reported phenomena under deeper architectures (1D-CNN, transformer) to test whether they are
-capacity-independent; semantic-aware feature alignment (which we pursue separately); and validation at
+cross-dataset FL; domain-aware evasion defenses instead of static adversarial training; re-validation of
+the reported phenomena under the stronger preprocessing and optimizer setting of
+Section~\ref{sec:probe} and with tree-based learners, since model capacity is not the limiting factor; semantic-aware feature alignment (which we pursue separately); and validation at
 a client and traffic scale closer to production, including IoT traffic domains.
 
 \section{Conclusion}
 We studied when cross-dataset federated learning works for network intrusion detection on two dataset
 pairs, under a leakage-free evaluation protocol and with a feature-controlled ablation. Cross-dataset FL
-does not collapse and consistently beats single-network models, which fail to transfer. Its quality is
+does not collapse and consistently beats single-network models, which fail to transfer. Under our baseline training setup, its quality is
 governed mainly by feature richness rather than domain proximity: the same-extractor pair reaches a
 union MCC of 0.85 with 76 features but only 0.54 with the nine features of the different-extractor
 pair, which reaches 0.65. The apparent collapse reported for cross-dataset FL can be an evaluation
