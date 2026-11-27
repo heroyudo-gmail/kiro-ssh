@@ -85,6 +85,7 @@ Bila gagal, kita laporkan apa adanya dan menimbang jurnal lain (mis. JOIN sebaga
 | 1C | belum; percobaan baru ditahan sampai gagasan inti dipilih |
 | jE_01 | selesai: separabilitas tidak menjelaskan sisa 0,077; jarak W1 tidak memprediksi kualitas FL; indeks ketakcocokan tidak prediktif; pohon (0,84-0,95) jauh di atas MLP (0,59-0,65) pada 9 fitur |
 | jF_01 | uji pendahuluan `jF_01_mlp_probe` siap dijalankan: apakah MLP kurang terlatih (tanpa federasi). Menentukan perlu tidaknya `jC_04` penuh |
+| FSFM | gagasan inti dipilih: Federated SFM (audit ringkasan terdistribusi + pemetaan bertingkat + agregasi sadar-tingkat). Desain dan kriteria H1-H3 (disepakati sebelum angka) di `fsfm-design.md`. Notebook `notebooks/02_survey-tanpaSFM/jG_00_fed_audit` dan `jG_01_fsfm_compare` siap dijalankan di SageMaker; baru lolos uji kering data sintetik, belum ada angka nyata. Kebaruan baru dicek dengan tiga kueri literatur |
 | 2–7 | belum |
 
 

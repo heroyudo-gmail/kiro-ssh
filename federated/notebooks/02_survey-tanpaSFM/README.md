@@ -43,3 +43,11 @@ Folder ini berisi notebook eksperimen untuk **paper survey FL-NIDS**
 
 **Aturan kejujuran:** semua angka hasil = `[TBD]` sampai dijalankan nyata; jangan
 mengarang. Jalankan di SageMaker/EC2 ber-data; hasil disimpan ke S3 sebelum teardown.
+
+## Catatan: seri jG (Federated SFM)
+Notebook `jG_*` memakai SFM (Federated SFM), berbeda dari notebook `s*` dan `jA`-`jF` di atas yang tidak memakai SFM.
+Ditaruh di folder ini agar urutan notebook jurnal tetap satu tempat. Desain dan kriteria: `../../fsfm-design.md`.
+| Notebook | Fungsi | Status |
+|---|---|---|
+| `jG_00_fed_audit.ipynb` | audit ringkasan terdistribusi (median/p99), tingkat fitur, kestabilan terhadap derau | siap dijalankan, belum ada angka nyata |
+| `jG_01_fsfm_compare.ipynb` | FSFM tier vs FedAvg/FedProx/FedPer/local/centralized, log1p + Adam, 5 seed | siap dijalankan, belum ada angka nyata |
